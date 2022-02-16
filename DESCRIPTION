@@ -15,6 +15,6 @@ Imports:
     dplyr,
     emoji,
     purrr,
-    rlang,
     stringr,
-    tibble
+    tibble,
+    utils

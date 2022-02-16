@@ -2,19 +2,24 @@
 % Please edit documentation in R/emoji-summary.R
 \name{emoji_summary}
 \alias{emoji_summary}
-\title{Emoji Summary Tibble}
+\title{Emoji summary tibble}
 \usage{
 emoji_summary(tweet_tbl, tweet_text)
 }
 \arguments{
-\item{tweet_tbl}{A dataframe/tibble containing tweets.}
+\item{tweet_tbl}{A dataframe/tibble containing tweets/text.}
 
-\item{tweet_text}{The column that is the tweet column.}
+\item{tweet_text}{The tweet/text column.}
 }
 \value{
-A summary tibble including # of tweets in total and # of tweets that
+A summary tibble including # of Tweets in total and # of Tweets that
 have at least one Emoji.
 }
 \description{
-Emoji Summary Tibble
+When having a Twitter dataframe/tibble at hand, it should be nice to know
+how many Tweets contain Emojis. This is the right time to use this function.
+What is worth noting is that it does not matter whether a Tweet has one Emoji
+or ten Emojis, the function only counts it once and returns a tibble that
+summarizes the number of Tweets containing at least one Emoji and the total
+number of Tweets presented in the dataframe/tibble.
 }
