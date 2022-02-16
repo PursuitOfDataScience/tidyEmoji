@@ -13,4 +13,6 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c(".",
                                                         "emoji_name",
                                                         "unicode",
                                                         "emoji_category",
-                                                        "emoji_unicode_crosswalk"))
+                                                        ".emoji_category",
+                                                        ".emoji_unicode",
+                                                        ".emoji_unicode"))
