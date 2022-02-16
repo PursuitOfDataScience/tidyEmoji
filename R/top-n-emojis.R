@@ -19,7 +19,15 @@
 #' @import purrr
 #' @import dplyr
 #' @export
-#'
+#' @examples
+#' library(dplyr)
+#' data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
+#'                       "R is my language! \U0001f601\U0001f606\U0001f605",
+#'                       "This Tweet does not have Emoji!",
+#'                       "Wearing a mask\U0001f637\U0001f637\U0001f637.",
+#'                       "Emoji does not appear in all Tweets",
+#'                       "A flag \U0001f600\U0001f3c1")) %>%
+#'          top_n_emojis(tweets, n = 2)
 
 
 top_n_emojis <- function(tweet_tbl, tweet_text, n = 20, duplicated_unicode = "no"){

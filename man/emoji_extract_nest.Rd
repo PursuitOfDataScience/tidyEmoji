@@ -19,3 +19,13 @@ The original dataframe/tibble with an extra column collumn called
 This function adds an extra list column called \code{.emoji_unicode} to the
 original data, with all Emojis included.
 }
+\examples{
+library(dplyr)
+data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
+                      "R is my language! \U0001f601\U0001f606\U0001f605",
+                      "This Tweet does not have Emoji!",
+                      "Wearing a mask\U0001f637\U0001f637\U0001f637.",
+                      "Emoji does not appear in all Tweets",
+                      "A flag \U0001f600\U0001f3c1")) \%>\%
+         emoji_extract_nest(tweets)
+}
