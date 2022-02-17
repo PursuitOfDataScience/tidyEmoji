@@ -23,5 +23,11 @@ Imports:
     tidyr,
     utils
 Suggests: 
-    testthat (>= 3.0.0)
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0),
+    ggplot2,
+    readr,
+    forcats
 Config/testthat/edition: 3
+VignetteBuilder: knitr

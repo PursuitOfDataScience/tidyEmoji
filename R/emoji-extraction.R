@@ -31,7 +31,7 @@ emoji_extract_unnest <- function(tweet_tbl, tweet_text){
     dplyr::mutate(row_number = dplyr::row_number()) %>%
     tidyr::unnest(.emoji_unicode) %>%
     dplyr::group_by(row_number, .emoji_unicode) %>%
-    dplyr::summarize(emoji_count = dplyr::n()) %>%
+    dplyr::summarize(.emoji_count = dplyr::n()) %>%
     dplyr::ungroup()
 
 }

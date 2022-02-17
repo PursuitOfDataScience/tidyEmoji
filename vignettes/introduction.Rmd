@@ -1,0 +1,199 @@
+---
+title: "Introduction to tidyEmoji"
+author: "Youzhi Yu"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to tidyEmoji}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8, 
+  fig.height = 5,
+  comment = "#>"
+)
+```
+
+## Why to use the package?
+
+Extracting Emoji from text might not be an easy task. This is especially the case when researchers want to understand the Emoji distribution presented in the full corpus of text data, as Unicode does not work well in conjunction with regular expression. (If you use the stringr package, the filter process is: `str_detect(text, "\Uhhhhhhhh")`). Part of the difficulty arises when we have to input each Emoji Unicode specifically to find out how many pieces of text contain this Emoji, and it would be daunting to input all existing Unicodes one by one by the user. Another challenge is that not all Unicodes are Emoji. In other words, even if we can find a way to filter all text containing some kind of Unicode, but not all of it might have Emoji per se. 
+
+## When to use the package?
+
+This package is specifically designed for working Emoji-related text. The ideal case is analyzing Tweets, which comprise Emoji from time to time. 
+
+## How to use the package?
+
+In this section, I would like to use 10000 Tweets from Atlanta, Georgia to give a comprehensive introduction of tidyEmoji.
+
+A few extra packages are loaded to help make the plots presented in the vignette more organized. 
+
+```{r setup}
+library(tidyEmoji)
+library(ggplot2)
+library(dplyr)
+```
+
+Load the data:
+
+```{r}
+ata_tweets <- readr::read_csv(system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"))
+```
+The `full_text` column in `ata_tweets` is where the actual Tweets are located. 
+
+First off, we can use `emoji_summary()` to see how many Emoji Tweets the data has. 
+
+- `emoji_summary()`:
+
+```{r}
+ata_tweets %>%
+  emoji_summary(full_text)
+```
+
+The raw data has 10000 tweets in total, 2841 of which have at least one Emoji.
+
+
+If users want to filter the Emoji Tweets, the `emoji_tweets()` function is specifically designed for this purpose. Researchers might be interested in finding differences (such as sentiment or timestamp differences) between Emoji and non-Emoji Tweets.
+
+- `emoji_extract_nest/unnest()`
+
+If users would like to see how many Emoji each Tweet has, `emoji_extract_nest()` can help achieve the task. The function preserves the raw data, in this case `ata_tweets`. The only change is it adds an extra list column `.emoji_unicode` to let the users see how many Emoji each Tweet has.  
+
+```{r}
+ata_tweets %>%
+  emoji_extract_nest(full_text) %>%
+  select(.emoji_unicode) 
+```
+When looking at the output above, we know immediately that the first two Tweets do not have any Emoji, but the third and fourth one have 1. If users want to see what exactly each Emoji Unicode is, they can either `unnest(.emoji_unicode)` or simply use `emoji_extract_unnest()` as follows:
+
+
+```{r}
+emoji_count_per_tweet <- ata_tweets %>%
+  emoji_extract_unnest(full_text) 
+
+emoji_count_per_tweet
+```
+
+`emoji_extract_unnest()` filters out non-Emoji Tweets and outputs the row number of each Emoji Tweet in the `row_number` column, and the Emoji Unicode(s) presented in each Tweet. `.emoji_count` counts how many Emoji with such `.emoji_unicode` in each Tweet. 
+
+The following plot shows the distribution of Emoji Tweets in terms of how many Emoji shown. 
+
+```{r}
+emoji_count_per_tweet %>%
+  group_by(.emoji_count) %>%
+  summarize(n = n()) %>%
+  ggplot(aes(.emoji_count, n)) +
+  geom_col() +
+  scale_x_continuous(breaks = seq(1,15)) +
+  ggtitle("How many Emoji does each Emoji Tweet have?")
+```
+
+As we can conclude from the plot above, most of the Emoji Tweets only have 1 Emoji, and much fewer Tweets have more than 1 Emoji. 
+
+- `top_n_emojis`:
+
+```{r}
+top_20_emojis <- ata_tweets %>%
+  top_n_emojis(full_text)
+
+top_20_emojis
+```
+
+`top_n_emojis()` counts all Emojis presented in the entire text corpus and outputs the top `n` ones. By default, `n` is 20.  
+
+Here are the top 20 Emojis from `ata_tweets`:
+
+```{r}
+top_20_emojis %>%
+  ggplot(aes(n, emoji_name, fill = emoji_category)) +
+  geom_col()
+```
+
+Tidy up the plot:
+
+```{r}
+top_20_emojis %>%
+  mutate(emoji_name = stringr::str_replace_all(emoji_name, "_", " "),
+         emoji_name = forcats::fct_reorder(emoji_name, n)) %>%
+  ggplot(aes(n, emoji_name, fill = emoji_category)) +
+  geom_col() +
+  labs(x = "# of Emoji",
+       y = "Emoji name",
+       fill = "Emoji category",
+       title = "The 20 most popular Emojis")
+```
+
+Besides having Emoji names, users can put the actual Emoji on the plot:
+
+```{r}
+top_20_emojis %>%
+  mutate(emoji_name = stringr::str_replace_all(emoji_name, "_", " "),
+         emoji_name = forcats::fct_reorder(emoji_name, n)) %>%
+  ggplot(aes(n, emoji_name, fill = emoji_category)) +
+  geom_col() +
+  geom_text(aes(label = unicode), hjust = 0.1) +
+  labs(x = "# of Emoji",
+       y = "Emoji name",
+       fill = "Emoji category",
+       title = "The 20 most popular Emojis")
+```
+
+With the presence of Emoji, the Emoji names are more concrete and easier to be understood of what they stand for. 
+
+Users can choose `n` based on their preferences. Here we would like to output the 10 most popular Emojis from `ata_tweets`:
+
+```{r}
+ata_tweets %>%
+  top_n_emojis(full_text, n = 10) %>%
+  ggplot(aes(n, emoji_name, fill = emoji_category)) +
+  geom_col()
+```
+
+- `emoji_categorize()`:
+
+```{r}
+ata_emoji_category <- ata_tweets %>%
+  emoji_categorize(full_text) %>%
+  select(.emoji_category)
+
+ata_emoji_category
+```
+
+Emojis can be categorized into 10 different categories. For more information in this regard, just simply type `category_unicode_crosswalk` at the console. 
+
+If users want to classify each Emoji Tweet for its category/categories, `emoji_categorize()` is the right function to use. `.emoji_category` is an added column indicating the Emoji category for each Tweet. If a Tweet has more than one category, `|` is used to separate various categories.
+
+The following plot shows the Emoji categories who appear more than 20 times among all Tweets: 
+
+```{r}
+ata_emoji_category %>%
+  count(.emoji_category) %>%
+  filter(n > 20) %>%
+  mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
+  ggplot(aes(n, .emoji_category)) +
+  geom_col()
+```
+
+If users want to see each of the 10 total categories only, `separate_rows()` from the tidyr package is used to separate categories based on `|`.
+
+```{r}
+ata_emoji_category %>%
+  tidyr::separate_rows(.emoji_category, sep = "\\|") %>%
+  count(.emoji_category) %>%
+  mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
+  ggplot(aes(n, .emoji_category)) +
+  geom_col()
+```
+
+Here we see more than 2000 Tweets fall into the "Smileys & Emotion" category, and the second popular category is "People & Body". One caveat for this plot is that some Tweets have been double counted, as once they fall into various categories, they are counted in each respective category. 
+
+To shed a bit more light on how users may use `emoji_categorize()` for further analysis, they can look at how each category is corrleated with each other. In other words, if Emoji from one category appears in a Tweet, what Emoji from other categories would be more likely to appear in the same Tweet. To visualize the result, a graph/network visualization is appropriate.  
+
+
+

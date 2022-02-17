@@ -110,22 +110,22 @@ output. By default, it is 20.
 tweet_df %>%
   emoji_extract_unnest(tweets)
 #> # A tibble: 8 x 3
-#>   row_number .emoji_unicode emoji_count
-#>        <int> <chr>                <int>
-#> 1          1 "\U0001f600"             1
-#> 2          1 "\U0001f603"             2
-#> 3          2 "\U0001f601"             1
-#> 4          2 "\U0001f605"             1
-#> 5          2 "\U0001f606"             1
-#> 6          4 "\U0001f637"             4
-#> 7          6 "\U0001f3c1"             1
-#> 8          6 "\U0001f600"             1
+#>   row_number .emoji_unicode .emoji_count
+#>        <int> <chr>                 <int>
+#> 1          1 "\U0001f600"              1
+#> 2          1 "\U0001f603"              2
+#> 3          2 "\U0001f601"              1
+#> 4          2 "\U0001f605"              1
+#> 5          2 "\U0001f606"              1
+#> 6          4 "\U0001f637"              4
+#> 7          6 "\U0001f3c1"              1
+#> 8          6 "\U0001f600"              1
 ```
 
 When looking at the tibble above, it has three columns: `row_number`,
-`.emoji_unicode`, and `emoji_count`. `row_number` is which row each
+`.emoji_unicode`, and `.emoji_count`. `row_number` is which row each
 Tweet is located in the raw data. This can give users a global overview
-of Emoji and counts.
+of Emoji and count.
 
 -   `emoji_extract_nest()`:
 

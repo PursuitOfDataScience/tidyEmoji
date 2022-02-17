@@ -100,7 +100,7 @@ tweet_df %>%
   emoji_extract_unnest(tweets)
 ```
 
-When looking at the tibble above, it has three columns: `row_number`, `.emoji_unicode`, and `emoji_count`. `row_number` is which row each Tweet is located in the raw data. This can give users a global overview of Emoji and counts.
+When looking at the tibble above, it has three columns: `row_number`, `.emoji_unicode`, and `.emoji_count`. `row_number` is which row each Tweet is located in the raw data. This can give users a global overview of Emoji and count.
 
 
 - `emoji_extract_nest()`:
