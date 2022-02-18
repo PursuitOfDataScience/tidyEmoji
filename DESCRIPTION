@@ -1,7 +1,7 @@
 Package: tidyEmoji
 Type: Package
 Title: Discovers Emoji from Text
-Version: 0.1.0
+Version: 0.1.0.9000
 Author: Youzhi Yu
 Maintainer: Youzhi Yu <yuyouzhi666@icloud.com>
 Description: Unicodes are not friendly to work with, and not all Unicodes are
