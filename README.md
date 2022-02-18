@@ -6,6 +6,8 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/workflows/R-CMD-check/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/tidyEmoji)](https://CRAN.R-project.org/package=tidyEmoji)
 <!-- badges: end -->
 
 The goal of tidyEmoji is to help R users work with text data with the
