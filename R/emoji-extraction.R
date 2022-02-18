@@ -26,7 +26,7 @@
 
 emoji_extract_unnest <- function(tweet_tbl, tweet_text){
   tweet_tbl %>%
-    tidyEmoji::emoji_extract_nest({{ tweet_text }}) %>%
+    emoji_extract_nest({{ tweet_text }}) %>%
     dplyr::select({{ tweet_text }}, .emoji_unicode) %>%
     dplyr::mutate(row_number = dplyr::row_number()) %>%
     tidyr::unnest(.emoji_unicode) %>%

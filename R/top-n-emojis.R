@@ -32,16 +32,16 @@
 
 top_n_emojis <- function(tweet_tbl, tweet_text, n = 20, duplicated_unicode = "no"){
 
-  emoji_tbl <- tidyEmoji::emoji_tweets(tweet_tbl, {{ tweet_text }})
+  emoji_tbl <- emoji_tweets(tweet_tbl, {{ tweet_text }})
 
-  emoji_count_list <- purrr::map(tidyEmoji::emoji_unicode_crosswalk$unicode,
+  emoji_count_list <- purrr::map(emoji_unicode_crosswalk$unicode,
                                  .f = count_each_emoji,
                                  emoji_tbl,
                                  {{ tweet_text }})
 
-  tbl <- tibble::tibble(unicode = tidyEmoji::emoji_unicode_crosswalk$unicode,
+  tbl <- tibble::tibble(unicode = emoji_unicode_crosswalk$unicode,
                         emoji_count = unlist(emoji_count_list)) %>%
-    dplyr::inner_join(tidyEmoji::emoji_unicode_crosswalk, by = "unicode") %>%
+    dplyr::inner_join(emoji_unicode_crosswalk, by = "unicode") %>%
     dplyr::distinct() %>%
     dplyr::count(emoji_name, unicode, emoji_category, wt = emoji_count, sort = T)
 

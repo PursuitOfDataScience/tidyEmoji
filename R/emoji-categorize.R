@@ -35,11 +35,11 @@ emoji_category_add <- function(emoji_unicodes, emoji_category, tweet_tbl, tweet_
 
 emoji_categorize <- function(tweet_tbl, tweet_text) {
 
-  emoji_long <- purrr::map2_dfr(tidyEmoji::category_unicode_crosswalk$unicodes,
-                  tidyEmoji::category_unicode_crosswalk$category,
-                  emoji_category_add,
-                  tweet_tbl,
-                  {{ tweet_text }})
+  emoji_long <- purrr::map2_dfr(category_unicode_crosswalk$unicodes,
+                                category_unicode_crosswalk$category,
+                                emoji_category_add,
+                                tweet_tbl,
+                                {{ tweet_text }})
 
   emoji_category_vector <- unique(emoji_long$.emoji_category)
 
