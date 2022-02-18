@@ -24,6 +24,8 @@ knitr::opts_chunk$set(
 
 Extracting Emoji from text might not be an easy task. This is especially the case when researchers want to understand the Emoji distribution presented in the full corpus of text data, as Unicode does not work well in conjunction with regular expression. (If you use the stringr package, the filter process is: `str_detect(text, "\Uhhhhhhhh")`). Part of the difficulty arises when we have to input each Emoji Unicode specifically to find out how many pieces of text contain this Emoji, and it would be daunting to input all existing Unicodes one by one by the user. Another challenge is that not all Unicodes are Emoji. In other words, even if we can find a way to filter all text containing some kind of Unicode, but not all of it might have Emoji per se. 
 
+tidyEmoji extracts, counts, and summarizes Emoji data while inheriting the tidyverse style, making the user experience as effortless as possible.
+
 ## When to use the package?
 
 This package is specifically designed for working Emoji-related text. The ideal case is analyzing Tweets, which comprise Emoji from time to time. 
@@ -165,7 +167,7 @@ ata_emoji_category <- ata_tweets %>%
 ata_emoji_category
 ```
 
-Emojis can be categorized into 10 different categories. For more information in this regard, just simply type `category_unicode_crosswalk` at the console. 
+Emojis can be categorized into 10 different categories. For more information in this regard, just simply type `?category_unicode_crosswalk` at the console. 
 
 If users want to classify each Emoji Tweet for its category/categories, `emoji_categorize()` is the right function to use. `.emoji_category` is an added column indicating the Emoji category for each Tweet. If a Tweet has more than one category, `|` is used to separate various categories.
 

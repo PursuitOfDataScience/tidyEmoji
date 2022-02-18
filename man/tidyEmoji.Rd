@@ -5,5 +5,5 @@
 \alias{tidyEmoji}
 \title{\code{tidyEmoji} package}
 \description{
-A tidy way working with text containing Emoji
+A tidy way working with text containing Emoji.
 }

@@ -1,6 +1,6 @@
 #' \code{tidyEmoji} package
 #'
-#' A tidy way working with text containing Emoji
+#' A tidy way working with text containing Emoji.
 #'
 #' @docType package
 #' @name tidyEmoji
