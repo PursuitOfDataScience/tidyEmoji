@@ -7,7 +7,7 @@ Maintainer: Youzhi Yu <yuyouzhi666@icloud.com>
 Description: Unicodes are not friendly to work with, and not all Unicodes are
     Emoji per se, making obtaining Emoji statistics a difficult task. This
     tool can help your experience of working with Emoji as smooth as possible,
-    as it has the `tidyverse` style. 
+    as it has the 'tidyverse' style. 
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
