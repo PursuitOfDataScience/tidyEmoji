@@ -20,6 +20,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/workflows/R-CMD-check/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/tidyEmoji)](https://CRAN.R-project.org/package=tidyEmoji)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
 The goal of tidyEmoji is to help R users work with text data with the presence of Emoji as easy as possible. The most common text data that falls into this category would be Tweets. When people tweet their emotions, ideas, celebrations, etc., Emoji sometimes appears on their Tweets, making the text rendered more colorful. To researchers/users who want to work with this type of text, it is intriguing to know the information about Emoji appearing in the text. With the help of tidyEmoji, dealing with Emoji is at ease. 

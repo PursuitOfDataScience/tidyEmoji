@@ -1,0 +1,33 @@
+url: https://pursuitofdatascience.github.io/tidyEmoji/
+template:
+  bootstrap: 5
+
+development:
+  mode: auto
+
+authors:
+  Youzhi Yu:
+    href: https://youzhi.netlify.app/
+  footer:
+    text: "Crafted by"
+  sidebar:
+    roles: [aut, cre]
+
+home:
+  sidebar:
+    structure: [links, license, community, citation, authors, dev]
+
+navbar:
+  type: default
+  left:
+  - text: Reference
+    href: reference/index.html
+  - text: Vignettes
+    menu:
+    - text: Introduction to tidyEmoji
+      href: articles/introduction.html
+  - text: News
+    href: news/index.html
+  right:
+  - icon: fa-github fa-lg
+    href: https://github.com/PursuitOfDataScience/tidyEmoji
