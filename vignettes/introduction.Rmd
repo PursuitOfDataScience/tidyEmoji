@@ -44,7 +44,7 @@ library(dplyr)
 Load the data:
 
 ```{r}
-ata_tweets <- readr::read_csv("ata_tweets.csv.gz")
+ata_tweets <- readr::read_csv("ata_tweets.RData")
 ```
 The `full_text` column in `ata_tweets` is where the actual Tweets are located. 
 
