@@ -1,7 +1,7 @@
 #' \code{tidyEmoji} package
 #'
 #' A tidy way working with text containing Emoji.
-#'
+#' @aliases tidyEmoji-package
 #' @docType package
 #' @name tidyEmoji
 #' @import utils
