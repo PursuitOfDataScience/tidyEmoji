@@ -1,7 +1,6 @@
 ---
 title: "Introduction to tidyEmoji"
-subtitle: "University of Chicago"
-author: "Youzhi Yu"
+author: "Youzhi Yu, University of Chicago"
 date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:
@@ -144,7 +143,7 @@ emoji_per_tweet
 
 We can use this to plot how many emoji each emoji-bearing tweet contains:
 
-```{r}
+```{r, fig.alt = "Bar chart of the number of emoji per emoji-bearing tweet. The vast majority of tweets contain a single emoji, with a long, thin tail of more emoji-heavy tweets."}
 emoji_per_tweet %>%
   group_by(row_number) %>%
   summarise(n_emoji = sum(.emoji_count)) %>%
@@ -220,7 +219,7 @@ top_20_emojis
 Plotting the top 20, coloured by category, gives an immediate sense of how the
 community expresses itself:
 
-```{r}
+```{r, fig.alt = "Horizontal bar chart of the 20 most frequent emoji in the corpus, coloured by Unicode category."}
 top_20_emojis %>%
   mutate(emoji_name = stringr::str_replace_all(emoji_name, "_", " "),
          emoji_name = forcats::fct_reorder(emoji_name, n)) %>%
@@ -236,7 +235,7 @@ The `unicode` column holds the actual glyph, should you wish to render the emoji
 themselves on a plot (this requires a graphics device with an emoji-capable
 font). You can also request a different number of emoji:
 
-```{r}
+```{r, fig.alt = "Horizontal bar chart of the 10 most frequent emoji in the corpus, coloured by Unicode category."}
 ata_tweets %>%
   top_n_emojis(full_text, n = 10) %>%
   mutate(emoji_name = stringr::str_replace_all(emoji_name, "_", " "),
@@ -264,7 +263,7 @@ ata_emoji_category
 
 We can tally the most common category combinations:
 
-```{r}
+```{r, fig.alt = "Horizontal bar chart of the most common emoji category combinations that appear in more than 20 tweets."}
 ata_emoji_category %>%
   count(.emoji_category, sort = TRUE) %>%
   filter(n > 20) %>%
@@ -278,7 +277,7 @@ ata_emoji_category %>%
 To count the 10 individual categories rather than their combinations, split the
 `.emoji_category` strings on `|` with `tidyr::separate_rows()`:
 
-```{r}
+```{r, fig.alt = "Horizontal bar chart of how often each individual Unicode emoji category is used, dominated by Smileys & Emotion followed by People & Body."}
 ata_emoji_category %>%
   tidyr::separate_rows(.emoji_category, sep = "\\|") %>%
   count(.emoji_category, sort = TRUE) %>%
@@ -316,7 +315,7 @@ ata_sentiment %>%
 
 Looking across the tweets that contain at least one scored emoji:
 
-```{r}
+```{r, fig.alt = "Histogram of the mean emoji sentiment per tweet, which is concentrated on the positive side of the scale."}
 ata_sentiment %>%
   filter(!is.na(.emoji_sentiment)) %>%
   ggplot(aes(.emoji_sentiment)) +
@@ -333,7 +332,7 @@ As is typical of social-media text, emoji sentiment leans strongly positive.
 Because `emoji_tokens()` attaches a sentiment score to every emoji occurrence, we
 can summarise average sentiment by category in a couple of lines:
 
-```{r}
+```{r, fig.alt = "Horizontal bar chart of the average emoji sentiment within each Unicode category."}
 ata_tweets %>%
   emoji_tokens(full_text) %>%
   group_by(.emoji_category) %>%
