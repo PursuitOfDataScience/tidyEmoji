@@ -1,6 +1,6 @@
 ---
 title: "Introduction to tidyEmoji"
-author: "Youzhi Yu, University of Chicago"
+author: 'Youzhi Yu<br><span style="font-weight: 400; font-size: 0.85em;">University of Chicago</span>'
 date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:
