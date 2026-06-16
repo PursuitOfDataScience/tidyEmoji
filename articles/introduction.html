@@ -54,9 +54,8 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Introduction to tidyEmoji</h1>
-            <h3 data-toc-skip class="subtitle">University of
-Chicago</h3>
-                        <h4 data-toc-skip class="author">Youzhi Yu</h4>
+                        <h4 data-toc-skip class="author">Youzhi Yu,
+University of Chicago</h4>
             
             <h4 data-toc-skip class="date">2026-06-16</h4>
       
@@ -290,7 +289,7 @@ contains:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of emoji in the tweet"</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Number of tweets"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Most emoji tweets contain a single emoji"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="Bar chart of the number of emoji per emoji-bearing tweet. The vast majority of tweets contain a single emoji, with a long, thin tail of more emoji-heavy tweets." width="768"></p>
 <p>The overwhelming majority of emoji tweets carry just one emoji, with
 a long, thin tail of more emoji-heavy tweets.</p>
 </div>
@@ -425,7 +424,7 @@ of how the community expresses itself:</p>
 <span>       y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       fill <span class="op">=</span> <span class="st">"Category"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"The 20 most frequent emoji"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="Horizontal bar chart of the 20 most frequent emoji in the corpus, coloured by Unicode category." width="768"></p>
 <p>The <code>unicode</code> column holds the actual glyph, should you
 wish to render the emoji themselves on a plot (this requires a graphics
 device with an emoji-capable font). You can also request a different
@@ -439,7 +438,7 @@ number of emoji:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Count"</span>, y <span class="op">=</span> <span class="cn">NULL</span>, fill <span class="op">=</span> <span class="st">"Category"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"The 10 most frequent emoji"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="Horizontal bar chart of the 10 most frequent emoji in the corpus, coloured by Unicode category." width="768"></p>
 </div>
 </div>
 <div class="section level2">
@@ -481,7 +480,7 @@ than one.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of tweets"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Most common emoji category combinations"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="Horizontal bar chart of the most common emoji category combinations that appear in more than 20 tweets." width="768"></p>
 <p>To count the 10 individual categories rather than their combinations,
 split the <code>.emoji_category</code> strings on <code>|</code> with
 <code><a href="https://tidyr.tidyverse.org/reference/separate_rows.html" class="external-link">tidyr::separate_rows()</a></code>:</p>
@@ -494,7 +493,7 @@ split the <code>.emoji_category</code> strings on <code>|</code> with
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of tweets"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji category usage"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="Horizontal bar chart of how often each individual Unicode emoji category is used, dominated by Smileys &amp; Emotion followed by People &amp; Body." width="768"></p>
 <p>“Smileys &amp; Emotion” dominates, followed by “People &amp; Body”.
 Note that a tweet spanning several categories is counted once in each,
 so these counts can exceed the number of emoji tweets.</p>
@@ -547,7 +546,7 @@ emoji, or whose emoji are not in the lexicon, receive
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Mean emoji sentiment"</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Number of tweets"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji sentiment skews positive"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="Histogram of the mean emoji sentiment per tweet, which is concentrated on the positive side of the scale." width="768"></p>
 <p>As is typical of social-media text, emoji sentiment leans strongly
 positive.</p>
 </div>
@@ -569,7 +568,7 @@ in a couple of lines:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Mean sentiment"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Average emoji sentiment by category"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="Horizontal bar chart of the average emoji sentiment within each Unicode category." width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="the-sentiment-lexicon">The sentiment lexicon<a class="anchor" aria-label="anchor" href="#the-sentiment-lexicon"></a>

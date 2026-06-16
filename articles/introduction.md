@@ -205,7 +205,10 @@ emoji_per_tweet %>%
        title = "Most emoji tweets contain a single emoji")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-7-1.png)
+![Bar chart of the number of emoji per emoji-bearing tweet. The vast
+majority of tweets contain a single emoji, with a long, thin tail of
+more emoji-heavy
+tweets.](introduction_files/figure-html/unnamed-chunk-7-1.png)
 
 The overwhelming majority of emoji tweets carry just one emoji, with a
 long, thin tail of more emoji-heavy tweets.
@@ -351,7 +354,9 @@ top_20_emojis %>%
        title = "The 20 most frequent emoji")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-12-1.png)
+![Horizontal bar chart of the 20 most frequent emoji in the corpus,
+coloured by Unicode
+category.](introduction_files/figure-html/unnamed-chunk-12-1.png)
 
 The `unicode` column holds the actual glyph, should you wish to render
 the emoji themselves on a plot (this requires a graphics device with an
@@ -369,7 +374,9 @@ ata_tweets %>%
        title = "The 10 most frequent emoji")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-13-1.png)
+![Horizontal bar chart of the 10 most frequent emoji in the corpus,
+coloured by Unicode
+category.](introduction_files/figure-html/unnamed-chunk-13-1.png)
 
 ## Categorising emoji
 
@@ -417,7 +424,9 @@ ata_emoji_category %>%
        title = "Most common emoji category combinations")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-15-1.png)
+![Horizontal bar chart of the most common emoji category combinations
+that appear in more than 20
+tweets.](introduction_files/figure-html/unnamed-chunk-15-1.png)
 
 To count the 10 individual categories rather than their combinations,
 split the `.emoji_category` strings on `|` with
@@ -435,7 +444,9 @@ ata_emoji_category %>%
        title = "Emoji category usage")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-16-1.png)
+![Horizontal bar chart of how often each individual Unicode emoji
+category is used, dominated by Smileys & Emotion followed by People &
+Body.](introduction_files/figure-html/unnamed-chunk-16-1.png)
 
 “Smileys & Emotion” dominates, followed by “People & Body”. Note that a
 tweet spanning several categories is counted once in each, so these
@@ -491,7 +502,9 @@ ata_sentiment %>%
        title = "Emoji sentiment skews positive")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-18-1.png)
+![Histogram of the mean emoji sentiment per tweet, which is concentrated
+on the positive side of the
+scale.](introduction_files/figure-html/unnamed-chunk-18-1.png)
 
 As is typical of social-media text, emoji sentiment leans strongly
 positive.
@@ -518,7 +531,9 @@ ata_tweets %>%
        title = "Average emoji sentiment by category")
 ```
 
-![](introduction_files/figure-html/unnamed-chunk-19-1.png)
+![Horizontal bar chart of the average emoji sentiment within each
+Unicode
+category.](introduction_files/figure-html/unnamed-chunk-19-1.png)
 
 ### The sentiment lexicon
 
