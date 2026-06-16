@@ -2,41 +2,42 @@
 % Please edit documentation in R/top-n-emojis.R
 \name{top_n_emojis}
 \alias{top_n_emojis}
-\title{Getting n most popular Emojis}
+\title{The most frequent emoji in a text column}
 \usage{
-top_n_emojis(tweet_tbl, tweet_text, n = 20, duplicated_unicode = "no")
+top_n_emojis(
+  data,
+  text,
+  n = 20,
+  duplicated = FALSE,
+  duplicated_unicode = lifecycle::deprecated()
+)
 }
 \arguments{
-\item{tweet_tbl}{A dataframe/tibble containing tweets/text.}
+\item{data}{A data frame or tibble containing a text column.}
 
-\item{tweet_text}{The tweet/text column.}
+\item{text}{The text column to scan, supplied unquoted.}
 
-\item{n}{Top \code{n} Emojis, default is 20.}
+\item{n}{Number of emoji to return. Default \code{20}.}
 
-\item{duplicated_unicode}{If no repetitious Unicode, \code{no}. Otherwise,
-\code{yes}. Default is \code{no}.}
+\item{duplicated}{If \code{TRUE}, emoji with several names occupy several rows.
+Default \code{FALSE}.}
+
+\item{duplicated_unicode}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{duplicated}
+instead.}
 }
 \value{
-A tibble with top \code{n} Emojis
+A tibble with columns \code{emoji_name}, \code{unicode}, \code{emoji_category} and
+\code{n}.
 }
 \description{
-When working with Tweets, counting how many times each Emoji appears in the
-entire Tweet corpus is useful. This is when \code{top_n_emojis} comes into
-play, and it is handy to see how Emojis are distributed across the corpus.
-If a Tweet has 10 Emojis, \code{top_n_emojis} will count it 10 times and
-assign each of the 10 Emojis on its respective Emoji category. What is
-interesting to note is Unicodes returned by \code{top_n_emojis} could have
-duplicates, meaning some Unicodes share various Emoji names. By default, this
-does not happen, but users can choose \code{duplicated_unicode = 'yes'} to
-obtain duplicated Unicodes.
+\code{top_n_emojis()} returns the \code{n} most frequent emoji. By default each emoji
+(unicode) appears on a single row; set \code{duplicated = TRUE} to list every name
+an emoji is known by, so glyphs that share several names occupy several rows.
 }
 \examples{
-library(dplyr)
-data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-                      "R is my language! \U0001f601\U0001f606\U0001f605",
-                      "This Tweet does not have Emoji!",
-                      "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-                      "Emoji does not appear in all Tweets",
-                      "A flag \U0001f600\U0001f3c1")) \%>\%
-         top_n_emojis(tweets, n = 2)
+df <- data.frame(text = c("\U0001f600\U0001f600\U0001f3c1", "\U0001f621"))
+top_n_emojis(df, text, n = 2)
+}
+\seealso{
+\code{\link[=emoji_frequency]{emoji_frequency()}} for the full distribution.
 }

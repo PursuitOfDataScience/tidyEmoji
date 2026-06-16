@@ -1,67 +1,79 @@
-#' Getting n most popular Emojis
+#' Frequency of every emoji in a text column
 #'
-#' When working with Tweets, counting how many times each Emoji appears in the
-#' entire Tweet corpus is useful. This is when \code{top_n_emojis} comes into
-#' play, and it is handy to see how Emojis are distributed across the corpus.
-#' If a Tweet has 10 Emojis, \code{top_n_emojis} will count it 10 times and
-#' assign each of the 10 Emojis on its respective Emoji category. What is
-#' interesting to note is Unicodes returned by \code{top_n_emojis} could have
-#' duplicates, meaning some Unicodes share various Emoji names. By default, this
-#' does not happen, but users can choose \code{duplicated_unicode = 'yes'} to
-#' obtain duplicated Unicodes.
+#' `emoji_frequency()` counts how often each emoji appears across the whole text
+#' column (an entry containing the same emoji twice contributes 2) and returns a
+#' tibble sorted by descending count, with each emoji's name, shortcode and
+#' category.
 #'
 #' @inheritParams emoji_summary
-#' @param n Top \code{n} Emojis, default is 20.
-#' @param duplicated_unicode If no repetitious Unicode, \code{no}. Otherwise,
-#' \code{yes}. Default is \code{no}.
-#' @return A tibble with top \code{n} Emojis
-#' @import tibble
-#' @import purrr
-#' @import dplyr
-#' @export
+#' @return A tibble with columns `emoji`, `name`, `shortcode`, `group` and `n`.
+#' @seealso [top_n_emojis()] for just the most frequent emoji.
 #' @examples
-#' library(dplyr)
-#' data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-#'                       "R is my language! \U0001f601\U0001f606\U0001f605",
-#'                       "This Tweet does not have Emoji!",
-#'                       "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-#'                       "Emoji does not appear in all Tweets",
-#'                       "A flag \U0001f600\U0001f3c1")) %>%
-#'          top_n_emojis(tweets, n = 2)
-
-
-top_n_emojis <- function(tweet_tbl, tweet_text, n = 20, duplicated_unicode = "no"){
-
-  emoji_tbl <- emoji_tweets(tweet_tbl, {{ tweet_text }})
-
-  emoji_count_list <- purrr::map(emoji_unicode_crosswalk$unicode,
-                                 .f = count_each_emoji,
-                                 emoji_tbl,
-                                 {{ tweet_text }})
-
-  tbl <- tibble::tibble(unicode = emoji_unicode_crosswalk$unicode,
-                        emoji_count = unlist(emoji_count_list)) %>%
-    dplyr::inner_join(emoji_unicode_crosswalk, by = "unicode") %>%
-    dplyr::distinct() %>%
-    dplyr::count(emoji_name, unicode, emoji_category, wt = emoji_count, sort = T)
-
-  if(duplicated_unicode == "no"){
-    tbl %>%
-      distinct(unicode, .keep_all = T) %>%
-      head(n)
+#' df <- data.frame(text = c("\U0001f600\U0001f600", "\U0001f621"))
+#' emoji_frequency(df, text)
+#' @export
+emoji_frequency <- function(data, text) {
+  glyphs <- unlist(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+                   use.names = FALSE)
+  if (!length(glyphs)) {
+    return(tibble::tibble(emoji = character(), name = character(),
+                          shortcode = character(), group = character(),
+                          n = integer()))
   }
-  else if(duplicated_unicode == "yes"){
-    tbl %>%
-      head(n)
-  }
-
-
+  counts <- tibble::tibble(emoji = glyphs) %>%
+    dplyr::count(emoji, name = "n", sort = TRUE)
+  ref <- emoji_reference()
+  idx <- match(counts$emoji, ref$emoji)
+  counts$name      <- ref$name[idx]
+  counts$shortcode <- ref$shortcode[idx]
+  counts$group     <- ref$group[idx]
+  counts[c("emoji", "name", "shortcode", "group", "n")]
 }
 
 
-count_each_emoji <- function(unicode, df, tweet_text){
-  return(df %>%
-           dplyr::pull({{ tweet_text }}) %>%
-           stringr::str_count(., unicode) %>%
-           sum())
+#' The most frequent emoji in a text column
+#'
+#' `top_n_emojis()` returns the `n` most frequent emoji. By default each emoji
+#' (unicode) appears on a single row; set `duplicated = TRUE` to list every name
+#' an emoji is known by, so glyphs that share several names occupy several rows.
+#'
+#' @inheritParams emoji_summary
+#' @param n Number of emoji to return. Default `20`.
+#' @param duplicated If `TRUE`, emoji with several names occupy several rows.
+#'   Default `FALSE`.
+#' @param duplicated_unicode `r lifecycle::badge("deprecated")` Use `duplicated`
+#'   instead.
+#' @return A tibble with columns `emoji_name`, `unicode`, `emoji_category` and
+#'   `n`.
+#' @seealso [emoji_frequency()] for the full distribution.
+#' @examples
+#' df <- data.frame(text = c("\U0001f600\U0001f600\U0001f3c1", "\U0001f621"))
+#' top_n_emojis(df, text, n = 2)
+#' @export
+top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
+                         duplicated_unicode = lifecycle::deprecated()) {
+  if (lifecycle::is_present(duplicated_unicode)) {
+    lifecycle::deprecate_warn(
+      "0.2.0", "top_n_emojis(duplicated_unicode)", "top_n_emojis(duplicated)"
+    )
+    duplicated <- isTRUE(duplicated_unicode) ||
+      identical(duplicated_unicode, "yes")
+  }
+
+  freq <- emoji_frequency(data, {{ text }})
+
+  if (isTRUE(duplicated)) {
+    out <- freq %>%
+      dplyr::select(unicode = emoji, n) %>%
+      dplyr::inner_join(emoji_unicode_crosswalk, by = "unicode",
+                        relationship = "many-to-many") %>%
+      dplyr::arrange(dplyr::desc(n)) %>%
+      dplyr::select(emoji_name, unicode, emoji_category, n)
+  } else {
+    out <- freq %>%
+      dplyr::transmute(emoji_name = shortcode, unicode = emoji,
+                       emoji_category = group, n = n)
+  }
+
+  utils::head(out, n)
 }

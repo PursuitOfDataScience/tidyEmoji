@@ -2,32 +2,25 @@
 % Please edit documentation in R/emoji-extraction.R
 \name{emoji_extract_unnest}
 \alias{emoji_extract_unnest}
-\title{Emoji extraction unnested summary}
+\title{Emoji counts per row, in long (tidy) form}
 \usage{
-emoji_extract_unnest(tweet_tbl, tweet_text)
+emoji_extract_unnest(data, text)
 }
 \arguments{
-\item{tweet_tbl}{A dataframe/tibble containing tweets/text.}
+\item{data}{A data frame or tibble containing a text column.}
 
-\item{tweet_text}{The tweet/text column.}
+\item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A summary tibble with the original row number and Emoji count.
+A tibble with columns \code{row_number}, \code{.emoji_unicode} and
+\code{.emoji_count}.
 }
 \description{
-If users would like to know how many Emojis and what kinds of Emojis each
-Tweet has, \code{emoji_extract} is a useful function to output a global
-summary with the row number of each Tweet containing Emoji and the Unicodes
-associated with each Tweet.
+\code{emoji_extract_unnest()} returns one row per (row, emoji) pair with a count,
+dropping rows that contain no emoji. \code{row_number} refers to the position of
+the entry in \code{data}.
 }
 \examples{
-library(dplyr)
-data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-                      "R is my language! \U0001f601\U0001f606\U0001f605",
-                      "This Tweet does not have Emoji!",
-                      "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-                      "Emoji does not appear in all Tweets",
-                      "A flag \U0001f600\U0001f3c1")) \%>\%
-         emoji_extract_unnest(tweets)
-
+df <- data.frame(text = c("hi \U0001f600\U0001f600", "none", "\U0001f44b"))
+emoji_extract_unnest(df, text)
 }

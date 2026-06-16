@@ -1,38 +1,45 @@
 Package: tidyEmoji
 Type: Package
-Title: Discovers Emoji from Text
-Version: 0.1.1
-Authors@R: 
+Title: Discover, Count and Score Emoji in Text
+Version: 0.2.0
+Authors@R:
     c(person(given = "Youzhi",
              family = "Yu",
              role = c("aut", "cre"),
              email = "yuyouzhi666@icloud.com"))
-Description: Unicodes are not friendly to work with, and not all Unicodes are
-    Emoji per se, making obtaining Emoji statistics a difficult task. This
-    tool can help your experience of working with Emoji as smooth as possible,
-    as it has the 'tidyverse' style. 
+Description: A tidy toolkit for working with the emoji in any text column, such
+    as social-media posts, product reviews, chat logs or survey responses.
+    Unicode is awkward to handle and not every code point is an emoji, which
+    makes emoji statistics fiddly to obtain. 'tidyEmoji' extracts, counts,
+    categorises and sentiment-scores emoji with grapheme-aware detection (so
+    skin-tone and multi-person sequences stay intact), returning tidy data
+    frames that slot straight into a 'tidyverse' workflow. The bundled emoji
+    sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al.
+    (2015) <doi:10.1371/journal.pone.0144296>, released under CC BY-SA 4.0.
 License: GPL (>= 3)
 URL: https://pursuitofdatascience.github.io/tidyEmoji/
 BugReports: https://github.com/PursuitOfDataScience/tidyEmoji/issues
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
-Depends: 
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends:
     R (>= 3.5.0)
-Imports: 
-    dplyr,
+Imports:
+    dplyr (>= 1.1.0),
     emoji,
-    purrr,
-    stringr,
+    lifecycle,
+    stats,
     tibble,
     tidyr,
     utils
-Suggests: 
+Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
     ggplot2,
     readr,
-    forcats
+    forcats,
+    stringr
 Config/testthat/edition: 3
 VignetteBuilder: knitr

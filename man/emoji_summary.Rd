@@ -2,35 +2,30 @@
 % Please edit documentation in R/emoji-summary.R
 \name{emoji_summary}
 \alias{emoji_summary}
-\title{Emoji summary tibble}
+\title{Summarise emoji presence in a text column}
 \usage{
-emoji_summary(tweet_tbl, tweet_text)
+emoji_summary(data, text)
 }
 \arguments{
-\item{tweet_tbl}{A dataframe/tibble containing tweets/text.}
+\item{data}{A data frame or tibble containing a text column.}
 
-\item{tweet_text}{The tweet/text column.}
+\item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A summary tibble including # of Tweets in total and # of Tweets that
-have at least one Emoji.
+A one-row tibble with columns \code{emoji_tweets} (entries containing at
+least one emoji) and \code{total_tweets} (all entries).
 }
 \description{
-When having a Twitter dataframe/tibble at hand, it should be nice to know
-how many Tweets contain Emojis. This is the right time to use this function.
-What is worth noting is that it does not matter whether a Tweet has one Emoji
-or ten Emojis, the function only counts it once and returns a tibble that
-summarizes the number of Tweets containing at least one Emoji and the total
-number of Tweets presented in the dataframe/tibble.
+\code{emoji_summary()} reports how many entries in a text column contain at least
+one emoji, alongside the total number of entries. An entry is counted once
+regardless of how many emoji it holds.
 }
 \examples{
-library(dplyr)
-data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-                      "R is my language! \U0001f601\U0001f606\U0001f605",
-                      "This Tweet does not have Emoji!",
-                      "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-                      "Emoji does not appear in all Tweets",
-                      "A flag \U0001f600\U0001f3c1")) \%>\%
-         emoji_summary(tweets)
-
+df <- data.frame(text = c("I love R \U0001f600",
+                          "no emoji here",
+                          "flags \U0001f3c1\U0001f600"))
+emoji_summary(df, text)
+}
+\seealso{
+\code{\link[=emoji_filter]{emoji_filter()}} to keep the emoji-bearing rows themselves.
 }

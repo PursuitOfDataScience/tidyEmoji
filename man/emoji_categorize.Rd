@@ -2,32 +2,28 @@
 % Please edit documentation in R/emoji-categorize.R
 \name{emoji_categorize}
 \alias{emoji_categorize}
-\title{Categorize Emoji Tweets/text based on Emoji category}
+\title{Categorise each row by the emoji categories it contains}
 \usage{
-emoji_categorize(tweet_tbl, tweet_text)
+emoji_categorize(data, text)
 }
 \arguments{
-\item{tweet_tbl}{A dataframe/tibble containing tweets/text.}
+\item{data}{A data frame or tibble containing a text column.}
 
-\item{tweet_text}{The tweet/text column.}
+\item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A filtered dataframe with the presence of Emoji only, and with an
-extra column \code{.emoji_category}.
+\code{data}, as a tibble, filtered to the rows containing emoji and with an
+added \code{.emoji_category} column.
 }
 \description{
-Users can use \code{emoji_categorize} to see the all the categories each
-Emoji Tweet has. The function preserves the input data structure, and the
-only change is it adds an extra column with information about Emoji
-category separated by \code{|} if there is more than one category.
+\code{emoji_categorize()} keeps the rows of \code{data} that contain emoji and adds a
+\code{.emoji_category} column listing the distinct Unicode categories present in
+that row (for example "Smileys & Emotion"), separated by \code{|} when a row spans
+more than one category.
 }
 \examples{
-library(dplyr)
-data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-                      "R is my language! \U0001f601\U0001f606\U0001f605",
-                      "This Tweet does not have Emoji!",
-                      "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-                      "Emoji does not appear in all Tweets",
-                      "A flag \U0001f600\U0001f3c1")) \%>\%
-         emoji_categorize(tweets)
+df <- data.frame(text = c("smile \U0001f600",
+                          "flag \U0001f3c1\U0001f600",
+                          "nothing"))
+emoji_categorize(df, text)
 }

@@ -1,55 +1,32 @@
-emoji_category_add <- function(emoji_unicodes, emoji_category, tweet_tbl, tweet_text){
-
-  tweet_tbl %>%
-    dplyr::filter(str_detect({{ tweet_text }}, emoji_unicodes)) %>%
-    dplyr::mutate(.emoji_category = emoji_category)
-
-}
-
-
-
-#' Categorize Emoji Tweets/text based on Emoji category
+#' Categorise each row by the emoji categories it contains
 #'
-#' Users can use \code{emoji_categorize} to see the all the categories each
-#' Emoji Tweet has. The function preserves the input data structure, and the
-#' only change is it adds an extra column with information about Emoji
-#' category separated by \code{|} if there is more than one category.
+#' `emoji_categorize()` keeps the rows of `data` that contain emoji and adds a
+#' `.emoji_category` column listing the distinct Unicode categories present in
+#' that row (for example "Smileys & Emotion"), separated by `|` when a row spans
+#' more than one category.
 #'
 #' @inheritParams emoji_summary
-#' @import purrr
-#' @import tidyr
-#' @import dplyr
-#' @return A filtered dataframe with the presence of Emoji only, and with an
-#' extra column \code{.emoji_category}.
-#' @export
+#' @return `data`, as a tibble, filtered to the rows containing emoji and with an
+#'   added `.emoji_category` column.
 #' @examples
-#' library(dplyr)
-#' data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-#'                       "R is my language! \U0001f601\U0001f606\U0001f605",
-#'                       "This Tweet does not have Emoji!",
-#'                       "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-#'                       "Emoji does not appear in all Tweets",
-#'                       "A flag \U0001f600\U0001f3c1")) %>%
-#'          emoji_categorize(tweets)
+#' df <- data.frame(text = c("smile \U0001f600",
+#'                           "flag \U0001f3c1\U0001f600",
+#'                           "nothing"))
+#' emoji_categorize(df, text)
+#' @export
+emoji_categorize <- function(data, text) {
+  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  ref <- emoji_reference()
+  cat_of <- stats::setNames(ref$group, ref$emoji)
 
+  cats <- vapply(lst, function(g) {
+    if (!length(g)) return(NA_character_)
+    cc <- unique(cat_of[g])
+    cc <- cc[!is.na(cc)]
+    if (!length(cc)) NA_character_ else paste(cc, collapse = "|")
+  }, character(1))
 
-emoji_categorize <- function(tweet_tbl, tweet_text) {
-
-  emoji_long <- purrr::map2_dfr(category_unicode_crosswalk$unicodes,
-                                category_unicode_crosswalk$category,
-                                emoji_category_add,
-                                tweet_tbl,
-                                {{ tweet_text }})
-
-  emoji_category_vector <- unique(emoji_long$.emoji_category)
-
-  emoji_long %>%
-    tidyr::pivot_wider(names_from = .emoji_category,
-                       values_from = .emoji_category) %>%
-    tidyr::unite(".emoji_category", emoji_category_vector, sep = "|", na.rm = T)
-
-
+  out <- tibble::as_tibble(data)
+  out$.emoji_category <- cats
+  out[!is.na(cats), , drop = FALSE]
 }
-
-
-

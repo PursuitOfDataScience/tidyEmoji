@@ -1,20 +1,17 @@
-#' \code{tidyEmoji} package
-#'
-#' A tidy way working with text containing Emoji.
+#' @keywords internal
 #' @aliases tidyEmoji-package
-#' @docType package
-#' @name tidyEmoji
-#' @import utils
-NULL
+#' @importFrom dplyr %>%
+"_PACKAGE"
 
-
-if(getRversion() >= "2.15.1")  utils::globalVariables(c(".",
-                                                        "name",
-                                                        "emoji_name",
-                                                        "unicode",
-                                                        "emoji_category",
-                                                        "emoji_unicode_crosswalk",
-                                                        "category_unicode_crosswalk",
-                                                        ".emoji_category",
-                                                        ".emoji_unicode",
-                                                        ".emoji_unicode"))
+# Quiet R CMD check notes about variables referenced via tidy evaluation and
+# bundled datasets used inside package functions.
+utils::globalVariables(c(
+  ".",
+  "emoji", "name", "shortcode", "group", "subgroup", "version", "n", "unicode",
+  "emoji_name", "emoji_category",
+  "row_number", ".emoji", ".emoji_unicode", ".emoji_count", ".emoji_category",
+  ".emoji_name", ".emoji_sentiment", ".emoji_n",
+  "sentiment_score", "sentiment_label",
+  "emoji_unicode_crosswalk", "category_unicode_crosswalk",
+  "emoji_sentiment_lexicon"
+))

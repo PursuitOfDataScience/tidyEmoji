@@ -17,6 +17,30 @@ home:
   sidebar:
     structure: [links, license, community, citation, authors, dev]
 
+reference:
+- title: Detect & summarise
+  contents:
+  - emoji_summary
+  - emoji_filter
+- title: Count
+  contents:
+  - emoji_frequency
+  - top_n_emojis
+- title: Extract
+  contents:
+  - emoji_extract_nest
+  - emoji_extract_unnest
+  - emoji_tokens
+- title: Categorise & score
+  contents:
+  - emoji_categorize
+  - emoji_sentiment
+- title: Data
+  contents:
+  - emoji_sentiment_lexicon
+  - emoji_unicode_crosswalk
+  - category_unicode_crosswalk
+
 navbar:
   type: default
   left:

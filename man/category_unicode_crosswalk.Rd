@@ -3,25 +3,23 @@
 \docType{data}
 \name{category_unicode_crosswalk}
 \alias{category_unicode_crosswalk}
-\title{Emoji category, Unicode crosswalk}
+\title{Emoji category to unicode crosswalk}
 \format{
-A data frame with 10 rows and 2 columns:
+A data frame with two columns:
 \describe{
-  \item{category}{Emoji category (10 categories only)}
-  \item{unicodes}{The Unicodes string of Emojis belonging to category per
-  se.}
+\item{category}{The Unicode category (10 categories).}
+\item{unicodes}{The emoji glyphs in the category, separated by \code{|}.}
 }
 }
 \source{
-The raw data set \code{emojis} comes from the
-\code{emoji} package, and it is processed by the author for the specific
-needs of \code{tidyEmoji}.
+Derived from the \code{emojis} table of the \pkg{emoji} package; rebuilt by
+\code{data-raw/crosswalks.R}.
 }
 \usage{
 category_unicode_crosswalk
 }
 \description{
-A data set containing each Emoji category (such as Activities), its
-respective Unicodes string separated by \code{|}.
+A table with one row per Unicode category, listing every emoji glyph in that
+category as a single \code{|}-separated string.
 }
 \keyword{datasets}

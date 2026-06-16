@@ -2,30 +2,29 @@
 % Please edit documentation in R/emoji-extraction.R
 \name{emoji_extract_nest}
 \alias{emoji_extract_nest}
-\title{Emoji extraction nested summary}
+\title{Add a list-column of the emoji found in each row}
 \usage{
-emoji_extract_nest(tweet_tbl, tweet_text)
+emoji_extract_nest(data, text)
 }
 \arguments{
-\item{tweet_tbl}{A dataframe/tibble containing tweets/text.}
+\item{data}{A data frame or tibble containing a text column.}
 
-\item{tweet_text}{The tweet/text column.}
+\item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-The original dataframe/tibble with an extra column collumn called
-\code{.emoji_unicode}.
+\code{data} with an added list-column \code{.emoji_unicode}.
 }
 \description{
-This function adds an extra list column called \code{.emoji_unicode} to the
-original data, with all Emojis included.
+\code{emoji_extract_nest()} returns \code{data} unchanged except for an added
+list-column, \code{.emoji_unicode}, holding the emoji found in each row. Detection
+is grapheme-aware, so skin-tone modifiers and ZWJ sequences (for example
+family emoji) are kept intact as a single emoji.
 }
 \examples{
-library(dplyr)
-data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
-                      "R is my language! \U0001f601\U0001f606\U0001f605",
-                      "This Tweet does not have Emoji!",
-                      "Wearing a mask\U0001f637\U0001f637\U0001f637.",
-                      "Emoji does not appear in all Tweets",
-                      "A flag \U0001f600\U0001f3c1")) \%>\%
-         emoji_extract_nest(tweets)
+df <- data.frame(text = c("hi \U0001f600\U0001f603", "none"))
+emoji_extract_nest(df, text)
+}
+\seealso{
+\code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}} for a long, counted form and
+\code{\link[=emoji_tokens]{emoji_tokens()}} for one row per emoji with metadata.
 }

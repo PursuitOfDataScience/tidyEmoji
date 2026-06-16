@@ -3,27 +3,25 @@
 \docType{data}
 \name{emoji_unicode_crosswalk}
 \alias{emoji_unicode_crosswalk}
-\title{Emoji name, Unicode, and Emoji category crosswalk}
+\title{Emoji name, unicode and category crosswalk}
 \format{
-A data frame with 4536 rows and 3 columns:
+A data frame with three columns:
 \describe{
-  \item{emoji_name}{The name of Emoji per se.}
-  \item{unicode}{The Unicode of Emoji.}
-  \item{emoji_category}{The category Emoji falls into.}
+\item{emoji_name}{The emoji name / shortcode (e.g. "grinning").}
+\item{unicode}{The emoji glyph.}
+\item{emoji_category}{The Unicode category the emoji belongs to.}
 }
 }
 \source{
-The raw data sets (\code{emoji_name} and \code{emojis}) come from the
-\code{emoji} package, and they are processed by the author for the specific
-needs of \code{tidyEmoji}.
+Derived from the \code{emojis} table of the \pkg{emoji} package; rebuilt by
+\code{data-raw/crosswalks.R}.
 }
 \usage{
 emoji_unicode_crosswalk
 }
 \description{
-A data set containing each Emoji name (such as grinning, smile), its
-respective Unicode and category. One thing to note here is there are
-duplicated Unicodes in the data set, because one Unicode could have multiple
-Emoji names.
+A table with one row per emoji \emph{name}: each emoji glyph appears once for every
+GitHub-style name it is known by, so a single unicode can occur on several
+rows (for example the grinning face is both "grinning" and "grinning_face").
 }
 \keyword{datasets}
