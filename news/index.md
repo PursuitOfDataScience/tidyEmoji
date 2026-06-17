@@ -2,6 +2,8 @@
 
 ## tidyEmoji 0.2.0
 
+CRAN release: 2026-06-17
+
 tidyEmoji is now positioned as a general toolkit for emoji in **any**
 text column (social-media posts, reviews, chat logs, survey responses,
 …), not just tweets.

@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.2.0/DESCRIPTION)
 
 Yu Y (2026). *tidyEmoji: Discover, Count and Score Emoji in Text*. R
 package version 0.2.0,
