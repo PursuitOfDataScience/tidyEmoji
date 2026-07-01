@@ -7,3 +7,5 @@ CRAN-SUBMISSION
 docs
 README.html
 ..Rcheck/
+tidyEmoji.Rcheck/
+tidyEmoji_*.tar.gz
