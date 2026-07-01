@@ -41,6 +41,7 @@ Imports:
     tidyr,
     utils
 Suggests:
+    rlang,
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
