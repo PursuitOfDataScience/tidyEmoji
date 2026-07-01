@@ -10,7 +10,7 @@ receive `NA`.
 ## Usage
 
 ``` r
-emoji_sentiment(data, text)
+emoji_sentiment(data, text, lexicon = "novak2015")
 ```
 
 ## Arguments
@@ -23,11 +23,22 @@ emoji_sentiment(data, text)
 
   The text column to scan, supplied unquoted.
 
+- lexicon:
+
+  Lexicon to use. The default, `"novak2015"`, uses the bundled
+  [emoji_sentiment_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md).
+  A registered lexicon (see
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md))
+  or a data frame can also be supplied; see
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  for the generic scorer.
+
 ## Value
 
 `data`, as a tibble, with added columns `.emoji_n` (the number of emoji
-in the row) and `.emoji_sentiment` (the mean sentiment of the emoji that
-appear in the lexicon).
+in the row), `.emoji_n_scored` (the number of emoji that actually appear
+in the lexicon), and `.emoji_sentiment` (the mean sentiment of the
+scored emoji).
 
 ## References
 
@@ -38,17 +49,21 @@ Emojis. PLoS ONE 10(12): e0144296.
 ## See also
 
 [emoji_sentiment_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
-for the underlying scores.
+for the underlying scores;
+[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+for scoring against any lexicon;
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+for discrete emotions.
 
 ## Examples
 
 ``` r
 df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))
 emoji_sentiment(df, text)
-#> # A tibble: 3 × 3
-#>   text       .emoji_n .emoji_sentiment
-#>   <chr>         <int>            <dbl>
-#> 1 love it 😍        1            0.678
-#> 2 awful 😡          1           -0.173
-#> 3 meh               0           NA    
+#> # A tibble: 3 × 4
+#>   text       .emoji_n .emoji_n_scored .emoji_sentiment
+#>   <chr>         <int>           <int>            <dbl>
+#> 1 love it 😍        1               1            0.678
+#> 2 awful 😡          1               1           -0.173
+#> 3 meh               0              NA           NA    
 ```

@@ -22,6 +22,9 @@ data frames that drop straight into a `dplyr`/`ggplot2` workflow:
 | Count | [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md), [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md) |
 | Categorise | [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md) |
 | Score sentiment | [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md) |
+| Score emotions | [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md), [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md) |
+| Translate | [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md), [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md), `as_emoji*()` |
+| Search | [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md) |
 
 Two design choices are worth highlighting:
 
@@ -43,29 +46,29 @@ library(ggplot2)
 
 ## Example data
 
-Throughout this vignette we use a sample of 10,000 tweets collected in
-Atlanta, Georgia. Tweets are a convenient, emoji-rich example, but
-nothing below is specific to Twitter — any data frame with a text column
-will do.
+Throughout this vignette we use a sample of text collected in Atlanta,
+Georgia. The data happens to come from a social-media corpus, but
+nothing below is specific to any platform — any data frame with a text
+column will do.
 
 ``` r
 
-ata_tweets <- readr::read_csv("ata_tweets.rda", show_col_types = FALSE)
+ata_tweets <- readr::read_csv("ata_tweets.csv", show_col_types = FALSE)
 ata_tweets
-#> # A tibble: 10,000 × 1
+#> # A tibble: 2,000 × 1
 #>    full_text                                                                    
 #>    <chr>                                                                        
-#>  1 "im not arguing  im not fighting nobody w a gun. people are dying every day …
-#>  2 "Time left until rump leaves office\nZoom\n56days\n1349hours\n80940minutes\n…
-#>  3 "It’s been 15 years since my father’s imprisonment  I swore it would get eas…
-#>  4 "Friendsgiving with my roomies🥰"                                            
-#>  5 "Going to be one of those “countdown app” people just so I have motivation t…
-#>  6 "When I can turn my philosophical thoughts into poetry. The world gone be on…
-#>  7 "These females really be trying it but fail to realize my girl tells me ever…
-#>  8 "why my sister called me toxic lmao"                                         
-#>  9 "What a great year to be not taking care of no kids."                        
-#> 10 "definitely don’t see any children in my near future, not with me trying to …
-#> # ℹ 9,990 more rows
+#>  1 "Was Justin Bieber ever at any BLM March/protest this past summer? Or ever?" 
+#>  2 "Whole Family gone and I’m stuck here in Brunswick 😭"                       
+#>  3 "38 years old and I still get distracted while cleaning my room. \n\nJust in…
+#>  4 "This time last year I was blasting fever nonstop by Wizkid 😭"              
+#>  5 "Kanye is a just a black man with a lot of confidence and y’all tear him dow…
+#>  6 "Feel like being my inner self today"                                        
+#>  7 "Peep toe boots irk my sole."                                                
+#>  8 "Nah the biggest naruto fans be trying call one piece long like... nigga?"   
+#>  9 "if my shoes don’t arrive by next Friday imma be pissed"                     
+#> 10 "Phone dry asf 🙄"                                                           
+#> # ℹ 1,990 more rows
 ```
 
 The actual text lives in the `full_text` column, which is the column we
@@ -88,12 +91,12 @@ summary_tbl <- ata_tweets %>%
 
 summary_tbl
 #> # A tibble: 1 × 2
-#>   emoji_tweets total_tweets
-#>          <int>        <int>
-#> 1         2818        10000
+#>   n_with_emoji n_total
+#>          <int>   <int>
+#> 1          560    2000
 ```
 
-Here, 2,818 of the 10,000 tweets (28.2%) contain at least one emoji.
+Here, 560 of the 2,000 entries (28%) contain at least one emoji.
 
 ### `emoji_filter()`
 
@@ -109,20 +112,20 @@ is a synonym retained for backward compatibility.)
 
 ata_tweets %>%
   emoji_filter(full_text)
-#> # A tibble: 2,818 × 1
+#> # A tibble: 560 × 1
 #>    full_text                                                                    
 #>    <chr>                                                                        
-#>  1 It’s been 15 years since my father’s imprisonment  I swore it would get easi…
-#>  2 Friendsgiving with my roomies🥰                                              
-#>  3 When I can turn my philosophical thoughts into poetry. The world gone be on …
-#>  4 I always get the last laugh 🥰 so I let people do what they want             
-#>  5 One thing about me, imma keep that same energy. 🙃                           
-#>  6 I’m really dope. 😎                                                          
-#>  7 I miss my bb🥺                                                               
-#>  8 Got half of bae and raidens Christmas shopping done 😩🙌🏽🙌🏽                   
-#>  9 Y’all be letting anybody in the studio and ion like dat🥴                    
-#> 10 Sometimes I need to work on myself before I can please anyone or get ready f…
-#> # ℹ 2,808 more rows
+#>  1 Whole Family gone and I’m stuck here in Brunswick 😭                         
+#>  2 This time last year I was blasting fever nonstop by Wizkid 😭                
+#>  3 Phone dry asf 🙄                                                             
+#>  4 When I gave my life to Christ, I was able to see people as imperfect, but st…
+#>  5 Everyone needs self care days❤️                                               
+#>  6 R u sears rn 🤦🏽‍♀️                                                              
+#>  7 Gucci wit some dope runnas head huncho top gunna u a sto runna😭             
+#>  8 i’m thinking insomnia cause they got this caramel apple pie cookie. 😋       
+#>  9 i deadass listen to the music everyday lmao🥲                                
+#> 10 Im ona block where ya barley can be at  if you try get shot down 😈          
+#> # ℹ 550 more rows
 ```
 
 ## Extracting emoji
@@ -143,27 +146,27 @@ step.
 ata_tweets %>%
   emoji_extract_nest(full_text) %>%
   select(full_text, .emoji_unicode)
-#> # A tibble: 10,000 × 2
+#> # A tibble: 2,000 × 2
 #>    full_text                                                      .emoji_unicode
 #>    <chr>                                                          <list>        
-#>  1 "im not arguing  im not fighting nobody w a gun. people are d… <chr [0]>     
-#>  2 "Time left until rump leaves office\nZoom\n56days\n1349hours\… <chr [0]>     
-#>  3 "It’s been 15 years since my father’s imprisonment  I swore i… <chr [1]>     
-#>  4 "Friendsgiving with my roomies🥰"                              <chr [1]>     
-#>  5 "Going to be one of those “countdown app” people just so I ha… <chr [0]>     
-#>  6 "When I can turn my philosophical thoughts into poetry. The w… <chr [1]>     
-#>  7 "These females really be trying it but fail to realize my gir… <chr [0]>     
-#>  8 "why my sister called me toxic lmao"                           <chr [0]>     
-#>  9 "What a great year to be not taking care of no kids."          <chr [0]>     
-#> 10 "definitely don’t see any children in my near future, not wit… <chr [0]>     
-#> # ℹ 9,990 more rows
+#>  1 "Was Justin Bieber ever at any BLM March/protest this past su… <chr [0]>     
+#>  2 "Whole Family gone and I’m stuck here in Brunswick 😭"         <chr [1]>     
+#>  3 "38 years old and I still get distracted while cleaning my ro… <chr [0]>     
+#>  4 "This time last year I was blasting fever nonstop by Wizkid 😭… <chr [1]>     
+#>  5 "Kanye is a just a black man with a lot of confidence and y’a… <chr [0]>     
+#>  6 "Feel like being my inner self today"                          <chr [0]>     
+#>  7 "Peep toe boots irk my sole."                                  <chr [0]>     
+#>  8 "Nah the biggest naruto fans be trying call one piece long li… <chr [0]>     
+#>  9 "if my shoes don’t arrive by next Friday imma be pissed"       <chr [0]>     
+#> 10 "Phone dry asf 🙄"                                             <chr [1]>     
+#> # ℹ 1,990 more rows
 ```
 
 ### `emoji_extract_unnest()`
 
 [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)
 returns a long, tidy table with one row per (entry, emoji) pair:
-`row_number` records the position of the entry in the data,
+`.row_number` records the position of the entry in the data,
 `.emoji_unicode` is the emoji, and `.emoji_count` is how many times that
 emoji occurs in that entry. Entries without emoji are dropped.
 
@@ -173,45 +176,45 @@ emoji_per_tweet <- ata_tweets %>%
   emoji_extract_unnest(full_text)
 
 emoji_per_tweet
-#> # A tibble: 3,519 × 3
-#>    row_number .emoji_unicode .emoji_count
-#>         <int> <chr>                 <int>
-#>  1          3 😩                        1
-#>  2          4 🥰                        1
-#>  3          6 👌🏾                        1
-#>  4         11 🥰                        1
-#>  5         12 🙃                        1
-#>  6         15 😎                        1
-#>  7         17 🥺                        1
-#>  8         33 😩                        1
-#>  9         33 🙌🏽                        2
-#> 10         34 🥴                        1
-#> # ℹ 3,509 more rows
+#> # A tibble: 697 × 3
+#>    .row_number .emoji_unicode .emoji_count
+#>          <int> <chr>                 <int>
+#>  1           2 😭                        1
+#>  2           4 😭                        1
+#>  3          10 🙄                        1
+#>  4          15 😂                        1
+#>  5          17 ❤️                         1
+#>  6          30 🤦🏽‍♀️                        1
+#>  7          31 😭                        1
+#>  8          33 😋                        1
+#>  9          42 🥲                        1
+#> 10          45 😈                        1
+#> # ℹ 687 more rows
 ```
 
-We can use this to plot how many emoji each emoji-bearing tweet
+We can use this to plot how many emoji each emoji-bearing entry
 contains:
 
 ``` r
 
 emoji_per_tweet %>%
-  group_by(row_number) %>%
+  group_by(.row_number) %>%
   summarise(n_emoji = sum(.emoji_count)) %>%
   ggplot(aes(n_emoji)) +
   geom_bar() +
   scale_x_continuous(breaks = seq(1, 15)) +
-  labs(x = "Number of emoji in the tweet",
-       y = "Number of tweets",
-       title = "Most emoji tweets contain a single emoji")
+  labs(x = "Number of emoji in the entry",
+       y = "Number of entries",
+       title = "Most emoji-bearing entries contain a single emoji")
 ```
 
-![Bar chart of the number of emoji per emoji-bearing tweet. The vast
-majority of tweets contain a single emoji, with a long, thin tail of
+![Bar chart of the number of emoji per emoji-bearing entry. The vast
+majority of entries contain a single emoji, with a long, thin tail of
 more emoji-heavy
-tweets.](introduction_files/figure-html/unnamed-chunk-7-1.png)
+entries.](introduction_files/figure-html/unnamed-chunk-7-1.png)
 
-The overwhelming majority of emoji tweets carry just one emoji, with a
-long, thin tail of more emoji-heavy tweets.
+The overwhelming majority of emoji-bearing entries carry just one emoji,
+with a long, thin tail of more emoji-heavy entries.
 
 ### `emoji_tokens()`
 
@@ -227,20 +230,20 @@ plotting.
 
 ata_tweets %>%
   emoji_tokens(full_text)
-#> # A tibble: 4,611 × 5
+#> # A tibble: 901 × 5
 #>    full_text                 .emoji .emoji_name .emoji_category .emoji_sentiment
 #>    <chr>                     <chr>  <chr>       <chr>                      <dbl>
-#>  1 It’s been 15 years since… 😩     weary face  Smileys & Emot…           -0.368
-#>  2 Friendsgiving with my ro… 🥰     smiling fa… Smileys & Emot…           NA    
-#>  3 When I can turn my philo… 👌🏾     OK hand: m… People & Body             NA    
-#>  4 I always get the last la… 🥰     smiling fa… Smileys & Emot…           NA    
-#>  5 One thing about me, imma… 🙃     upside-dow… Smileys & Emot…           NA    
-#>  6 I’m really dope. 😎       😎     smiling fa… Smileys & Emot…            0.493
-#>  7 I miss my bb🥺            🥺     pleading f… Smileys & Emot…           NA    
-#>  8 Got half of bae and raid… 😩     weary face  Smileys & Emot…           -0.368
-#>  9 Got half of bae and raid… 🙌🏽     raising ha… People & Body             NA    
-#> 10 Got half of bae and raid… 🙌🏽     raising ha… People & Body             NA    
-#> # ℹ 4,601 more rows
+#>  1 Whole Family gone and I’… 😭     loudly cry… Smileys & Emot…          -0.0934
+#>  2 This time last year I wa… 😭     loudly cry… Smileys & Emot…          -0.0934
+#>  3 Phone dry asf 🙄          🙄     face with … Smileys & Emot…          NA     
+#>  4 When I gave my life to C… 😂     face with … Smileys & Emot…           0.221 
+#>  5 Everyone needs self care… ❤️      red heart   Smileys & Emot…           0.746 
+#>  6 R u sears rn 🤦🏽‍♀️           🤦🏽‍♀️     woman face… People & Body            NA     
+#>  7 Gucci wit some dope runn… 😭     loudly cry… Smileys & Emot…          -0.0934
+#>  8 i’m thinking insomnia ca… 😋     face savor… Smileys & Emot…           0.634 
+#>  9 i deadass listen to the … 🥲     smiling fa… Smileys & Emot…          NA     
+#> 10 Im ona block where ya ba… 😈     smiling fa… Smileys & Emot…           0.268 
+#> # ℹ 891 more rows
 ```
 
 ### A note on grapheme-aware detection
@@ -263,10 +266,10 @@ demo <- data.frame(
 demo %>%
   emoji_extract_unnest(text)
 #> # A tibble: 2 × 3
-#>   row_number .emoji_unicode .emoji_count
-#>        <int> <chr>                 <int>
-#> 1          1 👨‍👩‍👧‍👦                        1
-#> 2          2 👍🏽                        1
+#>   .row_number .emoji_unicode .emoji_count
+#>         <int> <chr>                 <int>
+#> 1           1 👨‍👩‍👧‍👦                        1
+#> 2           2 👍🏽                        1
 ```
 
 ## Counting emoji across the corpus
@@ -283,20 +286,20 @@ shortcode and category.
 
 ata_tweets %>%
   emoji_frequency(full_text)
-#> # A tibble: 423 × 5
+#> # A tibble: 188 × 5
 #>    emoji name                          shortcode                     group     n
 #>    <chr> <chr>                         <chr>                         <chr> <int>
-#>  1 😂    face with tears of joy        joy                           Smil…   766
-#>  2 😭    loudly crying face            sob                           Smil…   536
-#>  3 🤣    rolling on the floor laughing rofl                          Smil…   182
-#>  4 😩    weary face                    weary                         Smil…   170
-#>  5 🥺    pleading face                 pleading_face                 Smil…   148
-#>  6 🥴    woozy face                    woozy_face                    Smil…   136
-#>  7 🥰    smiling face with hearts      smiling_face_with_three_hear… Smil…   106
-#>  8 🙄    face with rolling eyes        roll_eyes                     Smil…    83
-#>  9 💯    hundred points                100                           Smil…    78
-#> 10 ❤️     red heart                     heart                         Smil…    66
-#> # ℹ 413 more rows
+#>  1 😂    face with tears of joy        joy                           Smil…   160
+#>  2 😭    loudly crying face            sob                           Smil…    98
+#>  3 😩    weary face                    weary                         Smil…    34
+#>  4 🤣    rolling on the floor laughing rofl                          Smil…    34
+#>  5 🥺    pleading face                 pleading_face                 Smil…    29
+#>  6 🙄    face with rolling eyes        roll_eyes                     Smil…    22
+#>  7 🥴    woozy face                    woozy_face                    Smil…    21
+#>  8 💯    hundred points                100                           Smil…    20
+#>  9 😍    smiling face with heart-eyes  heart_eyes                    Smil…    20
+#> 10 🥰    smiling face with hearts      smiling_face_with_three_hear… Smil…    20
+#> # ℹ 178 more rows
 ```
 
 ### `top_n_emojis()`
@@ -314,28 +317,28 @@ top_20_emojis <- ata_tweets %>%
 
 top_20_emojis
 #> # A tibble: 20 × 4
-#>    emoji_name                     unicode emoji_category        n
-#>    <chr>                          <chr>   <chr>             <int>
-#>  1 joy                            😂      Smileys & Emotion   766
-#>  2 sob                            😭      Smileys & Emotion   536
-#>  3 rofl                           🤣      Smileys & Emotion   182
-#>  4 weary                          😩      Smileys & Emotion   170
-#>  5 pleading_face                  🥺      Smileys & Emotion   148
-#>  6 woozy_face                     🥴      Smileys & Emotion   136
-#>  7 smiling_face_with_three_hearts 🥰      Smileys & Emotion   106
-#>  8 roll_eyes                      🙄      Smileys & Emotion    83
-#>  9 100                            💯      Smileys & Emotion    78
-#> 10 heart                          ❤️       Smileys & Emotion    66
-#> 11 thinking                       🤔      Smileys & Emotion    62
-#> 12 heart_eyes                     😍      Smileys & Emotion    59
-#> 13 unamused                       😒      Smileys & Emotion    52
-#> 14 bangbang                       ‼️       Symbols              45
-#> 15 relieved                       😌      Smileys & Emotion    44
-#> 16 eyes                           👀      People & Body        42
-#> 17 pensive                        😔      Smileys & Emotion    41
-#> 18 partying_face                  🥳      Smileys & Emotion    40
-#> 19 tired_face                     😫      Smileys & Emotion    39
-#> 20 sparkles                       ✨      Activities           37
+#>    emoji_name                          unicode emoji_category        n
+#>    <chr>                               <chr>   <chr>             <int>
+#>  1 joy                                 😂      Smileys & Emotion   160
+#>  2 sob                                 😭      Smileys & Emotion    98
+#>  3 weary                               😩      Smileys & Emotion    34
+#>  4 rofl                                🤣      Smileys & Emotion    34
+#>  5 pleading_face                       🥺      Smileys & Emotion    29
+#>  6 roll_eyes                           🙄      Smileys & Emotion    22
+#>  7 woozy_face                          🥴      Smileys & Emotion    21
+#>  8 100                                 💯      Smileys & Emotion    20
+#>  9 heart_eyes                          😍      Smileys & Emotion    20
+#> 10 smiling_face_with_three_hearts      🥰      Smileys & Emotion    20
+#> 11 bangbang                            ‼️       Symbols              14
+#> 12 folded_hands_medium_dark_skin_tone  🙏🏾      People & Body        12
+#> 13 heart                               ❤️       Smileys & Emotion    11
+#> 14 skull                               💀      Smileys & Emotion    10
+#> 15 unamused                            😒      Smileys & Emotion    10
+#> 16 rage                                😡      Smileys & Emotion    10
+#> 17 sparkles                            ✨      Activities            9
+#> 18 eyes                                👀      People & Body         9
+#> 19 relieved                            😌      Smileys & Emotion     9
+#> 20 raising_hands_medium_dark_skin_tone 🙌🏾      People & Body         9
 ```
 
 Plotting the top 20, coloured by category, gives an immediate sense of
@@ -394,20 +397,20 @@ ata_emoji_category <- ata_tweets %>%
   select(.emoji_category)
 
 ata_emoji_category
-#> # A tibble: 2,818 × 1
-#>    .emoji_category                
-#>    <chr>                          
-#>  1 Smileys & Emotion              
-#>  2 Smileys & Emotion              
-#>  3 People & Body                  
-#>  4 Smileys & Emotion              
-#>  5 Smileys & Emotion              
-#>  6 Smileys & Emotion              
-#>  7 Smileys & Emotion              
-#>  8 Smileys & Emotion|People & Body
-#>  9 Smileys & Emotion              
-#> 10 Travel & Places|Activities     
-#> # ℹ 2,808 more rows
+#> # A tibble: 560 × 1
+#>    .emoji_category  
+#>    <chr>            
+#>  1 Smileys & Emotion
+#>  2 Smileys & Emotion
+#>  3 Smileys & Emotion
+#>  4 Smileys & Emotion
+#>  5 Smileys & Emotion
+#>  6 People & Body    
+#>  7 Smileys & Emotion
+#>  8 Smileys & Emotion
+#>  9 Smileys & Emotion
+#> 10 Smileys & Emotion
+#> # ℹ 550 more rows
 ```
 
 We can tally the most common category combinations:
@@ -420,13 +423,13 @@ ata_emoji_category %>%
   mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
   ggplot(aes(n, .emoji_category)) +
   geom_col() +
-  labs(x = "Number of tweets", y = NULL,
+  labs(x = "Number of entries", y = NULL,
        title = "Most common emoji category combinations")
 ```
 
 ![Horizontal bar chart of the most common emoji category combinations
 that appear in more than 20
-tweets.](introduction_files/figure-html/unnamed-chunk-15-1.png)
+entries.](introduction_files/figure-html/unnamed-chunk-15-1.png)
 
 To count the 10 individual categories rather than their combinations,
 split the `.emoji_category` strings on `|` with
@@ -440,7 +443,7 @@ ata_emoji_category %>%
   mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
   ggplot(aes(n, .emoji_category)) +
   geom_col() +
-  labs(x = "Number of tweets", y = NULL,
+  labs(x = "Number of entries", y = NULL,
        title = "Emoji category usage")
 ```
 
@@ -448,9 +451,9 @@ ata_emoji_category %>%
 category is used, dominated by Smileys & Emotion followed by People &
 Body.](introduction_files/figure-html/unnamed-chunk-16-1.png)
 
-“Smileys & Emotion” dominates, followed by “People & Body”. Note that a
-tweet spanning several categories is counted once in each, so these
-counts can exceed the number of emoji tweets.
+“Smileys & Emotion” dominates, followed by “People & Body”. Note that an
+entry spanning several categories is counted once in each, so these
+counts can exceed the number of emoji-bearing entries.
 
 ## Scoring emoji sentiment
 
@@ -459,10 +462,11 @@ counts can exceed the number of emoji tweets.
 Emoji are a strong sentiment signal, and
 [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
 surfaces it directly. It adds `.emoji_n` (the number of emoji in the
-entry) and `.emoji_sentiment` (the mean sentiment of those emoji, from
--1 for negative to +1 for positive). Scores come from the bundled
-`emoji_sentiment_lexicon` (described below); entries with no emoji, or
-whose emoji are not in the lexicon, receive `NA`.
+entry), `.emoji_n_scored` (the number that appear in the lexicon), and
+`.emoji_sentiment` (the mean sentiment of the scored emoji, from -1 to
++1). Scores come from the bundled `emoji_sentiment_lexicon` (described
+below); entries with no emoji, or whose emoji are not in the lexicon,
+receive `NA`.
 
 ``` r
 
@@ -471,25 +475,25 @@ ata_sentiment <- ata_tweets %>%
 
 ata_sentiment %>%
   select(.emoji_n, .emoji_sentiment)
-#> # A tibble: 10,000 × 2
+#> # A tibble: 2,000 × 2
 #>    .emoji_n .emoji_sentiment
 #>       <int>            <dbl>
-#>  1        0           NA    
-#>  2        0           NA    
-#>  3        1           -0.368
-#>  4        1           NA    
-#>  5        0           NA    
-#>  6        1           NA    
-#>  7        0           NA    
-#>  8        0           NA    
-#>  9        0           NA    
-#> 10        0           NA    
-#> # ℹ 9,990 more rows
+#>  1        0          NA     
+#>  2        1          -0.0934
+#>  3        0          NA     
+#>  4        1          -0.0934
+#>  5        0          NA     
+#>  6        0          NA     
+#>  7        0          NA     
+#>  8        0          NA     
+#>  9        0          NA     
+#> 10        1          NA     
+#> # ℹ 1,990 more rows
 ```
 
 ### Sentiment distribution
 
-Looking across the tweets that contain at least one scored emoji:
+Looking across the entries that contain at least one scored emoji:
 
 ``` r
 
@@ -498,11 +502,11 @@ ata_sentiment %>%
   ggplot(aes(.emoji_sentiment)) +
   geom_histogram(binwidth = 0.1) +
   labs(x = "Mean emoji sentiment",
-       y = "Number of tweets",
+       y = "Number of entries",
        title = "Emoji sentiment skews positive")
 ```
 
-![Histogram of the mean emoji sentiment per tweet, which is concentrated
+![Histogram of the mean emoji sentiment per entry, which is concentrated
 on the positive side of the
 scale.](introduction_files/figure-html/unnamed-chunk-18-1.png)
 
@@ -574,13 +578,130 @@ emoji_sentiment_lexicon %>%
 #> 8    😴      SLEEPING FACE         718     -0.08077994
 ```
 
+## Scoring emoji emotions
+
+Valence (negative↔︎positive) is only one affective dimension.
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+goes further, scoring each entry’s emoji across the eight Plutchik
+emotions (anger, anticipation, disgust, fear, joy, sadness, surprise,
+trust) using the bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020).
+Scores are in `[0, 1]`.
+
+``` r
+
+ata_emotion <- ata_tweets %>%
+  emoji_emotion(full_text)
+
+ata_emotion %>%
+  select(.emoji_joy, .emoji_trust, .emoji_anger, .emoji_n)
+#> # A tibble: 2,000 × 4
+#>    .emoji_joy .emoji_trust .emoji_anger .emoji_n
+#>         <dbl>        <dbl>        <dbl>    <int>
+#>  1         NA        NA           NA           0
+#>  2          0         0.08         0.22        1
+#>  3         NA        NA           NA           0
+#>  4          0         0.08         0.22        1
+#>  5         NA        NA           NA           0
+#>  6         NA        NA           NA           0
+#>  7         NA        NA           NA           0
+#>  8         NA        NA           NA           0
+#>  9         NA        NA           NA           0
+#> 10         NA        NA           NA           1
+#> # ℹ 1,990 more rows
+```
+
+A quick way to read the result is the dominant emotion per entry:
+
+``` r
+
+ata_tweets %>%
+  emoji_emotion_label(full_text) %>%
+  count(.emoji_emotion, sort = TRUE)
+#> # A tibble: 9 × 2
+#>   .emoji_emotion     n
+#>   <chr>          <int>
+#> 1 NA              1639
+#> 2 joy              166
+#> 3 sadness          115
+#> 4 anticipation      30
+#> 5 surprise          15
+#> 6 anger             12
+#> 7 disgust           11
+#> 8 fear              10
+#> 9 trust              2
+```
+
+The emotion scores join through the same codepoint-normalised key as
+sentiment, so emoji carrying the `U+FE0F` variation selector resolve
+correctly. The lexicon API is pluggable — see
+[`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md),
+[`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+and the generic
+[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+to bring your own lexicon.
+
+## Translating emoji to and from text
+
+Replacing emoji with words is useful for accessibility (screen readers)
+and as an NLP normalisation step before tokenising.
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+does this for a whole column, in either Unicode-name or shortcode form;
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+is the inverse.
+
+``` r
+
+demo <- data.frame(text = "great \U0001f600 love \u2764\ufe0f")
+demo %>% emoji_to_text(text, format = "name")
+#> # A tibble: 1 × 1
+#>   text                              
+#>   <chr>                             
+#> 1 great grinning face love red heart
+demo %>% emoji_to_text(text, format = "shortcode")
+#> # A tibble: 1 × 1
+#>   text                             
+#>   <chr>                            
+#> 1 great :grinning: love :red_heart:
+```
+
+For ad-hoc, vector-level use there are also
+[`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
+[`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+and
+[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
+and
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+to look up emoji by keyword:
+
+``` r
+
+emoji_search("happy")
+#> # A tibble: 27 × 5
+#>    emoji name                            shortcode             group     keyword
+#>    <chr> <chr>                           <chr>                 <chr>     <chr>  
+#>  1 😀    grinning face                   grinning              Smileys … happy  
+#>  2 😃    grinning face with big eyes     smiley                Smileys … happy  
+#>  3 😄    grinning face with smiling eyes smile                 Smileys … happy  
+#>  4 😁    beaming face with smiling eyes  grin                  Smileys … happy  
+#>  5 😆    grinning squinting face         laughing              Smileys … happy  
+#>  6 🤣    rolling on the floor laughing   rofl                  Smileys … happy  
+#>  7 😂    face with tears of joy          joy                   Smileys … happy  
+#>  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  
+#>  9 😇    smiling face with halo          innocent              Smileys … happy  
+#> 10 ☺     smiling face                    smiling_face          Smileys … happy  
+#> # ℹ 17 more rows
+```
+
 ## Bundled datasets
 
-tidyEmoji ships three datasets, each documented with its own help page:
+tidyEmoji ships four datasets, each documented with its own help page:
 
 - **`emoji_sentiment_lexicon`** — emoji sentiment scores from the Emoji
   Sentiment Ranking (see
   [`?emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)).
+- **`emoji_emotion_lexicon`** — emoji emotion scores from EmoTag1200
+  (see
+  [`?emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)).
 - **`emoji_unicode_crosswalk`** — one row per emoji name, mapping names
   / shortcodes to glyphs and categories.
 - **`category_unicode_crosswalk`** — one row per Unicode category,
@@ -596,3 +717,8 @@ Emojis. *PLoS ONE* 10(12): e0144296.
 <https://doi.org/10.1371/journal.pone.0144296>. The Emoji Sentiment
 Ranking is distributed under the Creative Commons Attribution-ShareAlike
 4.0 International (CC BY-SA 4.0) licence.
+
+Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the Association
+between Emojis and Emotions. *EMNLP 2020*.
+<https://aclanthology.org/2020.emnlp-main.720/>. The EmoTag1200 data is
+distributed under the MIT licence.

@@ -1,9 +1,10 @@
 # tidyEmoji
 
-tidyEmoji helps you **discover, count, categorise and sentiment-score
-the emoji in any text column** — social-media posts, product reviews,
-chat logs, survey responses, support tickets — and hands the result back
-as tidy data frames that drop straight into a tidyverse workflow.
+tidyEmoji helps you **discover, count, categorise, sentiment-score,
+score emotions and translate the emoji in any text column** —
+social-media posts, product reviews, chat logs, survey responses,
+support tickets — and hands the result back as tidy data frames that
+drop straight into a tidyverse workflow.
 
 Unicode is awkward to work with and not every code point is an emoji,
 which makes emoji statistics fiddly. tidyEmoji takes care of that,
@@ -42,9 +43,9 @@ reviews <- data.frame(text = c("Best purchase ever \U0001f600\U0001f60d",
 
 reviews %>% emoji_summary(text)        # entries with emoji vs. total
 #> # A tibble: 1 × 2
-#>   emoji_tweets total_tweets
-#>          <int>        <int>
-#> 1            4            5
+#>   n_with_emoji n_total
+#>          <int>   <int>
+#> 1            4       5
 reviews %>% emoji_filter(text)         # keep only the rows that have emoji
 #> # A tibble: 4 × 1
 #>   text                   
@@ -111,16 +112,96 @@ reviews %>% emoji_categorize(text)     # which Unicode categories each row spans
 #> 3 Wearing my mask 😷😷    Smileys & Emotion      
 #> 4 Shipped fast 🏁😀       Flags|Smileys & Emotion
 reviews %>% emoji_sentiment(text)      # mean emoji sentiment per row (-1 to +1)
-#> # A tibble: 5 × 3
-#>   text                    .emoji_n .emoji_sentiment
-#>   <chr>                      <int>            <dbl>
-#> 1 Best purchase ever 😀😍        2            0.625
-#> 2 It broke after a day 😡        1           -0.173
-#> 3 Does the job.                  0           NA    
-#> 4 Wearing my mask 😷😷           2           -0.171
-#> 5 Shipped fast 🏁😀              2            0.572
+#> # A tibble: 5 × 4
+#>   text                    .emoji_n .emoji_n_scored .emoji_sentiment
+#>   <chr>                      <int>           <int>            <dbl>
+#> 1 Best purchase ever 😀😍        2               2            0.625
+#> 2 It broke after a day 😡        1               1           -0.173
+#> 3 Does the job.                  0              NA           NA    
+#> 4 Wearing my mask 😷😷           2               2           -0.171
+#> 5 Shipped fast 🏁😀              2               2            0.572
 ```
 
 [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
 uses the bundled **Emoji Sentiment Ranking** lexicon (Kralj Novak et
 al., 2015). See the package vignette for a fuller tour.
+
+### Score emoji emotions
+
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+scores each row’s emoji across the eight Plutchik emotions using the
+bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020).
+
+``` r
+
+reviews %>% emoji_emotion(text) %>% select(text, .emoji_joy, .emoji_trust,
+                                           .emoji_anger, .emoji_n)
+#> # A tibble: 5 × 5
+#>   text                    .emoji_joy .emoji_trust .emoji_anger .emoji_n
+#>   <chr>                        <dbl>        <dbl>        <dbl>    <int>
+#> 1 Best purchase ever 😀😍       0.76        0.375         0.03        2
+#> 2 It broke after a day 😡       0           0.06          1           1
+#> 3 Does the job.                NA          NA            NA           0
+#> 4 Wearing my mask 😷😷          0           0.11          0.03        2
+#> 5 Shipped fast 🏁😀             0.69        0.25          0.06        2
+reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
+#> # A tibble: 5 × 4
+#>   text                    .emoji_n .emoji_n_scored .emoji_emotion
+#>   <chr>                      <int>           <int> <chr>         
+#> 1 Best purchase ever 😀😍        2               2 joy           
+#> 2 It broke after a day 😡        1               1 anger         
+#> 3 Does the job.                  0              NA <NA>          
+#> 4 Wearing my mask 😷😷           2               2 disgust       
+#> 5 Shipped fast 🏁😀              2               1 joy
+```
+
+### Translate emoji to and from text
+
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+replaces emoji with words (handy for accessibility and NLP
+preprocessing);
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+is the inverse.
+
+``` r
+
+reviews %>% emoji_to_text(text, format = "name")
+#> # A tibble: 5 × 1
+#>   text                                                        
+#>   <chr>                                                       
+#> 1 Best purchase ever grinning facesmiling face with heart-eyes
+#> 2 It broke after a day enraged face                           
+#> 3 Does the job.                                               
+#> 4 Wearing my mask face with medical maskface with medical mask
+#> 5 Shipped fast chequered flaggrinning face
+reviews %>% emoji_to_text(text, format = "shortcode")
+#> # A tibble: 5 × 1
+#>   text                                                       
+#>   <chr>                                                      
+#> 1 Best purchase ever :grinning::smiling_face_with_heart_eyes:
+#> 2 It broke after a day :rage:                                
+#> 3 Does the job.                                              
+#> 4 Wearing my mask :mask::mask:                               
+#> 5 Shipped fast :chequered_flag::grinning:
+```
+
+You can also search the emoji catalogue by keyword:
+
+``` r
+
+emoji_search("happy")
+#> # A tibble: 27 × 5
+#>    emoji name                            shortcode             group     keyword
+#>    <chr> <chr>                           <chr>                 <chr>     <chr>  
+#>  1 😀    grinning face                   grinning              Smileys … happy  
+#>  2 😃    grinning face with big eyes     smiley                Smileys … happy  
+#>  3 😄    grinning face with smiling eyes smile                 Smileys … happy  
+#>  4 😁    beaming face with smiling eyes  grin                  Smileys … happy  
+#>  5 😆    grinning squinting face         laughing              Smileys … happy  
+#>  6 🤣    rolling on the floor laughing   rofl                  Smileys … happy  
+#>  7 😂    face with tears of joy          joy                   Smileys … happy  
+#>  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  
+#>  9 😇    smiling face with halo          innocent              Smileys … happy  
+#> 10 ☺     smiling face                    smiling_face          Smileys … happy  
+#> # ℹ 17 more rows
+```

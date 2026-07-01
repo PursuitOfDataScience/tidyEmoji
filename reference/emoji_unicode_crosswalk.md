@@ -13,7 +13,7 @@ emoji_unicode_crosswalk
 
 ## Format
 
-A data frame with three columns:
+A data frame with four columns:
 
 - emoji_name:
 
@@ -26,6 +26,10 @@ A data frame with three columns:
 - emoji_category:
 
   The Unicode category the emoji belongs to.
+
+- key:
+
+  Codepoint-normalised key (U+FE0F stripped) for robust joining.
 
 ## Source
 

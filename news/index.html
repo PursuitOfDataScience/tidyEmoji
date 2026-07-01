@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,9 +31,53 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.2.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="tidyemoji-030">tidyEmoji 0.3.0<a class="anchor" aria-label="anchor" href="#tidyemoji-030"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
+<ul><li>
+<code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code> scores each row’s emoji across the eight Plutchik emotions (anger, anticipation, disgust, fear, joy, sadness, surprise, trust), using the new bundled <code>emoji_emotion_lexicon</code> (EmoTag1200, Shoeb &amp; de Melo 2020, MIT). Supports a long form (<code>long = TRUE</code>) with one row per (row, emotion).</li>
+<li>
+<code><a href="../reference/emoji_emotion_label.html">emoji_emotion_label()</a></code> adds the dominant emotion per row.</li>
+<li>A pluggable lexicon API: <code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code> lists bundled and registered lexicons, <code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> adds your own, and <code><a href="../reference/emoji_score.html">emoji_score()</a></code> is the generic scorer all the verbs share. <code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code> gains a <code>lexicon</code> argument (default <code>"novak2015"</code>, unchanged behaviour).</li>
+<li>
+<code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> replaces emoji in a text column with their Unicode names or shortcodes (demojize — useful for accessibility and NLP preprocessing), and <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> is the inverse (emojize).</li>
+<li>Vector helpers <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code> and <code><a href="../reference/as_emoji_name.html">as_emoji()</a></code> for ad-hoc conversion.</li>
+<li>
+<code><a href="../reference/emoji_search.html">emoji_search()</a></code> finds emoji by keyword, name or shortcode and returns a tidy tibble of matches.</li>
+<li>New bundled dataset <code>emoji_emotion_lexicon</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-and-fixes-0-3-0">Improvements and fixes<a class="anchor" aria-label="anchor" href="#improvements-and-fixes-0-3-0"></a></h3>
+<ul><li>DESCRIPTION Title and Description broadened to cover emotions, translation and search; version bumped to 0.3.0.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.1" id="tidyemoji-021">tidyEmoji 0.2.1<a class="anchor" aria-label="anchor" href="#tidyemoji-021"></a></h2>
+<div class="section level3">
+<h3 id="improvements-and-fixes-0-2-1">Improvements and fixes<a class="anchor" aria-label="anchor" href="#improvements-and-fixes-0-2-1"></a></h3>
+<ul><li>Emoji name, shortcode and category now resolve through the same codepoint-normalised key as sentiment, so emoji carrying the <code>U+FE0F</code> variation selector no longer get <code>NA</code> metadata, are no longer dropped by <code><a href="../reference/emoji_categorize.html">emoji_categorize()</a></code>, and no longer disappear from <code>top_n_emojis(duplicated = TRUE)</code>.</li>
+<li>The whole package now agrees on what “contains an emoji” means: <code><a href="../reference/emoji_summary.html">emoji_summary()</a></code> and <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code> use the same detection as the extraction verbs.</li>
+<li>
+<code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code> gains <code>.emoji_n_scored</code> (emoji actually found in the lexicon), distinct from <code>.emoji_n</code>.</li>
+<li>
+<code>top_n_emojis(n =)</code> counts distinct emoji rather than rows, breaks ties deterministically, keeps emoji that have no GitHub-style alias, and preserves the exact extracted glyph in <code>duplicated</code> mode (one row per distinct alias; <code>left_join</code> instead of <code>inner_join</code>).</li>
+<li>
+<code><a href="../reference/emoji_extract_unnest.html">emoji_extract_unnest()</a></code> now uses <code>.row_number</code> (dotted) to avoid collision with user columns and <code><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">dplyr::row_number</a></code>.</li>
+<li>
+<code><a href="../reference/emoji_summary.html">emoji_summary()</a></code> column names renamed from <code>emoji_tweets</code>/<code>total_tweets</code> to <code>n_with_emoji</code>/<code>n_total</code>. The old names are no longer available in this release.</li>
+<li>
+<code><a href="../reference/emoji_filter.html">emoji_tweets()</a></code> is soft-deprecated in favour of <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code>.</li>
+<li>Faster on large corpora: codepoint keys are computed once over the unique glyph set rather than per row in <code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code> and <code><a href="../reference/emoji_categorize.html">emoji_categorize()</a></code>.</li>
+<li>Grouped data frames passed to <code><a href="../reference/emoji_summary.html">emoji_summary()</a></code>, <code><a href="../reference/emoji_frequency.html">emoji_frequency()</a></code> and <code><a href="../reference/top_n_emojis.html">top_n_emojis()</a></code> now warn that grouping is ignored (per-group results land in 1.0).</li>
+<li>Lifecycle badge downgraded from stable to maturing.</li>
+<li>Vignette sample renamed from <code>ata_tweets.rda</code> (a CSV misnamed <code>.rda</code>) to <code>ata_tweets.csv</code> and downsampled from 10k to 2k rows. Vignette language updated to be less Twitter-specific.</li>
+<li>Crosswalk datasets rebuilt with a <code>key</code> column for normalised joins.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="tidyemoji-020">tidyEmoji 0.2.0<a class="anchor" aria-label="anchor" href="#tidyemoji-020"></a></h2><p class="text-muted">CRAN release: 2026-06-17</p>
 <p>tidyEmoji is now positioned as a general toolkit for emoji in <strong>any</strong> text column (social-media posts, reviews, chat logs, survey responses, …), not just tweets.</p>

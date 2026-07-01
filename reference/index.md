@@ -30,11 +30,39 @@
   : Categorise each row by the emoji categories it contains
 - [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
   : Score the sentiment of the emoji in each row
+- [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  : Emoji emotion profiles (the 8 Plutchik emotions)
+- [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  : The dominant emoji emotion per row
+
+## Lexicon API
+
+- [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  : List bundled emoji lexicons
+- [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  : Register a custom emoji lexicon
+- [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  : Score emoji in a text column against any lexicon
+
+## Translate & search
+
+- [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  : Replace emoji in a text column with words (demojize)
+- [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  : Replace shortcodes with emoji (emojize)
+- [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  : Vector helpers: convert emoji to/from names and shortcodes
+- [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  : Search emoji by keyword, name or shortcode
 
 ## Data
 
 - [`emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
   : Emoji Sentiment Ranking lexicon
+- [`emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)
+  : Emoji emotion lexicon (EmoTag1200)
 - [`emoji_unicode_crosswalk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_crosswalk.md)
   : Emoji name, unicode and category crosswalk
 - [`category_unicode_crosswalk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/category_unicode_crosswalk.md)

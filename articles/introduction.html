@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,9 +59,9 @@ Yu<br><span style="font-weight: 400; font-size: 0.85em;">University of
 Chicago</span>
 </h4>
             
-            <h4 data-toc-skip class="date">2026-06-17</h4>
+            <h4 data-toc-skip class="date">2026-07-01</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.2.0/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
       <div class="d-none name"><code>introduction.Rmd</code></div>
     </div>
 
@@ -119,6 +119,24 @@ and return tidy data frames that drop straight into a
 <td>Score sentiment</td>
 <td><code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code></td>
 </tr>
+<tr class="even">
+<td>Score emotions</td>
+<td>
+<code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>,
+<code><a href="../reference/emoji_emotion_label.html">emoji_emotion_label()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Translate</td>
+<td>
+<code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code>, <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code>,
+<code>as_emoji*()</code>
+</td>
+</tr>
+<tr class="even">
+<td>Search</td>
+<td><code><a href="../reference/emoji_search.html">emoji_search()</a></code></td>
+</tr>
 </tbody>
 </table>
 <p>Two design choices are worth highlighting:</p>
@@ -143,27 +161,27 @@ the pipe.</li>
 <div class="section level2">
 <h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a>
 </h2>
-<p>Throughout this vignette we use a sample of 10,000 tweets collected
-in Atlanta, Georgia. Tweets are a convenient, emoji-rich example, but
-nothing below is specific to Twitter — any data frame with a text column
-will do.</p>
+<p>Throughout this vignette we use a sample of text collected in
+Atlanta, Georgia. The data happens to come from a social-media corpus,
+but nothing below is specific to any platform — any data frame with a
+text column will do.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="st">"ata_tweets.rda"</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="st">"ata_tweets.csv"</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">ata_tweets</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10,000 × 1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,000 × 1</span></span></span>
 <span><span class="co">#&gt;    full_text                                                                    </span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                                        </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> <span style="color: #949494;">"</span>im not arguing  im not fighting nobody w a gun. people are dying every day …</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> <span style="color: #949494;">"</span>Time left until rump leaves office\nZoom\n56days\n1349hours\n80940minutes\n…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> <span style="color: #949494;">"</span>It’s been 15 years since my father’s imprisonment  I swore it would get eas…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> <span style="color: #949494;">"</span>Friendsgiving with my roomies🥰<span style="color: #949494;">"</span>                                            </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> <span style="color: #949494;">"</span>Going to be one of those “countdown app” people just so I have motivation t…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> <span style="color: #949494;">"</span>When I can turn my philosophical thoughts into poetry. The world gone be on…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> <span style="color: #949494;">"</span>These females really be trying it but fail to realize my girl tells me ever…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> <span style="color: #949494;">"</span>why my sister called me toxic lmao<span style="color: #949494;">"</span>                                         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> <span style="color: #949494;">"</span>What a great year to be not taking care of no kids.<span style="color: #949494;">"</span>                        </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> <span style="color: #949494;">"</span>definitely don’t see any children in my near future, not with me trying to …</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 9,990 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> <span style="color: #949494;">"</span>Was Justin Bieber ever at any BLM March/protest this past summer? Or ever?<span style="color: #949494;">"</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> <span style="color: #949494;">"</span>Whole Family gone and I’m stuck here in Brunswick 😭<span style="color: #949494;">"</span>                       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> <span style="color: #949494;">"</span>38 years old and I still get distracted while cleaning my room. \n\nJust in…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> <span style="color: #949494;">"</span>This time last year I was blasting fever nonstop by Wizkid 😭<span style="color: #949494;">"</span>              </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> <span style="color: #949494;">"</span>Kanye is a just a black man with a lot of confidence and y’all tear him dow…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> <span style="color: #949494;">"</span>Feel like being my inner self today<span style="color: #949494;">"</span>                                        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> <span style="color: #949494;">"</span>Peep toe boots irk my sole.<span style="color: #949494;">"</span>                                                </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> <span style="color: #949494;">"</span>Nah the biggest naruto fans be trying call one piece long like... nigga?<span style="color: #949494;">"</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> <span style="color: #949494;">"</span>if my shoes don’t arrive by next Friday imma be pissed<span style="color: #949494;">"</span>                     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> <span style="color: #949494;">"</span>Phone dry asf 🙄<span style="color: #949494;">"</span>                                                           </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,990 more rows</span></span></span></code></pre></div>
 <p>The actual text lives in the <code>full_text</code> column, which is
 the column we pass to each tidyEmoji verb.</p>
 </div>
@@ -185,11 +203,10 @@ regardless of how many emoji it holds.</p>
 <span></span>
 <span><span class="va">summary_tbl</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;   emoji_tweets total_tweets</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         <span style="text-decoration: underline;">2</span>818        <span style="text-decoration: underline;">10</span>000</span></span></code></pre></div>
-<p>Here, 2,818 of the 10,000 tweets (28.2%) contain at least one
-emoji.</p>
+<span><span class="co">#&gt;   n_with_emoji n_total</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          560    <span style="text-decoration: underline;">2</span>000</span></span></code></pre></div>
+<p>Here, 560 of the 2,000 entries (28%) contain at least one emoji.</p>
 </div>
 <div class="section level3">
 <h3 id="emoji_filter">
@@ -203,20 +220,20 @@ synonym retained for backward compatibility.)</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_filter.html">emoji_filter</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,818 × 1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 560 × 1</span></span></span>
 <span><span class="co">#&gt;    full_text                                                                    </span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                                        </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> It’s been 15 years since my father’s imprisonment  I swore it would get easi…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Friendsgiving with my roomies🥰                                              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> When I can turn my philosophical thoughts into poetry. The world gone be on …</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> I always get the last laugh 🥰 so I let people do what they want             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> One thing about me, imma keep that same energy. 🙃                           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> I’m really dope. 😎                                                          </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> I miss my bb🥺                                                               </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Got half of bae and raidens Christmas shopping done 😩🙌🏽🙌🏽                   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Y’all be letting anybody in the studio and ion like dat🥴                    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Sometimes I need to work on myself before I can please anyone or get ready f…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2,808 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Whole Family gone and I’m stuck here in Brunswick 😭                         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> This time last year I was blasting fever nonstop by Wizkid 😭                </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Phone dry asf 🙄                                                             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> When I gave my life to Christ, I was able to see people as imperfect, but st…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Everyone needs self care days❤️                                               </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> R u sears rn 🤦🏽‍♀️                                                              </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Gucci wit some dope runnas head huncho top gunna u a sto runna😭             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> i’m thinking insomnia cause they got this caramel apple pie cookie. 😋       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> i deadass listen to the music everyday lmao🥲                                </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Im ona block where ya barley can be at  if you try get shot down 😈          </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 550 more rows</span></span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -236,27 +253,27 @@ this convenient as an intermediate step.</p>
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_extract_nest.html">emoji_extract_nest</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">.emoji_unicode</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10,000 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,000 × 2</span></span></span>
 <span><span class="co">#&gt;    full_text                                                      .emoji_unicode</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                          <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>        </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> <span style="color: #949494;">"</span>im not arguing  im not fighting nobody w a gun. people are d… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> <span style="color: #949494;">"</span>Time left until rump leaves office\nZoom\n56days\n1349hours\… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> <span style="color: #949494;">"</span>It’s been 15 years since my father’s imprisonment  I swore i… <span style="color: #949494;">&lt;chr [1]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> <span style="color: #949494;">"</span>Friendsgiving with my roomies🥰<span style="color: #949494;">"</span>                              <span style="color: #949494;">&lt;chr [1]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> <span style="color: #949494;">"</span>Going to be one of those “countdown app” people just so I ha… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> <span style="color: #949494;">"</span>When I can turn my philosophical thoughts into poetry. The w… <span style="color: #949494;">&lt;chr [1]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> <span style="color: #949494;">"</span>These females really be trying it but fail to realize my gir… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> <span style="color: #949494;">"</span>why my sister called me toxic lmao<span style="color: #949494;">"</span>                           <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> <span style="color: #949494;">"</span>What a great year to be not taking care of no kids.<span style="color: #949494;">"</span>          <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> <span style="color: #949494;">"</span>definitely don’t see any children in my near future, not wit… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 9,990 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> <span style="color: #949494;">"</span>Was Justin Bieber ever at any BLM March/protest this past su… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> <span style="color: #949494;">"</span>Whole Family gone and I’m stuck here in Brunswick 😭<span style="color: #949494;">"</span>         <span style="color: #949494;">&lt;chr [1]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> <span style="color: #949494;">"</span>38 years old and I still get distracted while cleaning my ro… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> <span style="color: #949494;">"</span>This time last year I was blasting fever nonstop by Wizkid 😭… <span style="color: #949494;">&lt;chr [1]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> <span style="color: #949494;">"</span>Kanye is a just a black man with a lot of confidence and y’a… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> <span style="color: #949494;">"</span>Feel like being my inner self today<span style="color: #949494;">"</span>                          <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> <span style="color: #949494;">"</span>Peep toe boots irk my sole.<span style="color: #949494;">"</span>                                  <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> <span style="color: #949494;">"</span>Nah the biggest naruto fans be trying call one piece long li… <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> <span style="color: #949494;">"</span>if my shoes don’t arrive by next Friday imma be pissed<span style="color: #949494;">"</span>       <span style="color: #949494;">&lt;chr [0]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> <span style="color: #949494;">"</span>Phone dry asf 🙄<span style="color: #949494;">"</span>                                             <span style="color: #949494;">&lt;chr [1]&gt;</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,990 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="emoji_extract_unnest">
 <code>emoji_extract_unnest()</code><a class="anchor" aria-label="anchor" href="#emoji_extract_unnest"></a>
 </h3>
 <p><code><a href="../reference/emoji_extract_unnest.html">emoji_extract_unnest()</a></code> returns a long, tidy table with
-one row per (entry, emoji) pair: <code>row_number</code> records the
+one row per (entry, emoji) pair: <code>.row_number</code> records the
 position of the entry in the data, <code>.emoji_unicode</code> is the
 emoji, and <code>.emoji_count</code> is how many times that emoji occurs
 in that entry. Entries without emoji are dropped.</p>
@@ -265,35 +282,35 @@ in that entry. Entries without emoji are dropped.</p>
 <span>  <span class="fu"><a href="../reference/emoji_extract_unnest.html">emoji_extract_unnest</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">emoji_per_tweet</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3,519 × 3</span></span></span>
-<span><span class="co">#&gt;    row_number .emoji_unicode .emoji_count</span></span>
-<span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          3 😩                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          4 🥰                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          6 👌🏾                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         11 🥰                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>         12 🙃                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>         15 😎                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>         17 🥺                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>         33 😩                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>         33 🙌🏽                        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         34 🥴                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3,509 more rows</span></span></span></code></pre></div>
-<p>We can use this to plot how many emoji each emoji-bearing tweet
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 697 × 3</span></span></span>
+<span><span class="co">#&gt;    .row_number .emoji_unicode .emoji_count</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>           2 😭                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>           4 😭                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          10 🙄                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>          15 😂                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          17 ❤️                         1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          30 🤦🏽‍♀️                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          31 😭                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          33 😋                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          42 🥲                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          45 😈                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 687 more rows</span></span></span></code></pre></div>
+<p>We can use this to plot how many emoji each emoji-bearing entry
 contains:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_per_tweet</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">row_number</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.row_number</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>n_emoji <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">.emoji_count</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">n_emoji</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_bar</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of emoji in the tweet"</span>,</span>
-<span>       y <span class="op">=</span> <span class="st">"Number of tweets"</span>,</span>
-<span>       title <span class="op">=</span> <span class="st">"Most emoji tweets contain a single emoji"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="Bar chart of the number of emoji per emoji-bearing tweet. The vast majority of tweets contain a single emoji, with a long, thin tail of more emoji-heavy tweets." width="768"></p>
-<p>The overwhelming majority of emoji tweets carry just one emoji, with
-a long, thin tail of more emoji-heavy tweets.</p>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of emoji in the entry"</span>,</span>
+<span>       y <span class="op">=</span> <span class="st">"Number of entries"</span>,</span>
+<span>       title <span class="op">=</span> <span class="st">"Most emoji-bearing entries contain a single emoji"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="Bar chart of the number of emoji per emoji-bearing entry. The vast majority of entries contain a single emoji, with a long, thin tail of more emoji-heavy entries." width="768"></p>
+<p>The overwhelming majority of emoji-bearing entries carry just one
+emoji, with a long, thin tail of more emoji-heavy entries.</p>
 </div>
 <div class="section level3">
 <h3 id="emoji_tokens">
@@ -309,20 +326,20 @@ needed for counting, joining and plotting.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_tokens.html">emoji_tokens</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,611 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 901 × 5</span></span></span>
 <span><span class="co">#&gt;    full_text                 .emoji .emoji_name .emoji_category .emoji_sentiment</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> It’s been 15 years since… 😩     weary face  Smileys &amp; Emot…           -<span style="color: #BB0000;">0.368</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Friendsgiving with my ro… 🥰     smiling fa… Smileys &amp; Emot…           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> When I can turn my philo… 👌🏾     OK hand: m… People &amp; Body             <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> I always get the last la… 🥰     smiling fa… Smileys &amp; Emot…           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> One thing about me, imma… 🙃     upside-dow… Smileys &amp; Emot…           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> I’m really dope. 😎       😎     smiling fa… Smileys &amp; Emot…            0.493</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> I miss my bb🥺            🥺     pleading f… Smileys &amp; Emot…           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Got half of bae and raid… 😩     weary face  Smileys &amp; Emot…           -<span style="color: #BB0000;">0.368</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Got half of bae and raid… 🙌🏽     raising ha… People &amp; Body             <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Got half of bae and raid… 🙌🏽     raising ha… People &amp; Body             <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,601 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Whole Family gone and I’… 😭     loudly cry… Smileys &amp; Emot…          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> This time last year I wa… 😭     loudly cry… Smileys &amp; Emot…          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Phone dry asf 🙄          🙄     face with … Smileys &amp; Emot…          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> When I gave my life to C… 😂     face with … Smileys &amp; Emot…           0.221 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Everyone needs self care… ❤️      red heart   Smileys &amp; Emot…           0.746 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> R u sears rn 🤦🏽‍♀️           🤦🏽‍♀️     woman face… People &amp; Body            <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Gucci wit some dope runn… 😭     loudly cry… Smileys &amp; Emot…          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> i’m thinking insomnia ca… 😋     face savor… Smileys &amp; Emot…           0.634 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> i deadass listen to the … 🥲     smiling fa… Smileys &amp; Emot…          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Im ona block where ya ba… 😈     smiling fa… Smileys &amp; Emot…           0.268 </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 891 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="a-note-on-grapheme-aware-detection">A note on grapheme-aware detection<a class="anchor" aria-label="anchor" href="#a-note-on-grapheme-aware-detection"></a>
@@ -343,10 +360,10 @@ skin tone:</p>
 <span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_extract_unnest.html">emoji_extract_unnest</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
-<span><span class="co">#&gt;   row_number .emoji_unicode .emoji_count</span></span>
-<span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          1 👨‍👩‍👧‍👦                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>          2 👍🏽                        1</span></span></code></pre></div>
+<span><span class="co">#&gt;   .row_number .emoji_unicode .emoji_count</span></span>
+<span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>           1 👨‍👩‍👧‍👦                        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>           2 👍🏽                        1</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -363,20 +380,20 @@ annotated with each emoji’s name, shortcode and category.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 423 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 188 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                          shortcode                     group     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😂    face with tears of joy        joy                           Smil…   766</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 😭    loudly crying face            sob                           Smil…   536</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🤣    rolling on the floor laughing rofl                          Smil…   182</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 😩    weary face                    weary                         Smil…   170</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🥺    pleading face                 pleading_face                 Smil…   148</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🥴    woozy face                    woozy_face                    Smil…   136</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🥰    smiling face with hearts      smiling_face_with_three_hear… Smil…   106</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🙄    face with rolling eyes        roll_eyes                     Smil…    83</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 💯    hundred points                100                           Smil…    78</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ❤️     red heart                     heart                         Smil…    66</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 413 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😂    face with tears of joy        joy                           Smil…   160</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 😭    loudly crying face            sob                           Smil…    98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 😩    weary face                    weary                         Smil…    34</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🤣    rolling on the floor laughing rofl                          Smil…    34</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🥺    pleading face                 pleading_face                 Smil…    29</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🙄    face with rolling eyes        roll_eyes                     Smil…    22</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🥴    woozy face                    woozy_face                    Smil…    21</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 💯    hundred points                100                           Smil…    20</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😍    smiling face with heart-eyes  heart_eyes                    Smil…    20</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🥰    smiling face with hearts      smiling_face_with_three_hear… Smil…    20</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 178 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="top_n_emojis">
@@ -392,28 +409,28 @@ the <code>n</code> most frequent emoji (default
 <span></span>
 <span><span class="va">top_20_emojis</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 20 × 4</span></span></span>
-<span><span class="co">#&gt;    emoji_name                     unicode emoji_category        n</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> joy                            😂      Smileys &amp; Emotion   766</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> sob                            😭      Smileys &amp; Emotion   536</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> rofl                           🤣      Smileys &amp; Emotion   182</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> weary                          😩      Smileys &amp; Emotion   170</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> pleading_face                  🥺      Smileys &amp; Emotion   148</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> woozy_face                     🥴      Smileys &amp; Emotion   136</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> smiling_face_with_three_hearts 🥰      Smileys &amp; Emotion   106</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> roll_eyes                      🙄      Smileys &amp; Emotion    83</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 100                            💯      Smileys &amp; Emotion    78</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> heart                          ❤️       Smileys &amp; Emotion    66</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> thinking                       🤔      Smileys &amp; Emotion    62</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> heart_eyes                     😍      Smileys &amp; Emotion    59</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> unamused                       😒      Smileys &amp; Emotion    52</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> bangbang                       ‼️       Symbols              45</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> relieved                       😌      Smileys &amp; Emotion    44</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> eyes                           👀      People &amp; Body        42</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> pensive                        😔      Smileys &amp; Emotion    41</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> partying_face                  🥳      Smileys &amp; Emotion    40</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> tired_face                     😫      Smileys &amp; Emotion    39</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> sparkles                       ✨      Activities           37</span></span></code></pre></div>
+<span><span class="co">#&gt;    emoji_name                          unicode emoji_category        n</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> joy                                 😂      Smileys &amp; Emotion   160</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> sob                                 😭      Smileys &amp; Emotion    98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> weary                               😩      Smileys &amp; Emotion    34</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> rofl                                🤣      Smileys &amp; Emotion    34</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> pleading_face                       🥺      Smileys &amp; Emotion    29</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> roll_eyes                           🙄      Smileys &amp; Emotion    22</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> woozy_face                          🥴      Smileys &amp; Emotion    21</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 100                                 💯      Smileys &amp; Emotion    20</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> heart_eyes                          😍      Smileys &amp; Emotion    20</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> smiling_face_with_three_hearts      🥰      Smileys &amp; Emotion    20</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> bangbang                            ‼️       Symbols              14</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> folded_hands_medium_dark_skin_tone  🙏🏾      People &amp; Body        12</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> heart                               ❤️       Smileys &amp; Emotion    11</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> skull                               💀      Smileys &amp; Emotion    10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> unamused                            😒      Smileys &amp; Emotion    10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> rage                                😡      Smileys &amp; Emotion    10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> sparkles                            ✨      Activities            9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> eyes                                👀      People &amp; Body         9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> relieved                            😌      Smileys &amp; Emotion     9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> raising_hands_medium_dark_skin_tone 🙌🏾      People &amp; Body         9</span></span></code></pre></div>
 <p>Plotting the top 20, coloured by category, gives an immediate sense
 of how the community expresses itself:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -458,20 +475,20 @@ than one.</p>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">.emoji_category</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">ata_emoji_category</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,818 × 1</span></span></span>
-<span><span class="co">#&gt;    .emoji_category                </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                          </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> People &amp; Body                  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Smileys &amp; Emotion|People &amp; Body</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Smileys &amp; Emotion              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Travel &amp; Places|Activities     </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2,808 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 560 × 1</span></span></span>
+<span><span class="co">#&gt;    .emoji_category  </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> People &amp; Body    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Smileys &amp; Emotion</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 550 more rows</span></span></span></code></pre></div>
 <p>We can tally the most common category combinations:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_emoji_category</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -480,9 +497,9 @@ than one.</p>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>.emoji_category <span class="op">=</span> <span class="fu">forcats</span><span class="fu">::</span><span class="fu"><a href="https://forcats.tidyverse.org/reference/fct_reorder.html" class="external-link">fct_reorder</a></span><span class="op">(</span><span class="va">.emoji_category</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">.emoji_category</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of tweets"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of entries"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Most common emoji category combinations"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="Horizontal bar chart of the most common emoji category combinations that appear in more than 20 tweets." width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="Horizontal bar chart of the most common emoji category combinations that appear in more than 20 entries." width="768"></p>
 <p>To count the 10 individual categories rather than their combinations,
 split the <code>.emoji_category</code> strings on <code>|</code> with
 <code><a href="https://tidyr.tidyverse.org/reference/separate_rows.html" class="external-link">tidyr::separate_rows()</a></code>:</p>
@@ -493,12 +510,12 @@ split the <code>.emoji_category</code> strings on <code>|</code> with
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>.emoji_category <span class="op">=</span> <span class="fu">forcats</span><span class="fu">::</span><span class="fu"><a href="https://forcats.tidyverse.org/reference/fct_reorder.html" class="external-link">fct_reorder</a></span><span class="op">(</span><span class="va">.emoji_category</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">.emoji_category</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of tweets"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of entries"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji category usage"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="introduction_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="Horizontal bar chart of how often each individual Unicode emoji category is used, dominated by Smileys &amp; Emotion followed by People &amp; Body." width="768"></p>
 <p>“Smileys &amp; Emotion” dominates, followed by “People &amp; Body”.
-Note that a tweet spanning several categories is counted once in each,
-so these counts can exceed the number of emoji tweets.</p>
+Note that an entry spanning several categories is counted once in each,
+so these counts can exceed the number of emoji-bearing entries.</p>
 </div>
 <div class="section level2">
 <h2 id="scoring-emoji-sentiment">Scoring emoji sentiment<a class="anchor" aria-label="anchor" href="#scoring-emoji-sentiment"></a>
@@ -509,9 +526,10 @@ so these counts can exceed the number of emoji tweets.</p>
 </h3>
 <p>Emoji are a strong sentiment signal, and
 <code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code> surfaces it directly. It adds
-<code>.emoji_n</code> (the number of emoji in the entry) and
-<code>.emoji_sentiment</code> (the mean sentiment of those emoji, from
--1 for negative to +1 for positive). Scores come from the bundled
+<code>.emoji_n</code> (the number of emoji in the entry),
+<code>.emoji_n_scored</code> (the number that appear in the lexicon),
+and <code>.emoji_sentiment</code> (the mean sentiment of the scored
+emoji, from -1 to +1). Scores come from the bundled
 <code>emoji_sentiment_lexicon</code> (described below); entries with no
 emoji, or whose emoji are not in the lexicon, receive
 <code>NA</code>.</p>
@@ -521,34 +539,35 @@ emoji, or whose emoji are not in the lexicon, receive
 <span></span>
 <span><span class="va">ata_sentiment</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">.emoji_n</span>, <span class="va">.emoji_sentiment</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10,000 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,000 × 2</span></span></span>
 <span><span class="co">#&gt;    .emoji_n .emoji_sentiment</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>        1           -<span style="color: #BB0000;">0.368</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>        1           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>        1           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        0           <span style="color: #BB0000;">NA</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 9,990 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>        1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>        1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>        0          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        1          <span style="color: #BB0000;">NA</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,990 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="sentiment-distribution">Sentiment distribution<a class="anchor" aria-label="anchor" href="#sentiment-distribution"></a>
 </h3>
-<p>Looking across the tweets that contain at least one scored emoji:</p>
+<p>Looking across the entries that contain at least one scored
+emoji:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_sentiment</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">.emoji_sentiment</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">.emoji_sentiment</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span>binwidth <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Mean emoji sentiment"</span>,</span>
-<span>       y <span class="op">=</span> <span class="st">"Number of tweets"</span>,</span>
+<span>       y <span class="op">=</span> <span class="st">"Number of entries"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji sentiment skews positive"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="Histogram of the mean emoji sentiment per tweet, which is concentrated on the positive side of the scale." width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="Histogram of the mean emoji sentiment per entry, which is concentrated on the positive side of the scale." width="768"></p>
 <p>As is typical of social-media text, emoji sentiment leans strongly
 positive.</p>
 </div>
@@ -611,15 +630,110 @@ negative reasonably common emoji:</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="scoring-emoji-emotions">Scoring emoji emotions<a class="anchor" aria-label="anchor" href="#scoring-emoji-emotions"></a>
+</h2>
+<p>Valence (negative↔︎positive) is only one affective dimension.
+<code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code> goes further, scoring each entry’s emoji
+across the eight Plutchik emotions (anger, anticipation, disgust, fear,
+joy, sadness, surprise, trust) using the bundled EmoTag1200 lexicon
+(Shoeb &amp; de Melo, 2020). Scores are in <code>[0, 1]</code>.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_emotion</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_emotion.html">emoji_emotion</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ata_emotion</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">.emoji_joy</span>, <span class="va">.emoji_trust</span>, <span class="va">.emoji_anger</span>, <span class="va">.emoji_n</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,000 × 4</span></span></span>
+<span><span class="co">#&gt;    .emoji_joy .emoji_trust .emoji_anger .emoji_n</span></span>
+<span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          0         0.08         0.22        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>          0         0.08         0.22        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,990 more rows</span></span></span></code></pre></div>
+<p>A quick way to read the result is the dominant emotion per entry:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_emotion_label.html">emoji_emotion_label</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_emotion</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 2</span></span></span>
+<span><span class="co">#&gt;   .emoji_emotion     n</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> <span style="color: #BB0000;">NA</span>              <span style="text-decoration: underline;">1</span>639</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> joy              166</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> sadness          115</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> anticipation      30</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> surprise          15</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> anger             12</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> disgust           11</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> fear              10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span> trust              2</span></span></code></pre></div>
+<p>The emotion scores join through the same codepoint-normalised key as
+sentiment, so emoji carrying the <code>U+FE0F</code> variation selector
+resolve correctly. The lexicon API is pluggable — see
+<code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code>, <code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> and
+the generic <code><a href="../reference/emoji_score.html">emoji_score()</a></code> to bring your own lexicon.</p>
+</div>
+<div class="section level2">
+<h2 id="translating-emoji-to-and-from-text">Translating emoji to and from text<a class="anchor" aria-label="anchor" href="#translating-emoji-to-and-from-text"></a>
+</h2>
+<p>Replacing emoji with words is useful for accessibility (screen
+readers) and as an NLP normalisation step before tokenising.
+<code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> does this for a whole column, in either
+Unicode-name or shortcode form; <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> is the
+inverse.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"great \U0001f600 love \u2764\ufe0f"</span><span class="op">)</span></span>
+<span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
+<span><span class="co">#&gt;   text                              </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great grinning face love red heart</span></span>
+<span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
+<span><span class="co">#&gt;   text                             </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great :grinning: love :red_heart:</span></span></code></pre></div>
+<p>For ad-hoc, vector-level use there are also
+<code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code> and
+<code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>, and <code><a href="../reference/emoji_search.html">emoji_search()</a></code> to look up
+emoji by keyword:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
+<span><span class="co">#&gt;    emoji name                            shortcode             group     keyword</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😀    grinning face                   grinning              Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 😃    grinning face with big eyes     smiley                Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 😄    grinning face with smiling eyes smile                 Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 😁    beaming face with smiling eyes  grin                  Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 😆    grinning squinting face         laughing              Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🤣    rolling on the floor laughing   rofl                  Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 😂    face with tears of joy          joy                   Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😇    smiling face with halo          innocent              Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☺     smiling face                    smiling_face          Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 17 more rows</span></span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="bundled-datasets">Bundled datasets<a class="anchor" aria-label="anchor" href="#bundled-datasets"></a>
 </h2>
-<p>tidyEmoji ships three datasets, each documented with its own help
+<p>tidyEmoji ships four datasets, each documented with its own help
 page:</p>
 <ul>
 <li>
 <strong><code>emoji_sentiment_lexicon</code></strong> — emoji
 sentiment scores from the Emoji Sentiment Ranking (see
 <code><a href="../reference/emoji_sentiment_lexicon.html">?emoji_sentiment_lexicon</a></code>).</li>
+<li>
+<strong><code>emoji_emotion_lexicon</code></strong> — emoji emotion
+scores from EmoTag1200 (see <code><a href="../reference/emoji_emotion_lexicon.html">?emoji_emotion_lexicon</a></code>).</li>
 <li>
 <strong><code>emoji_unicode_crosswalk</code></strong> — one row per
 emoji name, mapping names / shortcodes to glyphs and categories.</li>
@@ -637,6 +751,9 @@ scripts in the package’s <code>data-raw/</code> directory.</p>
 Emojis. <em>PLoS ONE</em> 10(12): e0144296. <a href="https://doi.org/10.1371/journal.pone.0144296" class="external-link uri">https://doi.org/10.1371/journal.pone.0144296</a>. The Emoji
 Sentiment Ranking is distributed under the Creative Commons
 Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) licence.</p>
+<p>Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the
+Association between Emojis and Emotions. <em>EMNLP 2020</em>. <a href="https://aclanthology.org/2020.emnlp-main.720/" class="external-link uri">https://aclanthology.org/2020.emnlp-main.720/</a>. The
+EmoTag1200 data is distributed under the MIT licence.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -22,8 +22,8 @@ emoji_summary(data, text)
 
 ## Value
 
-A one-row tibble with columns `emoji_tweets` (entries containing at
-least one emoji) and `total_tweets` (all entries).
+A one-row tibble with columns `n_with_emoji` (entries containing at
+least one emoji) and `n_total` (all entries).
 
 ## See also
 
@@ -38,7 +38,7 @@ df <- data.frame(text = c("I love R \U0001f600",
                           "flags \U0001f3c1\U0001f600"))
 emoji_summary(df, text)
 #> # A tibble: 1 × 2
-#>   emoji_tweets total_tweets
-#>          <int>        <int>
-#> 1            2            3
+#>   n_with_emoji n_total
+#>          <int>   <int>
+#> 1            2       3
 ```
