@@ -4,17 +4,23 @@
 \alias{emoji_sentiment}
 \title{Score the sentiment of the emoji in each row}
 \usage{
-emoji_sentiment(data, text)
+emoji_sentiment(data, text, lexicon = "novak2015")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column.}
 
 \item{text}{The text column to scan, supplied unquoted.}
+
+\item{lexicon}{Lexicon to use. The default, \code{"novak2015"}, uses the bundled
+\link{emoji_sentiment_lexicon}. A registered lexicon (see
+\code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}}) or a data frame can also be supplied; see
+\code{\link[=emoji_score]{emoji_score()}} for the generic scorer.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n} (the number of
-emoji in the row) and \code{.emoji_sentiment} (the mean sentiment of the emoji
-that appear in the lexicon).
+emoji in the row), \code{.emoji_n_scored} (the number of emoji that actually
+appear in the lexicon), and \code{.emoji_sentiment} (the mean sentiment of the
+scored emoji).
 }
 \description{
 \code{emoji_sentiment()} adds the mean emoji sentiment of each row, based on the
@@ -31,5 +37,7 @@ Kralj Novak P, Smailovic J, Sluban B, Mozetic I (2015) Sentiment
 of Emojis. PLoS ONE 10(12): e0144296. \doi{10.1371/journal.pone.0144296}
 }
 \seealso{
-\link{emoji_sentiment_lexicon} for the underlying scores.
+\link{emoji_sentiment_lexicon} for the underlying scores;
+\code{\link[=emoji_score]{emoji_score()}} for scoring against any lexicon; \code{\link[=emoji_emotion]{emoji_emotion()}} for
+discrete emotions.
 }

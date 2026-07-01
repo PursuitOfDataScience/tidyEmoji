@@ -36,3 +36,18 @@ test_that("emoji_categorize keeps emoji rows and labels categories", {
   expect_true(".emoji_category" %in% names(out))
   expect_match(out$.emoji_category[2], "Flags")   # multi-category row
 })
+
+test_that("top_n_emojis n counts distinct emoji, not rows", {
+  df <- data.frame(text = c("\U0001f600", "\U0001f600", "\U0001f621"))
+  out <- top_n_emojis(df, text, n = 1)
+  expect_equal(nrow(out), 1)
+  expect_equal(out$n, 2L)
+})
+
+test_that("top_n_emojis(duplicated = TRUE) uses left_join so alias-less emoji survive", {
+  # Use an emoji that is known to have no alias
+  df <- data.frame(text = "\U0001f600")
+  dup <- top_n_emojis(df, text, n = 5, duplicated = TRUE)
+  expect_true(nrow(dup) >= 1)
+  expect_true("unicode" %in% names(dup))
+})

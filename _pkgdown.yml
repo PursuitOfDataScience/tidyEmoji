@@ -35,9 +35,25 @@ reference:
   contents:
   - emoji_categorize
   - emoji_sentiment
+  - emoji_emotion
+  - emoji_emotion_label
+- title: Lexicon API
+  contents:
+  - emoji_lexicons
+  - register_emoji_lexicon
+  - emoji_score
+- title: Translate & search
+  contents:
+  - emoji_to_text
+  - text_to_emoji
+  - as_emoji_name
+  - as_emoji_shortcode
+  - as_emoji
+  - emoji_search
 - title: Data
   contents:
   - emoji_sentiment_lexicon
+  - emoji_emotion_lexicon
   - emoji_unicode_crosswalk
   - category_unicode_crosswalk
 

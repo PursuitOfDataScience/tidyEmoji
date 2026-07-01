@@ -17,11 +17,16 @@
 emoji_categorize <- function(data, text) {
   lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
   ref <- emoji_reference()
-  cat_of <- stats::setNames(ref$group, ref$emoji)
+  cat_of <- stats::setNames(ref$group, ref$key)
+
+  all_glyphs <- unique(unlist(lst, use.names = FALSE))
+  key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
 
   cats <- vapply(lst, function(g) {
     if (!length(g)) return(NA_character_)
-    cc <- unique(cat_of[g])
+    keys <- unique(key_lookup[g])
+    keys <- keys[!is.na(keys)]
+    cc <- unique(cat_of[keys])
     cc <- cc[!is.na(cc)]
     if (!length(cc)) NA_character_ else paste(cc, collapse = "|")
   }, character(1))

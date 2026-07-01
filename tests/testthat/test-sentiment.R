@@ -1,7 +1,7 @@
 test_that("emoji_sentiment scores rows from the lexicon", {
   df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))
   out <- emoji_sentiment(df, text)
-  expect_named(out, c("text", ".emoji_n", ".emoji_sentiment"))
+  expect_true(all(c("text", ".emoji_n", ".emoji_n_scored", ".emoji_sentiment") %in% names(out)))
   expect_gt(out$.emoji_sentiment[1], 0)           # positive
   expect_lt(out$.emoji_sentiment[2], 0)           # negative
   expect_true(is.na(out$.emoji_sentiment[3]))     # no emoji -> NA

@@ -44,6 +44,9 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Count | `emoji_frequency()`, `top_n_emojis()` |
 | Categorise | `emoji_categorize()` |
 | Score sentiment | `emoji_sentiment()` |
+| Score emotions | `emoji_emotion()`, `emoji_emotion_label()` |
+| Translate | `emoji_to_text()`, `text_to_emoji()`, `as_emoji*()` |
+| Search | `emoji_search()` |
 
 Two design choices are worth highlighting:
 
@@ -64,12 +67,12 @@ library(ggplot2)
 
 ## Example data
 
-Throughout this vignette we use a sample of 10,000 tweets collected in Atlanta,
-Georgia. Tweets are a convenient, emoji-rich example, but nothing below is
-specific to Twitter — any data frame with a text column will do.
+Throughout this vignette we use a sample of text collected in Atlanta,
+Georgia. The data happens to come from a social-media corpus, but nothing below
+is specific to any platform — any data frame with a text column will do.
 
 ```{r}
-ata_tweets <- readr::read_csv("ata_tweets.rda", show_col_types = FALSE)
+ata_tweets <- readr::read_csv("ata_tweets.csv", show_col_types = FALSE)
 ata_tweets
 ```
 
@@ -92,9 +95,9 @@ summary_tbl <- ata_tweets %>%
 summary_tbl
 ```
 
-Here, `r format(summary_tbl$emoji_tweets, big.mark = ",")` of the
-`r format(summary_tbl$total_tweets, big.mark = ",")` tweets
-(`r round(100 * summary_tbl$emoji_tweets / summary_tbl$total_tweets, 1)`%)
+Here, `r format(summary_tbl$n_with_emoji, big.mark = ",")` of the
+`r format(summary_tbl$n_total, big.mark = ",")` entries
+(`r round(100 * summary_tbl$n_with_emoji / summary_tbl$n_total, 1)`%)
 contain at least one emoji.
 
 ### `emoji_filter()`
@@ -130,7 +133,7 @@ ata_tweets %>%
 ### `emoji_extract_unnest()`
 
 `emoji_extract_unnest()` returns a long, tidy table with one row per
-(entry, emoji) pair: `row_number` records the position of the entry in the data,
+(entry, emoji) pair: `.row_number` records the position of the entry in the data,
 `.emoji_unicode` is the emoji, and `.emoji_count` is how many times that emoji
 occurs in that entry. Entries without emoji are dropped.
 
@@ -141,22 +144,22 @@ emoji_per_tweet <- ata_tweets %>%
 emoji_per_tweet
 ```
 
-We can use this to plot how many emoji each emoji-bearing tweet contains:
+We can use this to plot how many emoji each emoji-bearing entry contains:
 
-```{r, fig.alt = "Bar chart of the number of emoji per emoji-bearing tweet. The vast majority of tweets contain a single emoji, with a long, thin tail of more emoji-heavy tweets."}
+```{r, fig.alt = "Bar chart of the number of emoji per emoji-bearing entry. The vast majority of entries contain a single emoji, with a long, thin tail of more emoji-heavy entries."}
 emoji_per_tweet %>%
-  group_by(row_number) %>%
+  group_by(.row_number) %>%
   summarise(n_emoji = sum(.emoji_count)) %>%
   ggplot(aes(n_emoji)) +
   geom_bar() +
   scale_x_continuous(breaks = seq(1, 15)) +
-  labs(x = "Number of emoji in the tweet",
-       y = "Number of tweets",
-       title = "Most emoji tweets contain a single emoji")
+  labs(x = "Number of emoji in the entry",
+       y = "Number of entries",
+       title = "Most emoji-bearing entries contain a single emoji")
 ```
 
-The overwhelming majority of emoji tweets carry just one emoji, with a long, thin
-tail of more emoji-heavy tweets.
+The overwhelming majority of emoji-bearing entries carry just one emoji, with a
+long, thin tail of more emoji-heavy entries.
 
 ### `emoji_tokens()`
 
@@ -263,14 +266,14 @@ ata_emoji_category
 
 We can tally the most common category combinations:
 
-```{r, fig.alt = "Horizontal bar chart of the most common emoji category combinations that appear in more than 20 tweets."}
+```{r, fig.alt = "Horizontal bar chart of the most common emoji category combinations that appear in more than 20 entries."}
 ata_emoji_category %>%
   count(.emoji_category, sort = TRUE) %>%
   filter(n > 20) %>%
   mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
   ggplot(aes(n, .emoji_category)) +
   geom_col() +
-  labs(x = "Number of tweets", y = NULL,
+  labs(x = "Number of entries", y = NULL,
        title = "Most common emoji category combinations")
 ```
 
@@ -284,24 +287,24 @@ ata_emoji_category %>%
   mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
   ggplot(aes(n, .emoji_category)) +
   geom_col() +
-  labs(x = "Number of tweets", y = NULL,
+  labs(x = "Number of entries", y = NULL,
        title = "Emoji category usage")
 ```
 
-"Smileys & Emotion" dominates, followed by "People & Body". Note that a tweet
+"Smileys & Emotion" dominates, followed by "People & Body". Note that an entry
 spanning several categories is counted once in each, so these counts can exceed
-the number of emoji tweets.
+the number of emoji-bearing entries.
 
 ## Scoring emoji sentiment
 
 ### `emoji_sentiment()`
 
 Emoji are a strong sentiment signal, and `emoji_sentiment()` surfaces it
-directly. It adds `.emoji_n` (the number of emoji in the entry) and
-`.emoji_sentiment` (the mean sentiment of those emoji, from -1 for negative to
-+1 for positive). Scores come from the bundled `emoji_sentiment_lexicon`
-(described below); entries with no emoji, or whose emoji are not in the lexicon,
-receive `NA`.
+directly. It adds `.emoji_n` (the number of emoji in the entry),
+`.emoji_n_scored` (the number that appear in the lexicon), and
+`.emoji_sentiment` (the mean sentiment of the scored emoji, from -1 to +1).
+Scores come from the bundled `emoji_sentiment_lexicon` (described below);
+entries with no emoji, or whose emoji are not in the lexicon, receive `NA`.
 
 ```{r}
 ata_sentiment <- ata_tweets %>%
@@ -313,15 +316,15 @@ ata_sentiment %>%
 
 ### Sentiment distribution
 
-Looking across the tweets that contain at least one scored emoji:
+Looking across the entries that contain at least one scored emoji:
 
-```{r, fig.alt = "Histogram of the mean emoji sentiment per tweet, which is concentrated on the positive side of the scale."}
+```{r, fig.alt = "Histogram of the mean emoji sentiment per entry, which is concentrated on the positive side of the scale."}
 ata_sentiment %>%
   filter(!is.na(.emoji_sentiment)) %>%
   ggplot(aes(.emoji_sentiment)) +
   geom_histogram(binwidth = 0.1) +
   labs(x = "Mean emoji sentiment",
-       y = "Number of tweets",
+       y = "Number of entries",
        title = "Emoji sentiment skews positive")
 ```
 
@@ -365,12 +368,63 @@ emoji_sentiment_lexicon %>%
   select(emoji, unicode_name, occurrences, sentiment_score)
 ```
 
+## Scoring emoji emotions
+
+Valence (negative↔positive) is only one affective dimension. `emoji_emotion()`
+goes further, scoring each entry's emoji across the eight Plutchik emotions
+(anger, anticipation, disgust, fear, joy, sadness, surprise, trust) using the
+bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020). Scores are in `[0, 1]`.
+
+```{r}
+ata_emotion <- ata_tweets %>%
+  emoji_emotion(full_text)
+
+ata_emotion %>%
+  select(.emoji_joy, .emoji_trust, .emoji_anger, .emoji_n)
+```
+
+A quick way to read the result is the dominant emotion per entry:
+
+```{r}
+ata_tweets %>%
+  emoji_emotion_label(full_text) %>%
+  count(.emoji_emotion, sort = TRUE)
+```
+
+The emotion scores join through the same codepoint-normalised key as sentiment,
+so emoji carrying the `U+FE0F` variation selector resolve correctly. The lexicon
+API is pluggable — see `emoji_lexicons()`, `register_emoji_lexicon()` and the
+generic `emoji_score()` to bring your own lexicon.
+
+## Translating emoji to and from text
+
+Replacing emoji with words is useful for accessibility (screen readers) and as
+an NLP normalisation step before tokenising. `emoji_to_text()` does this for a
+whole column, in either Unicode-name or shortcode form; `text_to_emoji()` is the
+inverse.
+
+```{r}
+demo <- data.frame(text = "great \U0001f600 love \u2764\ufe0f")
+demo %>% emoji_to_text(text, format = "name")
+demo %>% emoji_to_text(text, format = "shortcode")
+```
+
+For ad-hoc, vector-level use there are also `as_emoji_name()`,
+`as_emoji_shortcode()` and `as_emoji()`, and `emoji_search()` to look up emoji
+by keyword:
+
+```{r}
+emoji_search("happy")
+```
+
 ## Bundled datasets
 
-tidyEmoji ships three datasets, each documented with its own help page:
+tidyEmoji ships four datasets, each documented with its own help page:
 
 * **`emoji_sentiment_lexicon`** — emoji sentiment scores from the Emoji
   Sentiment Ranking (see `?emoji_sentiment_lexicon`).
+* **`emoji_emotion_lexicon`** — emoji emotion scores from EmoTag1200
+  (see `?emoji_emotion_lexicon`).
 * **`emoji_unicode_crosswalk`** — one row per emoji name, mapping names /
   shortcodes to glyphs and categories.
 * **`category_unicode_crosswalk`** — one row per Unicode category, listing its
@@ -386,3 +440,8 @@ Kralj Novak P, Smailović J, Sluban B, Mozetič I (2015). Sentiment of Emojis.
 <https://doi.org/10.1371/journal.pone.0144296>. The Emoji Sentiment Ranking is
 distributed under the Creative Commons Attribution-ShareAlike 4.0 International
 (CC BY-SA 4.0) licence.
+
+Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the Association between
+Emojis and Emotions. *EMNLP 2020*.
+<https://aclanthology.org/2020.emnlp-main.720/>. The EmoTag1200 data is
+distributed under the MIT licence.

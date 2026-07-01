@@ -9,9 +9,9 @@ test_that("emoji_extract_nest adds a list-column of glyphs", {
 test_that("emoji_extract_unnest counts emoji per row in long form", {
   df <- data.frame(text = c("hi \U0001f600\U0001f600", "none", "\U0001f44b"))
   out <- emoji_extract_unnest(df, text)
-  expect_named(out, c("row_number", ".emoji_unicode", ".emoji_count"))
-  expect_equal(out$.emoji_count[out$row_number == 1], 2L)
-  expect_false(2 %in% out$row_number)            # the no-emoji row is dropped
+  expect_named(out, c(".row_number", ".emoji_unicode", ".emoji_count"))
+  expect_equal(out$.emoji_count[out$.row_number == 1], 2L)
+  expect_false(2 %in% out$.row_number)            # the no-emoji row is dropped
 })
 
 test_that("emoji_tokens yields one row per occurrence with metadata", {
@@ -26,7 +26,7 @@ test_that("emoji_tokens yields one row per occurrence with metadata", {
 test_that("detection is grapheme-aware: ZWJ and skin-tone stay intact", {
   # Regression test for the pre-0.2.0 bug where a family emoji split into four
   # people and a skin-tone thumbs-up split into thumb + modifier.
-  family <- "\U0001F468‍\U0001F469‍\U0001F467‍\U0001F466"
+  family <- "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"
   thumb  <- "\U0001F44D\U0001F3FD"
   df <- data.frame(text = c(paste("a family", family), paste("a", thumb)))
 

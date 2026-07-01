@@ -9,8 +9,8 @@ df <- data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
 test_that("emoji_summary counts emoji and total entries", {
   s <- emoji_summary(df, tweets)
   expect_s3_class(s, "tbl_df")
-  expect_equal(pull(s, emoji_tweets), 3)
-  expect_equal(pull(s, total_tweets), 5)
+  expect_equal(pull(s, n_with_emoji), 3)
+  expect_equal(pull(s, n_total), 5)
 })
 
 test_that("emoji_filter / emoji_tweets keep only emoji rows and return a tibble", {

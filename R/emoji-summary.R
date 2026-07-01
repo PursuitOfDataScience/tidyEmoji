@@ -7,8 +7,8 @@
 #' @param data A data frame or tibble containing a text column.
 #' @param text The text column to scan, supplied unquoted.
 #'
-#' @return A one-row tibble with columns `emoji_tweets` (entries containing at
-#'   least one emoji) and `total_tweets` (all entries).
+#' @return A one-row tibble with columns \code{n_with_emoji} (entries containing at
+#'   least one emoji) and \code{n_total} (all entries).
 #' @seealso [emoji_filter()] to keep the emoji-bearing rows themselves.
 #' @examples
 #' df <- data.frame(text = c("I love R \U0001f600",
@@ -17,11 +17,17 @@
 #' emoji_summary(df, text)
 #' @export
 emoji_summary <- function(data, text) {
-  v <- as.character(dplyr::pull(data, {{ text }}))
-  has <- emoji::emoji_detect(v)
+  if (dplyr::is_grouped_df(data)) {
+    lifecycle::deprecate_warn(
+      "0.2.1", "emoji_summary(data = \"must be ungrouped data\")",
+      details = "emoji_summary() currently ignores groups. Supply ungrouped data or expect a single global result."
+    )
+  }
+  v <- dplyr::pull(data, {{ text }})
+  has <- emoji_has(v)
   tibble::tibble(
-    emoji_tweets = sum(has, na.rm = TRUE),
-    total_tweets = length(v)
+    n_with_emoji = sum(has, na.rm = TRUE),
+    n_total = length(v)
   )
 }
 
@@ -39,8 +45,8 @@ emoji_summary <- function(data, text) {
 #' emoji_filter(df, text)
 #' @export
 emoji_filter <- function(data, text) {
-  v <- as.character(dplyr::pull(data, {{ text }}))
-  keep <- emoji::emoji_detect(v)
+  v <- dplyr::pull(data, {{ text }})
+  keep <- emoji_has(v)
   keep[is.na(keep)] <- FALSE
   tibble::as_tibble(data[keep, , drop = FALSE])
 }
@@ -48,5 +54,6 @@ emoji_filter <- function(data, text) {
 #' @rdname emoji_filter
 #' @export
 emoji_tweets <- function(data, text) {
+  lifecycle::deprecate_soft("0.2.1", "emoji_tweets()", "emoji_filter()")
   emoji_filter(data, {{ text }})
 }

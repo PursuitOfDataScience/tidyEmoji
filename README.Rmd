@@ -20,13 +20,13 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/workflows/R-CMD-check/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/tidyEmoji)](https://CRAN.R-project.org/package=tidyEmoji)
-[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 <!-- badges: end -->
 
-tidyEmoji helps you **discover, count, categorise and sentiment-score the emoji
-in any text column** — social-media posts, product reviews, chat logs, survey
-responses, support tickets — and hands the result back as tidy data frames that
-drop straight into a tidyverse workflow.
+tidyEmoji helps you **discover, count, categorise, sentiment-score, score
+emotions and translate the emoji in any text column** — social-media posts,
+product reviews, chat logs, survey responses, support tickets — and hands the
+result back as tidy data frames that drop straight into a tidyverse workflow.
 
 Unicode is awkward to work with and not every code point is an emoji, which
 makes emoji statistics fiddly. tidyEmoji takes care of that, including
@@ -88,3 +88,30 @@ reviews %>% emoji_sentiment(text)      # mean emoji sentiment per row (-1 to +1)
 
 `emoji_sentiment()` uses the bundled **Emoji Sentiment Ranking** lexicon
 (Kralj Novak et al., 2015). See the package vignette for a fuller tour.
+
+### Score emoji emotions
+
+`emoji_emotion()` scores each row's emoji across the eight Plutchik emotions
+using the bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020).
+
+```{r}
+reviews %>% emoji_emotion(text) %>% select(text, .emoji_joy, .emoji_trust,
+                                           .emoji_anger, .emoji_n)
+reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
+```
+
+### Translate emoji to and from text
+
+`emoji_to_text()` replaces emoji with words (handy for accessibility and NLP
+preprocessing); `text_to_emoji()` is the inverse.
+
+```{r}
+reviews %>% emoji_to_text(text, format = "name")
+reviews %>% emoji_to_text(text, format = "shortcode")
+```
+
+You can also search the emoji catalogue by keyword:
+
+```{r}
+emoji_search("happy")
+```

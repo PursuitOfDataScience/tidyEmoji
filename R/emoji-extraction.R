@@ -21,11 +21,11 @@ emoji_extract_nest <- function(data, text) {
 #' Emoji counts per row, in long (tidy) form
 #'
 #' `emoji_extract_unnest()` returns one row per (row, emoji) pair with a count,
-#' dropping rows that contain no emoji. `row_number` refers to the position of
+#' dropping rows that contain no emoji. `.row_number` refers to the position of
 #' the entry in `data`.
 #'
 #' @inheritParams emoji_summary
-#' @return A tibble with columns `row_number`, `.emoji_unicode` and
+#' @return A tibble with columns `.row_number`, `.emoji_unicode` and
 #'   `.emoji_count`.
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600\U0001f600", "none", "\U0001f44b"))
@@ -34,11 +34,11 @@ emoji_extract_nest <- function(data, text) {
 emoji_extract_unnest <- function(data, text) {
   lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
   tibble::tibble(
-    row_number     = rep(seq_along(lst), lengths(lst)),
+    .row_number    = rep(seq_along(lst), lengths(lst)),
     .emoji_unicode = as.character(unlist(lst, use.names = FALSE))
   ) %>%
-    dplyr::count(row_number, .emoji_unicode, name = ".emoji_count") %>%
-    dplyr::arrange(row_number, .emoji_unicode)
+    dplyr::count(.row_number, .emoji_unicode, name = ".emoji_count") %>%
+    dplyr::arrange(.row_number, .emoji_unicode)
 }
 
 
@@ -64,7 +64,7 @@ emoji_tokens <- function(data, text) {
   data$.emoji <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
   out <- tidyr::unnest(data, ".emoji")
   ref <- emoji_reference()
-  idx <- match(out$.emoji, ref$emoji)
+  idx <- match(emoji_key(out$.emoji), ref$key)
   out$.emoji_name      <- ref$name[idx]
   out$.emoji_category  <- ref$group[idx]
   out$.emoji_sentiment <- unname(emoji_sentiment_map()[emoji_key(out$.emoji)])

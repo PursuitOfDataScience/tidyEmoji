@@ -5,11 +5,12 @@
 \alias{emoji_unicode_crosswalk}
 \title{Emoji name, unicode and category crosswalk}
 \format{
-A data frame with three columns:
+A data frame with four columns:
 \describe{
 \item{emoji_name}{The emoji name / shortcode (e.g. "grinning").}
 \item{unicode}{The emoji glyph.}
 \item{emoji_category}{The Unicode category the emoji belongs to.}
+\item{key}{Codepoint-normalised key (U+FE0F stripped) for robust joining.}
 }
 }
 \source{

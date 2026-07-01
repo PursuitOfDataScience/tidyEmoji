@@ -12,8 +12,8 @@ emoji_summary(data, text)
 \item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A one-row tibble with columns \code{emoji_tweets} (entries containing at
-least one emoji) and \code{total_tweets} (all entries).
+A one-row tibble with columns \code{n_with_emoji} (entries containing at
+least one emoji) and \code{n_total} (all entries).
 }
 \description{
 \code{emoji_summary()} reports how many entries in a text column contain at least

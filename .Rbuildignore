@@ -9,3 +9,6 @@
 ^docs$
 ^pkgdown$
 ^data-raw$
+^next_release\.md$
+^\.git$
+^\.gitignore$

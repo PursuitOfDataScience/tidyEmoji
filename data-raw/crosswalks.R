@@ -29,6 +29,17 @@ emoji_unicode_crosswalk <- emojis %>%
   distinct(emoji_name, unicode, emoji_category) %>%
   as.data.frame(stringsAsFactors = FALSE)
 
+# Add codepoint-normalised key (strip U+FE0F) for robust joining
+emoji_key2 <- function(glyphs) {
+  vapply(glyphs, function(g) {
+    if (is.na(g) || !nzchar(g)) return(NA_character_)
+    cp <- utf8ToInt(g)
+    cp <- cp[cp != 0xFE0F]
+    paste(sprintf("%X", cp), collapse = " ")
+  }, character(1), USE.NAMES = FALSE)
+}
+emoji_unicode_crosswalk$key <- emoji_key2(emoji_unicode_crosswalk$unicode)
+
 # category_unicode_crosswalk --------------------------------------------------
 category_unicode_crosswalk <- emojis %>%
   distinct(group, emoji) %>%

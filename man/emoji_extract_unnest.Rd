@@ -12,12 +12,12 @@ emoji_extract_unnest(data, text)
 \item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A tibble with columns \code{row_number}, \code{.emoji_unicode} and
+A tibble with columns \code{.row_number}, \code{.emoji_unicode} and
 \code{.emoji_count}.
 }
 \description{
 \code{emoji_extract_unnest()} returns one row per (row, emoji) pair with a count,
-dropping rows that contain no emoji. \code{row_number} refers to the position of
+dropping rows that contain no emoji. \code{.row_number} refers to the position of
 the entry in \code{data}.
 }
 \examples{

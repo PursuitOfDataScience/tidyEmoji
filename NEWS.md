@@ -1,3 +1,65 @@
+# tidyEmoji 0.3.0
+
+## New features
+
+* `emoji_emotion()` scores each row's emoji across the eight Plutchik emotions
+  (anger, anticipation, disgust, fear, joy, sadness, surprise, trust), using the
+  new bundled `emoji_emotion_lexicon` (EmoTag1200, Shoeb & de Melo 2020, MIT).
+  Supports a long form (`long = TRUE`) with one row per (row, emotion).
+* `emoji_emotion_label()` adds the dominant emotion per row.
+* A pluggable lexicon API: `emoji_lexicons()` lists bundled and registered
+  lexicons, `register_emoji_lexicon()` adds your own, and `emoji_score()` is the
+  generic scorer all the verbs share. `emoji_sentiment()` gains a `lexicon`
+  argument (default `"novak2015"`, unchanged behaviour).
+* `emoji_to_text()` replaces emoji in a text column with their Unicode names or
+  shortcodes (demojize — useful for accessibility and NLP preprocessing), and
+  `text_to_emoji()` is the inverse (emojize).
+* Vector helpers `as_emoji_name()`, `as_emoji_shortcode()` and `as_emoji()` for
+  ad-hoc conversion.
+* `emoji_search()` finds emoji by keyword, name or shortcode and returns a tidy
+  tibble of matches.
+* New bundled dataset `emoji_emotion_lexicon`.
+
+## Improvements and fixes
+
+* DESCRIPTION Title and Description broadened to cover emotions, translation and
+  search; version bumped to 0.3.0.
+
+# tidyEmoji 0.2.1
+
+## Improvements and fixes
+
+* Emoji name, shortcode and category now resolve through the same
+  codepoint-normalised key as sentiment, so emoji carrying the `U+FE0F` variation
+  selector no longer get `NA` metadata, are no longer dropped by
+  `emoji_categorize()`, and no longer disappear from `top_n_emojis(duplicated =
+  TRUE)`.
+* The whole package now agrees on what "contains an emoji" means:
+  `emoji_summary()` and `emoji_filter()` use the same detection as the extraction
+  verbs.
+* `emoji_sentiment()` gains `.emoji_n_scored` (emoji actually found in the
+  lexicon), distinct from `.emoji_n`.
+* `top_n_emojis(n =)` counts distinct emoji rather than rows, breaks ties
+  deterministically, keeps emoji that have no GitHub-style alias, and preserves
+  the exact extracted glyph in `duplicated` mode (one row per distinct alias;
+  `left_join` instead of `inner_join`).
+* `emoji_extract_unnest()` now uses `.row_number` (dotted) to avoid collision
+  with user columns and `dplyr::row_number`.
+* `emoji_summary()` column names renamed from `emoji_tweets`/`total_tweets` to
+  `n_with_emoji`/`n_total`. The old names are no longer available in this
+  release.
+* `emoji_tweets()` is soft-deprecated in favour of `emoji_filter()`.
+* Faster on large corpora: codepoint keys are computed once over the unique glyph
+  set rather than per row in `emoji_sentiment()` and `emoji_categorize()`.
+* Grouped data frames passed to `emoji_summary()`, `emoji_frequency()` and
+  `top_n_emojis()` now warn that grouping is ignored (per-group results land in
+  1.0).
+* Lifecycle badge downgraded from stable to maturing.
+* Vignette sample renamed from `ata_tweets.rda` (a CSV misnamed `.rda`) to
+  `ata_tweets.csv` and downsampled from 10k to 2k rows. Vignette language
+  updated to be less Twitter-specific.
+* Crosswalk datasets rebuilt with a `key` column for normalised joins.
+
 # tidyEmoji 0.2.0
 
 tidyEmoji is now positioned as a general toolkit for emoji in **any** text

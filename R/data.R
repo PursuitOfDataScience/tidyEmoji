@@ -1,14 +1,37 @@
+#' Emoji emotion lexicon (EmoTag1200)
+#'
+#' Human-annotated emotion-association scores (each from 0 to 1) for the eight
+#' Plutchik emotions (anger, anticipation, disgust, fear, joy, sadness, surprise,
+#' trust), for the 150 most popular Twitter emoji, from EmoTag1200.
+#'
+#' @format A data frame with one row per emoji and the columns:
+#' \describe{
+#'   \item{key}{Codepoint-normalised key (U+FE0F stripped) for robust joining.}
+#'   \item{emoji}{The emoji glyph (unqualified form, as stored by the source).}
+#'   \item{name}{The emoji's Unicode name.}
+#'   \item{anger, anticipation, disgust, fear, joy, sadness, surprise, trust}{
+#'     Emotion-association scores, each from 0 to 1.}
+#' }
+#' @source Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the
+#'   Association between Emojis and Emotions. *EMNLP 2020*.
+#'   <https://aclanthology.org/2020.emnlp-main.720/>. Data from
+#'   <https://github.com/abushoeb/EmoTag>, released under the MIT licence.
+#'   Processed by `data-raw/emoji_emotion_lexicon.R`.
+"emoji_emotion_lexicon"
+
+
 #' Emoji name, unicode and category crosswalk
 #'
 #' A table with one row per emoji *name*: each emoji glyph appears once for every
 #' GitHub-style name it is known by, so a single unicode can occur on several
 #' rows (for example the grinning face is both "grinning" and "grinning_face").
 #'
-#' @format A data frame with three columns:
+#' @format A data frame with four columns:
 #' \describe{
 #'   \item{emoji_name}{The emoji name / shortcode (e.g. "grinning").}
 #'   \item{unicode}{The emoji glyph.}
 #'   \item{emoji_category}{The Unicode category the emoji belongs to.}
+#'   \item{key}{Codepoint-normalised key (U+FE0F stripped) for robust joining.}
 #' }
 #' @source Derived from the `emojis` table of the \pkg{emoji} package; rebuilt by
 #'   `data-raw/crosswalks.R`.

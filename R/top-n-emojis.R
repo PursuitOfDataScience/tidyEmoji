@@ -13,6 +13,12 @@
 #' emoji_frequency(df, text)
 #' @export
 emoji_frequency <- function(data, text) {
+  if (dplyr::is_grouped_df(data)) {
+    lifecycle::deprecate_warn(
+      "0.2.1", "emoji_frequency(data = \"must be ungrouped data\")",
+      details = "emoji_frequency() currently ignores groups. Supply ungrouped data or expect a single global result."
+    )
+  }
   glyphs <- unlist(emoji_glyph_list(dplyr::pull(data, {{ text }})),
                    use.names = FALSE)
   if (!length(glyphs)) {
@@ -23,7 +29,7 @@ emoji_frequency <- function(data, text) {
   counts <- tibble::tibble(emoji = glyphs) %>%
     dplyr::count(emoji, name = "n", sort = TRUE)
   ref <- emoji_reference()
-  idx <- match(counts$emoji, ref$emoji)
+  idx <- match(emoji_key(counts$emoji), ref$key)
   counts$name      <- ref$name[idx]
   counts$shortcode <- ref$shortcode[idx]
   counts$group     <- ref$group[idx]
@@ -60,20 +66,48 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
       identical(duplicated_unicode, "yes")
   }
 
+  if (dplyr::is_grouped_df(data)) {
+    lifecycle::deprecate_warn(
+      "0.2.1", "top_n_emojis(data = \"must be ungrouped data\")",
+      details = "top_n_emojis() currently ignores groups. Supply ungrouped data or expect a single global result."
+    )
+    # Ungroup so the downstream emoji_frequency() call does not warn a second
+    # time about the same ignored grouping.
+    data <- dplyr::ungroup(data)
+  }
+
   freq <- emoji_frequency(data, {{ text }})
 
+  # n counts distinct emoji: take head before expanding names
+  freq_head <- utils::head(freq, n)
+
   if (isTRUE(duplicated)) {
-    out <- freq %>%
-      dplyr::select(unicode = emoji, n) %>%
-      dplyr::inner_join(emoji_unicode_crosswalk, by = "unicode",
-                        relationship = "many-to-many") %>%
-      dplyr::arrange(dplyr::desc(n)) %>%
-      dplyr::select(emoji_name, unicode, emoji_category, n)
+    # Expand to one row per alias the emoji is known by. Only the per-alias
+    # `emoji_name` comes from the crosswalk; the `unicode` is always the exact
+    # glyph the extractor returned (never NA, never a differently-qualified
+    # twin) and `emoji_category` is the reference `group`. A left_join means an
+    # emoji with no alias still survives as a single row (emoji_name = NA).
+    freq_head$key <- emoji_key(freq_head$emoji)
+    out <- freq_head %>%
+      dplyr::select(key, emoji, group, n) %>%
+      dplyr::left_join(
+        emoji_unicode_crosswalk %>%
+          dplyr::select(key, emoji_name) %>%
+          dplyr::distinct(),
+        by = "key", relationship = "many-to-many"
+      ) %>%
+      dplyr::transmute(
+        emoji_name     = emoji_name,
+        unicode        = emoji,
+        emoji_category = group,
+        n              = n
+      ) %>%
+      dplyr::arrange(dplyr::desc(n), unicode)
   } else {
-    out <- freq %>%
+    out <- freq_head %>%
       dplyr::transmute(emoji_name = shortcode, unicode = emoji,
                        emoji_category = group, n = n)
   }
 
-  utils::head(out, n)
+  out
 }
