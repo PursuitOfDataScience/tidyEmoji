@@ -1,17 +1,19 @@
 ## Submission notes
 
-This is a feature release (0.4.0; previous CRAN version 0.2.0). Relative to
-0.2.0 it contains three logical releases, documented separately in NEWS.md:
+This is a feature release (0.3.0; previous CRAN version 0.2.0). It contains
+the 0.2.1 correctness patch (documented separately in NEWS.md: codepoint-
+normalised metadata joins, unified emoji detection, `.emoji_n_scored`,
+`top_n_emojis()` fixes, warnings on grouped input) plus the 0.3.0 features:
 
-* 0.2.1 — a correctness patch (codepoint-normalised metadata joins, unified
-  emoji detection, `.emoji_n_scored`, `top_n_emojis()` fixes, warnings on
-  grouped input).
-* 0.3.0 — emoji emotion scoring (`emoji_emotion()`, EmoTag1200 lexicon), a
-  pluggable lexicon API, emoji<->text translation and emoji search.
-* 0.4.0 — relational analysis (`emoji_pairs()`, `emoji_cooccurrence()`,
+* Emoji emotion scoring (`emoji_emotion()`, `emoji_emotion_label()`) with the
+  new bundled EmoTag1200 lexicon, and a pluggable lexicon API
+  (`emoji_lexicons()`, `register_emoji_lexicon()`, `emoji_score()`).
+* Relational analysis (`emoji_pairs()`, `emoji_cooccurrence()`,
   `emoji_ngrams()`), structural metrics (`emoji_position()`,
   `emoji_density()`, `emoji_ratio()`), and `emoji_dfm()` document-by-emoji
   feature tables.
+* Emoji<->text translation (`emoji_to_text()`, `text_to_emoji()`,
+  `as_emoji*()` helpers) and `emoji_search()`.
 
 ## Test environments
 

@@ -1,4 +1,4 @@
-# Tests for the 0.4.0 relational verbs: emoji_pairs / emoji_cooccurrence /
+# Tests for the relational verbs: emoji_pairs / emoji_cooccurrence /
 # emoji_ngrams.
 
 laugh <- "\U0001f602"   # face with tears of joy

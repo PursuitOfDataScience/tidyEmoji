@@ -58,7 +58,7 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
                         sort = TRUE) {
   if (dplyr::is_grouped_df(data)) {
     lifecycle::deprecate_warn(
-      "0.4.0", "emoji_pairs(data = \"must be ungrouped data\")",
+      "0.3.0", "emoji_pairs(data = \"must be ungrouped data\")",
       details = "emoji_pairs() currently ignores groups. Use doc_id to define documents."
     )
     data <- dplyr::ungroup(data)

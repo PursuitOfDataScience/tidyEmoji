@@ -779,7 +779,11 @@ codepoint and rendering work; 1.0 consolidates.
 *Appended after the 0.2.1 + 0.3.0 work landed on the repo. Nothing above this
 line has been altered; this section records what actually shipped, the extra
 defects found by a second audit of the new code, and the concrete design
-decisions locked for 0.4.0 so the roadmap stays a faithful ledger.*
+decisions locked for the roadmap's 0.4.0 phase so the roadmap stays a faithful
+ledger. Since 0.3.0 had not yet reached CRAN when the 0.4.0-phase features
+were built, they ship together as the single CRAN release **0.3.0** (the
+version that follows the published 0.2.0); "0.4.0" below refers to the §9
+roadmap phase, not the package version.*
 
 ### 12.1 Ship report — §4 and the 0.3.0 plan are done
 
@@ -840,7 +844,7 @@ features:
    and `emoji_lexicons()` listed glyph/key columns among a custom lexicon's
    dimensions.
 
-### 12.3 0.4.0 design decisions (locked at implementation)
+### 12.3 0.4.0-phase design decisions (locked at implementation; shipping in the 0.3.0 release)
 
 The §5C/§5F/§5H proposals left semantics open; these are the decisions the
 implementation locked, and why:
@@ -922,11 +926,17 @@ New ideas surfaced while building 0.4.0 — none blocks a release:
 
 ### 12.5 Release ledger
 
-| Logical release | State | Where |
+| Roadmap phase (§9) | State | Where |
 |---|---|---|
-| 0.2.1 correctness patch | ✅ shipped | repo (folded into the 0.3.0 submission) |
-| 0.3.0 affect & translation | ✅ shipped | repo; CRAN submission prepared |
-| 0.4.0 relational & structure | ✅ implemented (this addendum) | repo |
+| 0.2.1 correctness patch | ✅ shipped | repo — folded into the 0.3.0 release |
+| 0.3.0 affect & translation | ✅ shipped | repo — package version 0.3.0 |
+| 0.4.0 relational & structure | ✅ implemented (this addendum) | repo — folded into the 0.3.0 release |
 | 0.5.0 modifiers, flags & representation | ⏳ next | §5D/§5E as planned |
 | 0.6.0 visualization & semantics | ⏳ | §5G/§5I as planned |
 | 1.0.0 stable & integrated | ⏳ | §5J + grouped-df guarantees |
+
+*(Version numbering note: CRAN's published version is 0.2.0, so everything
+above ships as the single next release, package version **0.3.0**. The later
+§9 phase numbers (0.5.0, 0.6.0, 1.0.0) name work packages, and future package
+versions will simply be assigned in sequence from whatever is current when
+they ship.)*

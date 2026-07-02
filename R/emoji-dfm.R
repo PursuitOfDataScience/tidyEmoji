@@ -41,7 +41,7 @@ emoji_dfm <- function(data, text, doc_id = NULL,
   weighting <- match.arg(weighting)
   if (dplyr::is_grouped_df(data)) {
     lifecycle::deprecate_warn(
-      "0.4.0", "emoji_dfm(data = \"must be ungrouped data\")",
+      "0.3.0", "emoji_dfm(data = \"must be ungrouped data\")",
       details = "emoji_dfm() currently ignores groups. Use doc_id to define documents."
     )
     data <- dplyr::ungroup(data)

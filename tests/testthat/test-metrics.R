@@ -1,4 +1,4 @@
-# Tests for the 0.4.0 structural metrics: emoji_position / emoji_density /
+# Tests for the structural metrics: emoji_position / emoji_density /
 # emoji_ratio.
 
 test_that("emoji_position reports first/last/relative positions", {
