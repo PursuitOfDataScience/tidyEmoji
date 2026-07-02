@@ -24,9 +24,11 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 tidyEmoji helps you **discover, count, categorise, sentiment-score, score
-emotions and translate the emoji in any text column** — social-media posts,
-product reviews, chat logs, survey responses, support tickets — and hands the
-result back as tidy data frames that drop straight into a tidyverse workflow.
+emotions, translate and relate the emoji in any text column** — social-media
+posts, product reviews, chat logs, survey responses, support tickets — from
+summary counts through emotion profiles, co-occurrence networks, structural
+metrics and model-ready feature tables, always as tidy data frames that drop
+straight into a tidyverse workflow.
 
 Unicode is awkward to work with and not every code point is an emoji, which
 makes emoji statistics fiddly. tidyEmoji takes care of that, including
@@ -98,6 +100,25 @@ using the bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020).
 reviews %>% emoji_emotion(text) %>% select(text, .emoji_joy, .emoji_trust,
                                            .emoji_anger, .emoji_n)
 reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
+```
+
+### Relate emoji to each other
+
+`emoji_pairs()` returns a graph-ready edge list of the emoji that appear in
+the same entry (`widyr`-style `item1`/`item2`/`n` — pipe it into igraph,
+tidygraph or ggraph), and `emoji_ngrams()` captures consecutive sequences.
+
+```{r}
+reviews %>% emoji_pairs(text)
+```
+
+There are structural metrics too — `emoji_position()` (emoji sit at the end of
+messages), `emoji_density()` and `emoji_ratio()` (emoji-only detection) — and
+`emoji_dfm()` builds a document-by-emoji count/binary/tf-idf table for
+modelling.
+
+```{r}
+reviews %>% emoji_dfm(text) %>% select(1:4)
 ```
 
 ### Bring your own lexicon

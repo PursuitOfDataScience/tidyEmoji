@@ -1,7 +1,6 @@
 ---
 title: "Introduction to tidyEmoji"
 author: 'Youzhi Yu<br><span style="font-weight: 400; font-size: 0.85em;">University of Chicago</span>'
-date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -48,6 +47,9 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Custom lexicons | `emoji_lexicons()`, `register_emoji_lexicon()`, `emoji_score()` |
 | Translate | `emoji_to_text()`, `text_to_emoji()`, `as_emoji*()` |
 | Search | `emoji_search()` |
+| Relate | `emoji_pairs()`, `emoji_cooccurrence()`, `emoji_ngrams()` |
+| Measure | `emoji_position()`, `emoji_density()`, `emoji_ratio()` |
+| Model features | `emoji_dfm()` |
 
 Two design choices are worth highlighting:
 
@@ -426,6 +428,98 @@ emotion columns:
 ```{r}
 register_emoji_lexicon("mine", my_lexicon)
 emoji_lexicons() %>% filter(name == "mine")
+```
+
+## Relating emoji: co-occurrence and sequences
+
+Which emoji appear *together*? `emoji_pairs()` returns a tidy edge list — one
+row per pair of distinct emoji that co-occur in the same entry, with the number
+of entries in which they do. The `item1`/`item2`/`n` shape matches
+`widyr::pairwise_count()` and feeds directly into graph tools such as igraph,
+tidygraph and ggraph:
+
+```{r}
+emoji_edges <- ata_tweets %>%
+  emoji_pairs(full_text)
+
+emoji_edges
+```
+
+The strongest pairings make a readable chart on their own:
+
+```{r, fig.alt = "Horizontal bar chart of the most frequent emoji pairs, labelled by the two glyphs of each pair."}
+emoji_edges %>%
+  slice_max(n, n = 10) %>%
+  mutate(pair = paste(item1, item2),
+         pair = forcats::fct_reorder(pair, n)) %>%
+  ggplot(aes(n, pair)) +
+  geom_col() +
+  labs(x = "Number of entries containing both", y = NULL,
+       title = "Emoji that appear together")
+```
+
+Set `directed = TRUE` to order each pair by first appearance, or supply
+`doc_id` to pool several rows (a conversation, a user, a day) into one
+document. `emoji_cooccurrence(diagonal = TRUE)` additionally returns each
+emoji's document frequency on the diagonal.
+
+Order also matters *within* an entry. `emoji_ngrams()` slides a window over
+each entry's emoji in reading order (any text in between is ignored), which is
+the raw material for sequence and Markov-style analyses:
+
+```{r}
+ata_tweets %>%
+  emoji_ngrams(full_text) %>%
+  count(.emoji_ngram, sort = TRUE)
+```
+
+All the relational verbs canonicalise glyphs through the same
+codepoint-normalised key as the rest of the package, so qualified and
+unqualified forms of one emoji count as a single node.
+
+## Measuring how emoji are used
+
+*Where* emoji sit and *how much* of the text they occupy are studied signals in
+their own right. `emoji_position()` reports each entry's first and last emoji
+position and the mean relative position from 0 (start) to 1 (end):
+
+```{r, fig.alt = "Histogram of the mean relative position of emoji within each entry, showing emoji concentrated towards the end of the text."}
+ata_tweets %>%
+  emoji_position(full_text) %>%
+  filter(!is.na(.emoji_rel_position)) %>%
+  ggplot(aes(.emoji_rel_position)) +
+  geom_histogram(binwidth = 0.05) +
+  labs(x = "Mean relative position of the entry's emoji",
+       y = "Number of entries",
+       title = "Emoji cluster at the end of a message")
+```
+
+`emoji_density()` normalises the emoji count by text length (per character and
+per whitespace-delimited token), and `emoji_ratio()` reports what share of the
+text's characters belong to emoji — including an `.emoji_only` flag for entries
+that are nothing but emoji (and whitespace):
+
+```{r}
+ata_tweets %>%
+  emoji_ratio(full_text) %>%
+  summarise(
+    n_emoji_only = sum(.emoji_only, na.rm = TRUE),
+    mean_ratio   = mean(.emoji_ratio[.emoji_ratio > 0], na.rm = TRUE)
+  )
+```
+
+## Emoji as model features
+
+For classification and regression work, `emoji_dfm()` turns the corpus into a
+document-by-emoji feature table: one row per entry (or per `doc_id`), one
+column per emoji, weighted by counts, binary presence or tf-idf. Every entry is
+kept — emoji-free rows are all zeros — so the table binds row-for-row to your
+outcome columns:
+
+```{r}
+ata_tweets %>%
+  emoji_dfm(full_text, weighting = "tfidf") %>%
+  select(1:6)
 ```
 
 ## Translating emoji to and from text

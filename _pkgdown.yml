@@ -42,6 +42,19 @@ reference:
   - emoji_lexicons
   - register_emoji_lexicon
   - emoji_score
+- title: Relate
+  contents:
+  - emoji_pairs
+  - emoji_cooccurrence
+  - emoji_ngrams
+- title: Measure
+  contents:
+  - emoji_position
+  - emoji_density
+  - emoji_ratio
+- title: Model features
+  contents:
+  - emoji_dfm
 - title: Translate & search
   contents:
   - emoji_to_text
