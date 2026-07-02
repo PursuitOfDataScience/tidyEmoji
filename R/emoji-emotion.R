@@ -7,8 +7,11 @@
 #'
 #' @inheritParams emoji_summary
 #' @param lexicon Lexicon to use. Either a string naming a bundled lexicon
-#'   (`"emotag1200"`, the default) or a registered lexicon (see
-#'   [register_emoji_lexicon()]). Currently only `"emotag1200"` ships.
+#'   (`"emotag1200"`, the default), the name of a registered lexicon (see
+#'   [register_emoji_lexicon()]), or a data frame. A custom lexicon must have an
+#'   `emoji` column and one column per emotion (any subset of the eight Plutchik
+#'   emotions); it is joined through the same codepoint-normalised key as the
+#'   bundled one.
 #' @param long If `TRUE`, return one row per (row, emotion) in long form with
 #'   columns `.emoji_emotion` (the emotion name) and `.emoji_score` (its mean).
 #'   Default `FALSE` adds eight `.emoji_<emotion>` columns plus `.emoji_n` and
@@ -29,17 +32,29 @@
 #' @export
 emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
   lex <- .emoji_lexicon_lookup(lexicon)
-  if (!identical(lex$type, "emotion") && !is.data.frame(lex)) {
-    stop("`emoji_emotion()` requires an emotion lexicon (use 'emotag1200').",
-         call. = FALSE)
+  if (is.list(lex) && !is.data.frame(lex) && identical(lex$type, "custom")) {
+    lex <- lex$tbl
   }
-  emap <- if (is.data.frame(lex)) {
-    # custom registered emotion lexicon: rebuild a key-indexed matrix
-    mat <- as.matrix(lex[, intersect(emoji_emotion_dims(), names(lex))])
-    rownames(mat) <- emoji_key(lex[["emoji"]])
-    mat
+  if (is.data.frame(lex)) {
+    # custom emotion lexicon (a data frame or a registered one): rebuild a
+    # key-indexed matrix over whichever emotion columns it supplies
+    dims_avail <- intersect(emoji_emotion_dims(), names(lex))
+    if (!length(dims_avail) || !any(c("emoji", "key") %in% names(lex))) {
+      stop(paste0(
+        "A custom emotion lexicon needs an `emoji` column and at least one ",
+        "emotion column (anger, anticipation, disgust, fear, joy, sadness, ",
+        "surprise, trust)."
+      ), call. = FALSE)
+    }
+    emap <- as.matrix(lex[, dims_avail, drop = FALSE])
+    rownames(emap) <- .emoji_lexicon_keys(lex)
+  } else if (identical(lex$type, "emotion")) {
+    emap <- emoji_emotion_map()
   } else {
-    emoji_emotion_map()
+    stop(paste0(
+      "`emoji_emotion()` requires an emotion lexicon: 'emotag1200', a ",
+      "registered emotion lexicon, or a data frame with emotion columns."
+    ), call. = FALSE)
   }
   dims <- colnames(emap)
 
@@ -57,7 +72,8 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
     sub <- emap[keys, , drop = FALSE]
     colMeans(sub, na.rm = TRUE)
   }, numeric(length(dims)))
-  row_means <- t(row_means)
+  # vapply returns a plain vector when there is a single emotion column
+  row_means <- if (length(dims) == 1L) matrix(row_means, ncol = 1L) else t(row_means)
   colnames(row_means) <- dims
 
   n_total <- as.integer(lengths(lst))
@@ -107,9 +123,10 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #' @export
 emoji_emotion_label <- function(data, text, lexicon = "emotag1200") {
   em <- emoji_emotion(data, {{ text }}, lexicon = lexicon, long = FALSE)
-  dims <- emoji_emotion_dims()
-  cols <- paste0(".emoji_", dims)
-  mat <- as.matrix(em[, cols])
+  # a custom lexicon may supply only a subset of the eight emotions
+  cols <- intersect(paste0(".emoji_", emoji_emotion_dims()), names(em))
+  dims <- sub("^\\.emoji_", "", cols)
+  mat <- as.matrix(em[, cols, drop = FALSE])
   # break ties in Plutchik order (first max wins via ties.method="first")
   idx <- max.col(mat, ties.method = "first")
   has_score <- rowSums(!is.na(mat)) > 0

@@ -12,8 +12,11 @@ emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
 \item{text}{The text column to scan, supplied unquoted.}
 
 \item{lexicon}{Lexicon to use. Either a string naming a bundled lexicon
-(\code{"emotag1200"}, the default) or a registered lexicon (see
-\code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}}). Currently only \code{"emotag1200"} ships.}
+(\code{"emotag1200"}, the default), the name of a registered lexicon (see
+\code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}}), or a data frame. A custom lexicon must have an
+\code{emoji} column and one column per emotion (any subset of the eight Plutchik
+emotions); it is joined through the same codepoint-normalised key as the
+bundled one.}
 
 \item{long}{If \code{TRUE}, return one row per (row, emotion) in long form with
 columns \code{.emoji_emotion} (the emotion name) and \code{.emoji_score} (its mean).

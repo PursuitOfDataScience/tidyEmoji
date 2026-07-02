@@ -15,7 +15,9 @@ emoji_tweets(data, text)
 \item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A tibble containing only the rows with at least one emoji.
+A tibble containing only the rows with at least one emoji. The
+result is always a plain (ungrouped) tibble, whatever the class or
+grouping of the input.
 }
 \description{
 \code{emoji_filter()} returns the rows of \code{data} whose text column contains at

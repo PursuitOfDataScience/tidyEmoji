@@ -12,7 +12,8 @@ text_to_emoji(data, text)
 \item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-\code{data}, as a tibble, with the text column rewritten in place.
+\code{data}, as a tibble, with the text column rewritten in place. \code{NA}
+entries stay \code{NA}.
 }
 \description{
 \code{text_to_emoji()} returns a copy of \code{data} with its text column rewritten so

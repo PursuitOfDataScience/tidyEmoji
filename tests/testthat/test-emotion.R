@@ -69,6 +69,34 @@ test_that("emoji_score accepts a data frame lexicon directly", {
   expect_equal(out$.emoji_score, 0.5)
 })
 
+test_that("emoji_emotion works with a registered custom emotion lexicon", {
+  own <- data.frame(emoji = c("\U0001f600", "\U0001f62d"),
+                    joy = c(1, 0), sadness = c(0, 1))
+  register_emoji_lexicon("test_emotions", own)
+  df <- data.frame(text = c("yay \U0001f600", "boo \U0001f62d", "meh"))
+  out <- emoji_emotion(df, text, lexicon = "test_emotions")
+  expect_equal(out$.emoji_joy, c(1, 0, NA))
+  expect_equal(out$.emoji_sadness, c(0, 1, NA))
+  lab <- emoji_emotion_label(df, text, lexicon = "test_emotions")
+  expect_equal(lab$.emoji_emotion, c("joy", "sadness", NA))
+})
+
+test_that("emoji_emotion handles a single-emotion custom lexicon", {
+  register_emoji_lexicon("test_joy_only",
+                         data.frame(emoji = "\U0001f600", joy = 1))
+  out <- emoji_emotion(data.frame(text = c("yay \U0001f600", "meh")), text,
+                       lexicon = "test_joy_only")
+  expect_equal(out$.emoji_joy, c(1, NA))
+})
+
+test_that("emoji_emotion rejects a lexicon without emotion columns", {
+  expect_error(
+    emoji_emotion(data.frame(text = "\U0001f600"), text,
+                  lexicon = data.frame(emoji = "\U0001f600", score = 1)),
+    "emotion column"
+  )
+})
+
 test_that("emoji_score with a bundled named lexicon works", {
   out <- emoji_score(data.frame(text = "love \U0001f60d"), text,
                      lexicon = "novak2015")
@@ -104,6 +132,21 @@ test_that("emoji_to_text replaces emoji with shortcodes", {
 test_that("emoji_to_text resolves qualified emoji (U+FE0F)", {
   out <- emoji_to_text(data.frame(text = "\u2764\ufe0f"), text, format = "name")
   expect_match(out$text, "red heart")
+})
+
+test_that("emoji_to_text honours a custom wrap template", {
+  out <- emoji_to_text(data.frame(text = "hi \U0001f600"), text,
+                       format = "shortcode", wrap = "<<{x}>>")
+  expect_equal(out$text, "hi <<grinning>>")
+})
+
+test_that("emoji_to_text and text_to_emoji keep NA entries as NA", {
+  out <- emoji_to_text(data.frame(text = c(NA, "hi \U0001f600")), text)
+  expect_true(is.na(out$text[1]))
+  expect_match(out$text[2], "grinning face")
+  back <- text_to_emoji(data.frame(text = c(NA, ":grinning:")), text)
+  expect_true(is.na(back$text[1]))
+  expect_equal(back$text[2], "\U0001f600")
 })
 
 test_that("text_to_emoji inverts emoji_to_text(shortcode)", {
@@ -150,4 +193,14 @@ test_that("emoji_search returns an empty typed tibble on no match", {
   out <- emoji_search("zzzznotarealquery")
   expect_equal(nrow(out), 0)
   expect_named(out, c("emoji","name","shortcode","group","keyword"))
+})
+
+test_that("emoji_search is safe for regex metacharacters", {
+  # "+1" is a real GitHub-style alias (thumbs up); "(" appears in some
+  # keywords. Neither may error, and matching must be literal.
+  plus1 <- emoji_search("+1")
+  expect_gt(nrow(plus1), 0)
+  expect_true("\U0001f44d" %in% plus1$emoji)
+  expect_no_error(emoji_search("("))
+  expect_equal(nrow(emoji_search("a[b")), 0)
 })

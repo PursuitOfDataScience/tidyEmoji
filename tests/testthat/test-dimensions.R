@@ -16,7 +16,9 @@ test_that("emoji_summary counts emoji and total entries", {
 test_that("emoji_filter / emoji_tweets keep only emoji rows and return a tibble", {
   expect_equal(nrow(emoji_filter(df, tweets)), 3)
   expect_s3_class(emoji_filter(df, tweets), "tbl_df")
-  expect_identical(emoji_tweets(df, tweets), emoji_filter(df, tweets))
+  expect_warning(via_synonym <- emoji_tweets(df, tweets),
+                 class = "lifecycle_warning_deprecated")
+  expect_identical(via_synonym, emoji_filter(df, tweets))
 })
 
 test_that("top_n_emojis returns the most frequent emoji by canonical shortcode", {

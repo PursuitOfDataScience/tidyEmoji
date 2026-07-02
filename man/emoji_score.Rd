@@ -24,7 +24,9 @@ score column.}
 \value{
 \code{data}, as a tibble, with \code{.emoji_score} (per-row mean),
 \code{.emoji_n_scored} (emoji found in the lexicon) and \code{.emoji_n} (total emoji)
-added.
+added. For the multi-dimensional \code{"emotag1200"} lexicon the score is the
+mean over its eight emotion dimensions; use \code{\link[=emoji_emotion]{emoji_emotion()}} for the
+per-emotion profile.
 }
 \description{
 \code{emoji_score()} is the generic scorer that the friendly verbs

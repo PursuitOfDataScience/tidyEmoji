@@ -12,7 +12,9 @@ emoji_frequency(data, text)
 \item{text}{The text column to scan, supplied unquoted.}
 }
 \value{
-A tibble with columns \code{emoji}, \code{name}, \code{shortcode}, \code{group} and \code{n}.
+A tibble with columns \code{emoji}, \code{name}, \code{shortcode}, \code{group} and \code{n},
+sorted by descending \code{n} with ties broken by the glyph so the order is
+deterministic.
 }
 \description{
 \code{emoji_frequency()} counts how often each emoji appears across the whole text

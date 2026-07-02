@@ -99,12 +99,7 @@ emoji_emotion_dims <- function() {
   if (!is.data.frame(tbl)) {
     stop("`tbl` must be a data frame.", call. = FALSE)
   }
-  if (!by %in% names(tbl)) {
-    stop(sprintf("Lexicon has no column `%s` to map glyphs from.", by),
-         call. = FALSE)
-  }
-  glyphs <- tbl[[by]]
-  keys <- emoji_key(glyphs)
+  keys <- .emoji_lexicon_keys(tbl, by)
   if (is.null(score)) {
     # heuristic: prefer 'sentiment_score', then 'score'
     score <- intersect(c("sentiment_score", "score"), names(tbl))[1L]
@@ -119,6 +114,21 @@ emoji_emotion_dims <- function() {
   s <- tbl[[score]]
   out <- stats::setNames(s, keys)
   out[!is.na(keys) & keys != ""]
+}
+
+# Normalised join keys for a lexicon table: prefer the glyph column `by`, and
+# fall back to a pre-computed `key` column (as stored by
+# register_emoji_lexicon()) so registered lexicons resolve regardless of what
+# their glyph column was called.
+.emoji_lexicon_keys <- function(tbl, by = "emoji") {
+  if (by %in% names(tbl)) {
+    emoji_key(tbl[[by]])
+  } else if ("key" %in% names(tbl)) {
+    as.character(tbl[["key"]])
+  } else {
+    stop(sprintf("Lexicon has no column `%s` to map glyphs from.", by),
+         call. = FALSE)
+  }
 }
 
 # Name --> tidy key index. Resolve a requested lexicon to a record or table.

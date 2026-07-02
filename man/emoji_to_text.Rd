@@ -12,16 +12,17 @@ emoji_to_text(data, text, format = c("name", "shortcode"), wrap = ":{x}:")
 \item{text}{The text column to scan, supplied unquoted.}
 
 \item{format}{Output form: \code{"name"} (the Unicode name, e.g.
-"grinning face") or \code{"shortcode"} (e.g. "grinning", wrapped as
-":grinning:"). Default \code{"name"}.}
+"grinning face") or \code{"shortcode"} (the canonical GitHub-style alias, e.g.
+"grinning", wrapped as ":grinning:"). Default \code{"name"}.}
 
 \item{wrap}{When \code{format = "shortcode"}, the wrapper applied to each
-shortcode, written as a \link[glue:glue]{glue}-style template with \code{{x}} as the
-shortcode. Default \code{":{x}:"}. Ignored for \code{format = "name"}.}
+shortcode, written as a template with \code{{x}} standing for the shortcode.
+Default \code{":{x}:"}. Ignored for \code{format = "name"}.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same
-column name).
+column name). \code{NA} entries stay \code{NA}, and emoji with no known name are left
+in place unchanged.
 }
 \description{
 \code{emoji_to_text()} returns a copy of \code{data} with its text column rewritten so

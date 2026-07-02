@@ -22,6 +22,25 @@
 
 ## Improvements and fixes
 
+* `emoji_search()` matches literally, so queries containing regex
+  metacharacters (for example the `+1` alias) are safe and cannot error.
+* `emoji_to_text(format = "shortcode")` now always emits the emoji's canonical
+  (first) GitHub-style alias — the same one reported by `emoji_frequency()` and
+  `as_emoji_shortcode()` — and the `wrap` template is honoured. Emoji with no
+  known name/shortcode are left in place rather than dropped from the text.
+* `emoji_to_text()` and `text_to_emoji()` keep `NA` text entries as `NA`.
+* `emoji_emotion()` and `emoji_emotion_label()` accept registered or
+  data-frame emotion lexicons (any subset of the eight Plutchik dimensions),
+  not just the bundled `"emotag1200"`.
+* Registered lexicons resolve through their stored normalised key, so
+  `register_emoji_lexicon(by = )` works with any glyph column name in
+  `emoji_sentiment()` and `emoji_emotion()`.
+* `emoji_frequency()` (and therefore `top_n_emojis()`) breaks count ties by
+  the glyph, making the output order deterministic.
+* `emoji_lexicons()` no longer lists a custom lexicon's glyph/key columns among
+  its score dimensions.
+* The package help page (`?tidyEmoji`) documents the output and naming
+  contract shared by all verbs.
 * DESCRIPTION Title and Description broadened to cover emotions, translation and
   search; version bumped to 0.3.0.
 

@@ -39,7 +39,9 @@ emoji_summary <- function(data, text) {
 #' synonym retained for backward compatibility.
 #'
 #' @inheritParams emoji_summary
-#' @return A tibble containing only the rows with at least one emoji.
+#' @return A tibble containing only the rows with at least one emoji. The
+#'   result is always a plain (ungrouped) tibble, whatever the class or
+#'   grouping of the input.
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600", "no emoji", "bye \U0001f44b"))
 #' emoji_filter(df, text)

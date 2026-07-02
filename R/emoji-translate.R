@@ -8,13 +8,14 @@
 #'
 #' @inheritParams emoji_summary
 #' @param format Output form: `"name"` (the Unicode name, e.g.
-#'   "grinning face") or `"shortcode"` (e.g. "grinning", wrapped as
-#'   ":grinning:"). Default `"name"`.
+#'   "grinning face") or `"shortcode"` (the canonical GitHub-style alias, e.g.
+#'   "grinning", wrapped as ":grinning:"). Default `"name"`.
 #' @param wrap When `format = "shortcode"`, the wrapper applied to each
-#'   shortcode, written as a [glue][glue::glue]-style template with `{x}` as the
-#'   shortcode. Default `":{x}:"`. Ignored for `format = "name"`.
+#'   shortcode, written as a template with `{x}` standing for the shortcode.
+#'   Default `":{x}:"`. Ignored for `format = "name"`.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
-#'   column name).
+#'   column name). `NA` entries stay `NA`, and emoji with no known name are left
+#'   in place unchanged.
 #' @seealso [text_to_emoji()] for the inverse (emojize); [as_emoji_name()],
 #'   [as_emoji_shortcode()], [as_emoji()] for vector helpers.
 #' @examples
@@ -26,31 +27,32 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
                           wrap = ":{x}:") {
   format <- match.arg(format)
   v <- as.character(dplyr::pull(data, {{ text }}))
-  v[is.na(v)] <- ""
+  was_na <- is.na(v)
+  v[was_na] <- ""
 
   lst <- emoji_glyph_list(v)
   ref <- emoji_reference()
 
+  # Map every unique glyph to its replacement once, then splice per row.
+  # Shortcodes use the canonical (first) GitHub-style alias, the same one
+  # reported by emoji_frequency() and as_emoji_shortcode(), so the output is
+  # deterministic and locale-independent.
   if (format == "name") {
-    # Map every unique glyph to its Unicode name once, then replace in order.
-    all_glyphs <- unique(unlist(lst, use.names = FALSE))
-    name_lookup <- stats::setNames(ref$name, ref$key)
-    key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
-    rewritten <- vapply(seq_along(v), function(i) {
-      g <- lst[[i]]
-      if (!length(g)) return(v[[i]])
-      keys <- key_lookup[g]
-      names <- name_lookup[keys]
-      .emoji_replace_in_order(v[[i]], g, names)
-    }, character(1))
+    rpl_lookup <- stats::setNames(ref$name, ref$key)
   } else {
-    # Shortcode: delegate to emoji::emoji_replace_name() ("":shortcode:""),
-    # then re-wrap if a non-default wrapper was requested.
-    rewritten <- emoji::emoji_replace_name(v)
-    if (!identical(wrap, ":{x}:")) {
-      rewritten <- .emoji_rewrap(rewritten, wrap)
-    }
+    wrapped <- vapply(ref$shortcode, function(s) {
+      if (is.na(s)) NA_character_ else gsub("{x}", s, wrap, fixed = TRUE)
+    }, character(1), USE.NAMES = FALSE)
+    rpl_lookup <- stats::setNames(wrapped, ref$key)
   }
+  all_glyphs <- unique(unlist(lst, use.names = FALSE))
+  key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
+  rewritten <- vapply(seq_along(v), function(i) {
+    g <- lst[[i]]
+    if (!length(g)) return(v[[i]])
+    .emoji_replace_in_order(v[[i]], g, rpl_lookup[key_lookup[g]])
+  }, character(1))
+  rewritten[was_na] <- NA_character_
 
   out <- tibble::as_tibble(data)
   col_name <- .emoji_col_name(data, {{ text }})
@@ -81,14 +83,15 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   if (nrow(locs) != length(glyphs)) {
     for (k in seq_along(glyphs)) {
       r <- replacements[k]
-      if (is.na(r)) r <- ""
+      if (is.na(r)) next   # unknown emoji: leave the glyph in place
       str <- sub(glyphs[k], r, str, fixed = TRUE)
     }
     return(str)
   }
   bp <- locs[, "start"]
   ep <- locs[, "end"]
-  rpls <- ifelse(is.na(replacements), "", replacements)
+  # unknown emoji keep their glyph rather than vanishing
+  rpls <- ifelse(is.na(replacements), glyphs, replacements)
   # Splice: prefix + replacement + middle + ... + suffix.
   pieces <- character(2L * length(bp) + 1L)
   prev <- 1L
@@ -103,18 +106,6 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   paste0(pieces, collapse = "")
 }
 
-# Internal: re-wrap :shortcode: tokens into a custom wrap template ("{x}").
-.emoji_rewrap <- function(str, wrap) {
-  m <- gregexpr(":[^:]+:", str)
-  regmatches(str, m) <- lapply(regmatches(str, m), function(toks) {
-    vapply(toks, function(t) {
-      sc <- substr(t, 2L, nchar(t) - 1L)
-      gsub("\\{x\\}", sc, wrap, fixed = TRUE)
-    }, character(1))
-  })
-  str
-}
-
 
 #' Replace shortcodes with emoji (emojize)
 #'
@@ -124,7 +115,8 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' that do not match a known emoji are left unchanged.
 #'
 #' @inheritParams emoji_summary
-#' @return `data`, as a tibble, with the text column rewritten in place.
+#' @return `data`, as a tibble, with the text column rewritten in place. `NA`
+#'   entries stay `NA`.
 #' @seealso [emoji_to_text()]; [as_emoji()] for the vector helper.
 #' @examples
 #' df <- data.frame(text = "hi :grinning: bye :waving_hand:")
@@ -132,6 +124,8 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' @export
 text_to_emoji <- function(data, text) {
   v <- as.character(dplyr::pull(data, {{ text }}))
+  was_na <- is.na(v)
+  v[was_na] <- ""
   name_map <- emoji::emoji_name   # named vector: name -> glyph
   m <- gregexpr(":[^:]+:", v)
   regmatches(v, m) <- lapply(regmatches(v, m), function(toks) {
@@ -141,6 +135,7 @@ text_to_emoji <- function(data, text) {
       if (is.na(g)) t else g
     }, character(1))
   })
+  v[was_na] <- NA_character_
   out <- tibble::as_tibble(data)
   col_name <- .emoji_col_name(data, {{ text }})
   out[[col_name]] <- v

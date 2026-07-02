@@ -29,7 +29,9 @@ emoji_lexicons <- function() {
     custom <- tibble::tibble(
       name = names(reg),
       type = "custom",
-      dimensions = I(lapply(reg, function(x) names(x))),
+      dimensions = I(lapply(reg, function(x) {
+        setdiff(names(x), c("emoji", "key", "name"))
+      })),
       n = vapply(reg, nrow, integer(1)),
       source = "user-registered",
       licence = NA_character_
@@ -99,7 +101,9 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'   `"sentiment_score"` then `"score"` are tried.
 #' @return `data`, as a tibble, with `.emoji_score` (per-row mean),
 #'   `.emoji_n_scored` (emoji found in the lexicon) and `.emoji_n` (total emoji)
-#'   added.
+#'   added. For the multi-dimensional `"emotag1200"` lexicon the score is the
+#'   mean over its eight emotion dimensions; use [emoji_emotion()] for the
+#'   per-emotion profile.
 #' @seealso [emoji_lexicons()], [register_emoji_lexicon()].
 #' @examples
 #' df <- data.frame(text = c("love \U0001f60d", "angry \U0001f621", "meh"))

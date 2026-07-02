@@ -6,7 +6,9 @@
 #' category.
 #'
 #' @inheritParams emoji_summary
-#' @return A tibble with columns `emoji`, `name`, `shortcode`, `group` and `n`.
+#' @return A tibble with columns `emoji`, `name`, `shortcode`, `group` and `n`,
+#'   sorted by descending `n` with ties broken by the glyph so the order is
+#'   deterministic.
 #' @seealso [top_n_emojis()] for just the most frequent emoji.
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f600", "\U0001f621"))
@@ -27,7 +29,9 @@ emoji_frequency <- function(data, text) {
                           n = integer()))
   }
   counts <- tibble::tibble(emoji = glyphs) %>%
-    dplyr::count(emoji, name = "n", sort = TRUE)
+    dplyr::count(emoji, name = "n") %>%
+    # stable secondary sort key so ties don't depend on input order
+    dplyr::arrange(dplyr::desc(n), emoji)
   ref <- emoji_reference()
   idx <- match(emoji_key(counts$emoji), ref$key)
   counts$name      <- ref$name[idx]

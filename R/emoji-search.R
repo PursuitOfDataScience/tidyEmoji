@@ -18,17 +18,17 @@ emoji_search <- function(query) {
   if (!is.character(query) || length(query) != 1L || !nzchar(query)) {
     stop("`query` must be a single non-empty string.", call. = FALSE)
   }
-  ref <- emoji_reference()
   e <- emoji::emojis
   pat <- tolower(query)
 
-  # keyword match
-  kw_hit <- vapply(e$keywords, function(k) any(grepl(pat, k, ignore.case = TRUE)),
+  # Fixed (non-regex) substring matching on lower-cased text, so queries
+  # containing regex metacharacters (e.g. the "+1" alias) are safe.
+  kw_hit <- vapply(e$keywords,
+                   function(k) any(grepl(pat, tolower(k), fixed = TRUE)),
                    logical(1))
-  # name match
-  nm_hit <- grepl(pat, e$name, ignore.case = TRUE)
-  # alias match
-  al_hit <- vapply(e$aliases, function(a) any(grepl(pat, a, ignore.case = TRUE)),
+  nm_hit <- grepl(pat, tolower(e$name), fixed = TRUE)
+  al_hit <- vapply(e$aliases,
+                   function(a) any(grepl(pat, tolower(a), fixed = TRUE)),
                    logical(1))
   hit <- kw_hit | nm_hit | al_hit
 
@@ -40,7 +40,7 @@ emoji_search <- function(query) {
 
   matched_kw <- vapply(which(hit), function(i) {
     k <- unlist(e$keywords[[i]])
-    k <- k[grepl(pat, k, ignore.case = TRUE)]
+    k <- k[grepl(pat, tolower(k), fixed = TRUE)]
     if (!length(k)) "" else paste(unique(k), collapse = ", ")
   }, character(1))
 

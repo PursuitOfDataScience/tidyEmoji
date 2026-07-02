@@ -14,6 +14,12 @@ test_that("emoji_frequency returns an empty, typed tibble when there are no emoj
   expect_named(out, c("emoji", "name", "shortcode", "group", "n"))
 })
 
+test_that("emoji_frequency breaks ties deterministically (by glyph)", {
+  a <- emoji_frequency(data.frame(text = c("\U0001f621", "\U0001f600")), text)
+  b <- emoji_frequency(data.frame(text = c("\U0001f600", "\U0001f621")), text)
+  expect_identical(a, b)
+})
+
 test_that("top_n_emojis(duplicated = TRUE) lists multiple names per glyph", {
   df <- data.frame(text = "\U0001f637")
   dup <- top_n_emojis(df, text, duplicated = TRUE)
