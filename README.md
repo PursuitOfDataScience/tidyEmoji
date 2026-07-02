@@ -157,10 +157,34 @@ reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
 #> 5 Shipped fast 🏁😀              2               1 joy
 ```
 
+### Bring your own lexicon
+
+The scoring machinery is pluggable: `emoji_lexicons()` lists what’s
+available, `register_emoji_lexicon()` adds your own, and `emoji_score()`
+scores a text column against any of them — always joining through a
+codepoint-normalised key, so qualified and unqualified emoji forms both
+match.
+
+``` r
+my_lexicon <- data.frame(emoji = c("\U0001f600", "\U0001f621"),
+                         score = c(1, -1))
+reviews %>% emoji_score(text, lexicon = my_lexicon)
+#> # A tibble: 5 × 4
+#>   text                    .emoji_score .emoji_n_scored .emoji_n
+#>   <chr>                          <dbl>           <int>    <int>
+#> 1 Best purchase ever 😀😍            1               1        2
+#> 2 It broke after a day 😡           -1               1        1
+#> 3 Does the job.                     NA              NA        0
+#> 4 Wearing my mask 😷😷              NA               0        2
+#> 5 Shipped fast 🏁😀                  1               1        2
+```
+
 ### Translate emoji to and from text
 
 `emoji_to_text()` replaces emoji with words (handy for accessibility and
-NLP preprocessing); `text_to_emoji()` is the inverse.
+NLP preprocessing); `text_to_emoji()` is the inverse. `as_emoji_name()`,
+`as_emoji_shortcode()` and `as_emoji()` are the vector-level
+equivalents.
 
 ``` r
 reviews %>% emoji_to_text(text, format = "name")
@@ -174,13 +198,13 @@ reviews %>% emoji_to_text(text, format = "name")
 #> 5 Shipped fast chequered flaggrinning face
 reviews %>% emoji_to_text(text, format = "shortcode")
 #> # A tibble: 5 × 1
-#>   text                                                       
-#>   <chr>                                                      
-#> 1 Best purchase ever :grinning::smiling_face_with_heart_eyes:
-#> 2 It broke after a day :rage:                                
-#> 3 Does the job.                                              
-#> 4 Wearing my mask :mask::mask:                               
-#> 5 Shipped fast :chequered_flag::grinning:
+#>   text                                     
+#>   <chr>                                    
+#> 1 Best purchase ever :grinning::heart_eyes:
+#> 2 It broke after a day :rage:              
+#> 3 Does the job.                            
+#> 4 Wearing my mask :mask::mask:             
+#> 5 Shipped fast :checkered_flag::grinning:
 ```
 
 You can also search the emoji catalogue by keyword:
@@ -202,3 +226,11 @@ emoji_search("happy")
 #> 10 ☺     smiling face                    smiling_face          Smileys … happy  
 #> # ℹ 17 more rows
 ```
+
+## Learn more
+
+The [introductory
+vignette](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html)
+(`vignette("introduction", package = "tidyEmoji")`) walks through a full
+analysis of a real corpus — counting, categorising, sentiment- and
+emotion-scoring emoji, and plotting the results.

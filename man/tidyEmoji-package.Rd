@@ -8,6 +8,20 @@
 \description{
 A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. 'tidyEmoji' extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), and searches the emoji catalogue, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a 'tidyverse' workflow. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) \doi{10.1371/journal.pone.0144296}, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb & de Melo (2020) \url{https://aclanthology.org/2020.emnlp-main.720/}, released under the MIT licence.
 }
+\section{Output and naming contract}{
+
+Every verb follows \code{verb(data, text, ...)}, takes the text column unquoted,
+and returns a tibble. Columns \emph{added to your data} carry a dotted
+\verb{.emoji_*} prefix (\code{.emoji}, \code{.emoji_name}, \code{.emoji_category},
+\code{.emoji_sentiment}, \code{.emoji_n}, ...) so they cannot collide with your own
+columns; \emph{new summary tibbles} (e.g. \code{\link[=emoji_frequency]{emoji_frequency()}}) use bare names.
+\code{group} always refers to the Unicode top-level category (the term used by
+the underlying \code{emoji::emojis} table). Every glyph-to-metadata join is
+normalised through a codepoint key that strips the \code{U+FE0F} variation
+selector, so qualified and unqualified emoji forms resolve identically in
+every verb.
+}
+
 \seealso{
 Useful links:
 \itemize{

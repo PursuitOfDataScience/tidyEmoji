@@ -45,6 +45,7 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Categorise | `emoji_categorize()` |
 | Score sentiment | `emoji_sentiment()` |
 | Score emotions | `emoji_emotion()`, `emoji_emotion_label()` |
+| Custom lexicons | `emoji_lexicons()`, `register_emoji_lexicon()`, `emoji_score()` |
 | Translate | `emoji_to_text()`, `text_to_emoji()`, `as_emoji*()` |
 | Search | `emoji_search()` |
 
@@ -392,9 +393,40 @@ ata_tweets %>%
 ```
 
 The emotion scores join through the same codepoint-normalised key as sentiment,
-so emoji carrying the `U+FE0F` variation selector resolve correctly. The lexicon
-API is pluggable — see `emoji_lexicons()`, `register_emoji_lexicon()` and the
-generic `emoji_score()` to bring your own lexicon.
+so emoji carrying the `U+FE0F` variation selector resolve correctly.
+
+## Bringing your own lexicon
+
+Sentiment and emotion scoring share one pluggable engine. `emoji_lexicons()`
+lists the bundled lexicons (plus any you have registered):
+
+```{r}
+emoji_lexicons()
+```
+
+`emoji_score()` is the generic scorer underneath `emoji_sentiment()`: give it
+any data frame with an emoji column and a score column — say, scores tailored
+to your own domain — and it returns the per-row mean, joined through the same
+codepoint-normalised key as everything else:
+
+```{r}
+my_lexicon <- data.frame(
+  emoji = c("\U0001f600", "\U0001f621", "\U0001f637"),
+  score = c(1, -1, -0.5)
+)
+
+data.frame(text = c("great \U0001f600", "bad \U0001f621\U0001f637", "none")) %>%
+  emoji_score(text, lexicon = my_lexicon)
+```
+
+`register_emoji_lexicon()` stores a lexicon under a name for the session, so
+you can refer to it in `emoji_score()` — or in `emoji_emotion()`, if it carries
+emotion columns:
+
+```{r}
+register_emoji_lexicon("mine", my_lexicon)
+emoji_lexicons() %>% filter(name == "mine")
+```
 
 ## Translating emoji to and from text
 
@@ -407,14 +439,31 @@ inverse.
 demo <- data.frame(text = "great \U0001f600 love \u2764\ufe0f")
 demo %>% emoji_to_text(text, format = "name")
 demo %>% emoji_to_text(text, format = "shortcode")
+demo %>%
+  emoji_to_text(text, format = "shortcode") %>%
+  text_to_emoji(text)
 ```
 
-For ad-hoc, vector-level use there are also `as_emoji_name()`,
-`as_emoji_shortcode()` and `as_emoji()`, and `emoji_search()` to look up emoji
-by keyword:
+Note that the qualified heart (which carries the `U+FE0F` variation selector)
+translates just as reliably as any other emoji, thanks to the normalised join
+key. For ad-hoc, vector-level use there are also `as_emoji_name()`,
+`as_emoji_shortcode()` and `as_emoji()`:
+
+```{r}
+as_emoji_name(c("\U0001f600", "\u2764\ufe0f"))
+as_emoji_shortcode(c("\U0001f600", "\u2764\ufe0f"))
+as_emoji(c("grinning", "heart"))
+```
+
+## Searching the emoji catalogue
+
+`emoji_search()` looks emoji up by keyword, name or shortcode
+(case-insensitive, literal matching), returning a tidy tibble you can filter
+further or feed into the other verbs:
 
 ```{r}
 emoji_search("happy")
+emoji_search("celebration")
 ```
 
 ## Bundled datasets

@@ -100,10 +100,24 @@ reviews %>% emoji_emotion(text) %>% select(text, .emoji_joy, .emoji_trust,
 reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
 ```
 
+### Bring your own lexicon
+
+The scoring machinery is pluggable: `emoji_lexicons()` lists what's available,
+`register_emoji_lexicon()` adds your own, and `emoji_score()` scores a text
+column against any of them — always joining through a codepoint-normalised key,
+so qualified and unqualified emoji forms both match.
+
+```{r}
+my_lexicon <- data.frame(emoji = c("\U0001f600", "\U0001f621"),
+                         score = c(1, -1))
+reviews %>% emoji_score(text, lexicon = my_lexicon)
+```
+
 ### Translate emoji to and from text
 
 `emoji_to_text()` replaces emoji with words (handy for accessibility and NLP
-preprocessing); `text_to_emoji()` is the inverse.
+preprocessing); `text_to_emoji()` is the inverse. `as_emoji_name()`,
+`as_emoji_shortcode()` and `as_emoji()` are the vector-level equivalents.
 
 ```{r}
 reviews %>% emoji_to_text(text, format = "name")
@@ -115,3 +129,11 @@ You can also search the emoji catalogue by keyword:
 ```{r}
 emoji_search("happy")
 ```
+
+## Learn more
+
+The [introductory
+vignette](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html)
+(`vignette("introduction", package = "tidyEmoji")`) walks through a full
+analysis of a real corpus — counting, categorising, sentiment- and
+emotion-scoring emoji, and plotting the results.
