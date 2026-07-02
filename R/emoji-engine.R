@@ -69,6 +69,20 @@ emoji_has <- function(x) {
   lengths(emoji_glyph_list(x)) > 0L
 }
 
+# Canonical glyph identity for the relational verbs (pairs / co-occurrence /
+# n-grams / dfm): map each extracted glyph to the reference glyph that shares
+# its codepoint key, so qualified ("❤️") and unqualified ("❤")
+# forms of the same emoji count as one item / node / feature. Glyphs unknown to
+# the reference pass through unchanged.
+emoji_canonical <- function(glyphs) {
+  if (!length(glyphs)) return(character(0))
+  ref <- emoji_reference()
+  idx <- match(emoji_key(glyphs), ref$key)
+  out <- ref$emoji[idx]
+  out[is.na(idx)] <- glyphs[is.na(idx)]
+  out
+}
+
 # Emotion map -------------------------------------------------------------
 # Named matrix of emotion scores, rows indexed by emoji_key() so emoji carrying
 # U+FE0F resolve exactly like sentiment. Cached for the session.

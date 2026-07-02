@@ -1,3 +1,38 @@
+# tidyEmoji 0.4.0
+
+## New features
+
+* Relational analysis. `emoji_pairs()` returns a tidy, graph-ready edge list
+  (`item1`, `item2`, `n`) of the emoji that co-occur in the same document —
+  each row is a document, or supply `doc_id` to pool rows — with
+  `directed = TRUE` to order pairs by first appearance. `emoji_cooccurrence()`
+  is the same with an optional `diagonal` (each emoji's document frequency).
+  `emoji_ngrams()` slides a window over each row's emoji in reading order and
+  returns one row per consecutive n-gram.
+* Structural metrics. `emoji_position()` reports where emoji sit in each text
+  (first/last character position and mean relative position in `[0, 1]`),
+  `emoji_density()` reports emoji per character and per token, and
+  `emoji_ratio()` reports the share of the text's characters that are emoji
+  plus an `.emoji_only` flag.
+* `emoji_dfm()` builds a document-by-emoji feature table (weightings: counts,
+  binary, tf-idf), keeping every document — including emoji-free ones — so the
+  result binds row-for-row to outcome columns in modelling workflows.
+* The four corpus-level verbs above canonicalise glyphs through the package's
+  codepoint key, so qualified and unqualified forms of the same emoji (for
+  example the victory hand with and without `U+FE0F`) count as one
+  node/feature. `emoji_frequency()` intentionally still reports the exact
+  extracted glyph.
+
+## Improvements and fixes
+
+* rlang moved from Suggests to Imports (tidy-eval capture of the new optional
+  `doc_id` argument); it was already a hard transitive dependency, so the
+  installed footprint is unchanged.
+* Grouped data frames passed to `emoji_pairs()`, `emoji_cooccurrence()` or
+  `emoji_dfm()` warn that grouping is ignored — use `doc_id` to express
+  per-group structure.
+* The vignette header no longer carries a build date.
+
 # tidyEmoji 0.3.0
 
 ## New features
