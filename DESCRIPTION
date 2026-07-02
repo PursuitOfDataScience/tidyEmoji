@@ -7,8 +7,6 @@ Authors@R:
              family = "Yu",
              role = c("aut", "cre"),
              email = "yuyouzhi666@icloud.com"))
-Author: Youzhi Yu
-Maintainer: Youzhi Yu <yuyouzhi666@icloud.com>
 Description: A tidy toolkit for working with the emoji in any text column, such
     as social-media posts, product reviews, chat logs or survey responses.
     Unicode is awkward to handle and not every code point is an emoji, which
