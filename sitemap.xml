@@ -10,6 +10,9 @@
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/category_unicode_crosswalk.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.html</loc></url>
@@ -18,6 +21,10 @@
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.html</loc></url>

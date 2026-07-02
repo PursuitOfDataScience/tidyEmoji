@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -256,15 +256,15 @@
 <p><strong>Why.</strong> A rich research literature studies <strong>which emoji appear together</strong> and <strong>in what order</strong> (co-occurrence networks, directed “EmojiNet” sequence graphs, power-law structure, topic-specific clusters). None of this is available tidily in R. This is a flagship, differentiating capability.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># tidy edge list of co-occurring emoji within the same text (à la widyr)</span></span>
-<span><span class="fu">emoji_pairs</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, doc_id <span class="op">=</span> <span class="cn">NULL</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, doc_id <span class="op">=</span> <span class="cn">NULL</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; columns: item1, item2, n   (undirected by default; directed = TRUE for order)</span></span>
 <span></span>
 <span><span class="co"># alias / fuller form</span></span>
-<span><span class="fu">emoji_cooccurrence</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, diagonal <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, diagonal <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># ordered sequences within a text</span></span>
-<span><span class="fu">emoji_ngrams</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, n <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>        <span class="co">#&gt; columns: row, position, ngram</span></span></code></pre></div>
-<ul><li>Output is deliberately <strong>graph-ready</strong>: pipe <code>emoji_pairs()</code> straight into <code>igraph::graph_from_data_frame()</code> / <code>ggraph</code> / <code>tidygraph</code>, or correlate with <code>widyr::pairwise_*</code>.</li>
+<span><span class="fu"><a href="reference/emoji_ngrams.html">emoji_ngrams</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, n <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>        <span class="co">#&gt; columns: row, position, ngram</span></span></code></pre></div>
+<ul><li>Output is deliberately <strong>graph-ready</strong>: pipe <code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code> straight into <code>igraph::graph_from_data_frame()</code> / <code>ggraph</code> / <code>tidygraph</code>, or correlate with <code>widyr::pairwise_*</code>.</li>
 <li>Deps: none required in core (return tidy frames); <code>igraph</code>/<code>ggraph</code> only in Suggests/vignette.</li>
 <li>Effort: <strong>M</strong>. Builds directly on <code>emoji_glyph_list()</code>.</li>
 </ul></div>
@@ -305,9 +305,9 @@
 <h3 id="f-structural--intensity-metrics">F. Structural &amp; intensity metrics<a class="anchor" aria-label="anchor" href="#f-structural--intensity-metrics"></a></h3>
 <p><strong>Why.</strong> <em>How</em> emoji are used matters: position in the message (the Emoji Sentiment Ranking already tracks mean position), emoji-to-text ratio, and “emoji-only” messages are all studied signals.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">emoji_position</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>             <span class="co"># first/last index, mean relative position (0–1)</span></span>
-<span><span class="fu">emoji_density</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>              <span class="co"># emoji per token and per character</span></span>
-<span><span class="fu">emoji_ratio</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>               <span class="co"># share of graphemes that are emoji; is_emoji_only</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/emoji_position.html">emoji_position</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>             <span class="co"># first/last index, mean relative position (0–1)</span></span>
+<span><span class="fu"><a href="reference/emoji_density.html">emoji_density</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>              <span class="co"># emoji per token and per character</span></span>
+<span><span class="fu"><a href="reference/emoji_ratio.html">emoji_ratio</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>               <span class="co"># share of graphemes that are emoji; is_emoji_only</span></span></code></pre></div>
 <ul><li>Effort: <strong>S</strong>. Pure computation over <code>emoji_glyph_list()</code> + token counts.</li>
 </ul></div>
 <div class="section level3">
@@ -327,14 +327,14 @@
 <p><strong>Why.</strong> Emoji are strong, compact features for text classification, but turning them into model-ready matrices is manual today.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># document × emoji count matrix (wide tibble or sparse Matrix), tidymodels-ready</span></span>
-<span><span class="fu">emoji_dfm</span><span class="op">(</span><span class="va">data</span>, <span class="va">doc_id</span>, <span class="va">text</span>, weighting <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"count"</span>, <span class="st">"binary"</span>, <span class="st">"tfidf"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/emoji_dfm.html">emoji_dfm</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">doc_id</span>, <span class="va">text</span>, weighting <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"count"</span>, <span class="st">"binary"</span>, <span class="st">"tfidf"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># semantic similarity &amp; neighbours via emoji2vec (MIT, 300-dim, all emoji)</span></span>
 <span><span class="fu">emoji_similarity</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>                 <span class="co"># cosine similarity between glyphs</span></span>
 <span><span class="fu">emoji_nearest</span><span class="op">(</span><span class="va">x</span>, n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>                <span class="co"># nearest emoji in embedding space</span></span></code></pre></div>
 <ul><li>emoji2vec is MIT-licensed but a few MB → <strong>do not bundle</strong>; ship via a small <code>Suggests</code>-gated download helper (<code>emoji_download_embeddings()</code>), à la <code>textdata</code>. Effort: <strong>M</strong> (dfm) / <strong>L</strong> (embeddings infra).</li>
 <li>
-<code>emoji_dfm()</code> alone is a high-value, low-risk addition.</li>
+<code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> alone is a high-value, low-risk addition.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="i-visualization">I. Visualization<a class="anchor" aria-label="anchor" href="#i-visualization"></a></h3>
@@ -411,14 +411,14 @@
 <h3 id="id_81-news-discipline--per-release-changelog-drafts">8.1 NEWS discipline &amp; per-release changelog drafts<a class="anchor" aria-label="anchor" href="#id_81-news-discipline--per-release-changelog-drafts"></a></h3>
 <p>0.2.0’s <code>NEWS.md</code> is accurate (§4.12); keep the same rigour. Conventions: open a <code># tidyEmoji (development version)</code> heading the moment work starts; one bullet per <em>user-visible</em> change, grouped <strong>New features / Improvements and fixes / Breaking changes / Deprecations</strong>; describe the behaviour change, not the commit. Draft entries (refine at release time — they double as the release checklist, so if a bullet has no NEWS-worthy change, the work isn’t user-visible yet):</p>
 <p><strong>0.2.1 — Improvements and fixes</strong> - Emoji name, shortcode and category now resolve through the same codepoint-normalised key as sentiment, so emoji carrying the <code>U+FE0F</code> variation selector no longer get <code>NA</code> metadata, are no longer dropped by <code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code>, and no longer disappear from <code>top_n_emojis(duplicated =   TRUE)</code>. (§4.1) - The whole package now agrees on what “contains an emoji” means: <code><a href="reference/emoji_summary.html">emoji_summary()</a></code>/<code><a href="reference/emoji_filter.html">emoji_filter()</a></code> use the same detection as the extraction verbs. (§4.2) - <code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code> gains <code>.emoji_n_scored</code> (emoji actually found in the lexicon), distinct from <code>.emoji_n</code>. (§4.7) - <code>top_n_emojis(n =)</code> again counts <em>distinct</em> emoji, breaks ties deterministically, and keeps emoji that have no GitHub-style alias. (§4.6) - Faster on large corpora: codepoint keys are computed once over the unique glyph set rather than per row. (§4.10) - <em>Deprecations:</em> grouped data frames passed to <code><a href="reference/emoji_summary.html">emoji_summary()</a></code>, <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code> and <code><a href="reference/top_n_emojis.html">top_n_emojis()</a></code> now warn that grouping is ignored (per-group results land in 1.0). (§4.3) - <em>Docs:</em> lifecycle badge → “maturing”; vignette sample renamed <code>ata_tweets.csv</code> and downsampled (was a CSV misnamed <code>.rda</code>). (§4.8, §4.12) - <em>(Optional, soft-deprecation — may slip to 0.3.0):</em> <code><a href="reference/emoji_summary.html">emoji_summary()</a></code> columns renamed to <code>n_with_emoji</code>/<code>n_total</code>; <code><a href="reference/emoji_filter.html">emoji_tweets()</a></code> soft-deprecated in favour of <code><a href="reference/emoji_filter.html">emoji_filter()</a></code>. (§4.4)</p>
-<p><strong>0.3.0 — New features:</strong> <code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code>/<code><a href="reference/emoji_emotion_label.html">emoji_emotion_label()</a></code> + bundled <code>emoji_emotion_lexicon</code> (EmoTag1200); pluggable lexicon API (<code><a href="reference/emoji_lexicons.html">emoji_lexicons()</a></code>, <code><a href="reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code>, <code><a href="reference/emoji_score.html">emoji_score()</a></code>); <code><a href="reference/emoji_to_text.html">emoji_to_text()</a></code>/<code><a href="reference/text_to_emoji.html">text_to_emoji()</a></code> + <code>as_emoji*()</code> helpers; <code><a href="reference/emoji_search.html">emoji_search()</a></code>. <strong>0.4.0 — New features:</strong> <code>emoji_pairs()</code>/<code>emoji_cooccurrence()</code>/<code>emoji_ngrams()</code>; <code>emoji_position()</code>/<code>emoji_density()</code>/<code>emoji_ratio()</code>; <code>emoji_dfm()</code>. <strong>0.5.0 — New features:</strong> <code>emoji_skin_tone()</code>/<code>emoji_gender()</code>/<code>emoji_components()</code>/<code>emoji_diversity()</code>; <code>emoji_flag_to_country()</code>/<code>country_to_flag()</code>/<code>emoji_is_flag()</code>/<code>emoji_flags()</code> + <code>emoji_country</code> data. <strong>0.6.0 — New features:</strong> <code>emoji_image()</code>/<code>emoji_label()</code>/<code>geom_emoji()</code>; <code>emoji_version()</code>/<code>emoji_vendor_support()</code>/<code>emoji_lookup()</code>; optional <code>emoji_similarity()</code>/<code>emoji_nearest()</code> via <code>emoji_download_embeddings()</code>. <strong>1.0.0 — Breaking changes / Improvements:</strong> grouped-df support across all verbs; finalise column-name migrations (drop the soft-deprecated aliases); lifecycle → <strong>stable</strong>; performance backend.</p>
+<p><strong>0.3.0 — New features:</strong> <code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code>/<code><a href="reference/emoji_emotion_label.html">emoji_emotion_label()</a></code> + bundled <code>emoji_emotion_lexicon</code> (EmoTag1200); pluggable lexicon API (<code><a href="reference/emoji_lexicons.html">emoji_lexicons()</a></code>, <code><a href="reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code>, <code><a href="reference/emoji_score.html">emoji_score()</a></code>); <code><a href="reference/emoji_to_text.html">emoji_to_text()</a></code>/<code><a href="reference/text_to_emoji.html">text_to_emoji()</a></code> + <code>as_emoji*()</code> helpers; <code><a href="reference/emoji_search.html">emoji_search()</a></code>. <strong>0.4.0 — New features:</strong> <code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>/<code><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code>/<code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code>; <code><a href="reference/emoji_position.html">emoji_position()</a></code>/<code><a href="reference/emoji_density.html">emoji_density()</a></code>/<code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code>; <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code>. <strong>0.5.0 — New features:</strong> <code>emoji_skin_tone()</code>/<code>emoji_gender()</code>/<code>emoji_components()</code>/<code>emoji_diversity()</code>; <code>emoji_flag_to_country()</code>/<code>country_to_flag()</code>/<code>emoji_is_flag()</code>/<code>emoji_flags()</code> + <code>emoji_country</code> data. <strong>0.6.0 — New features:</strong> <code>emoji_image()</code>/<code>emoji_label()</code>/<code>geom_emoji()</code>; <code>emoji_version()</code>/<code>emoji_vendor_support()</code>/<code>emoji_lookup()</code>; optional <code>emoji_similarity()</code>/<code>emoji_nearest()</code> via <code>emoji_download_embeddings()</code>. <strong>1.0.0 — Breaking changes / Improvements:</strong> grouped-df support across all verbs; finalise column-name migrations (drop the soft-deprecated aliases); lifecycle → <strong>stable</strong>; performance backend.</p>
 </div>
 <div class="section level3">
 <h3 id="id_82-readme-maintenance">8.2 README maintenance<a class="anchor" aria-label="anchor" href="#id_82-readme-maintenance"></a></h3>
 <ul><li>
 <code>README.md</code> is <strong>generated</strong> from <code>README.Rmd</code> — always edit the <code>.Rmd</code> and re-knit; never hand-edit <code>README.md</code>. The CRAN/GitHub front page must always show live, correct output (it will change the moment columns are renamed in §4.4).</li>
 <li>Broaden the opening tagline (“discover, count, categorise and sentiment-score”) as new capabilities land — e.g. add “score emotions, translate, and map co-occurrence.” Keep it in sync with the DESCRIPTION Title/Description (§4.12).</li>
-<li>Each release adds <strong>one</strong> short Usage snippet for its headline verb (emotion, translation, <code>emoji_pairs()</code>, flags, <code>geom_emoji()</code>), so the README always demonstrates the newest thing. Don’t let it grow unbounded — rotate older demos into the vignettes.</li>
+<li>Each release adds <strong>one</strong> short Usage snippet for its headline verb (emotion, translation, <code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>, flags, <code>geom_emoji()</code>), so the README always demonstrates the newest thing. Don’t let it grow unbounded — rotate older demos into the vignettes.</li>
 <li>Flip the lifecycle badge to “stable” only at 1.0.0.</li>
 </ul></div>
 <div class="section level3">
@@ -454,7 +454,7 @@
 <strong>V2 Social listening / brand analytics</strong> (reviews; also de-Twitters §4.9)</td>
 <td>—</td>
 </tr><tr><td>
-<code>emoji_dfm()</code> + embeddings (0.4/0.6)</td>
+<code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> + embeddings (0.4/0.6)</td>
 <td>✓</td>
 <td>
 <strong>V5 Emoji as model features</strong> (→ tidymodels)</td>
@@ -511,7 +511,7 @@
 </tr><tr><td><strong>0.4.0</strong></td>
 <td><em>Relational &amp; structure</em></td>
 <td>
-<code>emoji_pairs()</code>/<code>emoji_cooccurrence()</code>/<code>emoji_ngrams()</code>; <code>emoji_position()</code>/<code>emoji_density()</code>; <code>emoji_dfm()</code>
+<code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>/<code><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code>/<code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code>; <code><a href="reference/emoji_position.html">emoji_position()</a></code>/<code><a href="reference/emoji_density.html">emoji_density()</a></code>; <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code>
 </td>
 <td>Low/Med — all return tidy frames</td>
 </tr><tr><td><strong>0.5.0</strong></td>
@@ -562,7 +562,104 @@
 <li>Real emoji in ggplot2 (twemoji + ggimage), E. Hvitfeldt — <a href="https://emilhvitfeldt.com/post/2020-01-02-real-emojis-in-ggplot2/" class="external-link uri">https://emilhvitfeldt.com/post/2020-01-02-real-emojis-in-ggplot2/</a>.</li>
 <li>Unicode CLDR emoji annotations (multilingual names/keywords) — <a href="https://cldr.unicode.org/" class="external-link uri">https://cldr.unicode.org/</a> ; regional-indicator → ISO 3166 flags — <a href="https://en.wikipedia.org/wiki/Regional_indicator_symbol" class="external-link uri">https://en.wikipedia.org/wiki/Regional_indicator_symbol</a>.</li>
 <li>Python <code>emoji</code> (emojize/demojize/replace/analyze) — <a href="https://carpedm20.github.io/emoji/docs/" class="external-link uri">https://carpedm20.github.io/emoji/docs/</a> ; emoji marketing/social-listening use cases — <a href="https://onlinelibrary.wiley.com/doi/10.1002/cb.70017" class="external-link uri">https://onlinelibrary.wiley.com/doi/10.1002/cb.70017</a>.</li>
+</ul><hr></div>
+<div class="section level2">
+<h2 id="id_12-post-030-addendum--ship-report-and-the-040-design-log">12. Post-0.3.0 addendum — ship report and the 0.4.0 design log<a class="anchor" aria-label="anchor" href="#id_12-post-030-addendum--ship-report-and-the-040-design-log"></a></h2>
+<p><em>Appended after the 0.2.1 + 0.3.0 work landed on the repo. Nothing above this line has been altered; this section records what actually shipped, the extra defects found by a second audit of the new code, and the concrete design decisions locked for 0.4.0 so the roadmap stays a faithful ledger.</em></p>
+<div class="section level3">
+<h3 id="id_121-ship-report--4-and-the-030-plan-are-done">12.1 Ship report — §4 and the 0.3.0 plan are done<a class="anchor" aria-label="anchor" href="#id_121-ship-report--4-and-the-030-plan-are-done"></a></h3>
+<p>Every item of the §4 maintenance audit shipped (as the repo’s logical 0.2.1 release) and all §5A/§5B/§5G-search features shipped (as 0.3.0), each with regression tests, NEWS entries, help pages, README/vignette/pkgdown coverage:</p>
+<ul><li>§4.1–§4.3, §4.6–§4.8, §4.10–§4.12: fixed as specified; <code>emoji_has()</code> is the single detection path; every metadata join now routes through the key-indexed reference; grouped input warns; <code>.emoji_n_scored</code> added; the vignette sample is <code>ata_tweets.csv</code> (~2k rows); the naming contract lives in <code><a href="reference/tidyEmoji-package.html">?tidyEmoji</a></code> (§4.5); lifecycle badge is <em>maturing</em>.</li>
+<li>§4.4 renames took the more decisive route: <code>n_with_emoji</code>/<code>n_total</code> shipped directly (the old column names were never released to CRAN beyond 0.2.0, so no alias cycle was owed) and <code><a href="reference/emoji_filter.html">emoji_tweets()</a></code> is soft-deprecated.</li>
+<li>0.3.0: <code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code>/<code><a href="reference/emoji_emotion_label.html">emoji_emotion_label()</a></code> + <code>emoji_emotion_lexicon</code> (EmoTag1200, MIT, builder in <code>data-raw/</code>), the lexicon registry (<code><a href="reference/emoji_lexicons.html">emoji_lexicons()</a></code>, <code><a href="reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code>, <code><a href="reference/emoji_score.html">emoji_score()</a></code>), <code><a href="reference/emoji_to_text.html">emoji_to_text()</a></code>/<code><a href="reference/text_to_emoji.html">text_to_emoji()</a></code> + <code>as_emoji*()</code>, <code><a href="reference/emoji_search.html">emoji_search()</a></code>.</li>
+<li>Repo/CRAN hygiene beyond the plan: <code>Author:</code>/<code>Maintainer:</code> now derive from <code>Authors@R</code> (kills an incoming-check NOTE); the stale 0.1.x <code>docs/</code> tree was untracked (GitHub Pages serves the <code>gh-pages</code> branch built by CI); local check artifacts are git- and build-ignored; R-CMD-check (5 platforms) and pkgdown are green.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="id_122-second-audit--defects-found-in-the-new-030-code-and-fixed-pre-release">12.2 Second audit — defects found in the <em>new</em> 0.3.0 code and fixed pre-release<a class="anchor" aria-label="anchor" href="#id_122-second-audit--defects-found-in-the-new-030-code-and-fixed-pre-release"></a></h3>
+<p>A fresh read-through of the freshly written verbs surfaced its own crop of bugs — worth recording because each is a pattern to guard against in future features:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Locale-dependent output.</strong> <code>emoji_to_text(format = "shortcode")</code> delegated to <code><a href="https://emilhvitfeldt.github.io/emoji/reference/emoji_replace_name.html" class="external-link">emoji::emoji_replace_name()</a></code>, which picks an alias via <code>rev(sort(...))</code> — the chosen shortcode changed with the collation locale (testthat’s C locale picked <code>grinning_face</code>; an interactive session picked <code>grinning</code>). Fixed by always emitting the canonical <em>first</em> alias, the same one <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code>/<code><a href="reference/as_emoji_name.html">as_emoji_shortcode()</a></code> report. <em>Lesson: never let output depend on <code><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort()</a></code> of a locale-collated character vector.</em>
+</li>
+<li>
+<strong>Dead argument.</strong> The <code>wrap</code> template was applied with <code>gsub("\\{x\\}", ..., fixed = TRUE)</code> — a regex-escaped pattern under <code>fixed = TRUE</code> matches nothing, so <code>wrap</code> was silently ignored. <em>Lesson: <code>fixed = TRUE</code> patterns must be literal; add a test per argument.</em>
+</li>
+<li>
+<strong>Regex injection.</strong> <code>emoji_search("(")</code> errored and <code>emoji_search("+1")</code> (a real GitHub alias) mis-matched — the query was used as a regex. Fixed with literal matching on lower-cased text.</li>
+<li>
+<strong>Unreachable dispatch branch.</strong> <code>emoji_emotion(lexicon = &lt;registered&gt;)</code> rejected every custom lexicon: the registry returns <code>list(type = "custom", tbl = ...)</code>, which failed the <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">is.data.frame()</a></code> test. Also fixed the single-emotion matrix collapse (<code>vapply</code> returns a vector when length-1) and <code><a href="reference/emoji_emotion_label.html">emoji_emotion_label()</a></code>’s hard-coded 8 columns.</li>
+<li>
+<strong>NA/unknown handling.</strong> <code><a href="reference/emoji_to_text.html">emoji_to_text()</a></code>/<code><a href="reference/text_to_emoji.html">text_to_emoji()</a></code> turned <code>NA</code> into <code>""</code>/<code>"NA"</code>, and unknown glyphs were deleted from the text; NAs now stay <code>NA</code> and unknown glyphs stay in place.</li>
+<li>
+<strong>Non-determinism at the margin.</strong> <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code> tie order depended on input order; ties now break by glyph (completes §4.6’s determinism).</li>
+<li>Registered lexicons with <code>by =</code> other than <code>"emoji"</code> didn’t resolve from <code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code>/<code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code> (fixed via the stored <code>key</code> column), and <code><a href="reference/emoji_lexicons.html">emoji_lexicons()</a></code> listed glyph/key columns among a custom lexicon’s dimensions.</li>
+</ol></div>
+<div class="section level3">
+<h3 id="id_123-040-design-decisions-locked-at-implementation">12.3 0.4.0 design decisions (locked at implementation)<a class="anchor" aria-label="anchor" href="#id_123-040-design-decisions-locked-at-implementation"></a></h3>
+<p>The §5C/§5F/§5H proposals left semantics open; these are the decisions the implementation locked, and why:</p>
+<ul><li>
+<strong>Canonical glyph identity.</strong> All four corpus-level verbs (<code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>, <code><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code>, <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code>, <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code>) canonicalise extracted glyphs through a new internal <code>emoji_canonical()</code> (key → reference glyph, pass-through when unknown), so qualified/unqualified twins are one node/feature. Empirical fixture: the extractor returns the <em>bare</em> victory hand <code>U+270C</code> unqualified but the reference stores <code>U+270C U+FE0F</code> — the first in-the-wild instance of the §4.1 asymmetry we can pin in a test (the bare heart <code>U+2764</code> is <em>not</em> extracted at all, so the ❤/❤️ example in §4.1 cannot arise from extraction). <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code> deliberately keeps the exact extracted glyph (it is a faithful extraction record); the distinction is documented.</li>
+<li>
+<strong><code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code></strong>: a <em>document</em> is a row, or all rows sharing <code>doc_id</code> (NA ids form their own document); pairs are between <strong>distinct</strong> emoji (repeats don’t self-pair — the diagonal belongs to <code><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code>); <code>n</code> = number of documents containing both; <code>directed = TRUE</code> orders each pair by <strong>first appearance</strong> in the document; output is <code>item1</code>/<code>item2</code>/<code>n</code> (widyr-compatible), deterministically sorted.</li>
+<li>
+<strong><code>emoji_cooccurrence(diagonal = TRUE)</code></strong>: the diagonal is <strong>document frequency</strong> (rows where <code>item1 == item2</code>), i.e. the diagonal of the co-occurrence matrix.</li>
+<li>
+<strong><code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code></strong>: windows slide over each <em>row’s</em> emoji sequence in reading order (intervening text ignored, repeats kept); no <code>doc_id</code> (sequence order across rows of a document is not meaningful); columns <code>.row_number</code>/<code>.position</code>/<code>.emoji_ngram</code>, glyphs joined by <code>sep = " "</code>.</li>
+<li>
+<strong>Metrics</strong>: <code><a href="reference/emoji_position.html">emoji_position()</a></code> uses Novak-style relative position <code>(start - 1)/(L - 1)</code> (0 when <code>L &lt;= 1</code>), reporting <code>.emoji_first</code>/<code>.emoji_last</code>/<code>.emoji_rel_position</code>; <code><a href="reference/emoji_density.html">emoji_density()</a></code> = per character and per whitespace-delimited token; <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> = share of <em>characters</em> (code points) belonging to emoji — documented as character-based, since base R lacks grapheme segmentation and adding {stringi} for it would break the light-core principle — plus <code>.emoji_only</code>. Zero-emoji rows get 0 densities/ratio (not NA); NA/empty text gets NA.</li>
+<li>
+<strong><code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code></strong>: signature is <code>(data, text, doc_id = NULL, weighting)</code> — <em>not</em> §5H’s <code>(data, doc_id, text)</code> — to preserve the §2.1 <code>verb(data, text, ...)</code> convention; the default document column is <code>.row_number</code> (consistent with <code><a href="reference/emoji_extract_unnest.html">emoji_extract_unnest()</a></code>), and a supplied <code>doc_id</code> keeps its column name; <strong>all documents are kept</strong> (zero rows included) so the matrix binds row-for-row to outcome columns; a wide tibble, not a sparse <code>Matrix</code> (no new hard dependency — sparse/quanteda bridges can come later, §12.4); <code>tfidf</code> = <code>count * log(N / df)</code>; columns ordered by total count then glyph.</li>
+<li>
+<strong>{rlang} moved Suggests → Imports.</strong> Needed for correct tidy-eval capture of the <em>optional</em> <code>doc_id</code> argument (<code>enquo()</code>/<code>quo_is_null()</code> through forwarding); it was already a hard transitive dependency via dplyr and lifecycle, so the real dependency weight is unchanged.</li>
+<li>
+<strong>Grouped input</strong> to <code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>/<code><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code>/<code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> warns (the §4.3 pattern); <code>doc_id</code> is the supported way to express per-group structure until 1.0’s grouped-df guarantees.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_124-backlog-additions-beyond-the-existing-roadmap">12.4 Backlog additions (beyond the existing roadmap)<a class="anchor" aria-label="anchor" href="#id_124-backlog-additions-beyond-the-existing-roadmap"></a></h3>
+<p>New ideas surfaced while building 0.4.0 — none blocks a release:</p>
+<ul><li>
+<strong><code>inst/CITATION</code></strong> so <code>citation("tidyEmoji")</code> credits the package and the two lexicon papers users must cite anyway.</li>
+<li>
+<strong>CI enrichment</strong>: a {covr} test-coverage job + badge; <code>urlchecker</code> and spell-check (<code>spelling::spell_check_package()</code>) as scheduled jobs — §8.4 promised the tooling, the workflows don’t exist yet.</li>
+<li>
+<strong>Snapshot tests</strong> (<code>expect_snapshot()</code>) for the printed form of the tidy outputs, catching accidental column/order changes cheaply.</li>
+<li>
+<strong>Export the canonicaliser</strong> (e.g. <code>as_emoji_canonical()</code>): users doing their own joins hit the same qualified/unqualified trap; the internal is one <code>@export</code> away. Decide alongside 0.5.0’s codepoint work.</li>
+<li>
+<strong>Sparse/ecosystem bridges</strong>: <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> → <code><a href="https://rdrr.io/pkg/Matrix/man/sparseMatrix.html" class="external-link">Matrix::sparseMatrix</a></code> / <code>quanteda::as.dfm</code> helpers behind Suggests, once someone asks.</li>
+<li>
+<strong><code>doc_id</code> for <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code>/<code><a href="reference/top_n_emojis.html">top_n_emojis()</a></code></strong> as interim per-group support before the 1.0 grouped-df work.</li>
+<li>
+<strong>Benchmark script</strong> (<code>data-raw/benchmark.R</code>) tracking the millions-of-rows target (§5J) release over release.</li>
+<li>
+<strong>V3 “Emoji networks” vignette</strong> (ggraph/tidygraph in Suggests) now has its data source (<code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>); schedule with 0.5.0 rather than growing the introduction vignette further.</li>
+<li>
+<strong>Pin a minimum {emoji} version</strong> the moment 0.6.0 starts reading vendor/version columns (§10.7) — and the extractor-qualification fixture (victory hand, §12.3) is the test that will catch an upstream change.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_125-release-ledger">12.5 Release ledger<a class="anchor" aria-label="anchor" href="#id_125-release-ledger"></a></h3>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Logical release</th>
+<th>State</th>
+<th>Where</th>
+</tr></thead><tbody><tr><td>0.2.1 correctness patch</td>
+<td>✅ shipped</td>
+<td>repo (folded into the 0.3.0 submission)</td>
+</tr><tr><td>0.3.0 affect &amp; translation</td>
+<td>✅ shipped</td>
+<td>repo; CRAN submission prepared</td>
+</tr><tr><td>0.4.0 relational &amp; structure</td>
+<td>✅ implemented (this addendum)</td>
+<td>repo</td>
+</tr><tr><td>0.5.0 modifiers, flags &amp; representation</td>
+<td>⏳ next</td>
+<td>§5D/§5E as planned</td>
+</tr><tr><td>0.6.0 visualization &amp; semantics</td>
+<td>⏳</td>
+<td>§5G/§5I as planned</td>
+</tr><tr><td>1.0.0 stable &amp; integrated</td>
+<td>⏳</td>
+<td>§5J + grouped-df guarantees</td>
+</tr></tbody></table></div>
+</div>
 </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

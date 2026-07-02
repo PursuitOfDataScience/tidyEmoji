@@ -494,9 +494,10 @@ emoji_cooccurrence(data, text, diagonal = FALSE)
 emoji_ngrams(data, text, n = 2)        #> columns: row, position, ngram
 ```
 
-- Output is deliberately **graph-ready**: pipe `emoji_pairs()` straight
-  into `igraph::graph_from_data_frame()` / `ggraph` / `tidygraph`, or
-  correlate with `widyr::pairwise_*`.
+- Output is deliberately **graph-ready**: pipe
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  straight into `igraph::graph_from_data_frame()` / `ggraph` /
+  `tidygraph`, or correlate with `widyr::pairwise_*`.
 - Deps: none required in core (return tidy frames); `igraph`/`ggraph`
   only in Suggests/vignette.
 - Effort: **M**. Builds directly on `emoji_glyph_list()`.
@@ -611,7 +612,8 @@ emoji_nearest(x, n = 5)                # nearest emoji in embedding space
   small `Suggests`-gated download helper
   (`emoji_download_embeddings()`), à la `textdata`. Effort: **M** (dfm)
   / **L** (embeddings infra).
-- `emoji_dfm()` alone is a high-value, low-risk addition.
+- [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  alone is a high-value, low-risk addition.
 
 ### I. Visualization
 
@@ -752,8 +754,9 @@ bundled `emoji_emotion_lexicon` (EmoTag1200); pluggable lexicon API
 `as_emoji*()` helpers;
 [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md).
 **0.4.0 — New features:**
-`emoji_pairs()`/`emoji_cooccurrence()`/`emoji_ngrams()`;
-`emoji_position()`/`emoji_density()`/`emoji_ratio()`; `emoji_dfm()`.
+[`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)/[`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)/[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md);
+[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)/[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)/[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md);
+[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md).
 **0.5.0 — New features:**
 `emoji_skin_tone()`/`emoji_gender()`/`emoji_components()`/`emoji_diversity()`;
 `emoji_flag_to_country()`/`country_to_flag()`/`emoji_is_flag()`/`emoji_flags()` +
@@ -777,9 +780,11 @@ column-name migrations (drop the soft-deprecated aliases); lifecycle →
   translate, and map co-occurrence.” Keep it in sync with the
   DESCRIPTION Title/Description (§4.12).
 - Each release adds **one** short Usage snippet for its headline verb
-  (emotion, translation, `emoji_pairs()`, flags, `geom_emoji()`), so the
-  README always demonstrates the newest thing. Don’t let it grow
-  unbounded — rotate older demos into the vignettes.
+  (emotion, translation,
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),
+  flags, `geom_emoji()`), so the README always demonstrates the newest
+  thing. Don’t let it grow unbounded — rotate older demos into the
+  vignettes.
 - Flip the lifecycle badge to “stable” only at 1.0.0.
 
 ### 8.3 Documentation coverage matrix
@@ -794,7 +799,7 @@ Vignettes (one per workflow, each a real analysis):
 | [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md) (0.3) | ✓ | V1 / reference | brief |
 | Co-occurrence / sequences (0.4) | ✓ | **V3 Emoji networks** (→ ggraph/tidygraph) | mention |
 | Structural & intensity metrics (0.4) | ✓ | **V2 Social listening / brand analytics** (reviews; also de-Twitters §4.9) | — |
-| `emoji_dfm()` + embeddings (0.4/0.6) | ✓ | **V5 Emoji as model features** (→ tidymodels) | mention |
+| [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md) + embeddings (0.4/0.6) | ✓ | **V5 Emoji as model features** (→ tidymodels) | mention |
 | Skin tone / gender / components / diversity (0.5) | ✓ | **V4 Representation & skin tone** (research-framed, sensitivity caveats) | brief |
 | Flags ↔︎ countries (0.5) | ✓ | V2 or V3 | brief |
 | Visualization (`geom_emoji()`, twemoji) (0.6) | ✓ | figures throughout + a dedicated section | hero image |
@@ -834,7 +839,7 @@ engine.
 |----|----|----|----|
 | **0.2.1** | *Correctness patch* | Fix the key-normalisation asymmetry (§4.1); unify detection (§4.2); warn on grouped input (§4.3); `top_n_emojis` n-semantics + alias-less fix (§4.6); `.emoji_n_scored` (§4.7); vignette CSV rename/shrink (§4.8). Add regression tests (§4.11). No new public verbs. | **Low** — internal fixes + tests; renames soft-deprecated |
 | **0.3.0** | *Affect & translation* | [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md) + EmoTag1200 + lexicon API; [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)/[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md); [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md) | Low — data + tidy wrappers on the (now-correct) engine |
-| **0.4.0** | *Relational & structure* | `emoji_pairs()`/`emoji_cooccurrence()`/`emoji_ngrams()`; `emoji_position()`/`emoji_density()`; `emoji_dfm()` | Low/Med — all return tidy frames |
+| **0.4.0** | *Relational & structure* | [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)/[`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)/[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md); [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)/[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md); [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md) | Low/Med — all return tidy frames |
 | **0.5.0** | *Modifiers, flags & representation* | `emoji_skin_tone()`/`emoji_gender()`/`emoji_components()`/`emoji_diversity()`; flags↔︎countries | Med — sensitive framing, more edge cases |
 | **0.6.0** | *Visualization & semantics* | `emoji_image()`/`geom_emoji()`; `emoji_version()`/`emoji_vendor_support()`; optional emoji2vec similarity | Med — optional heavy deps/downloads |
 | **1.0.0** | *Stable & integrated* | ecosystem integration polish, **grouped-df guarantees** (the full §4.3 fix), performance backend, neutral column-name migration complete, full vignette suite → lifecycle **stable** | Med — API freeze |
@@ -909,3 +914,215 @@ take on the trickier codepoint and rendering work; 1.0 consolidates.
   <https://carpedm20.github.io/emoji/docs/> ; emoji
   marketing/social-listening use cases —
   <https://onlinelibrary.wiley.com/doi/10.1002/cb.70017>.
+
+------------------------------------------------------------------------
+
+## 12. Post-0.3.0 addendum — ship report and the 0.4.0 design log
+
+*Appended after the 0.2.1 + 0.3.0 work landed on the repo. Nothing above
+this line has been altered; this section records what actually shipped,
+the extra defects found by a second audit of the new code, and the
+concrete design decisions locked for 0.4.0 so the roadmap stays a
+faithful ledger.*
+
+### 12.1 Ship report — §4 and the 0.3.0 plan are done
+
+Every item of the §4 maintenance audit shipped (as the repo’s logical
+0.2.1 release) and all §5A/§5B/§5G-search features shipped (as 0.3.0),
+each with regression tests, NEWS entries, help pages,
+README/vignette/pkgdown coverage:
+
+- §4.1–§4.3, §4.6–§4.8, §4.10–§4.12: fixed as specified; `emoji_has()`
+  is the single detection path; every metadata join now routes through
+  the key-indexed reference; grouped input warns; `.emoji_n_scored`
+  added; the vignette sample is `ata_tweets.csv` (~2k rows); the naming
+  contract lives in
+  [`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  (§4.5); lifecycle badge is *maturing*.
+- §4.4 renames took the more decisive route: `n_with_emoji`/`n_total`
+  shipped directly (the old column names were never released to CRAN
+  beyond 0.2.0, so no alias cycle was owed) and
+  [`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
+  is soft-deprecated.
+- 0.3.0:
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)/[`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md) +
+  `emoji_emotion_lexicon` (EmoTag1200, MIT, builder in `data-raw/`), the
+  lexicon registry
+  ([`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md),
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md),
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)),
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)/[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md) +
+  `as_emoji*()`,
+  [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md).
+- Repo/CRAN hygiene beyond the plan: `Author:`/`Maintainer:` now derive
+  from `Authors@R` (kills an incoming-check NOTE); the stale 0.1.x
+  `docs/` tree was untracked (GitHub Pages serves the `gh-pages` branch
+  built by CI); local check artifacts are git- and build-ignored;
+  R-CMD-check (5 platforms) and pkgdown are green.
+
+### 12.2 Second audit — defects found in the *new* 0.3.0 code and fixed pre-release
+
+A fresh read-through of the freshly written verbs surfaced its own crop
+of bugs — worth recording because each is a pattern to guard against in
+future features:
+
+1.  **Locale-dependent output.** `emoji_to_text(format = "shortcode")`
+    delegated to
+    [`emoji::emoji_replace_name()`](https://emilhvitfeldt.github.io/emoji/reference/emoji_replace_name.html),
+    which picks an alias via `rev(sort(...))` — the chosen shortcode
+    changed with the collation locale (testthat’s C locale picked
+    `grinning_face`; an interactive session picked `grinning`). Fixed by
+    always emitting the canonical *first* alias, the same one
+    [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)/[`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+    report. *Lesson: never let output depend on
+    [`sort()`](https://rdrr.io/r/base/sort.html) of a locale-collated
+    character vector.*
+2.  **Dead argument.** The `wrap` template was applied with
+    `gsub("\\{x\\}", ..., fixed = TRUE)` — a regex-escaped pattern under
+    `fixed = TRUE` matches nothing, so `wrap` was silently ignored.
+    *Lesson: `fixed = TRUE` patterns must be literal; add a test per
+    argument.*
+3.  **Regex injection.** `emoji_search("(")` errored and
+    `emoji_search("+1")` (a real GitHub alias) mis-matched — the query
+    was used as a regex. Fixed with literal matching on lower-cased
+    text.
+4.  **Unreachable dispatch branch.**
+    `emoji_emotion(lexicon = <registered>)` rejected every custom
+    lexicon: the registry returns `list(type = "custom", tbl = ...)`,
+    which failed the
+    [`is.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) test.
+    Also fixed the single-emotion matrix collapse (`vapply` returns a
+    vector when length-1) and
+    [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)’s
+    hard-coded 8 columns.
+5.  **NA/unknown handling.**
+    [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)/[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+    turned `NA` into `""`/`"NA"`, and unknown glyphs were deleted from
+    the text; NAs now stay `NA` and unknown glyphs stay in place.
+6.  **Non-determinism at the margin.**
+    [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+    tie order depended on input order; ties now break by glyph
+    (completes §4.6’s determinism).
+7.  Registered lexicons with `by =` other than `"emoji"` didn’t resolve
+    from
+    [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)/[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+    (fixed via the stored `key` column), and
+    [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+    listed glyph/key columns among a custom lexicon’s dimensions.
+
+### 12.3 0.4.0 design decisions (locked at implementation)
+
+The §5C/§5F/§5H proposals left semantics open; these are the decisions
+the implementation locked, and why:
+
+- **Canonical glyph identity.** All four corpus-level verbs
+  ([`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md),
+  [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md),
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md))
+  canonicalise extracted glyphs through a new internal
+  `emoji_canonical()` (key → reference glyph, pass-through when
+  unknown), so qualified/unqualified twins are one node/feature.
+  Empirical fixture: the extractor returns the *bare* victory hand
+  `U+270C` unqualified but the reference stores `U+270C U+FE0F` — the
+  first in-the-wild instance of the §4.1 asymmetry we can pin in a test
+  (the bare heart `U+2764` is *not* extracted at all, so the ❤/❤️
+  example in §4.1 cannot arise from extraction).
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  deliberately keeps the exact extracted glyph (it is a faithful
+  extraction record); the distinction is documented.
+- **[`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)**:
+  a *document* is a row, or all rows sharing `doc_id` (NA ids form their
+  own document); pairs are between **distinct** emoji (repeats don’t
+  self-pair — the diagonal belongs to
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md));
+  `n` = number of documents containing both; `directed = TRUE` orders
+  each pair by **first appearance** in the document; output is
+  `item1`/`item2`/`n` (widyr-compatible), deterministically sorted.
+- **`emoji_cooccurrence(diagonal = TRUE)`**: the diagonal is **document
+  frequency** (rows where `item1 == item2`), i.e. the diagonal of the
+  co-occurrence matrix.
+- **[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)**:
+  windows slide over each *row’s* emoji sequence in reading order
+  (intervening text ignored, repeats kept); no `doc_id` (sequence order
+  across rows of a document is not meaningful); columns
+  `.row_number`/`.position`/`.emoji_ngram`, glyphs joined by
+  `sep = " "`.
+- **Metrics**:
+  [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+  uses Novak-style relative position `(start - 1)/(L - 1)` (0 when
+  `L <= 1`), reporting
+  `.emoji_first`/`.emoji_last`/`.emoji_rel_position`;
+  [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  = per character and per whitespace-delimited token;
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  = share of *characters* (code points) belonging to emoji — documented
+  as character-based, since base R lacks grapheme segmentation and
+  adding {stringi} for it would break the light-core principle — plus
+  `.emoji_only`. Zero-emoji rows get 0 densities/ratio (not NA);
+  NA/empty text gets NA.
+- **[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)**:
+  signature is `(data, text, doc_id = NULL, weighting)` — *not* §5H’s
+  `(data, doc_id, text)` — to preserve the §2.1 `verb(data, text, ...)`
+  convention; the default document column is `.row_number` (consistent
+  with
+  [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)),
+  and a supplied `doc_id` keeps its column name; **all documents are
+  kept** (zero rows included) so the matrix binds row-for-row to outcome
+  columns; a wide tibble, not a sparse `Matrix` (no new hard dependency
+  — sparse/quanteda bridges can come later, §12.4); `tfidf` =
+  `count * log(N / df)`; columns ordered by total count then glyph.
+- **{rlang} moved Suggests → Imports.** Needed for correct tidy-eval
+  capture of the *optional* `doc_id` argument (`enquo()`/`quo_is_null()`
+  through forwarding); it was already a hard transitive dependency via
+  dplyr and lifecycle, so the real dependency weight is unchanged.
+- **Grouped input** to
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)/[`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)/[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  warns (the §4.3 pattern); `doc_id` is the supported way to express
+  per-group structure until 1.0’s grouped-df guarantees.
+
+### 12.4 Backlog additions (beyond the existing roadmap)
+
+New ideas surfaced while building 0.4.0 — none blocks a release:
+
+- **`inst/CITATION`** so `citation("tidyEmoji")` credits the package and
+  the two lexicon papers users must cite anyway.
+- **CI enrichment**: a {covr} test-coverage job + badge; `urlchecker`
+  and spell-check (`spelling::spell_check_package()`) as scheduled jobs
+  — §8.4 promised the tooling, the workflows don’t exist yet.
+- **Snapshot tests** (`expect_snapshot()`) for the printed form of the
+  tidy outputs, catching accidental column/order changes cheaply.
+- **Export the canonicaliser** (e.g. `as_emoji_canonical()`): users
+  doing their own joins hit the same qualified/unqualified trap; the
+  internal is one `@export` away. Decide alongside 0.5.0’s codepoint
+  work.
+- **Sparse/ecosystem bridges**:
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  →
+  [`Matrix::sparseMatrix`](https://rdrr.io/pkg/Matrix/man/sparseMatrix.html)
+  / `quanteda::as.dfm` helpers behind Suggests, once someone asks.
+- **`doc_id` for
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)/[`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)**
+  as interim per-group support before the 1.0 grouped-df work.
+- **Benchmark script** (`data-raw/benchmark.R`) tracking the
+  millions-of-rows target (§5J) release over release.
+- **V3 “Emoji networks” vignette** (ggraph/tidygraph in Suggests) now
+  has its data source
+  ([`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md));
+  schedule with 0.5.0 rather than growing the introduction vignette
+  further.
+- **Pin a minimum {emoji} version** the moment 0.6.0 starts reading
+  vendor/version columns (§10.7) — and the extractor-qualification
+  fixture (victory hand, §12.3) is the test that will catch an upstream
+  change.
+
+### 12.5 Release ledger
+
+| Logical release | State | Where |
+|----|----|----|
+| 0.2.1 correctness patch | ✅ shipped | repo (folded into the 0.3.0 submission) |
+| 0.3.0 affect & translation | ✅ shipped | repo; CRAN submission prepared |
+| 0.4.0 relational & structure | ✅ implemented (this addendum) | repo |
+| 0.5.0 modifiers, flags & representation | ⏳ next | §5D/§5E as planned |
+| 0.6.0 visualization & semantics | ⏳ | §5G/§5I as planned |
+| 1.0.0 stable & integrated | ⏳ | §5J + grouped-df guarantees |

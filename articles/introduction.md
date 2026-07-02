@@ -26,6 +26,9 @@ data frames that drop straight into a `dplyr`/`ggplot2` workflow:
 | Custom lexicons | [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md), [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md), [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md) |
 | Translate | [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md), [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md), `as_emoji*()` |
 | Search | [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md) |
+| Relate | [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md), [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md), [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md) |
+| Measure | [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md), [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md), [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md) |
+| Model features | [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md) |
 
 Two design choices are worth highlighting:
 
@@ -691,6 +694,167 @@ emoji_lexicons() %>% filter(name == "mine")
 #>   name  type   dimensions     n source          licence
 #>   <chr> <chr>  <I<list>>  <int> <chr>           <chr>  
 #> 1 mine  custom <chr [1]>      3 user-registered NA
+```
+
+## Relating emoji: co-occurrence and sequences
+
+Which emoji appear *together*?
+[`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+returns a tidy edge list — one row per pair of distinct emoji that
+co-occur in the same entry, with the number of entries in which they do.
+The `item1`/`item2`/`n` shape matches `widyr::pairwise_count()` and
+feeds directly into graph tools such as igraph, tidygraph and ggraph:
+
+``` r
+
+emoji_edges <- ata_tweets %>%
+  emoji_pairs(full_text)
+
+emoji_edges
+#> # A tibble: 214 × 3
+#>    item1 item2     n
+#>    <chr> <chr> <int>
+#>  1 😂    😭       10
+#>  2 😂    😩        4
+#>  3 😂    🙄        3
+#>  4 😭    🙄        3
+#>  5 💕    🥰        2
+#>  6 💞    🥺        2
+#>  7 💯    🤷🏽‍♂️        2
+#>  8 🤔    😂        2
+#>  9 🤣    😂        2
+#> 10 🤷🏼‍♀️    😂        2
+#> # ℹ 204 more rows
+```
+
+The strongest pairings make a readable chart on their own:
+
+``` r
+
+emoji_edges %>%
+  slice_max(n, n = 10) %>%
+  mutate(pair = paste(item1, item2),
+         pair = forcats::fct_reorder(pair, n)) %>%
+  ggplot(aes(n, pair)) +
+  geom_col() +
+  labs(x = "Number of entries containing both", y = NULL,
+       title = "Emoji that appear together")
+```
+
+![Horizontal bar chart of the most frequent emoji pairs, labelled by the
+two glyphs of each
+pair.](introduction_files/figure-html/unnamed-chunk-27-1.png)
+
+Set `directed = TRUE` to order each pair by first appearance, or supply
+`doc_id` to pool several rows (a conversation, a user, a day) into one
+document. `emoji_cooccurrence(diagonal = TRUE)` additionally returns
+each emoji’s document frequency on the diagonal.
+
+Order also matters *within* an entry.
+[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+slides a window over each entry’s emoji in reading order (any text in
+between is ignored), which is the raw material for sequence and
+Markov-style analyses:
+
+``` r
+
+ata_tweets %>%
+  emoji_ngrams(full_text) %>%
+  count(.emoji_ngram, sort = TRUE)
+#> # A tibble: 159 × 2
+#>    .emoji_ngram     n
+#>    <chr>        <int>
+#>  1 😂 😂           66
+#>  2 😭 😭           27
+#>  3 😍 😍           13
+#>  4 🥺 🥺           13
+#>  5 🤣 🤣           10
+#>  6 😭 😂            8
+#>  7 🖕🏻 🖕🏻            7
+#>  8 😡 😡            5
+#>  9 🙏🏾 🙏🏾            5
+#> 10 💀 💀            4
+#> # ℹ 149 more rows
+```
+
+All the relational verbs canonicalise glyphs through the same
+codepoint-normalised key as the rest of the package, so qualified and
+unqualified forms of one emoji count as a single node.
+
+## Measuring how emoji are used
+
+*Where* emoji sit and *how much* of the text they occupy are studied
+signals in their own right.
+[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+reports each entry’s first and last emoji position and the mean relative
+position from 0 (start) to 1 (end):
+
+``` r
+
+ata_tweets %>%
+  emoji_position(full_text) %>%
+  filter(!is.na(.emoji_rel_position)) %>%
+  ggplot(aes(.emoji_rel_position)) +
+  geom_histogram(binwidth = 0.05) +
+  labs(x = "Mean relative position of the entry's emoji",
+       y = "Number of entries",
+       title = "Emoji cluster at the end of a message")
+```
+
+![Histogram of the mean relative position of emoji within each entry,
+showing emoji concentrated towards the end of the
+text.](introduction_files/figure-html/unnamed-chunk-29-1.png)
+
+[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+normalises the emoji count by text length (per character and per
+whitespace-delimited token), and
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+reports what share of the text’s characters belong to emoji — including
+an `.emoji_only` flag for entries that are nothing but emoji (and
+whitespace):
+
+``` r
+
+ata_tweets %>%
+  emoji_ratio(full_text) %>%
+  summarise(
+    n_emoji_only = sum(.emoji_only, na.rm = TRUE),
+    mean_ratio   = mean(.emoji_ratio[.emoji_ratio > 0], na.rm = TRUE)
+  )
+#> # A tibble: 1 × 2
+#>   n_emoji_only mean_ratio
+#>          <int>      <dbl>
+#> 1            0     0.0405
+```
+
+## Emoji as model features
+
+For classification and regression work,
+[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+turns the corpus into a document-by-emoji feature table: one row per
+entry (or per `doc_id`), one column per emoji, weighted by counts,
+binary presence or tf-idf. Every entry is kept — emoji-free rows are all
+zeros — so the table binds row-for-row to your outcome columns:
+
+``` r
+
+ata_tweets %>%
+  emoji_dfm(full_text, weighting = "tfidf") %>%
+  select(1:6)
+#> # A tibble: 2,000 × 6
+#>    .row_number  `😂`  `😭`  `🤣`  `😩`  `🥺`
+#>          <int> <dbl> <dbl> <dbl> <dbl> <dbl>
+#>  1           1     0  0        0     0     0
+#>  2           2     0  3.34     0     0     0
+#>  3           3     0  0        0     0     0
+#>  4           4     0  3.34     0     0     0
+#>  5           5     0  0        0     0     0
+#>  6           6     0  0        0     0     0
+#>  7           7     0  0        0     0     0
+#>  8           8     0  0        0     0     0
+#>  9           9     0  0        0     0     0
+#> 10          10     0  0        0     0     0
+#> # ℹ 1,990 more rows
 ```
 
 ## Translating emoji to and from text

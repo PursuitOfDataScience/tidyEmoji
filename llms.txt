@@ -1,10 +1,12 @@
 # tidyEmoji
 
 tidyEmoji helps you **discover, count, categorise, sentiment-score,
-score emotions and translate the emoji in any text column** —
+score emotions, translate and relate the emoji in any text column** —
 social-media posts, product reviews, chat logs, survey responses,
-support tickets — and hands the result back as tidy data frames that
-drop straight into a tidyverse workflow.
+support tickets — from summary counts through emotion profiles,
+co-occurrence networks, structural metrics and model-ready feature
+tables, always as tidy data frames that drop straight into a tidyverse
+workflow.
 
 Unicode is awkward to work with and not every code point is an emoji,
 which makes emoji statistics fiddly. tidyEmoji takes care of that,
@@ -155,6 +157,48 @@ reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
 #> 5 Shipped fast 🏁😀              2               1 joy
 ```
 
+### Relate emoji to each other
+
+[`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+returns a graph-ready edge list of the emoji that appear in the same
+entry (`widyr`-style `item1`/`item2`/`n` — pipe it into igraph,
+tidygraph or ggraph), and
+[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+captures consecutive sequences.
+
+``` r
+
+reviews %>% emoji_pairs(text)
+#> # A tibble: 2 × 3
+#>   item1 item2     n
+#>   <chr> <chr> <int>
+#> 1 🏁    😀        1
+#> 2 😀    😍        1
+```
+
+There are structural metrics too —
+[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+(emoji sit at the end of messages),
+[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+and
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+(emoji-only detection) — and
+[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+builds a document-by-emoji count/binary/tf-idf table for modelling.
+
+``` r
+
+reviews %>% emoji_dfm(text) %>% select(1:4)
+#> # A tibble: 5 × 4
+#>   .row_number  `😀`  `😷`  `🏁`
+#>         <int> <int> <int> <int>
+#> 1           1     1     0     0
+#> 2           2     0     0     0
+#> 3           3     0     0     0
+#> 4           4     0     2     0
+#> 5           5     1     0     1
+```
+
 ### Bring your own lexicon
 
 The scoring machinery is pluggable:
@@ -291,6 +335,29 @@ sentiment- and emotion-scoring emoji, and plotting the results.
   : Register a custom emoji lexicon
 - [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
   : Score emoji in a text column against any lexicon
+
+## Relate
+
+- [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  : Co-occurring emoji pairs
+- [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
+  : Emoji co-occurrence counts, with an optional diagonal
+- [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+  : Consecutive emoji sequences (n-grams)
+
+## Measure
+
+- [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+  : Where do emoji sit within each text?
+- [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  : Emoji density per character and per token
+- [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  : What share of the text is emoji — and is it emoji-only?
+
+## Model features
+
+- [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  : Document-by-emoji feature matrix
 
 ## Translate & search
 

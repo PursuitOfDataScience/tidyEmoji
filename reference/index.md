@@ -44,6 +44,29 @@
 - [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
   : Score emoji in a text column against any lexicon
 
+## Relate
+
+- [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  : Co-occurring emoji pairs
+- [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
+  : Emoji co-occurrence counts, with an optional diagonal
+- [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+  : Consecutive emoji sequences (n-grams)
+
+## Measure
+
+- [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+  : Where do emoji sit within each text?
+- [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  : Emoji density per character and per token
+- [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  : What share of the text is emoji — and is it emoji-only?
+
+## Model features
+
+- [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  : Document-by-emoji feature matrix
+
 ## Translate & search
 
 - [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
