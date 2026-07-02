@@ -23,6 +23,7 @@ data frames that drop straight into a `dplyr`/`ggplot2` workflow:
 | Categorise | [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md) |
 | Score sentiment | [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md) |
 | Score emotions | [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md), [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md) |
+| Custom lexicons | [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md), [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md), [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md) |
 | Translate | [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md), [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md), `as_emoji*()` |
 | Search | [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md) |
 
@@ -633,12 +634,64 @@ ata_tweets %>%
 
 The emotion scores join through the same codepoint-normalised key as
 sentiment, so emoji carrying the `U+FE0F` variation selector resolve
-correctly. The lexicon API is pluggable — see
-[`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md),
-[`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
-and the generic
+correctly.
+
+## Bringing your own lexicon
+
+Sentiment and emotion scoring share one pluggable engine.
+[`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+lists the bundled lexicons (plus any you have registered):
+
+``` r
+
+emoji_lexicons()
+#> # A tibble: 2 × 6
+#>   name       type      dimensions     n source                           licence
+#>   <chr>      <chr>     <I<list>>  <int> <chr>                            <chr>  
+#> 1 novak2015  sentiment <chr [1]>    969 Kralj Novak et al. (2015), PLoS… CC BY-…
+#> 2 emotag1200 emotion   <chr [8]>    150 Shoeb & de Melo (2020), EMNLP 2… MIT
+```
+
 [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
-to bring your own lexicon.
+is the generic scorer underneath
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
+give it any data frame with an emoji column and a score column — say,
+scores tailored to your own domain — and it returns the per-row mean,
+joined through the same codepoint-normalised key as everything else:
+
+``` r
+
+my_lexicon <- data.frame(
+  emoji = c("\U0001f600", "\U0001f621", "\U0001f637"),
+  score = c(1, -1, -0.5)
+)
+
+data.frame(text = c("great \U0001f600", "bad \U0001f621\U0001f637", "none")) %>%
+  emoji_score(text, lexicon = my_lexicon)
+#> # A tibble: 3 × 4
+#>   text     .emoji_score .emoji_n_scored .emoji_n
+#>   <chr>           <dbl>           <int>    <int>
+#> 1 great 😀         1                  1        1
+#> 2 bad 😡😷        -0.75               2        2
+#> 3 none            NA                 NA        0
+```
+
+[`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+stores a lexicon under a name for the session, so you can refer to it in
+[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+— or in
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md),
+if it carries emotion columns:
+
+``` r
+
+register_emoji_lexicon("mine", my_lexicon)
+emoji_lexicons() %>% filter(name == "mine")
+#> # A tibble: 1 × 6
+#>   name  type   dimensions     n source          licence
+#>   <chr> <chr>  <I<list>>  <int> <chr>           <chr>  
+#> 1 mine  custom <chr [1]>      3 user-registered NA
+```
 
 ## Translating emoji to and from text
 
@@ -659,19 +712,42 @@ demo %>% emoji_to_text(text, format = "name")
 #> 1 great grinning face love red heart
 demo %>% emoji_to_text(text, format = "shortcode")
 #> # A tibble: 1 × 1
-#>   text                             
-#>   <chr>                            
-#> 1 great :grinning: love :red_heart:
+#>   text                         
+#>   <chr>                        
+#> 1 great :grinning: love :heart:
+demo %>%
+  emoji_to_text(text, format = "shortcode") %>%
+  text_to_emoji(text)
+#> # A tibble: 1 × 1
+#>   text           
+#>   <chr>          
+#> 1 great 😀 love ❤️
 ```
 
-For ad-hoc, vector-level use there are also
+Note that the qualified heart (which carries the `U+FE0F` variation
+selector) translates just as reliably as any other emoji, thanks to the
+normalised join key. For ad-hoc, vector-level use there are also
 [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
 [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
 and
-[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
-and
+[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md):
+
+``` r
+
+as_emoji_name(c("\U0001f600", "\u2764\ufe0f"))
+#> [1] "grinning face" "red heart"
+as_emoji_shortcode(c("\U0001f600", "\u2764\ufe0f"))
+#> [1] "grinning" "heart"
+as_emoji(c("grinning", "heart"))
+#> [1] "😀" "❤️"
+```
+
+## Searching the emoji catalogue
+
 [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
-to look up emoji by keyword:
+looks emoji up by keyword, name or shortcode (case-insensitive, literal
+matching), returning a tidy tibble you can filter further or feed into
+the other verbs:
 
 ``` r
 
@@ -689,6 +765,21 @@ emoji_search("happy")
 #>  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  
 #>  9 😇    smiling face with halo          innocent              Smileys … happy  
 #> 10 ☺     smiling face                    smiling_face          Smileys … happy  
+#> # ℹ 17 more rows
+emoji_search("celebration")
+#> # A tibble: 27 × 5
+#>    emoji name                     shortcode      group             keyword    
+#>    <chr> <chr>                    <chr>          <chr>             <chr>      
+#>  1 🥳    partying face            partying_face  Smileys & Emotion celebration
+#>  2 🙌    raising hands            raised_hands   People & Body     celebration
+#>  3 🎅    Santa Claus              santa          People & Body     celebration
+#>  4 🤶    Mrs. Claus               mrs_claus      People & Body     celebration
+#>  5 🧑‍🎄    Mx Claus                 mx_claus       People & Body     celebration
+#>  6 🎂    birthday cake            birthday       Food & Drink      celebration
+#>  7 🍾    bottle with popping cork champagne      Food & Drink      celebration
+#>  8 🎃    jack-o-lantern           jack_o_lantern Activities        celebration
+#>  9 🎄    Christmas tree           christmas_tree Activities        celebration
+#> 10 🎆    fireworks                fireworks      Activities        celebration
 #> # ℹ 17 more rows
 ```
 

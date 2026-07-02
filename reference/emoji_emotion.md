@@ -25,9 +25,11 @@ emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
 - lexicon:
 
   Lexicon to use. Either a string naming a bundled lexicon
-  (`"emotag1200"`, the default) or a registered lexicon (see
-  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)).
-  Currently only `"emotag1200"` ships.
+  (`"emotag1200"`, the default), the name of a registered lexicon (see
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)),
+  or a data frame. A custom lexicon must have an `emoji` column and one
+  column per emotion (any subset of the eight Plutchik emotions); it is
+  joined through the same codepoint-normalised key as the bundled one.
 
 - long:
 

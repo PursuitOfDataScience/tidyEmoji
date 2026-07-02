@@ -40,6 +40,40 @@
 
 ### Improvements and fixes
 
+- [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  matches literally, so queries containing regex metacharacters (for
+  example the `+1` alias) are safe and cannot error.
+- `emoji_to_text(format = "shortcode")` now always emits the emoji’s
+  canonical (first) GitHub-style alias — the same one reported by
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  and
+  [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  — and the `wrap` template is honoured. Emoji with no known
+  name/shortcode are left in place rather than dropped from the text.
+- [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  and
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  keep `NA` text entries as `NA`.
+- [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  and
+  [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  accept registered or data-frame emotion lexicons (any subset of the
+  eight Plutchik dimensions), not just the bundled `"emotag1200"`.
+- Registered lexicons resolve through their stored normalised key, so
+  `register_emoji_lexicon(by = )` works with any glyph column name in
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  and
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md).
+- [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  (and therefore
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md))
+  breaks count ties by the glyph, making the output order deterministic.
+- [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  no longer lists a custom lexicon’s glyph/key columns among its score
+  dimensions.
+- The package help page
+  ([`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md))
+  documents the output and naming contract shared by all verbs.
 - DESCRIPTION Title and Description broadened to cover emotions,
   translation and search; version bumped to 0.3.0.
 

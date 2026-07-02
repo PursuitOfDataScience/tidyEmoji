@@ -25,7 +25,8 @@ text_to_emoji(data, text)
 
 ## Value
 
-`data`, as a tibble, with the text column rewritten in place.
+`data`, as a tibble, with the text column rewritten in place. `NA`
+entries stay `NA`.
 
 ## See also
 

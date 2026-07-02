@@ -24,7 +24,9 @@ emoji_tweets(data, text)
 
 ## Value
 
-A tibble containing only the rows with at least one emoji.
+A tibble containing only the rows with at least one emoji. The result is
+always a plain (ungrouped) tibble, whatever the class or grouping of the
+input.
 
 ## Examples
 

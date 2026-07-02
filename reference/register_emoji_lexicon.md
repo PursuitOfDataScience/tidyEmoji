@@ -56,7 +56,7 @@ emoji_lexicons()
 #>   <chr>      <chr>     <I<list>>  <int> <chr>                            <chr>  
 #> 1 novak2015  sentiment <chr [1]>    969 Kralj Novak et al. (2015), PLoS… CC BY-…
 #> 2 emotag1200 emotion   <chr [8]>    150 Shoeb & de Melo (2020), EMNLP 2… MIT    
-#> 3 mine       custom    <chr [3]>      2 user-registered                  NA     
+#> 3 mine       custom    <chr [1]>      2 user-registered                  NA     
 emoji_score(data.frame(text = "great \U0001f600"), text, lexicon = "mine")
 #> # A tibble: 1 × 4
 #>   text     .emoji_score .emoji_n_scored .emoji_n

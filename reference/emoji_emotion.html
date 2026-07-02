@@ -67,8 +67,11 @@ bundled EmoTag1200 lexicon (Shoeb &amp; de Melo, 2020). Scores each range from 0
 
 <dt id="arg-lexicon">lexicon<a class="anchor" aria-label="anchor" href="#arg-lexicon"></a></dt>
 <dd><p>Lexicon to use. Either a string naming a bundled lexicon
-(<code>"emotag1200"</code>, the default) or a registered lexicon (see
-<code><a href="register_emoji_lexicon.html">register_emoji_lexicon()</a></code>). Currently only <code>"emotag1200"</code> ships.</p></dd>
+(<code>"emotag1200"</code>, the default), the name of a registered lexicon (see
+<code><a href="register_emoji_lexicon.html">register_emoji_lexicon()</a></code>), or a data frame. A custom lexicon must have an
+<code>emoji</code> column and one column per emotion (any subset of the eight Plutchik
+emotions); it is joined through the same codepoint-normalised key as the
+bundled one.</p></dd>
 
 
 <dt id="arg-long">long<a class="anchor" aria-label="anchor" href="#arg-long"></a></dt>

@@ -23,7 +23,9 @@ emoji_frequency(data, text)
 
 ## Value
 
-A tibble with columns `emoji`, `name`, `shortcode`, `group` and `n`.
+A tibble with columns `emoji`, `name`, `shortcode`, `group` and `n`,
+sorted by descending `n` with ties broken by the glyph so the order is
+deterministic.
 
 ## See also
 

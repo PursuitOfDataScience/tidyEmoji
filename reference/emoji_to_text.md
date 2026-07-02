@@ -26,21 +26,20 @@ emoji_to_text(data, text, format = c("name", "shortcode"), wrap = ":{x}:")
 - format:
 
   Output form: `"name"` (the Unicode name, e.g. "grinning face") or
-  `"shortcode"` (e.g. "grinning", wrapped as ":grinning:"). Default
-  `"name"`.
+  `"shortcode"` (the canonical GitHub-style alias, e.g. "grinning",
+  wrapped as ":grinning:"). Default `"name"`.
 
 - wrap:
 
   When `format = "shortcode"`, the wrapper applied to each shortcode,
-  written as a
-  [glue](https://glue.tidyverse.org/reference/glue.html)-style template
-  with `{x}` as the shortcode. Default `":{x}:"`. Ignored for
-  `format = "name"`.
+  written as a template with `{x}` standing for the shortcode. Default
+  `":{x}:"`. Ignored for `format = "name"`.
 
 ## Value
 
 `data`, as a tibble, with the text column rewritten in place (same
-column name).
+column name). `NA` entries stay `NA`, and emoji with no known name are
+left in place unchanged.
 
 ## See also
 
@@ -62,7 +61,7 @@ emoji_to_text(df, text, format = "name")
 #> 1 great grinning face love red heart
 emoji_to_text(df, text, format = "shortcode")
 #> # A tibble: 1 × 1
-#>   text                                  
-#>   <chr>                                 
-#> 1 great :grinning_face: love :red_heart:
+#>   text                         
+#>   <chr>                        
+#> 1 great :grinning: love :heart:
 ```

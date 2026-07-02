@@ -52,7 +52,21 @@
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-and-fixes-0-3-0">Improvements and fixes<a class="anchor" aria-label="anchor" href="#improvements-and-fixes-0-3-0"></a></h3>
-<ul><li>DESCRIPTION Title and Description broadened to cover emotions, translation and search; version bumped to 0.3.0.</li>
+<ul><li>
+<code><a href="../reference/emoji_search.html">emoji_search()</a></code> matches literally, so queries containing regex metacharacters (for example the <code>+1</code> alias) are safe and cannot error.</li>
+<li>
+<code>emoji_to_text(format = "shortcode")</code> now always emits the emoji’s canonical (first) GitHub-style alias — the same one reported by <code><a href="../reference/emoji_frequency.html">emoji_frequency()</a></code> and <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code> — and the <code>wrap</code> template is honoured. Emoji with no known name/shortcode are left in place rather than dropped from the text.</li>
+<li>
+<code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> and <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> keep <code>NA</code> text entries as <code>NA</code>.</li>
+<li>
+<code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code> and <code><a href="../reference/emoji_emotion_label.html">emoji_emotion_label()</a></code> accept registered or data-frame emotion lexicons (any subset of the eight Plutchik dimensions), not just the bundled <code>"emotag1200"</code>.</li>
+<li>Registered lexicons resolve through their stored normalised key, so <code>register_emoji_lexicon(by = )</code> works with any glyph column name in <code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code> and <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>.</li>
+<li>
+<code><a href="../reference/emoji_frequency.html">emoji_frequency()</a></code> (and therefore <code><a href="../reference/top_n_emojis.html">top_n_emojis()</a></code>) breaks count ties by the glyph, making the output order deterministic.</li>
+<li>
+<code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code> no longer lists a custom lexicon’s glyph/key columns among its score dimensions.</li>
+<li>The package help page (<code><a href="../reference/tidyEmoji-package.html">?tidyEmoji</a></code>) documents the output and naming contract shared by all verbs.</li>
+<li>DESCRIPTION Title and Description broadened to cover emotions, translation and search; version bumped to 0.3.0.</li>
 </ul></div>
 </div>
     <div class="section level2">

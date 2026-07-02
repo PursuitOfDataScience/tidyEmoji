@@ -43,7 +43,10 @@ emoji_score(data, text, lexicon, by = "emoji", score = NULL)
 
 `data`, as a tibble, with `.emoji_score` (per-row mean),
 `.emoji_n_scored` (emoji found in the lexicon) and `.emoji_n` (total
-emoji) added.
+emoji) added. For the multi-dimensional `"emotag1200"` lexicon the score
+is the mean over its eight emotion dimensions; use
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+for the per-emotion profile.
 
 ## See also
 

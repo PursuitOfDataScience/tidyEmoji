@@ -59,7 +59,7 @@ Yu<br><span style="font-weight: 400; font-size: 0.85em;">University of
 Chicago</span>
 </h4>
             
-            <h4 data-toc-skip class="date">2026-07-01</h4>
+            <h4 data-toc-skip class="date">2026-07-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
       <div class="d-none name"><code>introduction.Rmd</code></div>
@@ -127,13 +127,20 @@ and return tidy data frames that drop straight into a
 </td>
 </tr>
 <tr class="odd">
+<td>Custom lexicons</td>
+<td>
+<code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code>,
+<code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code>, <code><a href="../reference/emoji_score.html">emoji_score()</a></code>
+</td>
+</tr>
+<tr class="even">
 <td>Translate</td>
 <td>
 <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code>, <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code>,
 <code>as_emoji*()</code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Search</td>
 <td><code><a href="../reference/emoji_search.html">emoji_search()</a></code></td>
 </tr>
@@ -676,9 +683,50 @@ joy, sadness, surprise, trust) using the bundled EmoTag1200 lexicon
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span> trust              2</span></span></code></pre></div>
 <p>The emotion scores join through the same codepoint-normalised key as
 sentiment, so emoji carrying the <code>U+FE0F</code> variation selector
-resolve correctly. The lexicon API is pluggable — see
-<code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code>, <code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> and
-the generic <code><a href="../reference/emoji_score.html">emoji_score()</a></code> to bring your own lexicon.</p>
+resolve correctly.</p>
+</div>
+<div class="section level2">
+<h2 id="bringing-your-own-lexicon">Bringing your own lexicon<a class="anchor" aria-label="anchor" href="#bringing-your-own-lexicon"></a>
+</h2>
+<p>Sentiment and emotion scoring share one pluggable engine.
+<code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code> lists the bundled lexicons (plus any you
+have registered):</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_lexicons.html">emoji_lexicons</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
+<span><span class="co">#&gt;   name       type      dimensions     n source                           licence</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;I&lt;list&gt;&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> novak2015  sentiment <span style="color: #949494;">&lt;chr [1]&gt;</span>    969 Kralj Novak et al. (2015), PLoS… CC BY-…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> emotag1200 emotion   <span style="color: #949494;">&lt;chr [8]&gt;</span>    150 Shoeb &amp; de Melo (2020), EMNLP 2… MIT</span></span></code></pre></div>
+<p><code><a href="../reference/emoji_score.html">emoji_score()</a></code> is the generic scorer underneath
+<code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code>: give it any data frame with an emoji
+column and a score column — say, scores tailored to your own domain —
+and it returns the per-row mean, joined through the same
+codepoint-normalised key as everything else:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">my_lexicon</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  emoji <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\U0001f621"</span>, <span class="st">"\U0001f637"</span><span class="op">)</span>,</span>
+<span>  score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"great \U0001f600"</span>, <span class="st">"bad \U0001f621\U0001f637"</span>, <span class="st">"none"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_score.html">emoji_score</a></span><span class="op">(</span><span class="va">text</span>, lexicon <span class="op">=</span> <span class="va">my_lexicon</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
+<span><span class="co">#&gt;   text     .emoji_score .emoji_n_scored .emoji_n</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great 😀         1                  1        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> bad 😡😷        -<span style="color: #BB0000;">0.75</span>               2        2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> none            <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>        0</span></span></code></pre></div>
+<p><code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> stores a lexicon under a name
+for the session, so you can refer to it in <code><a href="../reference/emoji_score.html">emoji_score()</a></code> —
+or in <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>, if it carries emotion columns:</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon</a></span><span class="op">(</span><span class="st">"mine"</span>, <span class="va">my_lexicon</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/emoji_lexicons.html">emoji_lexicons</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">name</span> <span class="op">==</span> <span class="st">"mine"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   name  type   dimensions     n source          licence</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;I&lt;list&gt;&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> mine  custom <span style="color: #949494;">&lt;chr [1]&gt;</span>      3 user-registered <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="translating-emoji-to-and-from-text">Translating emoji to and from text<a class="anchor" aria-label="anchor" href="#translating-emoji-to-and-from-text"></a>
@@ -688,7 +736,7 @@ readers) and as an NLP normalisation step before tokenising.
 <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> does this for a whole column, in either
 Unicode-name or shortcode form; <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> is the
 inverse.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"great \U0001f600 love \u2764\ufe0f"</span><span class="op">)</span></span>
 <span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
@@ -697,14 +745,36 @@ inverse.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great grinning face love red heart</span></span>
 <span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
-<span><span class="co">#&gt;   text                             </span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great :grinning: love :red_heart:</span></span></code></pre></div>
-<p>For ad-hoc, vector-level use there are also
-<code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code> and
-<code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>, and <code><a href="../reference/emoji_search.html">emoji_search()</a></code> to look up
-emoji by keyword:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt;   text                         </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great :grinning: love :heart:</span></span>
+<span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/text_to_emoji.html">text_to_emoji</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
+<span><span class="co">#&gt;   text           </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great 😀 love ❤️</span></span></code></pre></div>
+<p>Note that the qualified heart (which carries the <code>U+FE0F</code>
+variation selector) translates just as reliably as any other emoji,
+thanks to the normalised join key. For ad-hoc, vector-level use there
+are also <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code>
+and <code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>:</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji_name</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\u2764\ufe0f"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "grinning face" "red heart"</span></span>
+<span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji_shortcode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\u2764\ufe0f"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "grinning" "heart"</span></span>
+<span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grinning"</span>, <span class="st">"heart"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "😀" "❤️"</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="searching-the-emoji-catalogue">Searching the emoji catalogue<a class="anchor" aria-label="anchor" href="#searching-the-emoji-catalogue"></a>
+</h2>
+<p><code><a href="../reference/emoji_search.html">emoji_search()</a></code> looks emoji up by keyword, name or
+shortcode (case-insensitive, literal matching), returning a tidy tibble
+you can filter further or feed into the other verbs:</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                            shortcode             group     keyword</span></span>
@@ -719,6 +789,21 @@ emoji by keyword:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😇    smiling face with halo          innocent              Smileys … happy  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☺     smiling face                    smiling_face          Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 17 more rows</span></span></span>
+<span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"celebration"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
+<span><span class="co">#&gt;    emoji name                     shortcode      group             keyword    </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🥳    partying face            partying_face  Smileys &amp; Emotion celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🙌    raising hands            raised_hands   People &amp; Body     celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🎅    Santa Claus              santa          People &amp; Body     celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🤶    Mrs. Claus               mrs_claus      People &amp; Body     celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🧑‍🎄    Mx Claus                 mx_claus       People &amp; Body     celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🎂    birthday cake            birthday       Food &amp; Drink      celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🍾    bottle with popping cork champagne      Food &amp; Drink      celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🎃    jack-o-lantern           jack_o_lantern Activities        celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🎄    Christmas tree           christmas_tree Activities        celebration</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🎆    fireworks                fireworks      Activities        celebration</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 17 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
