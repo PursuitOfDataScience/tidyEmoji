@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# tidyEmoji
+# tidyEmoji <img src="man/figures/logo.png" align="right" height="139" alt="tidyEmoji hex logo" />
 
 <!-- badges: start -->
 

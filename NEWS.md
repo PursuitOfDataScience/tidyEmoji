@@ -1,3 +1,8 @@
+# tidyEmoji (development version)
+
+* tidyEmoji has a hex logo! It appears in the README and on the pkgdown site
+  (`man/figures/logo.svg` is the vector master, `logo.png` the raster copy).
+
 # tidyEmoji 0.3.0
 
 ## New features

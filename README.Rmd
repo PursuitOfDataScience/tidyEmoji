@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# tidyEmoji
+# tidyEmoji <img src="man/figures/logo.png" align="right" height="139" alt="tidyEmoji hex logo" />
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/workflows/R-CMD-check/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
