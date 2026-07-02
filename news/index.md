@@ -1,9 +1,27 @@
 # Changelog
 
-## tidyEmoji 0.4.0
+## tidyEmoji 0.3.0
 
 ### New features
 
+- [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  scores each row’s emoji across the eight Plutchik emotions (anger,
+  anticipation, disgust, fear, joy, sadness, surprise, trust), using the
+  new bundled `emoji_emotion_lexicon` (EmoTag1200, Shoeb & de Melo 2020,
+  MIT). Supports a long form (`long = TRUE`) with one row per (row,
+  emotion).
+- [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  adds the dominant emotion per row.
+- A pluggable lexicon API:
+  [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  lists bundled and registered lexicons,
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  adds your own, and
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  is the generic scorer all the verbs share.
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  gains a `lexicon` argument (default `"novak2015"`, unchanged
+  behaviour).
 - Relational analysis.
   [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
   returns a tidy, graph-ready edge list (`item1`, `item2`, `n`) of the
@@ -29,49 +47,16 @@
   builds a document-by-emoji feature table (weightings: counts, binary,
   tf-idf), keeping every document — including emoji-free ones — so the
   result binds row-for-row to outcome columns in modelling workflows.
-- The four corpus-level verbs above canonicalise glyphs through the
-  package’s codepoint key, so qualified and unqualified forms of the
-  same emoji (for example the victory hand with and without `U+FE0F`)
-  count as one node/feature.
+- The corpus-level verbs above
+  ([`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md),
+  [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md),
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md))
+  canonicalise glyphs through the package’s codepoint key, so qualified
+  and unqualified forms of the same emoji (for example the victory hand
+  with and without `U+FE0F`) count as one node/feature.
   [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
   intentionally still reports the exact extracted glyph.
-
-### Improvements and fixes
-
-- rlang moved from Suggests to Imports (tidy-eval capture of the new
-  optional `doc_id` argument); it was already a hard transitive
-  dependency, so the installed footprint is unchanged.
-- Grouped data frames passed to
-  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),
-  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
-  or
-  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
-  warn that grouping is ignored — use `doc_id` to express per-group
-  structure.
-- The vignette header no longer carries a build date.
-
-## tidyEmoji 0.3.0
-
-### New features
-
-- [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
-  scores each row’s emoji across the eight Plutchik emotions (anger,
-  anticipation, disgust, fear, joy, sadness, surprise, trust), using the
-  new bundled `emoji_emotion_lexicon` (EmoTag1200, Shoeb & de Melo 2020,
-  MIT). Supports a long form (`long = TRUE`) with one row per (row,
-  emotion).
-- [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
-  adds the dominant emotion per row.
-- A pluggable lexicon API:
-  [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
-  lists bundled and registered lexicons,
-  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
-  adds your own, and
-  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
-  is the generic scorer all the verbs share.
-  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
-  gains a `lexicon` argument (default `"novak2015"`, unchanged
-  behaviour).
 - [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
   replaces emoji in a text column with their Unicode names or shortcodes
   (demojize — useful for accessibility and NLP preprocessing), and
@@ -124,8 +109,20 @@
 - The package help page
   ([`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md))
   documents the output and naming contract shared by all verbs.
+- rlang moved from Suggests to Imports (tidy-eval capture of the new
+  optional `doc_id` argument); it was already a hard transitive
+  dependency, so the installed footprint is unchanged.
+- Grouped data frames passed to
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
+  or
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  warn that grouping is ignored — use `doc_id` to express per-group
+  structure.
+- The vignette header no longer carries a build date.
 - DESCRIPTION Title and Description broadened to cover emotions,
-  translation and search; version bumped to 0.3.0.
+  translation, search, co-occurrence, structural metrics and feature
+  tables; version bumped to 0.3.0.
 
 ## tidyEmoji 0.2.1
 
