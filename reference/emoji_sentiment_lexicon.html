@@ -89,6 +89,20 @@ Data from <a href="https://hdl.handle.net/11356/1048" class="external-link">http
 Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 licence. Processed by <code>data-raw/emoji_sentiment_lexicon.R</code>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="detection-limitations">Detection limitations<a class="anchor" aria-label="anchor" href="#detection-limitations"></a></h2>
+
+
+<p>A handful of the glyphs in this lexicon are stored in their <em>unqualified</em>,
+single-codepoint form – most notably the bare heart U+2764 ("❤")
+without the U+FE0F emoji-presentation variation selector. The
+grapheme-aware extractor used throughout the package
+(<code><a href="https://emilhvitfeldt.github.io/emoji/reference/emoji_extract.html" class="external-link">emoji::emoji_extract_all()</a></code> / <code><a href="https://emilhvitfeldt.github.io/emoji/reference/emoji_locate.html" class="external-link">emoji::emoji_locate_all()</a></code>) does not detect
+these unqualified single-codepoint glyphs, so rows whose only emoji is such a
+glyph are not counted or scored (they behave as if they contained no emoji).
+If you need these to be detected, supply the emoji-presentation (qualified)
+form instead – e.g. the red heart U+2764 U+FE0F ("❤️").</p>
+    </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
@@ -99,7 +113,7 @@ licence. Processed by <code>data-raw/emoji_sentiment_lexicon.R</code>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

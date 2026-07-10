@@ -40,6 +40,16 @@ in the row), `.emoji_n_scored` (the number of emoji that actually appear
 in the lexicon), and `.emoji_sentiment` (the mean sentiment of the
 scored emoji).
 
+## Details
+
+Detection is grapheme-aware: unqualified single-codepoint glyphs present
+in the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
+variation selector) are not detected by the extractor and so are not
+scored or counted; supply the emoji-presentation (qualified) form
+instead. See
+[emoji_sentiment_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
+for details.
+
 ## References
 
 Kralj Novak P, Smailovic J, Sluban B, Mozetic I (2015) Sentiment of

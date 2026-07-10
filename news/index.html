@@ -36,7 +36,15 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="tidyemoji-development-version">tidyEmoji (development version)<a class="anchor" aria-label="anchor" href="#tidyemoji-development-version"></a></h2>
 <ul><li>tidyEmoji has a hex logo! It appears in the README and on the pkgdown site (<code>man/figures/logo.svg</code> is the vector master, <code>logo.png</code> the raster copy).</li>
+</ul><div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/emoji_density.html">emoji_density()</a></code> returns <code>.emoji_per_token = 0</code> (not <code>NA</code>) for whitespace-only text, matching <code>.emoji_per_char</code> and the documented “no emoji → 0” contract (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/1" class="external-link">#1</a>).</li>
+<li>
+<code><a href="../reference/as_emoji_name.html">as_emoji()</a></code> accepts the spaced Unicode names produced by <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code> (routing through the reference table), so <code>as_emoji(as_emoji_name(x))</code> round-trips instead of returning <code>NA</code> (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/2" class="external-link">#2</a>).</li>
+<li>Documented that unqualified single-codepoint glyphs present in the sentiment lexicon — notably the bare heart <code>❤</code> (U+2764, without the <code>U+FE0F</code> variation selector) — are not detected by the grapheme-aware extractor, so they are not scored or counted; supply the emoji-presentation (qualified) form (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/3" class="external-link">#3</a>).</li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="tidyemoji-030">tidyEmoji 0.3.0<a class="anchor" aria-label="anchor" href="#tidyemoji-030"></a></h2>
 <div class="section level3">
@@ -153,7 +161,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

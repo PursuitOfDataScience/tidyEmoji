@@ -79,6 +79,14 @@ appear in the lexicon), and <code>.emoji_sentiment</code> (the mean sentiment of
 scored emoji).</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Detection is grapheme-aware: unqualified single-codepoint glyphs present in
+the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
+variation selector) are not detected by the extractor and so are not
+scored or counted; supply the emoji-presentation (qualified) form instead.
+See <a href="emoji_sentiment_lexicon.html">emoji_sentiment_lexicon</a> for details.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Kralj Novak P, Smailovic J, Sluban B, Mozetic I (2015) Sentiment
 of Emojis. PLoS ONE 10(12): e0144296. <a href="https://doi.org/10.1371/journal.pone.0144296" class="external-link">doi:10.1371/journal.pone.0144296</a></p>
@@ -111,7 +119,7 @@ discrete emotions.</p></div>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

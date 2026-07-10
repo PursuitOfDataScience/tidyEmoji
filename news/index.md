@@ -6,6 +6,25 @@
   site (`man/figures/logo.svg` is the vector master, `logo.png` the
   raster copy).
 
+### Bug fixes
+
+- [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  returns `.emoji_per_token = 0` (not `NA`) for whitespace-only text,
+  matching `.emoji_per_char` and the documented “no emoji → 0” contract
+  ([\#1](https://github.com/PursuitOfDataScience/tidyEmoji/issues/1)).
+- [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  accepts the spaced Unicode names produced by
+  [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  (routing through the reference table), so `as_emoji(as_emoji_name(x))`
+  round-trips instead of returning `NA`
+  ([\#2](https://github.com/PursuitOfDataScience/tidyEmoji/issues/2)).
+- Documented that unqualified single-codepoint glyphs present in the
+  sentiment lexicon — notably the bare heart `❤` (U+2764, without the
+  `U+FE0F` variation selector) — are not detected by the grapheme-aware
+  extractor, so they are not scored or counted; supply the
+  emoji-presentation (qualified) form
+  ([\#3](https://github.com/PursuitOfDataScience/tidyEmoji/issues/3)).
+
 ## tidyEmoji 0.3.0
 
 ### New features
