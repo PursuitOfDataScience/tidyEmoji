@@ -183,6 +183,12 @@ as_emoji_shortcode <- function(x) {
 #' @export
 as_emoji <- function(x) {
   x <- as.character(x)
-  unname(emoji::emoji_name[x])
+  ref <- emoji_reference()
+  by_name <- stats::setNames(ref$emoji, ref$name)
+  by_short <- stats::setNames(ref$emoji, ref$shortcode)
+  out <- unname(by_name[x])
+  miss <- is.na(out); out[miss] <- unname(by_short[x[miss]])
+  miss <- is.na(out); out[miss] <- unname(emoji::emoji_name[x[miss]])
+  out
 }
 
