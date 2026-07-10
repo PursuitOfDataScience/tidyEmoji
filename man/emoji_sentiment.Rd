@@ -28,6 +28,13 @@ Emoji Sentiment Ranking lexicon (see \link{emoji_sentiment_lexicon}). Scores ran
 from -1 (negative) through 0 (neutral) to +1 (positive). Rows that contain no
 emoji, or whose emoji are absent from the lexicon, receive \code{NA}.
 }
+\details{
+Detection is grapheme-aware: unqualified single-codepoint glyphs present in
+the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
+variation selector) are not detected by the extractor and so are not
+scored or counted; supply the emoji-presentation (qualified) form instead.
+See \link{emoji_sentiment_lexicon} for details.
+}
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))
 emoji_sentiment(df, text)

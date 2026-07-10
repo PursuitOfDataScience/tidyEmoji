@@ -60,6 +60,17 @@
 #' `sentiment_score` is `(positive - negative) / occurrences`, ranging from -1
 #' (negative) to +1 (positive); `sentiment_label` is derived from its sign.
 #'
+#' @section Detection limitations:
+#' A handful of the glyphs in this lexicon are stored in their *unqualified*,
+#' single-codepoint form -- most notably the bare heart U+2764 ("❤")
+#' without the U+FE0F emoji-presentation variation selector. The
+#' grapheme-aware extractor used throughout the package
+#' ([emoji::emoji_extract_all()] / [emoji::emoji_locate_all()]) does not detect
+#' these unqualified single-codepoint glyphs, so rows whose only emoji is such a
+#' glyph are not counted or scored (they behave as if they contained no emoji).
+#' If you need these to be detected, supply the emoji-presentation (qualified)
+#' form instead -- e.g. the red heart U+2764 U+FE0F ("❤️").
+#'
 #' @format A data frame with one row per emoji and the columns:
 #' \describe{
 #'   \item{emoji}{The emoji glyph.}

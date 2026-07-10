@@ -94,8 +94,8 @@ emoji_density <- function(data, text) {
   out$.emoji_n <- as.integer(n)
   out$.emoji_per_char <- ifelse(is.na(n_char) | n_char == 0L, NA_real_,
                                 n / n_char)
-  out$.emoji_per_token <- ifelse(is.na(n_token) | n_token == 0L, NA_real_,
-                                 n / n_token)
+  out$.emoji_per_token <- ifelse(is.na(n_token) | n_char == 0L, NA_real_,
+                                 ifelse(n_token == 0L, 0, n / n_token))
   out
 }
 
