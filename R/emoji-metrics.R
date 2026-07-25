@@ -1,14 +1,6 @@
 # Structural & intensity metrics: where emoji sit in the text and how much of
-# the text they make up. Pure computation over emoji::emoji_locate_all() and
-# character counts; no metadata joins.
-
-# Internal: emoji locations per element, as a list of start/end matrices
-# (possibly 0-row). Positions are in characters, matching substr().
-.emoji_locations <- function(x) {
-  x <- as.character(x)
-  x[is.na(x)] <- ""
-  emoji::emoji_locate_all(x)
-}
+# the text they make up. Pure computation over .emoji_locations() (the engine's
+# grapheme-aware locator) and character counts; no metadata joins.
 
 #' Where do emoji sit within each text?
 #'
@@ -38,7 +30,7 @@
 emoji_position <- function(data, text) {
   v <- as.character(dplyr::pull(data, {{ text }}))
   locs <- .emoji_locations(v)
-  n <- lengths(emoji_glyph_list(v))
+  n <- vapply(locs, nrow, integer(1))
   len <- nchar(v)
   len[is.na(len)] <- 0L
 

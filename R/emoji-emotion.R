@@ -86,17 +86,13 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
   out <- tibble::as_tibble(data)
   if (isTRUE(long)) {
     # Long form: one row per (original row, emotion), with the original columns
-    # repeated and .emoji_emotion / .emoji_score added.
-    long_df <- tibble::tibble(
-      .row_number    = rep(seq_len(nrow(out)), each = length(dims)),
-      .emoji_emotion = rep(dims, nrow(out)),
-      .emoji_score   = as.numeric(t(row_means))
-    )
-    out <- out %>%
-      dplyr::mutate(.row_number = dplyr::row_number()) %>%
-      dplyr::left_join(long_df, by = ".row_number") %>%
-      dplyr::select(-.row_number) %>%
-      dplyr::relocate(.emoji_emotion, .emoji_score, .after = dplyr::last_col())
+    # repeated and .emoji_emotion / .emoji_score added. Repeat by index rather
+    # than joining on a helper column, so a user column called `.row_number`
+    # survives untouched.
+    n_row <- nrow(out)
+    out <- out[rep(seq_len(n_row), each = length(dims)), , drop = FALSE]
+    out$.emoji_emotion <- rep(dims, times = n_row)
+    out$.emoji_score <- as.numeric(t(row_means))
   } else {
     for (em in dims) {
       out[[paste0(".emoji_", em)]] <- row_means[, em]

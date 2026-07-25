@@ -21,8 +21,11 @@ Invisibly, the registered lexicon (with an added \code{key} column).
 \code{register_emoji_lexicon()} adds a user-supplied lexicon to the in-session
 registry so it can be referenced by name in \code{\link[=emoji_score]{emoji_score()}},
 \code{\link[=emoji_sentiment]{emoji_sentiment()}} or \code{\link[=emoji_emotion]{emoji_emotion()}}. The lexicon is normalised through
-\code{emoji_key()} (U+FE0F stripped), so a lexicon keyed on unqualified glyphs
-still matches qualified text (see next_release.md §4.1).
+the package's codepoint key (\code{U+FE0F} stripped), so a lexicon keyed on
+unqualified glyphs still matches qualified text.
+}
+\details{
+Registration lasts for the session; it is not written to disk.
 }
 \examples{
 my_lex <- data.frame(

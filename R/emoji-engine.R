@@ -1,8 +1,11 @@
 # Internal engine -------------------------------------------------------------
-# Shared, cached helpers that power the user-facing verbs. Detection and
-# extraction delegate to {emoji}, whose extractor is grapheme-aware (skin-tone
-# modifiers and ZWJ sequences such as family emoji stay intact) and fast. None
-# of the helpers below are exported.
+# Shared, cached helpers that power the user-facing verbs. Detection is
+# delegated to {emoji}'s regex, which is fast and grapheme-aware (skin-tone
+# modifiers and ZWJ sequences such as family emoji stay intact), with a
+# post-pass here that re-joins ZWJ sequences the upstream regex does not yet
+# know about (see .emoji_merge_zwj()). Every verb goes through
+# .emoji_locations() / emoji_glyph_list(), so they all agree on what an emoji
+# is. None of the helpers below are exported.
 
 .tidyEmoji_cache <- new.env(parent = emptyenv())
 
@@ -34,7 +37,8 @@ emoji_reference <- function() {
 
 # Codepoint key used to join emoji robustly across qualified / unqualified
 # forms: the emoji variation selector U+FE0F is dropped so that, for example,
-# the qualified heart "❤️" matches the lexicon's unqualified "❤".
+# the qualified heart (U+2764 U+FE0F) matches the lexicon's unqualified
+# U+2764.
 emoji_key <- function(glyphs) {
   vapply(glyphs, function(g) {
     if (is.na(g) || !nzchar(g)) return(NA_character_)
@@ -56,11 +60,55 @@ emoji_sentiment_map <- function() {
   .tidyEmoji_cache$sentiment
 }
 
+# Grapheme-cluster repair ------------------------------------------------
+# The upstream emoji regex only knows the ZWJ sequences that were current when
+# it was built, so newer ones (face exhaling, heart on fire, people holding
+# hands, the skin-toned handshakes, ...) come back as their component emoji.
+# UAX #29 rule GB11 is unconditional: a zero-width joiner between two
+# emoji always binds them into one grapheme cluster. So whenever two matches
+# are separated by exactly one ZWJ, merge them.
+.emoji_zwj <- "\u200d"
+
+# Merge ZWJ-adjacent rows of one start/end matrix. `s` is the string the
+# positions refer to.
+.emoji_merge_zwj <- function(m, s) {
+  n <- nrow(m)
+  if (n < 2L) return(m)
+  gap_start <- m[-n, "end"] + 1L
+  gap_end   <- m[-1L, "start"] - 1L
+  joined <- gap_end == gap_start & substring(s, gap_start, gap_end) == .emoji_zwj
+  if (!any(joined)) return(m)
+  grp <- cumsum(c(TRUE, !joined))
+  cbind(start = as.integer(tapply(m[, "start"], grp, min)),
+        end   = as.integer(tapply(m[, "end"], grp, max)))
+}
+
+# Emoji locations per element, as a list of start/end matrices (possibly
+# 0-row). Positions are in characters, matching substr(). This is the single
+# source of truth: emoji_glyph_list() slices the same spans, so extraction and
+# location can never disagree.
+.emoji_locations <- function(x) {
+  x <- as.character(x)
+  x[is.na(x)] <- ""
+  locs <- emoji::emoji_locate_all(x)
+  z <- grepl(.emoji_zwj, x, fixed = TRUE)
+  if (any(z)) {
+    locs[z] <- mapply(.emoji_merge_zwj, locs[z], x[z], SIMPLIFY = FALSE)
+  }
+  locs
+}
+
+# Slice the glyphs of one string out of its start/end matrix.
+.emoji_slice <- function(m, s) {
+  if (!nrow(m)) character(0) else substring(s, m[, "start"], m[, "end"])
+}
+
 # A list, one element per element of `x`, of the emoji glyphs it contains.
 emoji_glyph_list <- function(x) {
   x <- as.character(x)
   x[is.na(x)] <- ""
-  emoji::emoji_extract_all(x)
+  mapply(.emoji_slice, .emoji_locations(x), x,
+         SIMPLIFY = FALSE, USE.NAMES = FALSE)
 }
 
 # Unified detection: TRUE where text contains at least one emoji.
@@ -71,7 +119,7 @@ emoji_has <- function(x) {
 
 # Canonical glyph identity for the relational verbs (pairs / co-occurrence /
 # n-grams / dfm): map each extracted glyph to the reference glyph that shares
-# its codepoint key, so qualified ("❤️") and unqualified ("❤")
+# its codepoint key, so the qualified (U+2764 U+FE0F) and unqualified (U+2764)
 # forms of the same emoji count as one item / node / feature. Glyphs unknown to
 # the reference pass through unchanged.
 emoji_canonical <- function(glyphs) {
@@ -99,7 +147,7 @@ emoji_emotion_map <- function() {
 
 # Lexicon registry ------------------------------------------------------
 # A tiny, documented registry so sentiment, emotion and user-supplied lexicons
-# share one mechanism (next_release.md §6).
+# share one mechanism.
 #   key -> score table is returned keyed by emoji_key() so user lexicons keyed
 #   on unqualified glyphs still match qualified text.
 emoji_emotion_dims <- function() {

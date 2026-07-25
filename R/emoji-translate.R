@@ -30,7 +30,8 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   was_na <- is.na(v)
   v[was_na] <- ""
 
-  lst <- emoji_glyph_list(v)
+  locs <- .emoji_locations(v)
+  lst <- mapply(.emoji_slice, locs, v, SIMPLIFY = FALSE, USE.NAMES = FALSE)
   ref <- emoji_reference()
 
   # Map every unique glyph to its replacement once, then splice per row.
@@ -50,7 +51,7 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   rewritten <- vapply(seq_along(v), function(i) {
     g <- lst[[i]]
     if (!length(g)) return(v[[i]])
-    .emoji_replace_in_order(v[[i]], g, rpl_lookup[key_lookup[g]])
+    .emoji_replace_in_order(v[[i]], locs[[i]], g, rpl_lookup[key_lookup[g]])
   }, character(1))
   rewritten[was_na] <- NA_character_
 
@@ -72,22 +73,12 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 
 # Internal: replace each emoji glyph with its replacement, in reading order,
 # rebuilding the string from the (character-based) locate positions so repeated
-# glyphs and multi-byte sequences are handled correctly.
-.emoji_replace_in_order <- function(str, glyphs, replacements) {
+# glyphs and multi-byte sequences are handled correctly. `locs` is the row's
+# start/end matrix from .emoji_locations() and `glyphs` the glyphs sliced from
+# it, so the two are aligned by construction.
+.emoji_replace_in_order <- function(str, locs, glyphs, replacements) {
   if (!length(glyphs)) return(str)
-  locs <- emoji::emoji_locate_all(str)[[1L]]
   if (is.null(locs) || nrow(locs) == 0L) return(str)
-  # emoji_extract_all and emoji_locate_all emit emoji in the same order, so the
-  # replacements align row-by-row. If they ever disagree, fall back to a safe
-  # sequential fixed substitution.
-  if (nrow(locs) != length(glyphs)) {
-    for (k in seq_along(glyphs)) {
-      r <- replacements[k]
-      if (is.na(r)) next   # unknown emoji: leave the glyph in place
-      str <- sub(glyphs[k], r, str, fixed = TRUE)
-    }
-    return(str)
-  }
   bp <- locs[, "start"]
   ep <- locs[, "end"]
   # unknown emoji keep their glyph rather than vanishing
@@ -114,6 +105,13 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' (the inverse of [emoji_to_text()] with `format = "shortcode"`). Shortcodes
 #' that do not match a known emoji are left unchanged.
 #'
+#' @details
+#' A shortcode token is a colon, one or more of `A-Z`, `a-z`, `0-9`, `_`, `+`
+#' or `-`, and a closing colon. Restricting the token this way means colons
+#' used for other purposes -- clock times, URLs, ratios, ordinary punctuation
+#' -- cannot swallow a following shortcode: `"meet at 10:30 :wave:"` still
+#' emojizes the wave.
+#'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with the text column rewritten in place. `NA`
 #'   entries stay `NA`.
@@ -121,13 +119,20 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' @examples
 #' df <- data.frame(text = "hi :grinning: bye :waving_hand:")
 #' text_to_emoji(df, text)
+#'
+#' # colons elsewhere in the text do not interfere
+#' text_to_emoji(data.frame(text = "https://example.org at 10:30 :grinning:"),
+#'               text)
 #' @export
 text_to_emoji <- function(data, text) {
   v <- as.character(dplyr::pull(data, {{ text }}))
   was_na <- is.na(v)
   v[was_na] <- ""
   name_map <- emoji::emoji_name   # named vector: name -> glyph
-  m <- gregexpr(":[^:]+:", v)
+  # Match only the characters GitHub-style aliases actually use. A permissive
+  # ":[^:]+:" lets an unrelated colon pair (a URL, a clock time, "note: ...")
+  # consume the opening colon of a real shortcode and silently skip it.
+  m <- gregexpr(":[A-Za-z0-9_+-]+:", v)
   regmatches(v, m) <- lapply(regmatches(v, m), function(toks) {
     vapply(toks, function(t) {
       sc <- substr(t, 2L, nchar(t) - 1L)

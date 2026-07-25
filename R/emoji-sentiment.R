@@ -6,11 +6,12 @@
 #' emoji, or whose emoji are absent from the lexicon, receive `NA`.
 #'
 #' @details
-#' Detection is grapheme-aware: unqualified single-codepoint glyphs present in
-#' the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
-#' variation selector) are not detected by the extractor and so are not
-#' scored or counted; supply the emoji-presentation (qualified) form instead.
-#' See [emoji_sentiment_lexicon] for details.
+#' Detection is grapheme-aware. Some lexicon entries are stored as unqualified,
+#' text-presentation code points (notably the bare heart, \code{U+2764},
+#' without the \code{U+FE0F} variation selector); those are not treated as
+#' emoji in your text, so they are neither counted nor scored. Supply the
+#' emoji-presentation (qualified) form and it resolves normally. See
+#' [emoji_sentiment_lexicon] for the full picture.
 #'
 #' @inheritParams emoji_summary
 #' @param lexicon Lexicon to use. The default, `"novak2015"`, uses the bundled

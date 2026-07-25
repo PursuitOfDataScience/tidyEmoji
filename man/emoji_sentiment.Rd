@@ -29,11 +29,12 @@ from -1 (negative) through 0 (neutral) to +1 (positive). Rows that contain no
 emoji, or whose emoji are absent from the lexicon, receive \code{NA}.
 }
 \details{
-Detection is grapheme-aware: unqualified single-codepoint glyphs present in
-the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
-variation selector) are not detected by the extractor and so are not
-scored or counted; supply the emoji-presentation (qualified) form instead.
-See \link{emoji_sentiment_lexicon} for details.
+Detection is grapheme-aware. Some lexicon entries are stored as unqualified,
+text-presentation code points (notably the bare heart, \code{U+2764},
+without the \code{U+FE0F} variation selector); those are not treated as
+emoji in your text, so they are neither counted nor scored. Supply the
+emoji-presentation (qualified) form and it resolves normally. See
+\link{emoji_sentiment_lexicon} for the full picture.
 }
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))

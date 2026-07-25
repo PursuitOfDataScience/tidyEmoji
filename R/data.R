@@ -61,15 +61,22 @@
 #' (negative) to +1 (positive); `sentiment_label` is derived from its sign.
 #'
 #' @section Detection limitations:
-#' A handful of the glyphs in this lexicon are stored in their *unqualified*,
-#' single-codepoint form -- most notably the bare heart U+2764 ("❤")
-#' without the U+FE0F emoji-presentation variation selector. The
-#' grapheme-aware extractor used throughout the package
-#' ([emoji::emoji_extract_all()] / [emoji::emoji_locate_all()]) does not detect
-#' these unqualified single-codepoint glyphs, so rows whose only emoji is such a
-#' glyph are not counted or scored (they behave as if they contained no emoji).
-#' If you need these to be detected, supply the emoji-presentation (qualified)
-#' form instead -- e.g. the red heart U+2764 U+FE0F ("❤️").
+#' Many of the glyphs in this lexicon are stored in their *unqualified*,
+#' text-presentation form: a single code point with no \code{U+FE0F}
+#' emoji-presentation variation selector. The best-known is the bare heart,
+#' \code{U+2764}; others include the white smiling face (\code{U+263A}), the
+#' heavy check mark (\code{U+2714}) and the black rightwards arrow
+#' (\code{U+27A1}). The lexicon also contains characters that are not emoji at
+#' all (box-drawing characters, the copyright and registered signs, the
+#' replacement character), inherited from the tweets it was built from.
+#'
+#' The grapheme-aware detection used throughout the package does not treat
+#' these text-presentation code points as emoji, so a row whose only "emoji" is
+#' one of them is not counted or scored -- it behaves as if it contained no
+#' emoji. This affects detection only, never the join: supply the qualified
+#' form (the red heart \code{U+2764 U+FE0F}, say) and it resolves to the same
+#' lexicon entry, because every lookup goes through a codepoint key that
+#' ignores \code{U+FE0F}.
 #'
 #' @format A data frame with one row per emoji and the columns:
 #' \describe{

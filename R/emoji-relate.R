@@ -68,7 +68,9 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
   pair_list <- lapply(docs, function(g) {
     u <- unique(g)
     if (length(u) < 2L) return(NULL)
-    if (!directed) u <- sort(u)
+    # radix = C-locale ordering, matching dplyr::arrange() below, so which
+    # glyph lands in item1 does not depend on the session's collation
+    if (!directed) u <- sort(u, method = "radix")
     # all index pairs i < j; for directed input, u is in first-appearance
     # order, so i < j means "i appears before j"
     idx <- utils::combn(length(u), 2L)
@@ -156,8 +158,8 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
 #' emoji_ngrams(df, text, n = 3)
 #' @export
 emoji_ngrams <- function(data, text, n = 2, sep = " ") {
-  if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 1) {
-    stop("`n` must be a single integer >= 1.", call. = FALSE)
+  if (!is.numeric(n) || length(n) != 1L || is.na(n) || !is.finite(n) || n < 1) {
+    stop("`n` must be a single finite integer >= 1.", call. = FALSE)
   }
   n <- as.integer(n)
   lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))

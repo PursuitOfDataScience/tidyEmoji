@@ -30,7 +30,10 @@ emoji_lexicons <- function() {
       name = names(reg),
       type = "custom",
       dimensions = I(lapply(reg, function(x) {
-        setdiff(names(x), c("emoji", "key", "name"))
+        # drop the glyph column (whatever it was called at registration), the
+        # normalised key and any label column -- they are not score dimensions
+        setdiff(names(x), c(attr(x, "tidyEmoji_by") %||% "emoji",
+                            "emoji", "key", "name"))
       })),
       n = vapply(reg, nrow, integer(1)),
       source = "user-registered",
@@ -47,8 +50,10 @@ emoji_lexicons <- function() {
 #' `register_emoji_lexicon()` adds a user-supplied lexicon to the in-session
 #' registry so it can be referenced by name in [emoji_score()],
 #' [emoji_sentiment()] or [emoji_emotion()]. The lexicon is normalised through
-#' \code{emoji_key()} (U+FE0F stripped), so a lexicon keyed on unqualified glyphs
-#' still matches qualified text (see next_release.md §4.1).
+#' the package's codepoint key (`U+FE0F` stripped), so a lexicon keyed on
+#' unqualified glyphs still matches qualified text.
+#'
+#' Registration lasts for the session; it is not written to disk.
 #'
 #' @param name Name to register the lexicon under.
 #' @param tbl A data frame. Must contain a glyph column named `by` (default
@@ -75,6 +80,9 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
   }
   tbl <- as.data.frame(tbl)
   tbl$key <- emoji_key(tbl[[by]])
+  # remember which column held the glyphs so emoji_lexicons() does not report
+  # it as a score dimension
+  attr(tbl, "tidyEmoji_by") <- by
   if (is.null(.tidyEmoji_cache$lexicons)) {
     .tidyEmoji_cache$lexicons <- list()
   }

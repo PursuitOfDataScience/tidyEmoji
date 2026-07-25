@@ -21,9 +21,20 @@ that every \verb{:shortcode:} token is replaced by the corresponding emoji glyph
 (the inverse of \code{\link[=emoji_to_text]{emoji_to_text()}} with \code{format = "shortcode"}). Shortcodes
 that do not match a known emoji are left unchanged.
 }
+\details{
+A shortcode token is a colon, one or more of \code{A-Z}, \code{a-z}, \code{0-9}, \verb{_}, \code{+}
+or \code{-}, and a closing colon. Restricting the token this way means colons
+used for other purposes -- clock times, URLs, ratios, ordinary punctuation
+-- cannot swallow a following shortcode: \code{"meet at 10:30 :wave:"} still
+emojizes the wave.
+}
 \examples{
 df <- data.frame(text = "hi :grinning: bye :waving_hand:")
 text_to_emoji(df, text)
+
+# colons elsewhere in the text do not interfere
+text_to_emoji(data.frame(text = "https://example.org at 10:30 :grinning:"),
+              text)
 }
 \seealso{
 \code{\link[=emoji_to_text]{emoji_to_text()}}; \code{\link[=as_emoji]{as_emoji()}} for the vector helper.

@@ -26,12 +26,22 @@ normalised metadata joins, unified emoji detection, `.emoji_n_scored`,
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 NOTE
+0 errors | 0 warnings | 0 notes
 
-* NOTE: `checking data for non-ASCII characters` -- "found marked UTF-8 strings"
-  in the bundled emoji datasets. The crosswalks and lexicons contain emoji
-  glyphs, which are inherently non-ASCII UTF-8, so this note is expected and
-  unavoidable for emoji data; it is tolerated by CRAN.
+The bundled datasets contain emoji glyphs and are therefore marked UTF-8. This
+did not produce a note on any of the 13 CRAN check flavours for 0.2.0, and 0.3.0
+adds one further lexicon of the same kind; should a checking host report
+"found marked UTF-8 strings", it is inherent to emoji data rather than a defect.
+
+The reference manual builds as PDF. Help pages refer to emoji by code point
+(for example `U+2764 U+FE0F`) rather than embedding the glyph, so pdfLaTeX has
+no unmapped characters to typeset.
+
+`?emoji_sentiment_lexicon` links to <https://hdl.handle.net/11356/1048>, the
+canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. It resolves
+correctly; a checking host whose certificate store cannot verify the
+`hdl.handle.net` chain may report it as a possibly-invalid URL (R itself
+reports "Status without verification: OK").
 
 ## Bundled data and licence
 

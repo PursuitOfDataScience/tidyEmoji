@@ -77,8 +77,9 @@ emoji_dfm <- function(data, text, doc_id = NULL,
   }, integer(length(glyphs)))
   counts <- matrix(counts, nrow = length(glyphs))   # glyphs x docs
 
-  # column order: descending total count, ties by glyph
-  ord <- order(-rowSums(counts), glyphs)
+  # column order: descending total count, ties by glyph. radix = C-locale
+  # ordering, so the column order does not depend on the session's collation
+  ord <- order(-rowSums(counts), glyphs, method = "radix")
   glyphs <- glyphs[ord]
   counts <- counts[ord, , drop = FALSE]
 
