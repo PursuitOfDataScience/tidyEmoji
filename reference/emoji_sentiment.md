@@ -42,13 +42,14 @@ scored emoji).
 
 ## Details
 
-Detection is grapheme-aware: unqualified single-codepoint glyphs present
-in the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
-variation selector) are not detected by the extractor and so are not
-scored or counted; supply the emoji-presentation (qualified) form
-instead. See
+Detection is grapheme-aware. Some lexicon entries are stored as
+unqualified, text-presentation code points (notably the bare heart,
+`U+2764`, without the `U+FE0F` variation selector); those are not
+treated as emoji in your text, so they are neither counted nor scored.
+Supply the emoji-presentation (qualified) form and it resolves normally.
+See
 [emoji_sentiment_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
-for details.
+for the full picture.
 
 ## References
 

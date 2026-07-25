@@ -1,30 +1,5 @@
 # Changelog
 
-## tidyEmoji (development version)
-
-- tidyEmoji has a hex logo! It appears in the README and on the pkgdown
-  site (`man/figures/logo.svg` is the vector master, `logo.png` the
-  raster copy).
-
-### Bug fixes
-
-- [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
-  returns `.emoji_per_token = 0` (not `NA`) for whitespace-only text,
-  matching `.emoji_per_char` and the documented “no emoji → 0” contract
-  ([\#1](https://github.com/PursuitOfDataScience/tidyEmoji/issues/1)).
-- [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-  accepts the spaced Unicode names produced by
-  [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-  (routing through the reference table), so `as_emoji(as_emoji_name(x))`
-  round-trips instead of returning `NA`
-  ([\#2](https://github.com/PursuitOfDataScience/tidyEmoji/issues/2)).
-- Documented that unqualified single-codepoint glyphs present in the
-  sentiment lexicon — notably the bare heart `❤` (U+2764, without the
-  `U+FE0F` variation selector) — are not detected by the grapheme-aware
-  extractor, so they are not scored or counted; supply the
-  emoji-presentation (qualified) form
-  ([\#3](https://github.com/PursuitOfDataScience/tidyEmoji/issues/3)).
-
 ## tidyEmoji 0.3.0
 
 ### New features
@@ -97,9 +72,70 @@
   finds emoji by keyword, name or shortcode and returns a tidy tibble of
   matches.
 - New bundled dataset `emoji_emotion_lexicon`.
+- tidyEmoji has a hex logo! It appears in the README and on the pkgdown
+  site (`man/figures/logo.svg` is the vector master, `logo.png` the
+  raster copy).
 
 ### Improvements and fixes
 
+- **Grapheme-aware detection now covers newer zero-width-joiner
+  sequences.** The upstream emoji regex only knows the ZWJ sequences
+  that were current when it was built, so it reported later ones — face
+  exhaling, face with spiral eyes, heart on fire, people holding hands,
+  the skin-toned handshakes, “woman: blond hair”, and around 630 others
+  — as their *component* emoji. tidyEmoji now re-joins them (a ZWJ
+  between two emoji always binds them into one grapheme cluster).
+  Previously such an emoji inflated counts, resolved to the wrong name,
+  split into several co-occurrence nodes and stopped
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  recognising an emoji-only row; all of that is fixed. Emoji separated
+  by anything other than a ZWJ are unaffected.
+- Extraction and location are now sliced from the same spans, so no verb
+  can disagree with another about where an emoji starts and ends.
+- [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  no longer misses a `:shortcode:` that follows an unrelated colon.
+  `"meet at 10:30 :grinning:"` and `"https://example.org :grinning:"`
+  previously came back unchanged, because the permissive `:...:` pattern
+  consumed the shortcode’s opening colon; shortcode tokens are now
+  matched on the character set GitHub-style aliases actually use.
+- [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  and
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  order glyphs in the C locale, so which glyph lands in `item1` and the
+  order of a dfm’s tied columns no longer depend on the session’s
+  collation. Results are now reproducible across machines.
+- [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  no longer reports the glyph column as a score dimension for a lexicon
+  registered with a `by` other than `"emoji"`.
+- `emoji_emotion(long = TRUE)` no longer drops a user column named
+  `.row_number`.
+- `emoji_ngrams(n = Inf)` gives the documented error instead of a
+  coercion warning followed by “missing value where TRUE/FALSE needed”.
+- [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  is several times faster: it locates emoji once for the whole column
+  rather than once per row.
+- [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  returns `.emoji_per_token = 0` (not `NA`) for whitespace-only text,
+  matching `.emoji_per_char` and the documented “no emoji -\> 0”
+  contract
+  ([\#1](https://github.com/PursuitOfDataScience/tidyEmoji/issues/1)).
+- [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  accepts the spaced Unicode names produced by
+  [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  (routing through the reference table), so `as_emoji(as_emoji_name(x))`
+  round-trips instead of returning `NA`
+  ([\#2](https://github.com/PursuitOfDataScience/tidyEmoji/issues/2)).
+- [`?emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
+  now explains which lexicon entries are stored as unqualified,
+  text-presentation code points (the bare heart `U+2764` without
+  `U+FE0F`, the white smiling face, the heavy check mark, …) and are
+  therefore not detected in text, and notes that the qualified form
+  resolves to the same entry
+  ([\#3](https://github.com/PursuitOfDataScience/tidyEmoji/issues/3)).
+- The help pages no longer embed raw emoji glyphs, so the reference
+  manual builds as PDF;
+  [`?register_emoji_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  no longer points at an internal development file.
 - [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
   matches literally, so queries containing regex metacharacters (for
   example the `+1` alias) are safe and cannot error.

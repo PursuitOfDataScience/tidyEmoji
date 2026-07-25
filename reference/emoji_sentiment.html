@@ -80,11 +80,12 @@ scored emoji).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Detection is grapheme-aware: unqualified single-codepoint glyphs present in
-the lexicon (notably the bare heart U+2764 "❤" without the U+FE0F
-variation selector) are not detected by the extractor and so are not
-scored or counted; supply the emoji-presentation (qualified) form instead.
-See <a href="emoji_sentiment_lexicon.html">emoji_sentiment_lexicon</a> for details.</p>
+    <p>Detection is grapheme-aware. Some lexicon entries are stored as unqualified,
+text-presentation code points (notably the bare heart, <code>U+2764</code>,
+without the <code>U+FE0F</code> variation selector); those are not treated as
+emoji in your text, so they are neither counted nor scored. Supply the
+emoji-presentation (qualified) form and it resolves normally. See
+<a href="emoji_sentiment_lexicon.html">emoji_sentiment_lexicon</a> for the full picture.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

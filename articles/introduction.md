@@ -180,7 +180,7 @@ emoji_per_tweet <- ata_tweets %>%
   emoji_extract_unnest(full_text)
 
 emoji_per_tweet
-#> # A tibble: 697 × 3
+#> # A tibble: 696 × 3
 #>    .row_number .emoji_unicode .emoji_count
 #>          <int> <chr>                 <int>
 #>  1           2 😭                        1
@@ -193,7 +193,7 @@ emoji_per_tweet
 #>  8          33 😋                        1
 #>  9          42 🥲                        1
 #> 10          45 😈                        1
-#> # ℹ 687 more rows
+#> # ℹ 686 more rows
 ```
 
 We can use this to plot how many emoji each emoji-bearing entry
@@ -234,7 +234,7 @@ plotting.
 
 ata_tweets %>%
   emoji_tokens(full_text)
-#> # A tibble: 901 × 5
+#> # A tibble: 900 × 5
 #>    full_text                 .emoji .emoji_name .emoji_category .emoji_sentiment
 #>    <chr>                     <chr>  <chr>       <chr>                      <dbl>
 #>  1 Whole Family gone and I’… 😭     loudly cry… Smileys & Emot…          -0.0934
@@ -247,7 +247,7 @@ ata_tweets %>%
 #>  8 i’m thinking insomnia ca… 😋     face savor… Smileys & Emot…           0.634 
 #>  9 i deadass listen to the … 🥲     smiling fa… Smileys & Emot…          NA     
 #> 10 Im ona block where ya ba… 😈     smiling fa… Smileys & Emot…           0.268 
-#> # ℹ 891 more rows
+#> # ℹ 890 more rows
 ```
 
 ### A note on grapheme-aware detection
@@ -290,7 +290,7 @@ shortcode and category.
 
 ata_tweets %>%
   emoji_frequency(full_text)
-#> # A tibble: 188 × 5
+#> # A tibble: 187 × 5
 #>    emoji name                          shortcode                     group     n
 #>    <chr> <chr>                         <chr>                         <chr> <int>
 #>  1 😂    face with tears of joy        joy                           Smil…   160
@@ -303,7 +303,7 @@ ata_tweets %>%
 #>  8 💯    hundred points                100                           Smil…    20
 #>  9 😍    smiling face with heart-eyes  heart_eyes                    Smil…    20
 #> 10 🥰    smiling face with hearts      smiling_face_with_three_hear… Smil…    20
-#> # ℹ 178 more rows
+#> # ℹ 177 more rows
 ```
 
 ### `top_n_emojis()`
@@ -711,7 +711,7 @@ emoji_edges <- ata_tweets %>%
   emoji_pairs(full_text)
 
 emoji_edges
-#> # A tibble: 214 × 3
+#> # A tibble: 213 × 3
 #>    item1 item2     n
 #>    <chr> <chr> <int>
 #>  1 😂    😭       10
@@ -721,10 +721,10 @@ emoji_edges
 #>  5 💕    🥰        2
 #>  6 💞    🥺        2
 #>  7 💯    🤷🏽‍♂️        2
-#>  8 🤔    😂        2
-#>  9 🤣    😂        2
-#> 10 🤷🏼‍♀️    😂        2
-#> # ℹ 204 more rows
+#>  8 😂    🤔        2
+#>  9 😂    🤣        2
+#> 10 😂    🤷🏼‍♀️        2
+#> # ℹ 203 more rows
 ```
 
 The strongest pairings make a readable chart on their own:
@@ -761,7 +761,7 @@ Markov-style analyses:
 ata_tweets %>%
   emoji_ngrams(full_text) %>%
   count(.emoji_ngram, sort = TRUE)
-#> # A tibble: 159 × 2
+#> # A tibble: 158 × 2
 #>    .emoji_ngram     n
 #>    <chr>        <int>
 #>  1 😂 😂           66
@@ -774,7 +774,7 @@ ata_tweets %>%
 #>  8 😡 😡            5
 #>  9 🙏🏾 🙏🏾            5
 #> 10 💀 💀            4
-#> # ℹ 149 more rows
+#> # ℹ 148 more rows
 ```
 
 All the relational verbs canonicalise glyphs through the same
@@ -842,7 +842,7 @@ ata_tweets %>%
   emoji_dfm(full_text, weighting = "tfidf") %>%
   select(1:6)
 #> # A tibble: 2,000 × 6
-#>    .row_number  `😂`  `😭`  `🤣`  `😩`  `🥺`
+#>    .row_number  `😂`  `😭`  `😩`  `🤣`  `🥺`
 #>          <int> <dbl> <dbl> <dbl> <dbl> <dbl>
 #>  1           1     0  0        0     0     0
 #>  2           2     0  3.34     0     0     0

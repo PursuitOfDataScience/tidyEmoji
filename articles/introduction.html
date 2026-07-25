@@ -305,7 +305,7 @@ in that entry. Entries without emoji are dropped.</p>
 <span>  <span class="fu"><a href="../reference/emoji_extract_unnest.html">emoji_extract_unnest</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">emoji_per_tweet</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 697 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 696 × 3</span></span></span>
 <span><span class="co">#&gt;    .row_number .emoji_unicode .emoji_count</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>           2 😭                        1</span></span>
@@ -318,7 +318,7 @@ in that entry. Entries without emoji are dropped.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          33 😋                        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          42 🥲                        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          45 😈                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 687 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 686 more rows</span></span></span></code></pre></div>
 <p>We can use this to plot how many emoji each emoji-bearing entry
 contains:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -349,7 +349,7 @@ needed for counting, joining and plotting.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_tokens.html">emoji_tokens</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 901 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 900 × 5</span></span></span>
 <span><span class="co">#&gt;    full_text                 .emoji .emoji_name .emoji_category .emoji_sentiment</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Whole Family gone and I’… 😭     loudly cry… Smileys &amp; Emot…          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
@@ -362,7 +362,7 @@ needed for counting, joining and plotting.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> i’m thinking insomnia ca… 😋     face savor… Smileys &amp; Emot…           0.634 </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> i deadass listen to the … 🥲     smiling fa… Smileys &amp; Emot…          <span style="color: #BB0000;">NA</span>     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Im ona block where ya ba… 😈     smiling fa… Smileys &amp; Emot…           0.268 </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 891 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 890 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="a-note-on-grapheme-aware-detection">A note on grapheme-aware detection<a class="anchor" aria-label="anchor" href="#a-note-on-grapheme-aware-detection"></a>
@@ -403,7 +403,7 @@ annotated with each emoji’s name, shortcode and category.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 188 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 187 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                          shortcode                     group     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😂    face with tears of joy        joy                           Smil…   160</span></span>
@@ -416,7 +416,7 @@ annotated with each emoji’s name, shortcode and category.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 💯    hundred points                100                           Smil…    20</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😍    smiling face with heart-eyes  heart_eyes                    Smil…    20</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🥰    smiling face with hearts      smiling_face_with_three_hear… Smil…    20</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 178 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 177 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="top_n_emojis">
@@ -758,7 +758,7 @@ such as igraph, tidygraph and ggraph:</p>
 <span>  <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">emoji_edges</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 214 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 213 × 3</span></span></span>
 <span><span class="co">#&gt;    item1 item2     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😂    😭       10</span></span>
@@ -768,10 +768,10 @@ such as igraph, tidygraph and ggraph:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 💕    🥰        2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 💞    🥺        2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 💯    🤷🏽‍♂️        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🤔    😂        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🤣    😂        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🤷🏼‍♀️    😂        2</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 204 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😂    🤔        2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😂    🤣        2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 😂    🤷🏼‍♀️        2</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 203 more rows</span></span></span></code></pre></div>
 <p>The strongest pairings make a readable chart on their own:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_edges</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -796,7 +796,7 @@ material for sequence and Markov-style analyses:</p>
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_ngrams.html">emoji_ngrams</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_ngram</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 159 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 158 × 2</span></span></span>
 <span><span class="co">#&gt;    .emoji_ngram     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😂 😂           66</span></span>
@@ -809,7 +809,7 @@ material for sequence and Markov-style analyses:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😡 😡            5</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🙏🏾 🙏🏾            5</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 💀 💀            4</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 149 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 148 more rows</span></span></span></code></pre></div>
 <p>All the relational verbs canonicalise glyphs through the same
 codepoint-normalised key as the rest of the package, so qualified and
 unqualified forms of one emoji count as a single node.</p>
@@ -862,7 +862,7 @@ columns:</p>
 <span>  <span class="fu"><a href="../reference/emoji_dfm.html">emoji_dfm</a></span><span class="op">(</span><span class="va">full_text</span>, weighting <span class="op">=</span> <span class="st">"tfidf"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,000 × 6</span></span></span>
-<span><span class="co">#&gt;    .row_number  `😂`  `😭`  `🤣`  `😩`  `🥺`</span></span>
+<span><span class="co">#&gt;    .row_number  `😂`  `😭`  `😩`  `🤣`  `🥺`</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>           1     0  0        0     0     0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>           2     0  3.34     0     0     0</span></span>

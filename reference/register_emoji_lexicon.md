@@ -6,9 +6,9 @@ in-session registry so it can be referenced by name in
 [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
 or
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md).
-The lexicon is normalised through `emoji_key()` (U+FE0F stripped), so a
-lexicon keyed on unqualified glyphs still matches qualified text (see
-next_release.md §4.1).
+The lexicon is normalised through the package's codepoint key (`U+FE0F`
+stripped), so a lexicon keyed on unqualified glyphs still matches
+qualified text.
 
 ## Usage
 
@@ -34,6 +34,10 @@ register_emoji_lexicon(name, tbl, by = "emoji")
 ## Value
 
 Invisibly, the registered lexicon (with an added `key` column).
+
+## Details
+
+Registration lasts for the session; it is not written to disk.
 
 ## See also
 

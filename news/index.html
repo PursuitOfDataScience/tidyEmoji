@@ -34,18 +34,6 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="tidyemoji-development-version">tidyEmoji (development version)<a class="anchor" aria-label="anchor" href="#tidyemoji-development-version"></a></h2>
-<ul><li>tidyEmoji has a hex logo! It appears in the README and on the pkgdown site (<code>man/figures/logo.svg</code> is the vector master, <code>logo.png</code> the raster copy).</li>
-</ul><div class="section level3">
-<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
-<ul><li>
-<code><a href="../reference/emoji_density.html">emoji_density()</a></code> returns <code>.emoji_per_token = 0</code> (not <code>NA</code>) for whitespace-only text, matching <code>.emoji_per_char</code> and the documented “no emoji → 0” contract (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/1" class="external-link">#1</a>).</li>
-<li>
-<code><a href="../reference/as_emoji_name.html">as_emoji()</a></code> accepts the spaced Unicode names produced by <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code> (routing through the reference table), so <code>as_emoji(as_emoji_name(x))</code> round-trips instead of returning <code>NA</code> (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/2" class="external-link">#2</a>).</li>
-<li>Documented that unqualified single-codepoint glyphs present in the sentiment lexicon — notably the bare heart <code>❤</code> (U+2764, without the <code>U+FE0F</code> variation selector) — are not detected by the grapheme-aware extractor, so they are not scored or counted; supply the emoji-presentation (qualified) form (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/3" class="external-link">#3</a>).</li>
-</ul></div>
-</div>
-    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="tidyemoji-030">tidyEmoji 0.3.0<a class="anchor" aria-label="anchor" href="#tidyemoji-030"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
@@ -65,10 +53,33 @@
 <li>
 <code><a href="../reference/emoji_search.html">emoji_search()</a></code> finds emoji by keyword, name or shortcode and returns a tidy tibble of matches.</li>
 <li>New bundled dataset <code>emoji_emotion_lexicon</code>.</li>
+<li>tidyEmoji has a hex logo! It appears in the README and on the pkgdown site (<code>man/figures/logo.svg</code> is the vector master, <code>logo.png</code> the raster copy).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-and-fixes-0-3-0">Improvements and fixes<a class="anchor" aria-label="anchor" href="#improvements-and-fixes-0-3-0"></a></h3>
 <ul><li>
+<strong>Grapheme-aware detection now covers newer zero-width-joiner sequences.</strong> The upstream emoji regex only knows the ZWJ sequences that were current when it was built, so it reported later ones — face exhaling, face with spiral eyes, heart on fire, people holding hands, the skin-toned handshakes, “woman: blond hair”, and around 630 others — as their <em>component</em> emoji. tidyEmoji now re-joins them (a ZWJ between two emoji always binds them into one grapheme cluster). Previously such an emoji inflated counts, resolved to the wrong name, split into several co-occurrence nodes and stopped <code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code> recognising an emoji-only row; all of that is fixed. Emoji separated by anything other than a ZWJ are unaffected.</li>
+<li>Extraction and location are now sliced from the same spans, so no verb can disagree with another about where an emoji starts and ends.</li>
+<li>
+<code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> no longer misses a <code>:shortcode:</code> that follows an unrelated colon. <code>"meet at 10:30 :grinning:"</code> and <code>"https://example.org :grinning:"</code> previously came back unchanged, because the permissive <code>:...:</code> pattern consumed the shortcode’s opening colon; shortcode tokens are now matched on the character set GitHub-style aliases actually use.</li>
+<li>
+<code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code> and <code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code> order glyphs in the C locale, so which glyph lands in <code>item1</code> and the order of a dfm’s tied columns no longer depend on the session’s collation. Results are now reproducible across machines.</li>
+<li>
+<code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code> no longer reports the glyph column as a score dimension for a lexicon registered with a <code>by</code> other than <code>"emoji"</code>.</li>
+<li>
+<code>emoji_emotion(long = TRUE)</code> no longer drops a user column named <code>.row_number</code>.</li>
+<li>
+<code>emoji_ngrams(n = Inf)</code> gives the documented error instead of a coercion warning followed by “missing value where TRUE/FALSE needed”.</li>
+<li>
+<code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> is several times faster: it locates emoji once for the whole column rather than once per row.</li>
+<li>
+<code><a href="../reference/emoji_density.html">emoji_density()</a></code> returns <code>.emoji_per_token = 0</code> (not <code>NA</code>) for whitespace-only text, matching <code>.emoji_per_char</code> and the documented “no emoji -&gt; 0” contract (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/1" class="external-link">#1</a>).</li>
+<li>
+<code><a href="../reference/as_emoji_name.html">as_emoji()</a></code> accepts the spaced Unicode names produced by <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code> (routing through the reference table), so <code>as_emoji(as_emoji_name(x))</code> round-trips instead of returning <code>NA</code> (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/2" class="external-link">#2</a>).</li>
+<li>
+<code><a href="../reference/emoji_sentiment_lexicon.html">?emoji_sentiment_lexicon</a></code> now explains which lexicon entries are stored as unqualified, text-presentation code points (the bare heart <code>U+2764</code> without <code>U+FE0F</code>, the white smiling face, the heavy check mark, …) and are therefore not detected in text, and notes that the qualified form resolves to the same entry (<a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/3" class="external-link">#3</a>).</li>
+<li>The help pages no longer embed raw emoji glyphs, so the reference manual builds as PDF; <code><a href="../reference/register_emoji_lexicon.html">?register_emoji_lexicon</a></code> no longer points at an internal development file.</li>
+<li>
 <code><a href="../reference/emoji_search.html">emoji_search()</a></code> matches literally, so queries containing regex metacharacters (for example the <code>+1</code> alias) are safe and cannot error.</li>
 <li>
 <code>emoji_to_text(format = "shortcode")</code> now always emits the emoji’s canonical (first) GitHub-style alias — the same one reported by <code><a href="../reference/emoji_frequency.html">emoji_frequency()</a></code> and <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code> — and the <code>wrap</code> template is honoured. Emoji with no known name/shortcode are left in place rather than dropped from the text.</li>
