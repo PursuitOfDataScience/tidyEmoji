@@ -21,6 +21,7 @@ utils::globalVariables(c(
   ".",
   "emoji", "name", "shortcode", "group", "subgroup", "version", "n", "unicode",
   "emoji_name", "emoji_category", "key",
+  "word", "pmi", "share", "ambiguity", "rank", "flip_rate", ".period",
   ".row_number", ".emoji", ".emoji_unicode", ".emoji_count", ".emoji_category",
   ".emoji_name", ".emoji_sentiment", ".emoji_n", ".emoji_n_scored",
   ".emoji_score", ".emoji_emotion",

@@ -9,10 +9,11 @@
 #' By default every row of `data` is a document and the first output column,
 #' `.row_number`, is its position in `data` (matching
 #' [emoji_extract_unnest()]). Give `doc_id` to aggregate rows sharing an id
-#' into one document; the id column keeps its name. Emoji columns are named by
-#' the glyph itself, canonicalised through the package's codepoint key (so
-#' qualified and unqualified forms count as one feature), and ordered by
-#' descending total count (ties broken by glyph).
+#' into one document; the id column keeps its name, and documents appear in the
+#' order their id is first seen in `data`, never in the session's collation
+#' order. Emoji columns are named by the glyph itself, canonicalised through
+#' the package's codepoint key (so qualified and unqualified forms count as one
+#' feature), and ordered by descending total count (ties broken by glyph).
 #'
 #' For `weighting = "tfidf"`, the cell for emoji *e* in document *d* is
 #' `count(d, e) * log(N / df(e))`, where `N` is the number of documents and
@@ -58,10 +59,13 @@ emoji_dfm <- function(data, text, doc_id = NULL,
   } else {
     ids <- dplyr::pull(data, !!q)
     doc_col <- names(dplyr::select(data, !!q))
-    f <- factor(ids, exclude = NULL)
-    split_idx <- split(seq_along(lst), f)
+    # documents come out in first-appearance order of the id: factor() would
+    # sort the levels with the session's collation, making the row order of the
+    # result locale-dependent
+    split_idx <- .emoji_id_split(ids)
     docs <- lapply(split_idx, function(i) unlist(lst[i], use.names = FALSE))
-    # levels(f) stringifies the ids; index back into the originals instead
+    # index back into the original ids so their type (Date, factor, ...) and
+    # their exact value survive
     doc_vals <- ids[vapply(split_idx, `[`, integer(1), 1L)]
   }
 

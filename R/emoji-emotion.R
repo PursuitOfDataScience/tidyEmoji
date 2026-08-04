@@ -31,6 +31,7 @@
 #' emoji_emotion(df, text, long = TRUE)
 #' @export
 emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
+  .emoji_check_flag(long, "long")
   lex <- .emoji_lexicon_lookup(lexicon)
   if (is.list(lex) && !is.data.frame(lex) && identical(lex$type, "custom")) {
     lex <- lex$tbl

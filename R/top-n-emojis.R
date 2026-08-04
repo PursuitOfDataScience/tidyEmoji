@@ -62,6 +62,11 @@ emoji_frequency <- function(data, text) {
 #' @export
 top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
                          duplicated_unicode = lifecycle::deprecated()) {
+  if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 0) {
+    # head(x, -1) silently drops the last row rather than erroring, so an
+    # accidental negative would return a quietly wrong answer
+    stop("`n` must be a single non-negative number.", call. = FALSE)
+  }
   if (lifecycle::is_present(duplicated_unicode)) {
     lifecycle::deprecate_warn(
       "0.2.0", "top_n_emojis(duplicated_unicode)", "top_n_emojis(duplicated)"
@@ -69,6 +74,8 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
     duplicated <- isTRUE(duplicated_unicode) ||
       identical(duplicated_unicode, "yes")
   }
+  # after the legacy conversion: duplicated_unicode accepted the string "yes"
+  .emoji_check_flag(duplicated, "duplicated")
 
   if (dplyr::is_grouped_df(data)) {
     lifecycle::deprecate_warn(

@@ -1,3 +1,139 @@
+# tidyEmoji 0.4.0
+
+This release delivers the first wave of the feature roadmap filed as
+[issue #5](https://github.com/PursuitOfDataScience/tidyEmoji/issues/5):
+the items that are cheap, research-grounded, and need no new dataset and no
+new dependency. Most of them are recombinations of machinery the package
+already had — the Novak lexicon's annotation counts, the reference table's
+Unicode version column, the grapheme-aware locator — read out in a way no R
+package exposed before.
+
+## New features
+
+### Interpretation risk (roadmap theme B)
+
+Miller et al. (2016) found that readers of the *same* rendering disagree about
+whether an emoji is positive, neutral or negative roughly a quarter of the
+time. The bundled Emoji Sentiment Ranking keeps the raw
+`negative`/`neutral`/`positive` annotation counts behind its collapsed score,
+so that disagreement was already inside the package as an empirical
+distribution. It is now a number.
+
+* `emoji_ambiguity()` reports per-glyph annotation shares and one of four
+  disagreement statistics — Shannon `entropy` (the default), `gini`,
+  `neutral_share` or `ci_width` — with a rank over the whole lexicon.
+* `emoji_risk()` is the per-row version: `.emoji_ambiguity_mean`,
+  `.emoji_ambiguity_max` and `.emoji_n_ambiguous`.
+* `emoji_flag_ambiguous()` is the content-QA shortlist: the emoji in *your*
+  corpus most likely to be misread.
+* `emoji_sentiment(se = TRUE)` adds `.emoji_sentiment_se`, so a glyph annotated
+  eight times no longer carries the same authority as one annotated eight
+  thousand times.
+
+### Context (roadmap theme C)
+
+* `emoji_context()` returns one row per emoji occurrence with a window of the
+  surrounding text, in words or characters. All other emoji are blanked out of
+  the window, and character offsets stay exact.
+* `emoji_collocations()` aggregates those windows into an emoji-word table
+  scored by pointwise mutual information, shaped like `widyr::pairwise_count()`
+  output. Corpus-derived senses have neither the licence problem nor the
+  staleness problem of an imported sense inventory.
+
+### Time (roadmap theme H)
+
+* `emoji_trend()` counts emoji per period (`"day"`, `"week"`, `"month"`,
+  `"quarter"`, `"year"`) and returns a *complete* period-by-emoji grid, so a
+  trend line does not silently skip its zeros.
+* `emoji_turnover()` reports vocabulary churn between consecutive periods:
+  `jaccard`, `n_new`, `n_lost`, `n_core`.
+* `emoji_version_profile()` breaks a corpus down by the Unicode emoji version
+  that introduced each glyph, and `emoji_adoption_lag()` compares first use in
+  the corpus with the release date. Both come almost free from the `version`
+  column the reference table already carries.
+* `emoji_seasonality()` aggregates by month, weekday or hour, returning every
+  level of the cycle including the empty ones, with fixed English labels so a
+  script's output does not change with the machine that runs it.
+* `emoji_unicode_releases()` is the version-to-release-date lookup behind the
+  two verbs above. It is a function rather than a bundled dataset: at a few
+  dozen rows it belongs beside the code that uses it.
+
+### Text-emoji mismatch (roadmap theme E)
+
+* `emoji_incongruity()` measures the signed gap between a row's text sentiment
+  and its emoji sentiment — the sarcasm feature in NLP, the (in)congruence
+  variable in marketing research. `emoji_congruence()` is the same engine under
+  the marketing framing; `emoji_incongruity_profile()` reports which glyphs go
+  against the grain of their host text.
+* tidyEmoji still does not score text: you supply `text_score` from
+  tidytext, sentimentr, vader or a model. Because those live
+  on incompatible scales, `scale` has **no default** — you have to say how the
+  two sides were made comparable.
+* Rows with no scorable emoji get `NA`, never `0`, in every new column.
+
+### Functional type (roadmap theme K)
+
+* `as_emoji_type()`, `emoji_type()` and `emoji_faceness()` recode the Unicode
+  group and subgroup into `face`, `gesture`, `person`, `nature`, `food`,
+  `place`, `activity`, `object`, `symbol`, `flag` and `component`. The
+  emotional (face) versus semantic (object) contrast is the key variable in the
+  consumer-behaviour literature and is now a one-liner.
+
+### Language-model plumbing (roadmap theme J)
+
+* `emoji_sanitize()` applies one named policy — `"keep"`, `"strip"`, `"name"`,
+  `"shortcode"` or `"placeholder"` — to a text column. The capability mostly
+  existed; the value is an argument that shows up in a script diff and in a
+  methods section.
+* `emoji_token_cost()` reports exact `.emoji_bytes`, `.emoji_codepoints` and
+  `.emoji_graphemes` plus a clearly-labelled `.emoji_token_estimate`, or the
+  real count if you pass your own `tokenizer`.
+
+### Provenance (roadmap theme M)
+
+* `emoji_provenance()` puts every version an emoji result depends on in one
+  row: tidyEmoji, the emoji package, the Unicode emoji version, the size
+  of the detectable emoji set, and the lexicons.
+* `emoji_unicode_version()` reports that Unicode version on its own.
+* `inst/CITATION` now credits the package and the two lexicon papers users have
+  to cite anyway.
+
+## Improvements and fixes
+
+* **`emoji_dfm(doc_id = )` no longer orders its rows by the session's
+  collation.** Documents were grouped with `factor()`, whose levels are sorted
+  with the locale's collation, so the row order of the result could differ
+  between machines — the same class of bug 0.3.0 fixed for glyph ordering in
+  `emoji_pairs()` and the dfm's columns. Documents now appear in the order
+  their id is first seen in the data. `emoji_pairs()`,
+  `emoji_cooccurrence()` and `emoji_dfm()` share one grouping helper, so they
+  cannot drift apart again.
+* `emoji_sanitize(policy = "strip")` tidies only the whitespace left behind by
+  a removed glyph, and only on rows that actually contained one.
+* **Arguments given nonsense now error instead of quietly returning a
+  different answer.** An audit of every argument that reaches a base R function
+  without validation found one shape of bug repeated across the package: a
+  value the function cannot honour was absorbed rather than rejected.
+  `emoji_to_text(wrap = )` now requires the `{x}` placeholder, since a template
+  without it replaces every emoji with the same literal string;
+  `top_n_emojis(n = )` rejects a negative `n`, which `head()` had silently read
+  as "drop the last row"; and every `TRUE`/`FALSE` argument
+  (`emoji_pairs(directed = , sort = )`, `emoji_cooccurrence(diagonal = )`,
+  `emoji_emotion(long = )`, `emoji_context(keep_text = )`,
+  `top_n_emojis(duplicated = )`, `emoji_sentiment(se = )`) is now checked,
+  because `isTRUE()` reads every non-`TRUE` value as `FALSE` — so
+  `long = "yes"` used to return the wide form without complaint. The deprecated
+  `top_n_emojis(duplicated_unicode = "yes")` still works: the check runs after
+  the lifecycle conversion.
+* `emoji_score()` gains the `lexicon = "novak2015"` default that
+  `emoji_sentiment()` always had, so calling it without a lexicon works instead
+  of raising a missing-argument error.
+* The reference-manual sources are ASCII throughout, so the PDF manual builds
+  everywhere.
+* `next_release.md`, the repo's release ledger, gains a section 13 recording
+  what wave 1 shipped, the third-audit defect, and the design decisions locked
+  at implementation.
+
 # tidyEmoji 0.3.0
 
 ## New features

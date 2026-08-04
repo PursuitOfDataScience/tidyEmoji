@@ -12,7 +12,8 @@
 #'   "grinning", wrapped as ":grinning:"). Default `"name"`.
 #' @param wrap When `format = "shortcode"`, the wrapper applied to each
 #'   shortcode, written as a template with `{x}` standing for the shortcode.
-#'   Default `":{x}:"`. Ignored for `format = "name"`.
+#'   Default `":{x}:"`. Must contain `{x}`, or every emoji would be replaced by
+#'   the same literal string. Ignored for `format = "name"`.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`, and emoji with no known name are left
 #'   in place unchanged.
@@ -26,6 +27,14 @@
 emoji_to_text <- function(data, text, format = c("name", "shortcode"),
                           wrap = ":{x}:") {
   format <- match.arg(format)
+  if (format == "shortcode" &&
+      (!is.character(wrap) || length(wrap) != 1L || is.na(wrap) ||
+         !grepl("{x}", wrap, fixed = TRUE))) {
+    # a template with no placeholder silently collapses every emoji to the same
+    # string -- the dead-argument failure mode the 0.3.0 audit already caught
+    stop("`wrap` must be a single string containing `{x}`, the placeholder ",
+         "for the shortcode.", call. = FALSE)
+  }
   v <- as.character(dplyr::pull(data, {{ text }}))
   was_na <- is.na(v)
   v[was_na] <- ""
