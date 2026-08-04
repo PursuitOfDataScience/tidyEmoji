@@ -1,0 +1,47 @@
+if (!exists("meta") || is.null(meta)) {
+  meta <- utils::packageDescription("tidyEmoji")
+}
+ver <- meta$Version
+if (is.null(ver)) ver <- "0.4.0"
+
+citHeader(paste(
+  "To cite tidyEmoji in publications, cite the package.",
+  "If you used emoji_sentiment(), emoji_ambiguity() or emoji_risk(),",
+  "also cite Kralj Novak et al. (2015);",
+  "if you used emoji_emotion(), also cite Shoeb & de Melo (2020)."
+))
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "{tidyEmoji}: Discover, Count, Categorise, Score, Translate and Relate Emoji in Text",
+  author   = person(given = "Youzhi", family = "Yu"),
+  year     = "2026",
+  note     = paste("R package version", ver),
+  url      = "https://pursuitofdatascience.github.io/tidyEmoji/"
+)
+
+bibentry(
+  bibtype = "Article",
+  title   = "Sentiment of Emojis",
+  author  = c(person(given = "Petra", family = "Kralj Novak"),
+              person(given = "Jasmina", family = "Smailovic"),
+              person(given = "Borut", family = "Sluban"),
+              person(given = "Igor", family = "Mozetic")),
+  journal = "PLoS ONE",
+  year    = "2015",
+  volume  = "10",
+  number  = "12",
+  pages   = "e0144296",
+  doi     = "10.1371/journal.pone.0144296"
+)
+
+bibentry(
+  bibtype   = "InProceedings",
+  title     = "{EmoTag1200}: Understanding the Association between Emojis and Emotions",
+  author    = c(person(given = "Abu Awal Md", family = "Shoeb"),
+                person(given = "Gerard", family = "de Melo")),
+  booktitle = "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+  year      = "2020",
+  pages     = "8957--8967",
+  url       = "https://aclanthology.org/2020.emnlp-main.720/"
+)

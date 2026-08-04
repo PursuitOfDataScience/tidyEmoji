@@ -1,19 +1,31 @@
 ## Submission notes
 
-This is a feature release (0.3.0; previous CRAN version 0.2.0). It contains
-the 0.2.1 correctness patch (documented separately in NEWS.md: codepoint-
-normalised metadata joins, unified emoji detection, `.emoji_n_scored`,
-`top_n_emojis()` fixes, warnings on grouped input) plus the 0.3.0 features:
+This is a feature release (0.4.0; previous CRAN version 0.2.0). It contains the
+0.2.1 correctness patch and the 0.3.0 feature release, both documented
+separately in NEWS.md, plus the 0.4.0 features:
 
-* Emoji emotion scoring (`emoji_emotion()`, `emoji_emotion_label()`) with the
-  new bundled EmoTag1200 lexicon, and a pluggable lexicon API
-  (`emoji_lexicons()`, `register_emoji_lexicon()`, `emoji_score()`).
-* Relational analysis (`emoji_pairs()`, `emoji_cooccurrence()`,
-  `emoji_ngrams()`), structural metrics (`emoji_position()`,
-  `emoji_density()`, `emoji_ratio()`), and `emoji_dfm()` document-by-emoji
-  feature tables.
-* Emoji<->text translation (`emoji_to_text()`, `text_to_emoji()`,
-  `as_emoji*()` helpers) and `emoji_search()`.
+* Interpretation risk (`emoji_ambiguity()`, `emoji_risk()`,
+  `emoji_flag_ambiguous()`, `emoji_sentiment(se = TRUE)`), computed from the
+  annotation counts already carried by the bundled Emoji Sentiment Ranking.
+* Context windows and corpus-derived collocations (`emoji_context()`,
+  `emoji_collocations()`).
+* Time verbs (`emoji_trend()`, `emoji_turnover()`, `emoji_seasonality()`,
+  `emoji_version_profile()`, `emoji_adoption_lag()`,
+  `emoji_unicode_releases()`).
+* Text-emoji mismatch (`emoji_incongruity()`, `emoji_congruence()`,
+  `emoji_incongruity_profile()`).
+* Functional type (`emoji_type()`, `emoji_faceness()`, `as_emoji_type()`).
+* Preprocessing policies and token accounting for language-model pipelines
+  (`emoji_sanitize()`, `emoji_token_cost()`).
+* Provenance (`emoji_provenance()`, `emoji_unicode_version()`) and a new
+  `inst/CITATION`.
+
+No new dependencies, no new bundled data, and no change to the existing
+verbs' output columns. One behavioural fix is noted in NEWS.md:
+`emoji_dfm(doc_id = )` previously ordered its rows with the session's
+collation and now uses first-appearance order of the id.
+
+The package makes no network requests, at check time or at run time.
 
 ## Test environments
 
@@ -29,9 +41,9 @@ normalised metadata joins, unified emoji detection, `.emoji_n_scored`,
 0 errors | 0 warnings | 0 notes
 
 The bundled datasets contain emoji glyphs and are therefore marked UTF-8. This
-did not produce a note on any of the 13 CRAN check flavours for 0.2.0, and 0.3.0
-adds one further lexicon of the same kind; should a checking host report
-"found marked UTF-8 strings", it is inherent to emoji data rather than a defect.
+did not produce a note on any of the 13 CRAN check flavours for 0.2.0; 0.4.0
+adds no further data. Should a checking host report "found marked UTF-8
+strings", it is inherent to emoji data rather than a defect.
 
 The reference manual builds as PDF. Help pages refer to emoji by code point
 (for example `U+2764 U+FE0F`) rather than embedding the glyph, so pdfLaTeX has

@@ -2,7 +2,7 @@
 % Please edit documentation in R/emoji-metrics.R
 \name{emoji_ratio}
 \alias{emoji_ratio}
-\title{What share of the text is emoji — and is it emoji-only?}
+\title{What share of the text is emoji, and is it emoji-only?}
 \usage{
 emoji_ratio(data, text)
 }

@@ -14,25 +14,50 @@
 #' [emoji_sentiment_lexicon] for the full picture.
 #'
 #' @inheritParams emoji_summary
+#' @section Uncertainty:
+#' A glyph annotated eight times should not carry the same authority as one
+#' annotated eight thousand times, and the bundled lexicon keeps the annotation
+#' counts that say which is which. With `se = TRUE` the result gains
+#' `.emoji_sentiment_se`, the standard error of the row's mean: each glyph's
+#' score has a binomial-style standard error computed from its own counts, and
+#' those are propagated to the mean assuming independent annotations
+#' (`sqrt(sum(se^2)) / n_scored`). It needs the annotation counts, so it is
+#' available for the bundled `"novak2015"` lexicon only. See
+#' [emoji_ambiguity()] for the same counts read as disagreement.
+#'
 #' @param lexicon Lexicon to use. The default, `"novak2015"`, uses the bundled
 #'   [emoji_sentiment_lexicon]. A registered lexicon (see
 #'   [register_emoji_lexicon()]) or a data frame can also be supplied; see
 #'   [emoji_score()] for the generic scorer.
+#' @param se If `TRUE`, also return `.emoji_sentiment_se`, the standard error of
+#'   the row's mean sentiment. Requires the bundled `"novak2015"` lexicon.
+#'   Default `FALSE`.
 #' @return \code{data}, as a tibble, with added columns \code{.emoji_n} (the number of
 #'   emoji in the row), \code{.emoji_n_scored} (the number of emoji that actually
 #'   appear in the lexicon), and \code{.emoji_sentiment} (the mean sentiment of the
-#'   scored emoji).
+#'   scored emoji). With \code{se = TRUE}, also \code{.emoji_sentiment_se}.
 #' @references Kralj Novak P, Smailovic J, Sluban B, Mozetic I (2015) Sentiment
 #'   of Emojis. PLoS ONE 10(12): e0144296. \doi{10.1371/journal.pone.0144296}
 #' @seealso [emoji_sentiment_lexicon] for the underlying scores;
 #'   [emoji_score()] for scoring against any lexicon; [emoji_emotion()] for
-#'   discrete emotions.
+#'   discrete emotions; [emoji_ambiguity()] for annotator disagreement.
 #' @examples
 #' df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))
 #' emoji_sentiment(df, text)
+#' emoji_sentiment(df, text, se = TRUE)
 #' @export
-emoji_sentiment <- function(data, text, lexicon = "novak2015") {
-  if (missing(lexicon) || identical(lexicon, "novak2015")) {
+emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
+  if (!is.logical(se) || length(se) != 1L || is.na(se)) {
+    stop("`se` must be TRUE or FALSE.", call. = FALSE)
+  }
+  is_novak <- missing(lexicon) ||
+    (is.character(lexicon) && length(lexicon) == 1L && !is.na(lexicon) &&
+       lexicon %in% c("novak2015", "emoji_sentiment_lexicon", "sentiment"))
+  if (se && !is_novak) {
+    stop("`se = TRUE` needs the annotation counts behind a score, which only ",
+         "the bundled \"novak2015\" lexicon carries.", call. = FALSE)
+  }
+  if (is_novak) {
     score <- emoji_sentiment_map()
   } else {
     lex <- .emoji_lexicon_lookup(lexicon)
@@ -69,5 +94,15 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015") {
   out$.emoji_n <- as.integer(lengths(lst))
   out$.emoji_n_scored <- n_scored
   out$.emoji_sentiment <- means
+  if (se) {
+    se_map <- emoji_sentiment_se_map()
+    out$.emoji_sentiment_se <- vapply(lst, function(g) {
+      if (!length(g)) return(NA_real_)
+      s <- se_map[key_lookup[g]]
+      s <- s[!is.na(s)]
+      if (!length(s)) return(NA_real_)
+      sqrt(sum(s^2)) / length(s)
+    }, numeric(1))
+  }
   out
 }

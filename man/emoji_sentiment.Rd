@@ -4,7 +4,7 @@
 \alias{emoji_sentiment}
 \title{Score the sentiment of the emoji in each row}
 \usage{
-emoji_sentiment(data, text, lexicon = "novak2015")
+emoji_sentiment(data, text, lexicon = "novak2015", se = FALSE)
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column.}
@@ -15,12 +15,16 @@ emoji_sentiment(data, text, lexicon = "novak2015")
 \link{emoji_sentiment_lexicon}. A registered lexicon (see
 \code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}}) or a data frame can also be supplied; see
 \code{\link[=emoji_score]{emoji_score()}} for the generic scorer.}
+
+\item{se}{If \code{TRUE}, also return \code{.emoji_sentiment_se}, the standard error of
+the row's mean sentiment. Requires the bundled \code{"novak2015"} lexicon.
+Default \code{FALSE}.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n} (the number of
 emoji in the row), \code{.emoji_n_scored} (the number of emoji that actually
 appear in the lexicon), and \code{.emoji_sentiment} (the mean sentiment of the
-scored emoji).
+scored emoji). With \code{se = TRUE}, also \code{.emoji_sentiment_se}.
 }
 \description{
 \code{emoji_sentiment()} adds the mean emoji sentiment of each row, based on the
@@ -36,9 +40,23 @@ emoji in your text, so they are neither counted nor scored. Supply the
 emoji-presentation (qualified) form and it resolves normally. See
 \link{emoji_sentiment_lexicon} for the full picture.
 }
+\section{Uncertainty}{
+
+A glyph annotated eight times should not carry the same authority as one
+annotated eight thousand times, and the bundled lexicon keeps the annotation
+counts that say which is which. With \code{se = TRUE} the result gains
+\code{.emoji_sentiment_se}, the standard error of the row's mean: each glyph's
+score has a binomial-style standard error computed from its own counts, and
+those are propagated to the mean assuming independent annotations
+(\code{sqrt(sum(se^2)) / n_scored}). It needs the annotation counts, so it is
+available for the bundled \code{"novak2015"} lexicon only. See
+\code{\link[=emoji_ambiguity]{emoji_ambiguity()}} for the same counts read as disagreement.
+}
+
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))
 emoji_sentiment(df, text)
+emoji_sentiment(df, text, se = TRUE)
 }
 \references{
 Kralj Novak P, Smailovic J, Sluban B, Mozetic I (2015) Sentiment
@@ -47,5 +65,5 @@ of Emojis. PLoS ONE 10(12): e0144296. \doi{10.1371/journal.pone.0144296}
 \seealso{
 \link{emoji_sentiment_lexicon} for the underlying scores;
 \code{\link[=emoji_score]{emoji_score()}} for scoring against any lexicon; \code{\link[=emoji_emotion]{emoji_emotion()}} for
-discrete emotions.
+discrete emotions; \code{\link[=emoji_ambiguity]{emoji_ambiguity()}} for annotator disagreement.
 }

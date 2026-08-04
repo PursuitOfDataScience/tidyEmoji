@@ -117,6 +117,42 @@ emoji_has <- function(x) {
   lengths(emoji_glyph_list(x)) > 0L
 }
 
+# One row per emoji occurrence, in reading order, with the character span it
+# occupies. The long-form counterpart of emoji_glyph_list(): every verb that
+# needs occurrence-level detail (context windows, per-glyph profiles) builds on
+# this so occurrence identity is defined in exactly one place.
+.emoji_occurrences <- function(v) {
+  v <- as.character(v)
+  v[is.na(v)] <- ""
+  locs <- .emoji_locations(v)
+  n <- vapply(locs, nrow, integer(1))
+  if (!sum(n)) {
+    return(tibble::tibble(.row_number = integer(), .position = integer(),
+                          .end = integer(), .emoji = character()))
+  }
+  tibble::tibble(
+    .row_number = rep(seq_along(v), n),
+    .position = as.integer(unlist(lapply(locs, function(m) m[, "start"]),
+                                  use.names = FALSE)),
+    .end = as.integer(unlist(lapply(locs, function(m) m[, "end"]),
+                             use.names = FALSE)),
+    .emoji = as.character(unlist(
+      mapply(.emoji_slice, locs, v, SIMPLIFY = FALSE, USE.NAMES = FALSE),
+      use.names = FALSE
+    ))
+  )
+}
+
+# Split row indices into documents, in *first-appearance* order of the id.
+# factor() would order the levels by sort(), which for character ids depends on
+# the session's collation -- the same trap emoji_pairs()/emoji_dfm() avoid when
+# ordering glyphs. Rows whose id is NA form one document.
+.emoji_id_split <- function(ids) {
+  lvls <- unique(ids)
+  f <- factor(match(ids, lvls), levels = seq_along(lvls))
+  split(seq_along(ids), f)
+}
+
 # Canonical glyph identity for the relational verbs (pairs / co-occurrence /
 # n-grams / dfm): map each extracted glyph to the reference glyph that shares
 # its codepoint key, so the qualified (U+2764 U+FE0F) and unqualified (U+2764)

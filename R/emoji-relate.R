@@ -14,7 +14,7 @@
     return(lst)
   }
   ids <- dplyr::pull(data, !!q)
-  split_idx <- split(seq_along(lst), factor(ids, exclude = NULL))
+  split_idx <- .emoji_id_split(ids)
   lapply(split_idx, function(i) unlist(lst[i], use.names = FALSE))
 }
 

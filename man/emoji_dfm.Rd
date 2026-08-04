@@ -33,10 +33,11 @@ bound to outcome columns for tidymodels-style workflows.
 By default every row of \code{data} is a document and the first output column,
 \code{.row_number}, is its position in \code{data} (matching
 \code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}}). Give \code{doc_id} to aggregate rows sharing an id
-into one document; the id column keeps its name. Emoji columns are named by
-the glyph itself, canonicalised through the package's codepoint key (so
-qualified and unqualified forms count as one feature), and ordered by
-descending total count (ties broken by glyph).
+into one document; the id column keeps its name, and documents appear in the
+order their id is first seen in \code{data}, never in the session's collation
+order. Emoji columns are named by the glyph itself, canonicalised through
+the package's codepoint key (so qualified and unqualified forms count as one
+feature), and ordered by descending total count (ties broken by glyph).
 
 For \code{weighting = "tfidf"}, the cell for emoji \emph{e} in document \emph{d} is
 \code{count(d, e) * log(N / df(e))}, where \code{N} is the number of documents and

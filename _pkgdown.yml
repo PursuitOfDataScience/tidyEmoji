@@ -34,14 +34,26 @@ reference:
 - title: Categorise & score
   contents:
   - emoji_categorize
+  - emoji_type
+  - as_emoji_type
+  - emoji_faceness
   - emoji_sentiment
   - emoji_emotion
   - emoji_emotion_label
+- title: Interpretation risk
+  contents:
+  - emoji_ambiguity
+  - emoji_risk
+  - emoji_flag_ambiguous
 - title: Lexicon API
   contents:
   - emoji_lexicons
   - register_emoji_lexicon
   - emoji_score
+- title: Context
+  contents:
+  - emoji_context
+  - emoji_collocations
 - title: Relate
   contents:
   - emoji_pairs
@@ -52,9 +64,25 @@ reference:
   - emoji_position
   - emoji_density
   - emoji_ratio
+- title: Text-emoji mismatch
+  contents:
+  - emoji_incongruity
+  - emoji_congruence
+  - emoji_incongruity_profile
+- title: Time
+  contents:
+  - emoji_trend
+  - emoji_turnover
+  - emoji_seasonality
+  - emoji_version_profile
+  - emoji_adoption_lag
 - title: Model features
   contents:
   - emoji_dfm
+- title: Language-model pipelines
+  contents:
+  - emoji_sanitize
+  - emoji_token_cost
 - title: Translate & search
   contents:
   - emoji_to_text
@@ -63,6 +91,11 @@ reference:
   - as_emoji_shortcode
   - as_emoji
   - emoji_search
+- title: Provenance & reference data
+  contents:
+  - emoji_provenance
+  - emoji_unicode_version
+  - emoji_unicode_releases
 - title: Data
   contents:
   - emoji_sentiment_lexicon

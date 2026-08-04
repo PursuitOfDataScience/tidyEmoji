@@ -14,7 +14,7 @@ emoji_position(data, text)
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n}, \code{.emoji_first}
 and \code{.emoji_last} (character positions where the first/last emoji start)
-and \code{.emoji_rel_position} (mean relative position in \verb{[0, 1]}). Rows
+and \code{.emoji_rel_position} (mean relative position in \code{[0, 1]}). Rows
 without emoji get \code{NA} positions.
 }
 \description{
