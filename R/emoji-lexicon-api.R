@@ -102,7 +102,7 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #' @inheritParams emoji_summary
 #' @param lexicon Either a string naming a bundled or registered lexicon, or a
 #'   data frame. For data frames, `by` names the glyph column and `score` the
-#'   score column.
+#'   score column. Defaults to `"novak2015"`, matching [emoji_sentiment()].
 #' @param by Glyph column name when `lexicon` is a data frame. Default
 #'   `"emoji"`.
 #' @param score Score column name when `lexicon` is a data frame. If `NULL`,
@@ -122,7 +122,8 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'                   score = c(0.9, -0.8))
 #' emoji_score(df, text, lexicon = own)
 #' @export
-emoji_score <- function(data, text, lexicon, by = "emoji", score = NULL) {
+emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
+                        score = NULL) {
   if (is.data.frame(lexicon)) {
     rec <- .emoji_lexicon_record(lexicon, by = by, score = score)
     score_map <- rec

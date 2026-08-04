@@ -95,6 +95,19 @@ test_that("emoji_turnover selects measures and copes with one period", {
   expect_s3_class(one$.period, "Date")
 })
 
+test_that("emoji_trend(top_n = NULL) keeps every emoji", {
+  all_of <- emoji_trend(df, text, when, top_n = NULL)
+  expect_equal(nrow(all_of), 4L)
+  expect_setequal(unique(all_of$emoji), c(grin, laugh))
+})
+
+test_that("emoji_turnover returns only the measures asked for", {
+  out <- emoji_turnover(df, text, when, measure = c("new", "lost"))
+  expect_named(out, c(".period", ".period_prev", "n_types_prev", "n_types",
+                      "n_new", "n_lost"))
+  expect_type(out$n_new, "integer")
+})
+
 test_that("emoji_version_profile accounts for every emoji token", {
   out <- emoji_version_profile(df, text)
   expect_named(out, c("version", "version_num", "release_date", "n_types",

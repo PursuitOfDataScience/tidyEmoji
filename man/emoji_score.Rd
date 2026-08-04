@@ -4,7 +4,7 @@
 \alias{emoji_score}
 \title{Score emoji in a text column against any lexicon}
 \usage{
-emoji_score(data, text, lexicon, by = "emoji", score = NULL)
+emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column.}
@@ -13,7 +13,7 @@ emoji_score(data, text, lexicon, by = "emoji", score = NULL)
 
 \item{lexicon}{Either a string naming a bundled or registered lexicon, or a
 data frame. For data frames, \code{by} names the glyph column and \code{score} the
-score column.}
+score column. Defaults to \code{"novak2015"}, matching \code{\link[=emoji_sentiment]{emoji_sentiment()}}.}
 
 \item{by}{Glyph column name when \code{lexicon} is a data frame. Default
 \code{"emoji"}.}

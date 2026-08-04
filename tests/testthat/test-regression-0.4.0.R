@@ -83,3 +83,35 @@ test_that("qualified and unqualified twins resolve identically everywhere", {
   expect_equal(nrow(emoji_version_profile(df, text)), 1L)
   expect_equal(emoji_version_profile(df, text)$n_types, 1L)
 })
+
+# ---------------------------------------------------------------------------
+# Argument validation on the older verbs: three arguments could previously be
+# given nonsense and return a quietly wrong answer instead of erroring.
+# ---------------------------------------------------------------------------
+
+test_that("emoji_to_text rejects a wrap template with no placeholder", {
+  df <- data.frame(text = paste0("hi ", laugh))
+  expect_error(emoji_to_text(df, text, format = "shortcode", wrap = "none"),
+               "\\{x\\}")
+  # the placeholder is still honoured when it is there
+  expect_equal(emoji_to_text(df, text, format = "shortcode",
+                             wrap = "<{x}>")$text,
+               paste0("hi <", as_emoji_shortcode(laugh), ">"))
+  # and `wrap` is irrelevant to format = "name"
+  expect_no_error(emoji_to_text(df, text, format = "name", wrap = "none"))
+})
+
+test_that("top_n_emojis rejects a negative n instead of dropping rows", {
+  df <- data.frame(text = c(laugh, laugh, rage))
+  expect_error(top_n_emojis(df, text, n = -1), "non-negative")
+  expect_equal(nrow(top_n_emojis(df, text, n = 0)), 0L)
+  expect_equal(nrow(top_n_emojis(df, text, n = Inf)), 2L)
+})
+
+test_that("emoji_score defaults to the bundled sentiment lexicon", {
+  df <- data.frame(text = c(paste0("love ", laugh), "plain"))
+  out <- emoji_score(df, text)
+  expect_true(".emoji_score" %in% names(out))
+  expect_equal(out$.emoji_score,
+               emoji_score(df, text, lexicon = "novak2015")$.emoji_score)
+})

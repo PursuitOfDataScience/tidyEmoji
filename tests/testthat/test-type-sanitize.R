@@ -71,6 +71,12 @@ test_that("emoji_sanitize keeps the column name and validates its arguments", {
   expect_error(emoji_sanitize(df, nope, policy = "keep"))
 })
 
+test_that("emoji_sanitize honours the shortcode wrap template", {
+  df <- data.frame(text = paste0("hi ", grin))
+  expect_equal(emoji_sanitize(df, text, policy = "shortcode",
+                              wrap = "<{x}>")$text, "hi <grinning>")
+})
+
 test_that("emoji_token_cost measures bytes, code points and graphemes", {
   family <- paste0("\U0001F468\u200d\U0001F469\u200d",
                    "\U0001F467\u200d\U0001F466")

@@ -17,7 +17,8 @@ emoji_to_text(data, text, format = c("name", "shortcode"), wrap = ":{x}:")
 
 \item{wrap}{When \code{format = "shortcode"}, the wrapper applied to each
 shortcode, written as a template with \code{{x}} standing for the shortcode.
-Default \code{":{x}:"}. Ignored for \code{format = "name"}.}
+Default \code{":{x}:"}. Must contain \code{{x}}, or every emoji would be replaced by
+the same literal string. Ignored for \code{format = "name"}.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same

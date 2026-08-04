@@ -110,8 +110,19 @@ distribution. It is now a number.
   cannot drift apart again.
 * `emoji_sanitize(policy = "strip")` tidies only the whitespace left behind by
   a removed glyph, and only on rows that actually contained one.
+* Three arguments on the older verbs could be given nonsense and return a
+  quietly wrong answer instead of erroring. `emoji_to_text(wrap = )` now
+  requires the `{x}` placeholder, since a template without it replaces every
+  emoji with the same literal string; `top_n_emojis(n = )` rejects a negative
+  `n`, which `head()` had silently read as "drop the last row"; and
+  `emoji_score()` gains the `lexicon = "novak2015"` default that
+  `emoji_sentiment()` always had, so calling it without a lexicon works instead
+  of raising a missing-argument error.
 * The reference-manual sources are ASCII throughout, so the PDF manual builds
   everywhere.
+* `next_release.md`, the repo's release ledger, gains a section 13 recording
+  what wave 1 shipped, the third-audit defect, and the design decisions locked
+  at implementation.
 
 # tidyEmoji 0.3.0
 

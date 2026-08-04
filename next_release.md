@@ -940,3 +940,104 @@ above ships as the single next release, package version **0.3.0**. The later
 §9 phase numbers (0.5.0, 0.6.0, 1.0.0) name work packages, and future package
 versions will simply be assigned in sequence from whatever is current when
 they ship.)*
+
+---
+
+## 13. Post-0.4.0 addendum — wave 1 of `features.md` shipped
+
+*Appended after the 0.4.0 work landed. Nothing above this line has been
+altered. `features.md` (filed verbatim as issue #5) is the **idea space**; this
+file stays the **ledger**. Section 13 records what wave 1 actually shipped, the
+one defect a third audit found in the shipped 0.3.0 code, and the design
+decisions locked at implementation.*
+
+### 13.1 Ship report — `features.md` wave 1 is done, as package version 0.4.0
+
+Twenty-one new exported verbs, **no new dependencies, no new bundled data, and
+no change to any existing verb's output columns**. Each arrived with tests,
+help page, NEWS entry, README mention, pkgdown entry and a vignette section:
+
+| `features.md` theme | Shipped |
+|---|---|
+| §4 B — ambiguity & interpretation risk | `emoji_ambiguity()`, `emoji_risk()`, `emoji_flag_ambiguous()`, `emoji_sentiment(se = TRUE)` |
+| §5 C — sense & context | `emoji_context()`, `emoji_collocations()` |
+| §10 H — time | `emoji_trend()`, `emoji_turnover()`, `emoji_seasonality()`, `emoji_version_profile()`, `emoji_adoption_lag()`, `emoji_unicode_releases()` |
+| §7 E — incongruity | `emoji_incongruity()`, `emoji_congruence()`, `emoji_incongruity_profile()` |
+| §13.3 K — functional type | `as_emoji_type()`, `emoji_type()`, `emoji_faceness()` |
+| §12 J — LLM plumbing | `emoji_sanitize()`, `emoji_token_cost()` |
+| §15.5 M — provenance | `emoji_provenance()`, `emoji_unicode_version()`, `inst/CITATION` |
+
+Wave 1 predicted this would be cheap because the raw material was already in
+the package, and that held: the Novak lexicon's `negative`/`neutral`/`positive`
+counts became the whole ambiguity family, the reference table's `version`
+column became the whole version/adoption family, and `.emoji_locations()`
+became the context windows. §12.4's `inst/CITATION` backlog item is now done.
+
+### 13.2 Third audit — the defect found in the shipped 0.3.0 code
+
+One real bug, and it is **the same pattern as §12.2 item 1**, which is the
+point of recording it:
+
+- **Locale-dependent output, again.** `emoji_dfm(doc_id = )` grouped rows with
+  `factor(ids)`, whose levels are ordered by `sort()` — so the *row order* of
+  the returned matrix depended on the session's collation. 0.3.0 fixed exactly
+  this for glyph ordering (`sort(method = "radix")` in `emoji_pairs()`,
+  `order(method = "radix")` for dfm columns) and missed the document axis.
+  Fixed: documents come out in first-appearance order of the id, via one
+  `.emoji_id_split()` helper now shared by `emoji_pairs()`,
+  `emoji_cooccurrence()` and `emoji_dfm()` so they cannot drift apart again.
+  *Lesson, restated: `factor()` is `sort()` in disguise. Any verb that turns a
+  user value into a group or an axis needs the same radix/first-appearance
+  discipline as the glyph ordering did.*
+
+The rest of the sweep came back clean: every verb still routes metadata joins
+through the codepoint key, `NA` text is still never an emoji, and the empty-
+input paths still return typed zero-row tibbles.
+
+### 13.3 Design decisions locked at implementation
+
+- **`scale` on `emoji_incongruity()` has no default.** `features.md` §7 asked
+  that the user "acknowledge one"; the strongest form of that is a required
+  argument, so a missing `scale` is an error naming the three options. Text
+  scores arrive on incompatible scales and a silent default would manufacture
+  incomparable numbers.
+- **`unicode_release_dates` ships as a function, not a `data/*.rda`.**
+  `emoji_unicode_releases()` returns the same table. Two dozen rows tied
+  directly to the verbs that join to them belong beside the code, not in
+  `LazyData`; it also keeps the "no new bundled data" line of this release
+  intact. The `version` key is unambiguous because the Unicode Emoji series
+  (0.6-5.0, then 11.0+) and the Unicode series (6.0-10.0) do not collide.
+- **Version strings are normalised, not assumed.** `{emoji}`'s `version` column
+  is read through `.emoji_version_label()` (strips a leading `E`, empty becomes
+  `NA`), so both `"E15.1"` and `"15.1"` resolve, and an unmatched version gives
+  `NA` release date rather than a wrong one.
+- **`method = "cosine"` was dropped.** Over two scalars, cosine *is*
+  `sign_flip`; shipping it would be a synonym pretending to be a method.
+- **`policy = "base"` deferred.** It needs `emoji_base()`, which belongs with
+  the modifier work (§8 F / the next phase).
+- **`.emoji_n_scored` keeps the 0.2.1 convention** — `NA` only when the row has
+  no emoji at all, `0` when it has emoji that the lexicon cannot score — and
+  every new verb follows it rather than inventing a second convention.
+- **Grapheme counting is exact, token counting is not.** `emoji_token_cost()`
+  is authoritative about bytes, code points and graphemes and explicitly
+  labels its token figure an estimate, with `tokenizer =` for the real number.
+- **No CI enrichment yet.** §12.4's {covr}/`urlchecker`/spelling jobs are still
+  open. They need repository secrets and configuration decisions the code work
+  did not; a job that goes red on merge is worse than a missing one.
+
+### 13.4 Release ledger
+
+| Work package | State | Where |
+|---|---|---|
+| §9 0.2.1 correctness patch | ✅ shipped | folded into package 0.3.0 |
+| §9 0.3.0 affect & translation | ✅ shipped | package 0.3.0 |
+| §9 0.4.0 relational & structure | ✅ shipped | folded into package 0.3.0 |
+| `features.md` wave 1 | ✅ shipped | **package 0.4.0** |
+| `features.md` wave 2 — modifiers, Unicode property data, flags (§9 "0.5.0") | ⏳ next | needs `emoji_unicode_props` built from `emoji-test.txt` first |
+| `features.md` wave 3 — affect breadth & coverage honesty | ⏳ | blocked on the batched licence review |
+| `features.md` wave 4 — semantics & visualization (§9 "0.6.0") | ⏳ | `emoji_embed_corpus()` leads |
+| `features.md` wave 5 — locale, pragmatics, drift, stability (§9 "1.0.0") | ⏳ | includes grouped-df guarantees and the API freeze |
+
+*(Version numbering: CRAN's published version is still 0.2.0. The repo has now
+shipped 0.3.0 and 0.4.0; the §9 phase numbers above name work packages, not
+package versions.)*

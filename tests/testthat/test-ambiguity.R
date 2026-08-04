@@ -119,5 +119,6 @@ test_that("emoji_flag_ambiguous ranks the corpus's own emoji", {
   expect_false(is.unsorted(rev(out$ambiguity)))
   expect_equal(nrow(emoji_flag_ambiguous(df, text, top_n = 1)), 1L)
   expect_equal(nrow(emoji_flag_ambiguous(data.frame(text = "plain"), text)), 0L)
+  expect_equal(nrow(emoji_flag_ambiguous(df, text, top_n = NULL)), nrow(out))
   expect_error(emoji_flag_ambiguous(df, text, top_n = -1), "non-negative")
 })
