@@ -87,6 +87,7 @@
 emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
                           keep_text = FALSE) {
   unit <- match.arg(unit)
+  .emoji_check_flag(keep_text, "keep_text")
   if (!is.numeric(window) || length(window) != 1L || is.na(window) ||
       !is.finite(window) || window < 0) {
     stop("`window` must be a single finite number >= 0.", call. = FALSE)

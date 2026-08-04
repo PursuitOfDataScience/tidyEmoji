@@ -74,6 +74,8 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
     duplicated <- isTRUE(duplicated_unicode) ||
       identical(duplicated_unicode, "yes")
   }
+  # after the legacy conversion: duplicated_unicode accepted the string "yes"
+  .emoji_check_flag(duplicated, "duplicated")
 
   if (dplyr::is_grouped_df(data)) {
     lifecycle::deprecate_warn(

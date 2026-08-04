@@ -56,6 +56,8 @@
 #' @export
 emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
                         sort = TRUE) {
+  .emoji_check_flag(directed, "directed")
+  .emoji_check_flag(sort, "sort")
   if (dplyr::is_grouped_df(data)) {
     lifecycle::deprecate_warn(
       "0.3.0", "emoji_pairs(data = \"must be ungrouped data\")",
@@ -111,6 +113,7 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 #' @export
 emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
                                sort = TRUE) {
+  .emoji_check_flag(diagonal, "diagonal")
   out <- emoji_pairs(data, {{ text }}, doc_id = {{ doc_id }},
                      directed = FALSE, sort = sort)
   if (isTRUE(diagonal)) {

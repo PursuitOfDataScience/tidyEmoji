@@ -115,3 +115,26 @@ test_that("emoji_score defaults to the bundled sentiment lexicon", {
   expect_equal(out$.emoji_score,
                emoji_score(df, text, lexicon = "novak2015")$.emoji_score)
 })
+
+test_that("logical arguments reject values that are not TRUE or FALSE", {
+  # isTRUE() reads every non-TRUE value as FALSE, so an unchecked flag turned a
+  # typo into a different, silently wrong result
+  df <- data.frame(text = c(paste0(laugh, rage), laugh))
+  expect_error(emoji_pairs(df, text, directed = "yes"), "TRUE or FALSE")
+  expect_error(emoji_pairs(df, text, sort = "yes"), "TRUE or FALSE")
+  expect_error(emoji_cooccurrence(df, text, diagonal = "yes"), "TRUE or FALSE")
+  expect_error(emoji_emotion(df, text, long = "yes"), "TRUE or FALSE")
+  expect_error(emoji_context(df, text, keep_text = "yes"), "TRUE or FALSE")
+  expect_error(top_n_emojis(df, text, duplicated = "yes"), "TRUE or FALSE")
+  expect_error(emoji_sentiment(df, text, se = NA), "TRUE or FALSE")
+})
+
+test_that("the deprecated duplicated_unicode = \"yes\" still works", {
+  # the legacy argument documented the string "yes", so the new check has to
+  # run after the lifecycle conversion, not before it
+  df <- data.frame(text = c(laugh, laugh, rage))
+  expect_warning(out <- top_n_emojis(df, text, duplicated_unicode = "yes"),
+                 class = "lifecycle_warning_deprecated")
+  expect_gt(nrow(out), 0L)
+  expect_true("emoji_name" %in% names(out))
+})

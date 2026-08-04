@@ -110,12 +110,22 @@ distribution. It is now a number.
   cannot drift apart again.
 * `emoji_sanitize(policy = "strip")` tidies only the whitespace left behind by
   a removed glyph, and only on rows that actually contained one.
-* Three arguments on the older verbs could be given nonsense and return a
-  quietly wrong answer instead of erroring. `emoji_to_text(wrap = )` now
-  requires the `{x}` placeholder, since a template without it replaces every
-  emoji with the same literal string; `top_n_emojis(n = )` rejects a negative
-  `n`, which `head()` had silently read as "drop the last row"; and
-  `emoji_score()` gains the `lexicon = "novak2015"` default that
+* **Arguments given nonsense now error instead of quietly returning a
+  different answer.** An audit of every argument that reaches a base R function
+  without validation found one shape of bug repeated across the package: a
+  value the function cannot honour was absorbed rather than rejected.
+  `emoji_to_text(wrap = )` now requires the `{x}` placeholder, since a template
+  without it replaces every emoji with the same literal string;
+  `top_n_emojis(n = )` rejects a negative `n`, which `head()` had silently read
+  as "drop the last row"; and every `TRUE`/`FALSE` argument
+  (`emoji_pairs(directed = , sort = )`, `emoji_cooccurrence(diagonal = )`,
+  `emoji_emotion(long = )`, `emoji_context(keep_text = )`,
+  `top_n_emojis(duplicated = )`, `emoji_sentiment(se = )`) is now checked,
+  because `isTRUE()` reads every non-`TRUE` value as `FALSE` — so
+  `long = "yes"` used to return the wide form without complaint. The deprecated
+  `top_n_emojis(duplicated_unicode = "yes")` still works: the check runs after
+  the lifecycle conversion.
+* `emoji_score()` gains the `lexicon = "novak2015"` default that
   `emoji_sentiment()` always had, so calling it without a lexicon works instead
   of raising a missing-argument error.
 * The reference-manual sources are ASCII throughout, so the PDF manual builds

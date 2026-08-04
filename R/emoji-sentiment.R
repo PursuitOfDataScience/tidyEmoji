@@ -47,9 +47,7 @@
 #' emoji_sentiment(df, text, se = TRUE)
 #' @export
 emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
-  if (!is.logical(se) || length(se) != 1L || is.na(se)) {
-    stop("`se` must be TRUE or FALSE.", call. = FALSE)
-  }
+  .emoji_check_flag(se, "se")
   is_novak <- missing(lexicon) ||
     (is.character(lexicon) && length(lexicon) == 1L && !is.na(lexicon) &&
        lexicon %in% c("novak2015", "emoji_sentiment_lexicon", "sentiment"))

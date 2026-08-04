@@ -257,3 +257,14 @@ emoji_emotion_dims <- function() {
 
 # Convenience for `%||%` operator without importing rlang.
 `%||%` <- function(a, b) if (is.null(a)) b else a
+
+# Validate a TRUE/FALSE argument. isTRUE() quietly treats every non-TRUE value
+# as FALSE, so an unchecked flag turns a typo into a different, silently wrong
+# answer instead of an error -- the same failure mode as an unvalidated `n` or
+# a `wrap` template with no placeholder.
+.emoji_check_flag <- function(x, arg) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    stop(sprintf("`%s` must be TRUE or FALSE.", arg), call. = FALSE)
+  }
+  invisible(x)
+}
