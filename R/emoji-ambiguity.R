@@ -131,12 +131,21 @@ emoji_ambiguity <- function(x = NULL, measure = "entropy") {
   if (is.null(x)) {
     return(dplyr::arrange(out, rank, emoji))
   }
+  # index columns rather than rows: an unknown glyph gives NA statistics
+  # without relying on NA row subscripts
   x <- as.character(x)
   keys <- emoji_key(x)
-  res <- out[match(keys, out$key), , drop = FALSE]
-  res$emoji <- x
-  res$key <- keys
-  res
+  idx <- match(keys, out$key)
+  tibble::tibble(
+    emoji = x,
+    key = keys,
+    n_annotations = out$n_annotations[idx],
+    p_neg = out$p_neg[idx],
+    p_neu = out$p_neu[idx],
+    p_pos = out$p_pos[idx],
+    ambiguity = out$ambiguity[idx],
+    rank = out$rank[idx]
+  )
 }
 
 
