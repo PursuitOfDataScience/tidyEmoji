@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,6 +127,27 @@
 
         <dt>
 
+          <code><a href="emoji_type.html">emoji_type()</a></code>
+
+        </dt>
+        <dd>Which functional types of emoji does each row use?</dd>
+
+        <dt>
+
+          <code><a href="as_emoji_type.html">as_emoji_type()</a></code>
+
+        </dt>
+        <dd>Functional type of an emoji glyph</dd>
+
+        <dt>
+
+          <code><a href="emoji_faceness.html">emoji_faceness()</a></code>
+
+        </dt>
+        <dd>How face-heavy is each row's emoji use?</dd>
+
+        <dt>
+
           <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>
 
         </dt>
@@ -145,6 +166,36 @@
 
         </dt>
         <dd>The dominant emoji emotion per row</dd>
+      </dl></div><div class="section level2">
+      <h2 id="interpretation-risk">Interpretation risk<a class="anchor" aria-label="anchor" href="#interpretation-risk"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="emoji_ambiguity.html">emoji_ambiguity()</a></code>
+
+        </dt>
+        <dd>How ambiguous is each emoji?</dd>
+
+        <dt>
+
+          <code><a href="emoji_risk.html">emoji_risk()</a></code>
+
+        </dt>
+        <dd>Interpretation risk per row</dd>
+
+        <dt>
+
+          <code><a href="emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code>
+
+        </dt>
+        <dd>Which emoji in this corpus are most likely to be misread?</dd>
       </dl></div><div class="section level2">
       <h2 id="lexicon-api">Lexicon API<a class="anchor" aria-label="anchor" href="#lexicon-api"></a></h2>
 
@@ -175,6 +226,29 @@
 
         </dt>
         <dd>Score emoji in a text column against any lexicon</dd>
+      </dl></div><div class="section level2">
+      <h2 id="context">Context<a class="anchor" aria-label="anchor" href="#context"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="emoji_context.html">emoji_context()</a></code>
+
+        </dt>
+        <dd>The text around each emoji occurrence</dd>
+
+        <dt>
+
+          <code><a href="emoji_collocations.html">emoji_collocations()</a></code>
+
+        </dt>
+        <dd>Which words keep company with which emoji</dd>
       </dl></div><div class="section level2">
       <h2 id="relate">Relate<a class="anchor" aria-label="anchor" href="#relate"></a></h2>
 
@@ -234,7 +308,81 @@
           <code><a href="emoji_ratio.html">emoji_ratio()</a></code>
 
         </dt>
-        <dd>What share of the text is emoji — and is it emoji-only?</dd>
+        <dd>What share of the text is emoji, and is it emoji-only?</dd>
+      </dl></div><div class="section level2">
+      <h2 id="text-emoji-mismatch">Text-emoji mismatch<a class="anchor" aria-label="anchor" href="#text-emoji-mismatch"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="emoji_incongruity.html">emoji_incongruity()</a></code>
+
+        </dt>
+        <dd>Text-emoji sentiment mismatch</dd>
+
+        <dt>
+
+          <code><a href="emoji_congruence.html">emoji_congruence()</a></code>
+
+        </dt>
+        <dd>Text-emoji congruence</dd>
+
+        <dt>
+
+          <code><a href="emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code>
+
+        </dt>
+        <dd>Which emoji go against the grain of their text?</dd>
+      </dl></div><div class="section level2">
+      <h2 id="time">Time<a class="anchor" aria-label="anchor" href="#time"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="emoji_trend.html">emoji_trend()</a></code>
+
+        </dt>
+        <dd>Emoji frequency over time</dd>
+
+        <dt>
+
+          <code><a href="emoji_turnover.html">emoji_turnover()</a></code>
+
+        </dt>
+        <dd>Emoji vocabulary churn between consecutive periods</dd>
+
+        <dt>
+
+          <code><a href="emoji_seasonality.html">emoji_seasonality()</a></code>
+
+        </dt>
+        <dd>Cyclical patterns in emoji use</dd>
+
+        <dt>
+
+          <code><a href="emoji_version_profile.html">emoji_version_profile()</a></code>
+
+        </dt>
+        <dd>How new is this corpus's emoji repertoire?</dd>
+
+        <dt>
+
+          <code><a href="emoji_adoption_lag.html">emoji_adoption_lag()</a></code>
+
+        </dt>
+        <dd>How long did this population take to adopt each emoji?</dd>
       </dl></div><div class="section level2">
       <h2 id="model-features">Model features<a class="anchor" aria-label="anchor" href="#model-features"></a></h2>
 
@@ -251,6 +399,29 @@
 
         </dt>
         <dd>Document-by-emoji feature matrix</dd>
+      </dl></div><div class="section level2">
+      <h2 id="language-model-pipelines">Language-model pipelines<a class="anchor" aria-label="anchor" href="#language-model-pipelines"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code>
+
+        </dt>
+        <dd>Apply an explicit emoji policy to a text column</dd>
+
+        <dt>
+
+          <code><a href="emoji_token_cost.html">emoji_token_cost()</a></code>
+
+        </dt>
+        <dd>What are the emoji in this text costing a tokeniser?</dd>
       </dl></div><div class="section level2">
       <h2 id="translate-search">Translate &amp; search<a class="anchor" aria-label="anchor" href="#translate-search"></a></h2>
 
@@ -288,6 +459,36 @@
 
         </dt>
         <dd>Search emoji by keyword, name or shortcode</dd>
+      </dl></div><div class="section level2">
+      <h2 id="provenance-reference-data">Provenance &amp; reference data<a class="anchor" aria-label="anchor" href="#provenance-reference-data"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="emoji_provenance.html">emoji_provenance()</a></code>
+
+        </dt>
+        <dd>Versions behind an emoji analysis, in one row</dd>
+
+        <dt>
+
+          <code><a href="emoji_unicode_version.html">emoji_unicode_version()</a></code>
+
+        </dt>
+        <dd>Which Unicode emoji version does this build reflect?</dd>
+
+        <dt>
+
+          <code><a href="emoji_unicode_releases.html">emoji_unicode_releases()</a></code>
+
+        </dt>
+        <dd>Unicode and Unicode Emoji release dates</dd>
       </dl></div><div class="section level2">
       <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h2>
 

@@ -10,7 +10,7 @@ receive `NA`.
 ## Usage
 
 ``` r
-emoji_sentiment(data, text, lexicon = "novak2015")
+emoji_sentiment(data, text, lexicon = "novak2015", se = FALSE)
 ```
 
 ## Arguments
@@ -33,12 +33,18 @@ emoji_sentiment(data, text, lexicon = "novak2015")
   [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
   for the generic scorer.
 
+- se:
+
+  If `TRUE`, also return `.emoji_sentiment_se`, the standard error of
+  the row's mean sentiment. Requires the bundled `"novak2015"` lexicon.
+  Default `FALSE`.
+
 ## Value
 
 `data`, as a tibble, with added columns `.emoji_n` (the number of emoji
 in the row), `.emoji_n_scored` (the number of emoji that actually appear
 in the lexicon), and `.emoji_sentiment` (the mean sentiment of the
-scored emoji).
+scored emoji). With `se = TRUE`, also `.emoji_sentiment_se`.
 
 ## Details
 
@@ -50,6 +56,20 @@ Supply the emoji-presentation (qualified) form and it resolves normally.
 See
 [emoji_sentiment_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
 for the full picture.
+
+## Uncertainty
+
+A glyph annotated eight times should not carry the same authority as one
+annotated eight thousand times, and the bundled lexicon keeps the
+annotation counts that say which is which. With `se = TRUE` the result
+gains `.emoji_sentiment_se`, the standard error of the row's mean: each
+glyph's score has a binomial-style standard error computed from its own
+counts, and those are propagated to the mean assuming independent
+annotations (`sqrt(sum(se^2)) / n_scored`). It needs the annotation
+counts, so it is available for the bundled `"novak2015"` lexicon only.
+See
+[`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+for the same counts read as disagreement.
 
 ## References
 
@@ -64,7 +84,9 @@ for the underlying scores;
 [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
 for scoring against any lexicon;
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
-for discrete emotions.
+for discrete emotions;
+[`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+for annotator disagreement.
 
 ## Examples
 
@@ -77,4 +99,11 @@ emoji_sentiment(df, text)
 #> 1 love it 😍        1               1            0.678
 #> 2 awful 😡          1               1           -0.173
 #> 3 meh               0              NA           NA    
+emoji_sentiment(df, text, se = TRUE)
+#> # A tibble: 3 × 5
+#>   text       .emoji_n .emoji_n_scored .emoji_sentiment .emoji_sentiment_se
+#>   <chr>         <int>           <int>            <dbl>               <dbl>
+#> 1 love it 😍        1               1            0.678             0.00711
+#> 2 awful 😡          1               1           -0.173             0.0338 
+#> 3 meh               0              NA           NA                NA      
 ```

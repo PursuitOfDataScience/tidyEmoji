@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,11 +30,92 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.0" id="tidyemoji-030">tidyEmoji 0.3.0<a class="anchor" aria-label="anchor" href="#tidyemoji-030"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.0" id="tidyemoji-040">tidyEmoji 0.4.0<a class="anchor" aria-label="anchor" href="#tidyemoji-040"></a></h2>
+<p>This release delivers the first wave of the feature roadmap filed as <a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/5" class="external-link">issue </a><a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues/5" class="external-link">#5</a>: the items that are cheap, research-grounded, and need no new dataset and no new dependency. Most of them are recombinations of machinery the package already had — the Novak lexicon’s annotation counts, the reference table’s Unicode version column, the grapheme-aware locator — read out in a way no R package exposed before.</p>
+<div class="section level3">
+<h3 id="new-features-0-4-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-4-0"></a></h3>
+<div class="section level4">
+<h4 id="interpretation-risk-roadmap-theme-b-0-4-0">Interpretation risk (roadmap theme B)<a class="anchor" aria-label="anchor" href="#interpretation-risk-roadmap-theme-b-0-4-0"></a></h4>
+<p>Miller et al. (2016) found that readers of the <em>same</em> rendering disagree about whether an emoji is positive, neutral or negative roughly a quarter of the time. The bundled Emoji Sentiment Ranking keeps the raw <code>negative</code>/<code>neutral</code>/<code>positive</code> annotation counts behind its collapsed score, so that disagreement was already inside the package as an empirical distribution. It is now a number.</p>
+<ul><li>
+<code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code> reports per-glyph annotation shares and one of four disagreement statistics — Shannon <code>entropy</code> (the default), <code>gini</code>, <code>neutral_share</code> or <code>ci_width</code> — with a rank over the whole lexicon.</li>
+<li>
+<code><a href="../reference/emoji_risk.html">emoji_risk()</a></code> is the per-row version: <code>.emoji_ambiguity_mean</code>, <code>.emoji_ambiguity_max</code> and <code>.emoji_n_ambiguous</code>.</li>
+<li>
+<code><a href="../reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code> is the content-QA shortlist: the emoji in <em>your</em> corpus most likely to be misread.</li>
+<li>
+<code>emoji_sentiment(se = TRUE)</code> adds <code>.emoji_sentiment_se</code>, so a glyph annotated eight times no longer carries the same authority as one annotated eight thousand times.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="context-roadmap-theme-c-0-4-0">Context (roadmap theme C)<a class="anchor" aria-label="anchor" href="#context-roadmap-theme-c-0-4-0"></a></h4>
+<ul><li>
+<code><a href="../reference/emoji_context.html">emoji_context()</a></code> returns one row per emoji occurrence with a window of the surrounding text, in words or characters. All other emoji are blanked out of the window, and character offsets stay exact.</li>
+<li>
+<code><a href="../reference/emoji_collocations.html">emoji_collocations()</a></code> aggregates those windows into an emoji-word table scored by pointwise mutual information, shaped like <code>widyr::pairwise_count()</code> output. Corpus-derived senses have neither the licence problem nor the staleness problem of an imported sense inventory.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="time-roadmap-theme-h-0-4-0">Time (roadmap theme H)<a class="anchor" aria-label="anchor" href="#time-roadmap-theme-h-0-4-0"></a></h4>
+<ul><li>
+<code><a href="../reference/emoji_trend.html">emoji_trend()</a></code> counts emoji per period (<code>"day"</code>, <code>"week"</code>, <code>"month"</code>, <code>"quarter"</code>, <code>"year"</code>) and returns a <em>complete</em> period-by-emoji grid, so a trend line does not silently skip its zeros.</li>
+<li>
+<code><a href="../reference/emoji_turnover.html">emoji_turnover()</a></code> reports vocabulary churn between consecutive periods: <code>jaccard</code>, <code>n_new</code>, <code>n_lost</code>, <code>n_core</code>.</li>
+<li>
+<code><a href="../reference/emoji_version_profile.html">emoji_version_profile()</a></code> breaks a corpus down by the Unicode emoji version that introduced each glyph, and <code><a href="../reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code> compares first use in the corpus with the release date. Both come almost free from the <code>version</code> column the reference table already carries.</li>
+<li>
+<code><a href="../reference/emoji_seasonality.html">emoji_seasonality()</a></code> aggregates by month, weekday or hour, returning every level of the cycle including the empty ones, with fixed English labels so a script’s output does not change with the machine that runs it.</li>
+<li>
+<code><a href="../reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> is the version-to-release-date lookup behind the two verbs above. It is a function rather than a bundled dataset: at a few dozen rows it belongs beside the code that uses it.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="text-emoji-mismatch-roadmap-theme-e-0-4-0">Text-emoji mismatch (roadmap theme E)<a class="anchor" aria-label="anchor" href="#text-emoji-mismatch-roadmap-theme-e-0-4-0"></a></h4>
+<ul><li>
+<code><a href="../reference/emoji_incongruity.html">emoji_incongruity()</a></code> measures the signed gap between a row’s text sentiment and its emoji sentiment — the sarcasm feature in NLP, the (in)congruence variable in marketing research. <code><a href="../reference/emoji_congruence.html">emoji_congruence()</a></code> is the same engine under the marketing framing; <code><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code> reports which glyphs go against the grain of their host text.</li>
+<li>tidyEmoji still does not score text: you supply <code>text_score</code> from tidytext, sentimentr, vader or a model. Because those live on incompatible scales, <code>scale</code> has <strong>no default</strong> — you have to say how the two sides were made comparable.</li>
+<li>Rows with no scorable emoji get <code>NA</code>, never <code>0</code>, in every new column.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="functional-type-roadmap-theme-k-0-4-0">Functional type (roadmap theme K)<a class="anchor" aria-label="anchor" href="#functional-type-roadmap-theme-k-0-4-0"></a></h4>
+<ul><li>
+<code><a href="../reference/as_emoji_type.html">as_emoji_type()</a></code>, <code><a href="../reference/emoji_type.html">emoji_type()</a></code> and <code><a href="../reference/emoji_faceness.html">emoji_faceness()</a></code> recode the Unicode group and subgroup into <code>face</code>, <code>gesture</code>, <code>person</code>, <code>nature</code>, <code>food</code>, <code>place</code>, <code>activity</code>, <code>object</code>, <code>symbol</code>, <code>flag</code> and <code>component</code>. The emotional (face) versus semantic (object) contrast is the key variable in the consumer-behaviour literature and is now a one-liner.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="language-model-plumbing-roadmap-theme-j-0-4-0">Language-model plumbing (roadmap theme J)<a class="anchor" aria-label="anchor" href="#language-model-plumbing-roadmap-theme-j-0-4-0"></a></h4>
+<ul><li>
+<code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code> applies one named policy — <code>"keep"</code>, <code>"strip"</code>, <code>"name"</code>, <code>"shortcode"</code> or <code>"placeholder"</code> — to a text column. The capability mostly existed; the value is an argument that shows up in a script diff and in a methods section.</li>
+<li>
+<code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code> reports exact <code>.emoji_bytes</code>, <code>.emoji_codepoints</code> and <code>.emoji_graphemes</code> plus a clearly-labelled <code>.emoji_token_estimate</code>, or the real count if you pass your own <code>tokenizer</code>.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="provenance-roadmap-theme-m-0-4-0">Provenance (roadmap theme M)<a class="anchor" aria-label="anchor" href="#provenance-roadmap-theme-m-0-4-0"></a></h4>
+<ul><li>
+<code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code> puts every version an emoji result depends on in one row: tidyEmoji, the emoji package, the Unicode emoji version, the size of the detectable emoji set, and the lexicons.</li>
+<li>
+<code><a href="../reference/emoji_unicode_version.html">emoji_unicode_version()</a></code> reports that Unicode version on its own.</li>
+<li>
+<code>inst/CITATION</code> now credits the package and the two lexicon papers users have to cite anyway.</li>
+</ul></div>
+</div>
+<div class="section level3">
+<h3 id="improvements-and-fixes-0-4-0">Improvements and fixes<a class="anchor" aria-label="anchor" href="#improvements-and-fixes-0-4-0"></a></h3>
+<ul><li>
+<strong><code>emoji_dfm(doc_id = )</code> no longer orders its rows by the session’s collation.</strong> Documents were grouped with <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code>, whose levels are sorted with the locale’s collation, so the row order of the result could differ between machines — the same class of bug 0.3.0 fixed for glyph ordering in <code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code> and the dfm’s columns. Documents now appear in the order their id is first seen in the data. <code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code>, <code><a href="../reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code> and <code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code> share one grouping helper, so they cannot drift apart again.</li>
+<li>
+<code>emoji_sanitize(policy = "strip")</code> tidies only the whitespace left behind by a removed glyph, and only on rows that actually contained one.</li>
+<li>
+<strong>Arguments given nonsense now error instead of quietly returning a different answer.</strong> An audit of every argument that reaches a base R function without validation found one shape of bug repeated across the package: a value the function cannot honour was absorbed rather than rejected. <code>emoji_to_text(wrap = )</code> now requires the <code>{x}</code> placeholder, since a template without it replaces every emoji with the same literal string; <code>top_n_emojis(n = )</code> rejects a negative <code>n</code>, which <code><a href="https://rdrr.io/r/utils/head.html" class="external-link">head()</a></code> had silently read as “drop the last row”; and every <code>TRUE</code>/<code>FALSE</code> argument (<code>emoji_pairs(directed = , sort = )</code>, <code>emoji_cooccurrence(diagonal = )</code>, <code>emoji_emotion(long = )</code>, <code>emoji_context(keep_text = )</code>, <code>top_n_emojis(duplicated = )</code>, <code>emoji_sentiment(se = )</code>) is now checked, because <code><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE()</a></code> reads every non-<code>TRUE</code> value as <code>FALSE</code> — so <code>long = "yes"</code> used to return the wide form without complaint. The deprecated <code>top_n_emojis(duplicated_unicode = "yes")</code> still works: the check runs after the lifecycle conversion.</li>
+<li>
+<code><a href="../reference/emoji_score.html">emoji_score()</a></code> gains the <code>lexicon = "novak2015"</code> default that <code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code> always had, so calling it without a lexicon works instead of raising a missing-argument error.</li>
+<li>The reference-manual sources are ASCII throughout, so the PDF manual builds everywhere.</li>
+<li>
+<code>next_release.md</code>, the repo’s release ledger, gains a section 13 recording what wave 1 shipped, the third-audit defect, and the design decisions locked at implementation.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="tidyemoji-030">tidyEmoji 0.3.0<a class="anchor" aria-label="anchor" href="#tidyemoji-030"></a></h2><p class="text-muted">CRAN release: 2026-08-04</p>
 <div class="section level3">
 <h3 id="new-features-0-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
 <ul><li>

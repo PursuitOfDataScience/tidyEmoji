@@ -33,7 +33,8 @@ emoji_to_text(data, text, format = c("name", "shortcode"), wrap = ":{x}:")
 
   When `format = "shortcode"`, the wrapper applied to each shortcode,
   written as a template with `{x}` standing for the shortcode. Default
-  `":{x}:"`. Ignored for `format = "name"`.
+  `":{x}:"`. Must contain `{x}`, or every emoji would be replaced by the
+  same literal string. Ignored for `format = "name"`.
 
 ## Value
 

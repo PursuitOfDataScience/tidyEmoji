@@ -13,7 +13,7 @@ emoji, or whose emoji are absent from the lexicon, receive NA."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +36,7 @@ emoji, or whose emoji are absent from the lexicon, receive NA."><meta property="
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Score the sentiment of the emoji in each row</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/R/emoji-sentiment.R" class="external-link"><code>R/emoji-sentiment.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/R/emoji-sentiment.R" class="external-link"><code>R/emoji-sentiment.R</code></a></small>
       <div class="d-none name"><code>emoji_sentiment.Rd</code></div>
     </div>
 
@@ -49,7 +49,7 @@ emoji, or whose emoji are absent from the lexicon, receive <code>NA</code>.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">emoji_sentiment</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, lexicon <span class="op">=</span> <span class="st">"novak2015"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">emoji_sentiment</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, lexicon <span class="op">=</span> <span class="st">"novak2015"</span>, se <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,13 +70,19 @@ emoji, or whose emoji are absent from the lexicon, receive <code>NA</code>.</p>
 <code><a href="register_emoji_lexicon.html">register_emoji_lexicon()</a></code>) or a data frame can also be supplied; see
 <code><a href="emoji_score.html">emoji_score()</a></code> for the generic scorer.</p></dd>
 
+
+<dt id="arg-se">se<a class="anchor" aria-label="anchor" href="#arg-se"></a></dt>
+<dd><p>If <code>TRUE</code>, also return <code>.emoji_sentiment_se</code>, the standard error of
+the row's mean sentiment. Requires the bundled <code>"novak2015"</code> lexicon.
+Default <code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>data</code>, as a tibble, with added columns <code>.emoji_n</code> (the number of
 emoji in the row), <code>.emoji_n_scored</code> (the number of emoji that actually
 appear in the lexicon), and <code>.emoji_sentiment</code> (the mean sentiment of the
-scored emoji).</p>
+scored emoji). With <code>se = TRUE</code>, also <code>.emoji_sentiment_se</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -88,6 +94,20 @@ emoji-presentation (qualified) form and it resolves normally. See
 <a href="emoji_sentiment_lexicon.html">emoji_sentiment_lexicon</a> for the full picture.</p>
     </div>
     <div class="section level2">
+    <h2 id="uncertainty">Uncertainty<a class="anchor" aria-label="anchor" href="#uncertainty"></a></h2>
+
+
+<p>A glyph annotated eight times should not carry the same authority as one
+annotated eight thousand times, and the bundled lexicon keeps the annotation
+counts that say which is which. With <code>se = TRUE</code> the result gains
+<code>.emoji_sentiment_se</code>, the standard error of the row's mean: each glyph's
+score has a binomial-style standard error computed from its own counts, and
+those are propagated to the mean assuming independent annotations
+(<code>sqrt(sum(se^2)) / n_scored</code>). It needs the annotation counts, so it is
+available for the bundled <code>"novak2015"</code> lexicon only. See
+<code><a href="emoji_ambiguity.html">emoji_ambiguity()</a></code> for the same counts read as disagreement.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Kralj Novak P, Smailovic J, Sluban B, Mozetic I (2015) Sentiment
 of Emojis. PLoS ONE 10(12): e0144296. <a href="https://doi.org/10.1371/journal.pone.0144296" class="external-link">doi:10.1371/journal.pone.0144296</a></p>
@@ -96,7 +116,7 @@ of Emojis. PLoS ONE 10(12): e0144296. <a href="https://doi.org/10.1371/journal.p
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><a href="emoji_sentiment_lexicon.html">emoji_sentiment_lexicon</a> for the underlying scores;
 <code><a href="emoji_score.html">emoji_score()</a></code> for scoring against any lexicon; <code><a href="emoji_emotion.html">emoji_emotion()</a></code> for
-discrete emotions.</p></div>
+discrete emotions; <code><a href="emoji_ambiguity.html">emoji_ambiguity()</a></code> for annotator disagreement.</p></div>
     </div>
 
     <div class="section level2">
@@ -109,6 +129,13 @@ discrete emotions.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> love it 😍        1               1            0.678</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> awful 😡          1               1           -<span style="color: #BB0000;">0.173</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> meh               0              <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>    </span>
+<span class="r-in"><span><span class="fu">emoji_sentiment</span><span class="op">(</span><span class="va">df</span>, <span class="va">text</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   text       .emoji_n .emoji_n_scored .emoji_sentiment .emoji_sentiment_se</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> love it 😍        1               1            0.678             0.007<span style="text-decoration: underline;">11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> awful 😡          1               1           -<span style="color: #BB0000;">0.173</span>             0.033<span style="text-decoration: underline;">8</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> meh               0              <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>                <span style="color: #BB0000;">NA</span>      </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

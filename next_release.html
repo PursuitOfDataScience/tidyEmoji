@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +30,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="logo.svg" class="logo" alt=""><h1>tidyEmoji — Roadmap for the Next Release(s)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/next_release.md" class="external-link"><code>next_release.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/next_release.md" class="external-link"><code>next_release.md</code></a></small>
     </div>
 
 <div id="tidyemoji--roadmap-for-the-next-releases" class="section level1">
@@ -658,6 +658,110 @@
 <td>⏳</td>
 <td>§5J + grouped-df guarantees</td>
 </tr></tbody></table><p><em>(Version numbering note: CRAN’s published version is 0.2.0, so everything above ships as the single next release, package version <strong>0.3.0</strong>. The later §9 phase numbers (0.5.0, 0.6.0, 1.0.0) name work packages, and future package versions will simply be assigned in sequence from whatever is current when they ship.)</em></p>
+<hr></div>
+</div>
+<div class="section level2">
+<h2 id="id_13-post-040-addendum--wave-1-of-featuresmd-shipped">13. Post-0.4.0 addendum — wave 1 of <code>features.md</code> shipped<a class="anchor" aria-label="anchor" href="#id_13-post-040-addendum--wave-1-of-featuresmd-shipped"></a></h2>
+<p><em>Appended after the 0.4.0 work landed. Nothing above this line has been altered. <code>features.md</code> (filed verbatim as issue #5) is the <strong>idea space</strong>; this file stays the <strong>ledger</strong>. Section 13 records what wave 1 actually shipped, the one defect a third audit found in the shipped 0.3.0 code, and the design decisions locked at implementation.</em></p>
+<div class="section level3">
+<h3 id="id_131-ship-report--featuresmd-wave-1-is-done-as-package-version-040">13.1 Ship report — <code>features.md</code> wave 1 is done, as package version 0.4.0<a class="anchor" aria-label="anchor" href="#id_131-ship-report--featuresmd-wave-1-is-done-as-package-version-040"></a></h3>
+<p>Twenty-one new exported verbs, <strong>no new dependencies, no new bundled data, and no change to any existing verb’s output columns</strong>. Each arrived with tests, help page, NEWS entry, README mention, pkgdown entry and a vignette section:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>
+<code>features.md</code> theme</th>
+<th>Shipped</th>
+</tr></thead><tbody><tr><td>§4 B — ambiguity &amp; interpretation risk</td>
+<td>
+<code><a href="reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>, <code><a href="reference/emoji_risk.html">emoji_risk()</a></code>, <code><a href="reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code>, <code>emoji_sentiment(se = TRUE)</code>
+</td>
+</tr><tr><td>§5 C — sense &amp; context</td>
+<td>
+<code><a href="reference/emoji_context.html">emoji_context()</a></code>, <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code>
+</td>
+</tr><tr><td>§10 H — time</td>
+<td>
+<code><a href="reference/emoji_trend.html">emoji_trend()</a></code>, <code><a href="reference/emoji_turnover.html">emoji_turnover()</a></code>, <code><a href="reference/emoji_seasonality.html">emoji_seasonality()</a></code>, <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code>, <code><a href="reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code>, <code><a href="reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code>
+</td>
+</tr><tr><td>§7 E — incongruity</td>
+<td>
+<code><a href="reference/emoji_incongruity.html">emoji_incongruity()</a></code>, <code><a href="reference/emoji_congruence.html">emoji_congruence()</a></code>, <code><a href="reference/emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code>
+</td>
+</tr><tr><td>§13.3 K — functional type</td>
+<td>
+<code><a href="reference/as_emoji_type.html">as_emoji_type()</a></code>, <code><a href="reference/emoji_type.html">emoji_type()</a></code>, <code><a href="reference/emoji_faceness.html">emoji_faceness()</a></code>
+</td>
+</tr><tr><td>§12 J — LLM plumbing</td>
+<td>
+<code><a href="reference/emoji_sanitize.html">emoji_sanitize()</a></code>, <code><a href="reference/emoji_token_cost.html">emoji_token_cost()</a></code>
+</td>
+</tr><tr><td>§15.5 M — provenance</td>
+<td>
+<code><a href="reference/emoji_provenance.html">emoji_provenance()</a></code>, <code><a href="reference/emoji_unicode_version.html">emoji_unicode_version()</a></code>, <code>inst/CITATION</code>
+</td>
+</tr></tbody></table><p>Wave 1 predicted this would be cheap because the raw material was already in the package, and that held: the Novak lexicon’s <code>negative</code>/<code>neutral</code>/<code>positive</code> counts became the whole ambiguity family, the reference table’s <code>version</code> column became the whole version/adoption family, and <code>.emoji_locations()</code> became the context windows. §12.4’s <code>inst/CITATION</code> backlog item is now done.</p>
+</div>
+<div class="section level3">
+<h3 id="id_132-third-audit--the-defect-found-in-the-shipped-030-code">13.2 Third audit — the defect found in the shipped 0.3.0 code<a class="anchor" aria-label="anchor" href="#id_132-third-audit--the-defect-found-in-the-shipped-030-code"></a></h3>
+<p>One real bug, and it is <strong>the same pattern as §12.2 item 1</strong>, which is the point of recording it:</p>
+<ul><li>
+<strong>Locale-dependent output, again.</strong> <code>emoji_dfm(doc_id = )</code> grouped rows with <code>factor(ids)</code>, whose levels are ordered by <code><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort()</a></code> — so the <em>row order</em> of the returned matrix depended on the session’s collation. 0.3.0 fixed exactly this for glyph ordering (<code>sort(method = "radix")</code> in <code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>, <code>order(method = "radix")</code> for dfm columns) and missed the document axis. Fixed: documents come out in first-appearance order of the id, via one <code>.emoji_id_split()</code> helper now shared by <code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>, <code><a href="reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code> and <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> so they cannot drift apart again. <em>Lesson, restated: <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code> is <code><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort()</a></code> in disguise. Any verb that turns a user value into a group or an axis needs the same radix/first-appearance discipline as the glyph ordering did.</em>
+</li>
+</ul><p>The rest of the sweep came back clean: every verb still routes metadata joins through the codepoint key, <code>NA</code> text is still never an emoji, and the empty- input paths still return typed zero-row tibbles.</p>
+</div>
+<div class="section level3">
+<h3 id="id_133-design-decisions-locked-at-implementation">13.3 Design decisions locked at implementation<a class="anchor" aria-label="anchor" href="#id_133-design-decisions-locked-at-implementation"></a></h3>
+<ul><li>
+<strong><code>scale</code> on <code><a href="reference/emoji_incongruity.html">emoji_incongruity()</a></code> has no default.</strong> <code>features.md</code> §7 asked that the user “acknowledge one”; the strongest form of that is a required argument, so a missing <code>scale</code> is an error naming the three options. Text scores arrive on incompatible scales and a silent default would manufacture incomparable numbers.</li>
+<li>
+<strong><code>unicode_release_dates</code> ships as a function, not a <code>data/*.rda</code>.</strong> <code><a href="reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> returns the same table. Two dozen rows tied directly to the verbs that join to them belong beside the code, not in <code>LazyData</code>; it also keeps the “no new bundled data” line of this release intact. The <code>version</code> key is unambiguous because the Unicode Emoji series (0.6-5.0, then 11.0+) and the Unicode series (6.0-10.0) do not collide.</li>
+<li>
+<strong>Version strings are normalised, not assumed.</strong> <a href="https://emilhvitfeldt.github.io/emoji/" class="external-link">emoji</a>’s <code>version</code> column is read through <code>.emoji_version_label()</code> (strips a leading <code>E</code>, empty becomes <code>NA</code>), so both <code>"E15.1"</code> and <code>"15.1"</code> resolve, and an unmatched version gives <code>NA</code> release date rather than a wrong one.</li>
+<li>
+<strong><code>method = "cosine"</code> was dropped.</strong> Over two scalars, cosine <em>is</em> <code>sign_flip</code>; shipping it would be a synonym pretending to be a method.</li>
+<li>
+<strong><code>policy = "base"</code> deferred.</strong> It needs <code>emoji_base()</code>, which belongs with the modifier work (§8 F / the next phase).</li>
+<li>
+<strong><code>.emoji_n_scored</code> keeps the 0.2.1 convention</strong> — <code>NA</code> only when the row has no emoji at all, <code>0</code> when it has emoji that the lexicon cannot score — and every new verb follows it rather than inventing a second convention.</li>
+<li>
+<strong>Grapheme counting is exact, token counting is not.</strong> <code><a href="reference/emoji_token_cost.html">emoji_token_cost()</a></code> is authoritative about bytes, code points and graphemes and explicitly labels its token figure an estimate, with <code>tokenizer =</code> for the real number.</li>
+<li>
+<strong>No CI enrichment yet.</strong> §12.4’s {covr}/<code>urlchecker</code>/spelling jobs are still open. They need repository secrets and configuration decisions the code work did not; a job that goes red on merge is worse than a missing one.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_134-release-ledger">13.4 Release ledger<a class="anchor" aria-label="anchor" href="#id_134-release-ledger"></a></h3>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Work package</th>
+<th>State</th>
+<th>Where</th>
+</tr></thead><tbody><tr><td>§9 0.2.1 correctness patch</td>
+<td>✅ shipped</td>
+<td>folded into package 0.3.0</td>
+</tr><tr><td>§9 0.3.0 affect &amp; translation</td>
+<td>✅ shipped</td>
+<td>package 0.3.0</td>
+</tr><tr><td>§9 0.4.0 relational &amp; structure</td>
+<td>✅ shipped</td>
+<td>folded into package 0.3.0</td>
+</tr><tr><td>
+<code>features.md</code> wave 1</td>
+<td>✅ shipped</td>
+<td><strong>package 0.4.0</strong></td>
+</tr><tr><td>
+<code>features.md</code> wave 2 — modifiers, Unicode property data, flags (§9 “0.5.0”)</td>
+<td>⏳ next</td>
+<td>needs <code>emoji_unicode_props</code> built from <code>emoji-test.txt</code> first</td>
+</tr><tr><td>
+<code>features.md</code> wave 3 — affect breadth &amp; coverage honesty</td>
+<td>⏳</td>
+<td>blocked on the batched licence review</td>
+</tr><tr><td>
+<code>features.md</code> wave 4 — semantics &amp; visualization (§9 “0.6.0”)</td>
+<td>⏳</td>
+<td>
+<code>emoji_embed_corpus()</code> leads</td>
+</tr><tr><td>
+<code>features.md</code> wave 5 — locale, pragmatics, drift, stability (§9 “1.0.0”)</td>
+<td>⏳</td>
+<td>includes grouped-df guarantees and the API freeze</td>
+</tr></tbody></table><p><em>(Version numbering: CRAN’s published version is still 0.2.0. The repo has now shipped 0.3.0 and 0.4.0; the §9 phase numbers above name work packages, not package versions.)</em></p>
 </div>
 </div>
 </div>

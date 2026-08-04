@@ -11,7 +11,7 @@ registered one.
 ## Usage
 
 ``` r
-emoji_score(data, text, lexicon, by = "emoji", score = NULL)
+emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
 ```
 
 ## Arguments
@@ -28,7 +28,8 @@ emoji_score(data, text, lexicon, by = "emoji", score = NULL)
 
   Either a string naming a bundled or registered lexicon, or a data
   frame. For data frames, `by` names the glyph column and `score` the
-  score column.
+  score column. Defaults to `"novak2015"`, matching
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md).
 
 - by:
 

@@ -1,0 +1,60 @@
+# How new is this corpus's emoji repertoire?
+
+`emoji_version_profile()` breaks a corpus down by the Unicode emoji
+version that introduced each glyph. A corpus written entirely in emoji
+from 2015 and one full of 2023 additions look identical to a frequency
+table and quite different here.
+
+## Usage
+
+``` r
+emoji_version_profile(data, text)
+```
+
+## Arguments
+
+- data:
+
+  A data frame or tibble containing a text column.
+
+- text:
+
+  The text column to scan, supplied unquoted.
+
+## Value
+
+A tibble with one row per version, oldest first: `version`,
+`version_num`, `release_date`, `n_types` (distinct emoji), `n_tokens`
+(occurrences), `share_types` and `share_tokens`.
+
+## Details
+
+The version comes from the reference table tidyEmoji detects against, so
+it is capped by your installed emoji package (see
+[`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)).
+Glyphs whose version is unknown – including any the reference table does
+not carry – are reported in a row with `version = NA` rather than
+dropped.
+
+The corpus's average vintage is a weighted mean over this table, for
+example
+`with(profile, weighted.mean(version_num, n_tokens, na.rm = TRUE))`.
+
+## See also
+
+[`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+for how quickly new emoji were picked up;
+[`emoji_unicode_releases()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_releases.md)
+for the date lookup.
+
+## Examples
+
+``` r
+df <- data.frame(text = c("\U0001f600 hello", "\U0001f97a nice"))
+emoji_version_profile(df, text)
+#> # A tibble: 2 × 7
+#>   version version_num release_date n_types n_tokens share_types share_tokens
+#>   <chr>         <dbl> <date>         <int>    <int>       <dbl>        <dbl>
+#> 1 1.0               1 2015-06-09         1        1         0.5          0.5
+#> 2 11.0             11 2018-06-05         1        1         0.5          0.5
+```

@@ -44,10 +44,11 @@ By default every row of `data` is a document and the first output
 column, `.row_number`, is its position in `data` (matching
 [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)).
 Give `doc_id` to aggregate rows sharing an id into one document; the id
-column keeps its name. Emoji columns are named by the glyph itself,
-canonicalised through the package's codepoint key (so qualified and
-unqualified forms count as one feature), and ordered by descending total
-count (ties broken by glyph).
+column keeps its name, and documents appear in the order their id is
+first seen in `data`, never in the session's collation order. Emoji
+columns are named by the glyph itself, canonicalised through the
+package's codepoint key (so qualified and unqualified forms count as one
+feature), and ordered by descending total count (ties broken by glyph).
 
 For `weighting = "tfidf"`, the cell for emoji *e* in document *d* is
 `count(d, e) * log(N / df(e))`, where `N` is the number of documents and

@@ -14,6 +14,10 @@ including grapheme-aware detection so skin-tone modifiers (👍🏽) and
 multi-person sequences (👨‍👩‍👧‍👦) are treated as a single emoji rather than
 being split apart.
 
+New in 0.4.0: how much annotators *disagreed* about an emoji, the words
+around each occurrence, emoji use over time, text-emoji sentiment
+mismatch, and explicit emoji policies for language-model pipelines.
+
 ## Installation
 
 ``` r
@@ -199,6 +203,76 @@ reviews %>% emoji_dfm(text) %>% select(1:4)
 #> 5           5     1     0     1
 ```
 
+### How likely is an emoji to be misread?
+
+Readers of the *same* emoji rendering disagree about its sentiment
+roughly a quarter of the time (Miller et al., 2016). The bundled lexicon
+keeps the raw annotation counts behind its score, so that disagreement
+is a number rather than a caveat.
+
+``` r
+
+emoji_ambiguity()                             # every glyph, most disputed first
+reviews %>% emoji_risk(text)                  # interpretation risk per row
+reviews %>% emoji_flag_ambiguous(text)        # the riskiest emoji in this corpus
+reviews %>% emoji_sentiment(text, se = TRUE)  # a score with a standard error
+```
+
+### What is around each emoji, and when was it used?
+
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+returns one row per occurrence with the surrounding words, and
+[`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+turns those windows into a PMI-scored emoji-word table — corpus-derived
+senses, with no licence baggage and nothing stale. On the time axis,
+[`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+and
+[`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+follow usage and vocabulary churn, while
+[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+and
+[`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+use the Unicode version of each glyph to ask how new a corpus’s
+repertoire is.
+
+``` r
+
+reviews %>% emoji_context(text, window = 5)
+reviews %>% emoji_collocations(text, min_n = 2)
+posts %>% emoji_trend(text, posted_at, by = "month")
+posts %>% emoji_adoption_lag(text, posted_at)
+```
+
+### Does the text agree with the emoji?
+
+Emoji–text sentiment mismatch is a sarcasm feature in NLP and the
+(in)congruence variable in marketing research. tidyEmoji supplies the
+emoji half and the arithmetic; you bring the text score from tidytext,
+sentimentr or a model, and say how the two were made comparable.
+
+``` r
+
+reviews %>% emoji_incongruity(text, text_score, scale = "rank")
+reviews %>% emoji_incongruity_profile(text, text_score, scale = "rank")
+```
+
+### Emoji in language-model pipelines
+
+Emoji are a preprocessing decision, and
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+makes it an explicit one.
+[`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
+says what they are costing you, and
+[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+records every version behind a result for your methods section.
+
+``` r
+
+reviews %>% emoji_sanitize(text, policy = "name")   # or strip/shortcode/...
+reviews %>% emoji_token_cost(text)
+emoji_provenance()
+```
+
 ### Bring your own lexicon
 
 The scoring machinery is pluggable:
@@ -320,12 +394,27 @@ sentiment- and emotion-scoring emoji, and plotting the results.
 
 - [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md)
   : Categorise each row by the emoji categories it contains
+- [`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md)
+  : Which functional types of emoji does each row use?
+- [`as_emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.md)
+  : Functional type of an emoji glyph
+- [`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md)
+  : How face-heavy is each row's emoji use?
 - [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
   : Score the sentiment of the emoji in each row
 - [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
   : Emoji emotion profiles (the 8 Plutchik emotions)
 - [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
   : The dominant emoji emotion per row
+
+## Interpretation risk
+
+- [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+  : How ambiguous is each emoji?
+- [`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md)
+  : Interpretation risk per row
+- [`emoji_flag_ambiguous()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag_ambiguous.md)
+  : Which emoji in this corpus are most likely to be misread?
 
 ## Lexicon API
 
@@ -335,6 +424,13 @@ sentiment- and emotion-scoring emoji, and plotting the results.
   : Register a custom emoji lexicon
 - [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
   : Score emoji in a text column against any lexicon
+
+## Context
+
+- [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  : The text around each emoji occurrence
+- [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+  : Which words keep company with which emoji
 
 ## Relate
 
@@ -352,12 +448,41 @@ sentiment- and emotion-scoring emoji, and plotting the results.
 - [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
   : Emoji density per character and per token
 - [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-  : What share of the text is emoji — and is it emoji-only?
+  : What share of the text is emoji, and is it emoji-only?
+
+## Text-emoji mismatch
+
+- [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)
+  : Text-emoji sentiment mismatch
+- [`emoji_congruence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_congruence.md)
+  : Text-emoji congruence
+- [`emoji_incongruity_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity_profile.md)
+  : Which emoji go against the grain of their text?
+
+## Time
+
+- [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+  : Emoji frequency over time
+- [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  : Emoji vocabulary churn between consecutive periods
+- [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)
+  : Cyclical patterns in emoji use
+- [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+  : How new is this corpus's emoji repertoire?
+- [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+  : How long did this population take to adopt each emoji?
 
 ## Model features
 
 - [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
   : Document-by-emoji feature matrix
+
+## Language-model pipelines
+
+- [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+  : Apply an explicit emoji policy to a text column
+- [`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
+  : What are the emoji in this text costing a tokeniser?
 
 ## Translate & search
 
@@ -371,6 +496,15 @@ sentiment- and emotion-scoring emoji, and plotting the results.
   : Vector helpers: convert emoji to/from names and shortcodes
 - [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
   : Search emoji by keyword, name or shortcode
+
+## Provenance & reference data
+
+- [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  : Versions behind an emoji analysis, in one row
+- [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)
+  : Which Unicode emoji version does this build reflect?
+- [`emoji_unicode_releases()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_releases.md)
+  : Unicode and Unicode Emoji release dates
 
 ## Data
 

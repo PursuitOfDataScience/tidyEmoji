@@ -1,4 +1,4 @@
-# What share of the text is emoji — and is it emoji-only?
+# What share of the text is emoji, and is it emoji-only?
 
 `emoji_ratio()` reports, per row, the share of the text's characters
 that belong to emoji, and whether the text is emoji-only (nothing left

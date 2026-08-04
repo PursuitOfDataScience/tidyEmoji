@@ -15,7 +15,7 @@ name a bundled / registered one."><meta property="og:image" content="https://pur
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ name a bundled / registered one."><meta property="og:image" content="https://pur
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Score emoji in a text column against any lexicon</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/R/emoji-lexicon-api.R" class="external-link"><code>R/emoji-lexicon-api.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/R/emoji-lexicon-api.R" class="external-link"><code>R/emoji-lexicon-api.R</code></a></small>
       <div class="d-none name"><code>emoji_score.Rd</code></div>
     </div>
 
@@ -52,7 +52,7 @@ name a bundled / registered one.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">emoji_score</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, <span class="va">lexicon</span>, by <span class="op">=</span> <span class="st">"emoji"</span>, score <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">emoji_score</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, lexicon <span class="op">=</span> <span class="st">"novak2015"</span>, by <span class="op">=</span> <span class="st">"emoji"</span>, score <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,7 +70,7 @@ name a bundled / registered one.</p>
 <dt id="arg-lexicon">lexicon<a class="anchor" aria-label="anchor" href="#arg-lexicon"></a></dt>
 <dd><p>Either a string naming a bundled or registered lexicon, or a
 data frame. For data frames, <code>by</code> names the glyph column and <code>score</code> the
-score column.</p></dd>
+score column. Defaults to <code>"novak2015"</code>, matching <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>.</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,7 @@ Chicago</span>
 </h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
       <div class="d-none name"><code>introduction.Rmd</code></div>
     </div>
 
@@ -157,8 +157,57 @@ and return tidy data frames that drop straight into a
 </td>
 </tr>
 <tr class="even">
+<td>Interpretation risk</td>
+<td>
+<code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>, <code><a href="../reference/emoji_risk.html">emoji_risk()</a></code>,
+<code><a href="../reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Context</td>
+<td>
+<code><a href="../reference/emoji_context.html">emoji_context()</a></code>, <code><a href="../reference/emoji_collocations.html">emoji_collocations()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td>Functional type</td>
+<td>
+<code><a href="../reference/emoji_type.html">emoji_type()</a></code>, <code><a href="../reference/emoji_faceness.html">emoji_faceness()</a></code>,
+<code><a href="../reference/as_emoji_type.html">as_emoji_type()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Time</td>
+<td>
+<code><a href="../reference/emoji_trend.html">emoji_trend()</a></code>, <code><a href="../reference/emoji_turnover.html">emoji_turnover()</a></code>,
+<code><a href="../reference/emoji_seasonality.html">emoji_seasonality()</a></code>, <code><a href="../reference/emoji_version_profile.html">emoji_version_profile()</a></code>,
+<code><a href="../reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td>Text-emoji mismatch</td>
+<td>
+<code><a href="../reference/emoji_incongruity.html">emoji_incongruity()</a></code>, <code><a href="../reference/emoji_congruence.html">emoji_congruence()</a></code>,
+<code><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code>
+</td>
+</tr>
+<tr class="odd">
 <td>Model features</td>
 <td><code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code></td>
+</tr>
+<tr class="even">
+<td>LLM pipelines</td>
+<td>
+<code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code>, <code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Provenance</td>
+<td>
+<code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code>,
+<code><a href="../reference/emoji_unicode_version.html">emoji_unicode_version()</a></code>,
+<code><a href="../reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code>
+</td>
 </tr>
 </tbody>
 </table>
@@ -539,6 +588,41 @@ split the <code>.emoji_category</code> strings on <code>|</code> with
 <p>“Smileys &amp; Emotion” dominates, followed by “People &amp; Body”.
 Note that an entry spanning several categories is counted once in each,
 so these counts can exceed the number of emoji-bearing entries.</p>
+<div class="section level3">
+<h3 id="emoji_type-faces-versus-everything-else">
+<code>emoji_type()</code>: faces versus everything else<a class="anchor" aria-label="anchor" href="#emoji_type-faces-versus-everything-else"></a>
+</h3>
+<p>The consumer-behaviour literature repeatedly contrasts
+<em>emotional</em> (face) emoji with <em>semantic</em> (object) emoji
+and finds that the two have different effects on engagement.
+<code><a href="../reference/emoji_type.html">emoji_type()</a></code> recodes the Unicode group and subgroup into
+that smaller functional vocabulary, and <code><a href="../reference/emoji_faceness.html">emoji_faceness()</a></code>
+reduces it to a single per-entry share:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_type.html">emoji_type</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_type</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 2</span></span></span>
+<span><span class="co">#&gt;   .emoji_type     n</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> <span style="color: #BB0000;">NA</span>           <span style="text-decoration: underline;">1</span>440</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> face          364</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> gesture        54</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> symbol         42</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> face|symbol    17</span></span>
+<span></span>
+<span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_faceness.html">emoji_faceness</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>mean_faceness <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.emoji_faceness</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>            all_faces <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">.emoji_faceness</span> <span class="op">==</span> <span class="fl">1</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;   mean_faceness all_faces</span></span>
+<span><span class="co">#&gt;           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         0.694       364</span></span></code></pre></div>
+<p><code><a href="../reference/as_emoji_type.html">as_emoji_type()</a></code> is the vector-level version, for typing
+a glyph you already have in hand.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="scoring-emoji-sentiment">Scoring emoji sentiment<a class="anchor" aria-label="anchor" href="#scoring-emoji-sentiment"></a>
@@ -556,7 +640,7 @@ emoji, from -1 to +1). Scores come from the bundled
 <code>emoji_sentiment_lexicon</code> (described below); entries with no
 emoji, or whose emoji are not in the lexicon, receive
 <code>NA</code>.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_sentiment</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
 <span></span>
@@ -582,7 +666,7 @@ emoji, or whose emoji are not in the lexicon, receive
 </h3>
 <p>Looking across the entries that contain at least one scored
 emoji:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_sentiment</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">.emoji_sentiment</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">.emoji_sentiment</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -590,7 +674,7 @@ emoji:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Mean emoji sentiment"</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Number of entries"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji sentiment skews positive"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="Histogram of the mean emoji sentiment per entry, which is concentrated on the positive side of the scale." width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="Histogram of the mean emoji sentiment per entry, which is concentrated on the positive side of the scale." width="768"></p>
 <p>As is typical of social-media text, emoji sentiment leans strongly
 positive.</p>
 </div>
@@ -600,7 +684,7 @@ positive.</p>
 <p>Because <code><a href="../reference/emoji_tokens.html">emoji_tokens()</a></code> attaches a sentiment score to
 every emoji occurrence, we can summarise average sentiment by category
 in a couple of lines:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_tokens.html">emoji_tokens</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.emoji_category</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -612,7 +696,7 @@ in a couple of lines:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Mean sentiment"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Average emoji sentiment by category"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="Horizontal bar chart of the average emoji sentiment within each Unicode category." width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="Horizontal bar chart of the average emoji sentiment within each Unicode category." width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="the-sentiment-lexicon">The sentiment lexicon<a class="anchor" aria-label="anchor" href="#the-sentiment-lexicon"></a>
@@ -622,7 +706,7 @@ in a couple of lines:</p>
 from around 70,000 tweets annotated in 13 European languages. You can
 work with it directly — for instance, to find the most positive and most
 negative reasonably common emoji:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_sentiment_lexicon</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">occurrences</span> <span class="op">&gt;=</span> <span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_max</a></span><span class="op">(</span><span class="va">sentiment_score</span>, n <span class="op">=</span> <span class="fl">8</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -653,6 +737,83 @@ negative reasonably common emoji:</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="interpretation-risk-how-much-do-readers-disagree">Interpretation risk: how much do readers disagree?<a class="anchor" aria-label="anchor" href="#interpretation-risk-how-much-do-readers-disagree"></a>
+</h2>
+<p>The most practically important fact about emoji is that people do not
+agree on what they mean. Miller et al. (2016) showed the <em>same</em>
+rendering to many readers and found they disagreed about whether it was
+positive, neutral or negative around a quarter of the time.</p>
+<p>That disagreement was already inside the package. The Emoji Sentiment
+Ranking keeps the raw
+<code>negative</code>/<code>neutral</code>/<code>positive</code>
+annotation counts behind its collapsed score, which is an empirical
+interpretation distribution per glyph. <code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>
+reads it out:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_ambiguity.html">emoji_ambiguity</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n_annotations</span> <span class="op">&gt;</span> <span class="fl">500</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 8</span></span></span>
+<span><span class="co">#&gt;   emoji key   n_annotations p_neg p_neu p_pos ambiguity  rank</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 😳    1F633           846 0.327 0.327 0.345      1.10     6</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 💯    1F4AF           637 0.281 0.317 0.402      1.09    16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 😴    1F634           718 0.422 0.237 0.341      1.07    43</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 😢    1F622           749 0.385 0.224 0.391      1.07    47</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 😱    1F631          <span style="text-decoration: underline;">1</span>130 0.264 0.282 0.454      1.07    50</span></span></code></pre></div>
+<p>Because the measure is a property of the glyph, the corpus-level
+question – “which of <em>my</em> emoji are most likely to be misread?” –
+is one call:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous</a></span><span class="op">(</span><span class="va">full_text</span>, top_n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
+<span><span class="co">#&gt;   emoji name               n n_annotations ambiguity  rank</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 😳    flushed face       3           846      1.10     6</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 💣    bomb               2           131      1.09    10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 💯    hundred points    20           637      1.09    16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 😯    hushed face        1            62      1.08    20</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 💔    broken heart       5           328      1.08    22</span></span></code></pre></div>
+<p><code><a href="../reference/emoji_risk.html">emoji_risk()</a></code> is the per-entry version, and the pair
+<code>.emoji_n</code> / <code>.emoji_n_scored</code> keeps the coverage
+honest: an entry whose emoji are absent from the lexicon is not a
+low-risk entry, it is an unmeasured one.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_risk.html">emoji_risk</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.emoji_n</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">.emoji_n</span>, <span class="va">.emoji_n_scored</span>, <span class="va">.emoji_ambiguity_mean</span>,</span>
+<span>         <span class="va">.emoji_n_ambiguous</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 4</span></span></span>
+<span><span class="co">#&gt;   .emoji_n .emoji_n_scored .emoji_ambiguity_mean .emoji_n_ambiguous</span></span>
+<span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        2               2                 1.06                   2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        2               2                 1.06                   2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        2               2                 0.973                  1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>        2               2                 1.06                   2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>        3               2                 0.889                  1</span></span></code></pre></div>
+<p>The same counts also put an error bar on the sentiment score itself.
+A glyph annotated eight times should not carry the authority of one
+annotated eight thousand times, and
+<code>emoji_sentiment(se = TRUE)</code> says so:</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">full_text</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">.emoji_sentiment</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">.emoji_n_scored</span>, <span class="va">.emoji_sentiment</span>, <span class="va">.emoji_sentiment_se</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
+<span><span class="co">#&gt;   .emoji_n_scored .emoji_sentiment .emoji_sentiment_se</span></span>
+<span><span class="co">#&gt;             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>               1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span>             0.011<span style="text-decoration: underline;">8</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>               1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span>             0.011<span style="text-decoration: underline;">8</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>               1           0.221              0.006<span style="text-decoration: underline;">75</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>               1           0.746              0.005<span style="text-decoration: underline;">87</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>               1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span>             0.011<span style="text-decoration: underline;">8</span></span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="scoring-emoji-emotions">Scoring emoji emotions<a class="anchor" aria-label="anchor" href="#scoring-emoji-emotions"></a>
 </h2>
 <p>Valence (negative↔︎positive) is only one affective dimension.
@@ -660,7 +821,7 @@ negative reasonably common emoji:</p>
 across the eight Plutchik emotions (anger, anticipation, disgust, fear,
 joy, sadness, surprise, trust) using the bundled EmoTag1200 lexicon
 (Shoeb &amp; de Melo, 2020). Scores are in <code>[0, 1]</code>.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_emotion</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_emotion.html">emoji_emotion</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
 <span></span>
@@ -681,7 +842,7 @@ joy, sadness, surprise, trust) using the bundled EmoTag1200 lexicon
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>           1</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,990 more rows</span></span></span></code></pre></div>
 <p>A quick way to read the result is the dominant emotion per entry:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_emotion_label.html">emoji_emotion_label</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_emotion</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -707,7 +868,7 @@ resolve correctly.</p>
 <p>Sentiment and emotion scoring share one pluggable engine.
 <code><a href="../reference/emoji_lexicons.html">emoji_lexicons()</a></code> lists the bundled lexicons (plus any you
 have registered):</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_lexicons.html">emoji_lexicons</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
 <span><span class="co">#&gt;   name       type      dimensions     n source                           licence</span></span>
@@ -719,7 +880,7 @@ have registered):</p>
 column and a score column — say, scores tailored to your own domain —
 and it returns the per-row mean, joined through the same
 codepoint-normalised key as everything else:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_lexicon</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  emoji <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\U0001f621"</span>, <span class="st">"\U0001f637"</span><span class="op">)</span>,</span>
 <span>  score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">0.5</span><span class="op">)</span></span>
@@ -736,7 +897,7 @@ codepoint-normalised key as everything else:</p>
 <p><code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> stores a lexicon under a name
 for the session, so you can refer to it in <code><a href="../reference/emoji_score.html">emoji_score()</a></code> —
 or in <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>, if it carries emotion columns:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon</a></span><span class="op">(</span><span class="st">"mine"</span>, <span class="va">my_lexicon</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/emoji_lexicons.html">emoji_lexicons</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">name</span> <span class="op">==</span> <span class="st">"mine"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
@@ -753,7 +914,7 @@ co-occur in the same entry, with the number of entries in which they do.
 The <code>item1</code>/<code>item2</code>/<code>n</code> shape matches
 <code>widyr::pairwise_count()</code> and feeds directly into graph tools
 such as igraph, tidygraph and ggraph:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_edges</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
 <span></span>
@@ -773,7 +934,7 @@ such as igraph, tidygraph and ggraph:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 😂    🤷🏼‍♀️        2</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 203 more rows</span></span></span></code></pre></div>
 <p>The strongest pairings make a readable chart on their own:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_edges</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_max</a></span><span class="op">(</span><span class="va">n</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pair <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">item1</span>, <span class="va">item2</span><span class="op">)</span>,</span>
@@ -782,7 +943,7 @@ such as igraph, tidygraph and ggraph:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of entries containing both"</span>, y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji that appear together"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="Horizontal bar chart of the most frequent emoji pairs, labelled by the two glyphs of each pair." width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-32-1.png" class="r-plt" alt="Horizontal bar chart of the most frequent emoji pairs, labelled by the two glyphs of each pair." width="768"></p>
 <p>Set <code>directed = TRUE</code> to order each pair by first
 appearance, or supply <code>doc_id</code> to pool several rows (a
 conversation, a user, a day) into one document.
@@ -792,7 +953,7 @@ each emoji’s document frequency on the diagonal.</p>
 <code><a href="../reference/emoji_ngrams.html">emoji_ngrams()</a></code> slides a window over each entry’s emoji in
 reading order (any text in between is ignored), which is the raw
 material for sequence and Markov-style analyses:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_ngrams.html">emoji_ngrams</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_ngram</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -815,13 +976,59 @@ codepoint-normalised key as the rest of the package, so qualified and
 unqualified forms of one emoji count as a single node.</p>
 </div>
 <div class="section level2">
+<h2 id="the-words-around-an-emoji">The words around an emoji<a class="anchor" aria-label="anchor" href="#the-words-around-an-emoji"></a>
+</h2>
+<p>Which emoji occurred is only half the story: emoji are polysemous,
+and their reading is decided by the co-text.
+<code><a href="../reference/emoji_context.html">emoji_context()</a></code> returns one row per occurrence with a
+window of the surrounding text. Other emoji are blanked out of the
+window, so a neighbouring glyph never leaks into it:</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_context.html">emoji_context</a></span><span class="op">(</span><span class="va">full_text</span>, window <span class="op">=</span> <span class="fl">4</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">.row_number</span>, <span class="va">.emoji</span>, <span class="va">.emoji_context</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
+<span><span class="co">#&gt;   .row_number .emoji .emoji_context                   </span></span>
+<span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>           2 😭     stuck here in Brunswick          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>           4 😭     fever nonstop by Wizkid          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>          10 🙄     Phone dry asf                    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>          15 😂     lot of white girls . I thought it</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>          17 ❤️      needs self care days</span></span></code></pre></div>
+<p>Aggregated over a corpus, those windows give the emoji-word
+associations that a sense inventory would otherwise have to supply –
+derived from your own data, so they are neither stale nor
+licence-encumbered:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_collocations.html">emoji_collocations</a></span><span class="op">(</span><span class="va">full_text</span>, window <span class="op">=</span> <span class="fl">4</span>, min_n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
+<span><span class="co">#&gt;    emoji word          n   pmi</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🙌🏾    god           5  4.31</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🖕🏻    underdogs     8  3.93</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 😍    lacking      11  3.49</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 😍    strapped     11  3.49</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 😍    yess         11  3.49</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🥺    everytime     7  3.44</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🥺    greys         7  3.44</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🥺    accepted      5  3.44</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🥺    clemson       5  3.44</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🥺    into          5  3.44</span></span></code></pre></div>
+<p>Tokenisation stops at whitespace on purpose. If you need stemming or
+stopword removal, hand the result to <code>tidytext</code> rather than
+expecting this verb to grow a tokeniser.</p>
+</div>
+<div class="section level2">
 <h2 id="measuring-how-emoji-are-used">Measuring how emoji are used<a class="anchor" aria-label="anchor" href="#measuring-how-emoji-are-used"></a>
 </h2>
 <p><em>Where</em> emoji sit and <em>how much</em> of the text they
 occupy are studied signals in their own right.
 <code><a href="../reference/emoji_position.html">emoji_position()</a></code> reports each entry’s first and last emoji
 position and the mean relative position from 0 (start) to 1 (end):</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_position.html">emoji_position</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">.emoji_rel_position</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -830,13 +1037,13 @@ position and the mean relative position from 0 (start) to 1 (end):</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Mean relative position of the entry's emoji"</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Number of entries"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Emoji cluster at the end of a message"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-29-1.png" class="r-plt" alt="Histogram of the mean relative position of emoji within each entry, showing emoji concentrated towards the end of the text." width="768"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-36-1.png" class="r-plt" alt="Histogram of the mean relative position of emoji within each entry, showing emoji concentrated towards the end of the text." width="768"></p>
 <p><code><a href="../reference/emoji_density.html">emoji_density()</a></code> normalises the emoji count by text
 length (per character and per whitespace-delimited token), and
 <code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code> reports what share of the text’s characters
 belong to emoji — including an <code>.emoji_only</code> flag for entries
 that are nothing but emoji (and whitespace):</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_ratio.html">emoji_ratio</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
@@ -849,6 +1056,78 @@ that are nothing but emoji (and whitespace):</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            0     0.040<span style="text-decoration: underline;">5</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="emoji-over-time">Emoji over time<a class="anchor" aria-label="anchor" href="#emoji-over-time"></a>
+</h2>
+<p>Almost every substantive emoji study is longitudinal. Our sample has
+no timestamp, so the dates below are <em>synthetic</em> – they
+illustrate the mechanics, not a finding:</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dated</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>posted_at <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2021-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%%</a></span> <span class="fl">540</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dated</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_trend.html">emoji_trend</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">posted_at</span>, by <span class="op">=</span> <span class="st">"quarter"</span>, top_n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 18 × 5</span></span></span>
+<span><span class="co">#&gt;    .period    emoji name                       n   share</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 2021-01-01 😂    face with tears of joy    31 0.194  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 2021-01-01 😭    loudly crying face        17 0.106  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 2021-01-01 😩    weary face                 9 0.056<span style="text-decoration: underline;">2</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 2021-04-01 😂    face with tears of joy    42 0.214  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 2021-04-01 😩    weary face                 8 0.040<span style="text-decoration: underline;">8</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 2021-04-01 😭    loudly crying face         8 0.040<span style="text-decoration: underline;">8</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 2021-07-01 😭    loudly crying face        26 0.166  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 2021-07-01 😂    face with tears of joy    22 0.140  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 2021-07-01 😩    weary face                 3 0.019<span style="text-decoration: underline;">1</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 2021-10-01 😂    face with tears of joy    34 0.221  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> 2021-10-01 😭    loudly crying face        13 0.084<span style="text-decoration: underline;">4</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> 2021-10-01 😩    weary face                 9 0.058<span style="text-decoration: underline;">4</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> 2022-01-01 😂    face with tears of joy    18 0.157  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> 2022-01-01 😭    loudly crying face        12 0.104  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> 2022-01-01 😩    weary face                 4 0.034<span style="text-decoration: underline;">8</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> 2022-04-01 😭    loudly crying face        22 0.186  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> 2022-04-01 😂    face with tears of joy    13 0.110  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> 2022-04-01 😩    weary face                 1 0.008<span style="text-decoration: underline;">47</span></span></span></code></pre></div>
+<p><code><a href="../reference/emoji_turnover.html">emoji_turnover()</a></code> asks a different question – not how
+often an emoji is used but how much of the <em>repertoire</em> changes
+from one period to the next:</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dated</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_turnover.html">emoji_turnover</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">posted_at</span>, by <span class="op">=</span> <span class="st">"quarter"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 8</span></span></span>
+<span><span class="co">#&gt;   .period    .period_prev n_types_prev n_types jaccard n_new n_lost n_core</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2021-04-01 2021-01-01             56      79   0.298    48     25     31</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2021-07-01 2021-04-01             79      57   0.225    32     54     25</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2021-10-01 2021-07-01             57      65   0.232    42     34     23</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-01-01 2021-10-01             65      56   0.260    31     40     25</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-04-01 2022-01-01             56      49   0.25     28     35     21</span></span></code></pre></div>
+<p>Two of the time verbs need no timestamp at all, because the reference
+table already records the Unicode version that introduced each glyph.
+That makes “how new is this corpus’s emoji vocabulary?” a single
+call:</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_version_profile.html">emoji_version_profile</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 7</span></span></span>
+<span><span class="co">#&gt;   version version_num release_date n_types n_tokens share_types share_tokens</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 0.6             0.6 2010-10-11        74      517     0.396        0.574  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 0.7             0.7 2014-06-16         1        4     0.005<span style="text-decoration: underline;">35</span>      0.004<span style="text-decoration: underline;">44</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 1.0             1   2015-06-09        44      126     0.235        0.14   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2.0             2   2015-11-12         1        1     0.005<span style="text-decoration: underline;">35</span>      0.001<span style="text-decoration: underline;">11</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 3.0             3   2016-06-21        17       58     0.090<span style="text-decoration: underline;">9</span>       0.064<span style="text-decoration: underline;">4</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 4.0             4   2016-11-22        17       38     0.090<span style="text-decoration: underline;">9</span>       0.042<span style="text-decoration: underline;">2</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> 5.0             5   2017-06-20         8       19     0.042<span style="text-decoration: underline;">8</span>       0.021<span style="text-decoration: underline;">1</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> 11.0           11   2018-06-05         8       84     0.042<span style="text-decoration: underline;">8</span>       0.093<span style="text-decoration: underline;">3</span></span></span></code></pre></div>
+<p>With real timestamps, <code><a href="../reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code> goes one step
+further and compares each glyph’s first appearance in the corpus with
+its Unicode release date – see <code><a href="../reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> for
+that lookup, and <code><a href="../reference/emoji_seasonality.html">emoji_seasonality()</a></code> for month-of-year,
+day-of-week and hour-of-day cycles.</p>
+</div>
+<div class="section level2">
 <h2 id="emoji-as-model-features">Emoji as model features<a class="anchor" aria-label="anchor" href="#emoji-as-model-features"></a>
 </h2>
 <p>For classification and regression work, <code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code>
@@ -857,7 +1136,7 @@ entry (or per <code>doc_id</code>), one column per emoji, weighted by
 counts, binary presence or tf-idf. Every entry is kept — emoji-free rows
 are all zeros — so the table binds row-for-row to your outcome
 columns:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_dfm.html">emoji_dfm</a></span><span class="op">(</span><span class="va">full_text</span>, weighting <span class="op">=</span> <span class="st">"tfidf"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span></span>
@@ -877,6 +1156,77 @@ columns:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,990 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="text-emoji-mismatch">Text-emoji mismatch<a class="anchor" aria-label="anchor" href="#text-emoji-mismatch"></a>
+</h2>
+<p>Two separate literatures converge on one statistic. NLP sarcasm
+detection uses emoji-text sentiment incongruity as a feature; marketing
+research finds that a mismatch between a review’s words and its emoji
+lowers perceived helpfulness and authenticity. Both want the same
+number.</p>
+<p>tidyEmoji deliberately does not score text – that choice belongs in
+your script, where the method is visible. Here is a deliberately crude
+word-list scorer standing in for <code>tidytext</code> + AFINN,
+<code>sentimentr</code> or a transformer:</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">positive</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"love"</span>, <span class="st">"great"</span>, <span class="st">"best"</span>, <span class="st">"happy"</span>, <span class="st">"good"</span>, <span class="st">"thanks"</span>, <span class="st">"beautiful"</span><span class="op">)</span></span>
+<span><span class="va">negative</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hate"</span>, <span class="st">"worst"</span>, <span class="st">"bad"</span>, <span class="st">"sad"</span>, <span class="st">"awful"</span>, <span class="st">"sick"</span>, <span class="st">"tired"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">scored</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>text_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span>, <span class="st">"[^a-z]+"</span><span class="op">)</span>,</span>
+<span>    <span class="kw">function</span><span class="op">(</span><span class="va">w</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">w</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">positive</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">w</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">negative</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><code>scale</code> has no default: AFINN runs -5 to 5, VADER -1 to 1,
+and a model’s logits on nothing in particular, so you have to say how
+the two sides were made comparable. <code>"rank"</code> puts both on
+percentiles and is the safest choice.</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">incong</span> <span class="op">&lt;-</span> <span class="va">scored</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_incongruity.html">emoji_incongruity</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">text_score</span>, scale <span class="op">=</span> <span class="st">"rank"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">incong</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">.emoji_incongruity</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_polarity_flip</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;   .emoji_polarity_flip     n</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FALSE                  358</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> TRUE                    15</span></span>
+<span></span>
+<span><span class="va">incong</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.emoji_polarity_flip</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">.emoji_sentiment</span>, <span class="va">text_score</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt;   full_text                                          .emoji_sentiment text_score</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> zay hilfiger went from juju on that BEAT , to juj…           0.024<span style="text-decoration: underline;">5</span>         -<span style="color: #BB0000;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Worst story 📖 I heard. I guy I met bought 200 sha…           0.176          -<span style="color: #BB0000;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Ew don’t you hate when a hoe watch you and you do…           0.221          -<span style="color: #BB0000;">1</span></span></span></code></pre></div>
+<p>Note what happens to entries with no scorable emoji: they get
+<code>NA</code>, never <code>0</code>. A neutral emoji and no emoji at
+all are different states, and collapsing them biases every model
+downstream. <code><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code> aggregates the same
+numbers by glyph, and <code><a href="../reference/emoji_congruence.html">emoji_congruence()</a></code> is the identical
+engine under the marketing framing.</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scored</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">text_score</span>, scale <span class="op">=</span> <span class="st">"rank"</span>, min_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 7</span></span></span>
+<span><span class="co">#&gt;   emoji name                 n mean_incongruity sd_incongruity n_flips flip_rate</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 😂    face with tears…   160           0.233         0.382         9    0.056<span style="text-decoration: underline;">2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 😭    loudly crying f…    98          -<span style="color: #BB0000;">0.265</span>         0.400         3    0.030<span style="text-decoration: underline;">6</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 😩    weary face          34          -<span style="color: #BB0000;">0.587</span>         0.476         1    0.029<span style="text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 💯    hundred points      20           0.012<span style="text-decoration: underline;">3</span>        0.278         0    0     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 😍    smiling face wi…    20           0.876         0.223         0    0     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> ❤️     red heart           11           0.967         0.129         0    0     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> 💀    skull               10          -<span style="color: #BB0000;">0.620</span>         0.255         0    0     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> 😒    unamused face       10          -<span style="color: #BB0000;">0.892</span>         0.008<span style="text-decoration: underline;">50</span>       0    0     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span> 😡    enraged face        10          -<span style="color: #BB0000;">0.447</span>         0.320         0    0</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="translating-emoji-to-and-from-text">Translating emoji to and from text<a class="anchor" aria-label="anchor" href="#translating-emoji-to-and-from-text"></a>
 </h2>
 <p>Replacing emoji with words is useful for accessibility (screen
@@ -884,7 +1234,7 @@ readers) and as an NLP normalisation step before tokenising.
 <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> does this for a whole column, in either
 Unicode-name or shortcode form; <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> is the
 inverse.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"great \U0001f600 love \u2764\ufe0f"</span><span class="op">)</span></span>
 <span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
@@ -908,7 +1258,7 @@ variation selector) translates just as reliably as any other emoji,
 thanks to the normalised join key. For ad-hoc, vector-level use there
 are also <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code>
 and <code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji_name</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\u2764\ufe0f"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "grinning face" "red heart"</span></span>
 <span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji_shortcode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\u2764\ufe0f"</span><span class="op">)</span><span class="op">)</span></span>
@@ -922,7 +1272,7 @@ and <code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>:</p>
 <p><code><a href="../reference/emoji_search.html">emoji_search()</a></code> looks emoji up by keyword, name or
 shortcode (case-insensitive, literal matching), returning a tidy tibble
 you can filter further or feed into the other verbs:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                            shortcode             group     keyword</span></span>
@@ -955,6 +1305,62 @@ you can filter further or feed into the other verbs:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 17 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="emoji-in-language-model-pipelines">Emoji in language-model pipelines<a class="anchor" aria-label="anchor" href="#emoji-in-language-model-pipelines"></a>
+</h2>
+<p>Emoji are now a preprocessing decision in every LLM pipeline, and the
+decision matters: they inflate token counts several-fold, and models
+disambiguate them poorly. <code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code> gives the
+exact sizes plus a clearly-labelled estimate – pass your real tokeniser
+through <code>tokenizer</code> when the number matters:</p>
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.emoji_n</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>emoji <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">.emoji_n</span><span class="op">)</span>,</span>
+<span>            bytes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">.emoji_bytes</span><span class="op">)</span>,</span>
+<span>            codepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">.emoji_codepoints</span><span class="op">)</span>,</span>
+<span>            est_tokens <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">.emoji_token_estimate</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;   emoji bytes codepoints est_tokens</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   900  <span style="text-decoration: underline;">4</span>437       <span style="text-decoration: underline;">1</span>166       <span style="text-decoration: underline;">2</span>245</span></span></code></pre></div>
+<p><code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code> then applies one <em>named</em> policy
+to the column. The capability is not new – most of it exists across
+<code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> and the extraction verbs – but the named
+argument shows up in a script diff and in a methods section, which is
+the point:</p>
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">demo_llm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"ship it \U0001f680 today"</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"keep"</span>, <span class="st">"strip"</span>, <span class="st">"name"</span>, <span class="st">"shortcode"</span>, <span class="st">"placeholder"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">p</span>, width <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>, <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">demo_llm</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="va">p</span><span class="op">)</span><span class="op">$</span><span class="va">text</span>,</span>
+<span>      <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; keep         ship it 🚀 today </span></span>
+<span><span class="co">#&gt; strip        ship it today </span></span>
+<span><span class="co">#&gt; name         ship it rocket today </span></span>
+<span><span class="co">#&gt; shortcode    ship it :rocket: today </span></span>
+<span><span class="co">#&gt; placeholder  ship it [emoji] today</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="recording-provenance">Recording provenance<a class="anchor" aria-label="anchor" href="#recording-provenance"></a>
+</h2>
+<p>“Emoji” is not a fixed object. Which glyphs exist, what they are
+called and which lexicon scored them all depend on versions, and a
+result is not reproducible without them. <code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code>
+puts the lot in one row you can paste into a methods section:</p>
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Rows: 1</span></span>
+<span><span class="co">#&gt; Columns: 7</span></span>
+<span><span class="co">#&gt; $ tidyEmoji         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.4.0"</span></span>
+<span><span class="co">#&gt; $ emoji_pkg         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0.0"</span></span>
+<span><span class="co">#&gt; $ unicode_emoji     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0"</span></span>
+<span><span class="co">#&gt; $ n_emoji           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 5042</span></span>
+<span><span class="co">#&gt; $ sentiment_lexicon <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "novak2015 (969 emoji)"</span></span>
+<span><span class="co">#&gt; $ emotion_lexicon   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "emotag1200 (150 emoji)"</span></span>
+<span><span class="co">#&gt; $ R                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "4.6.1"</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="bundled-datasets">Bundled datasets<a class="anchor" aria-label="anchor" href="#bundled-datasets"></a>
 </h2>
 <p>tidyEmoji ships four datasets, each documented with its own help
@@ -984,6 +1390,10 @@ scripts in the package’s <code>data-raw/</code> directory.</p>
 Emojis. <em>PLoS ONE</em> 10(12): e0144296. <a href="https://doi.org/10.1371/journal.pone.0144296" class="external-link uri">https://doi.org/10.1371/journal.pone.0144296</a>. The Emoji
 Sentiment Ranking is distributed under the Creative Commons
 Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) licence.</p>
+<p>Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L, Hecht B
+(2016). “Blissfully Happy” or “Ready to Fight”: Varying Interpretations
+of Emoji. <em>ICWSM 2016</em>. The source of the disagreement result
+behind <code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>.</p>
 <p>Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the
 Association between Emojis and Emotions. <em>EMNLP 2020</em>. <a href="https://aclanthology.org/2020.emnlp-main.720/" class="external-link uri">https://aclanthology.org/2020.emnlp-main.720/</a>. The
 EmoTag1200 data is distributed under the MIT licence.</p>

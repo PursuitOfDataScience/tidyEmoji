@@ -28,7 +28,14 @@ data frames that drop straight into a `dplyr`/`ggplot2` workflow:
 | Search | [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md) |
 | Relate | [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md), [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md), [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md) |
 | Measure | [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md), [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md), [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md) |
+| Interpretation risk | [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md), [`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md), [`emoji_flag_ambiguous()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag_ambiguous.md) |
+| Context | [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md), [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md) |
+| Functional type | [`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md), [`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md), [`as_emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.md) |
+| Time | [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md), [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md), [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md), [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md), [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md) |
+| Text-emoji mismatch | [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md), [`emoji_congruence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_congruence.md), [`emoji_incongruity_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity_profile.md) |
 | Model features | [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md) |
+| LLM pipelines | [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md), [`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md) |
+| Provenance | [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md), [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md), [`emoji_unicode_releases()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_releases.md) |
 
 Two design choices are worth highlighting:
 
@@ -459,6 +466,46 @@ Body.](introduction_files/figure-html/unnamed-chunk-16-1.png)
 entry spanning several categories is counted once in each, so these
 counts can exceed the number of emoji-bearing entries.
 
+### `emoji_type()`: faces versus everything else
+
+The consumer-behaviour literature repeatedly contrasts *emotional*
+(face) emoji with *semantic* (object) emoji and finds that the two have
+different effects on engagement.
+[`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md)
+recodes the Unicode group and subgroup into that smaller functional
+vocabulary, and
+[`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md)
+reduces it to a single per-entry share:
+
+``` r
+
+ata_tweets %>%
+  emoji_type(full_text) %>%
+  count(.emoji_type, sort = TRUE) %>%
+  head(5)
+#> # A tibble: 5 × 2
+#>   .emoji_type     n
+#>   <chr>       <int>
+#> 1 NA           1440
+#> 2 face          364
+#> 3 gesture        54
+#> 4 symbol         42
+#> 5 face|symbol    17
+
+ata_tweets %>%
+  emoji_faceness(full_text) %>%
+  summarise(mean_faceness = mean(.emoji_faceness, na.rm = TRUE),
+            all_faces = sum(.emoji_faceness == 1, na.rm = TRUE))
+#> # A tibble: 1 × 2
+#>   mean_faceness all_faces
+#>           <dbl>     <int>
+#> 1         0.694       364
+```
+
+[`as_emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.md)
+is the vector-level version, for typing a glyph you already have in
+hand.
+
 ## Scoring emoji sentiment
 
 ### `emoji_sentiment()`
@@ -512,7 +559,7 @@ ata_sentiment %>%
 
 ![Histogram of the mean emoji sentiment per entry, which is concentrated
 on the positive side of the
-scale.](introduction_files/figure-html/unnamed-chunk-18-1.png)
+scale.](introduction_files/figure-html/unnamed-chunk-19-1.png)
 
 As is typical of social-media text, emoji sentiment leans strongly
 positive.
@@ -541,7 +588,7 @@ ata_tweets %>%
 
 ![Horizontal bar chart of the average emoji sentiment within each
 Unicode
-category.](introduction_files/figure-html/unnamed-chunk-19-1.png)
+category.](introduction_files/figure-html/unnamed-chunk-20-1.png)
 
 ### The sentiment lexicon
 
@@ -580,6 +627,98 @@ emoji_sentiment_lexicon %>%
 #> 6    😞  DISAPPOINTED FACE         532     -0.11842105
 #> 7    😭 LOUDLY CRYING FACE        5526     -0.09337676
 #> 8    😴      SLEEPING FACE         718     -0.08077994
+```
+
+## Interpretation risk: how much do readers disagree?
+
+The most practically important fact about emoji is that people do not
+agree on what they mean. Miller et al. (2016) showed the *same*
+rendering to many readers and found they disagreed about whether it was
+positive, neutral or negative around a quarter of the time.
+
+That disagreement was already inside the package. The Emoji Sentiment
+Ranking keeps the raw `negative`/`neutral`/`positive` annotation counts
+behind its collapsed score, which is an empirical interpretation
+distribution per glyph.
+[`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+reads it out:
+
+``` r
+
+emoji_ambiguity() %>%
+  filter(n_annotations > 500) %>%
+  head(5)
+#> # A tibble: 5 × 8
+#>   emoji key   n_annotations p_neg p_neu p_pos ambiguity  rank
+#>   <chr> <chr>         <int> <dbl> <dbl> <dbl>     <dbl> <int>
+#> 1 😳    1F633           846 0.327 0.327 0.345      1.10     6
+#> 2 💯    1F4AF           637 0.281 0.317 0.402      1.09    16
+#> 3 😴    1F634           718 0.422 0.237 0.341      1.07    43
+#> 4 😢    1F622           749 0.385 0.224 0.391      1.07    47
+#> 5 😱    1F631          1130 0.264 0.282 0.454      1.07    50
+```
+
+Because the measure is a property of the glyph, the corpus-level
+question – “which of *my* emoji are most likely to be misread?” – is one
+call:
+
+``` r
+
+ata_tweets %>%
+  emoji_flag_ambiguous(full_text, top_n = 5)
+#> # A tibble: 5 × 6
+#>   emoji name               n n_annotations ambiguity  rank
+#>   <chr> <chr>          <int>         <int>     <dbl> <int>
+#> 1 😳    flushed face       3           846      1.10     6
+#> 2 💣    bomb               2           131      1.09    10
+#> 3 💯    hundred points    20           637      1.09    16
+#> 4 😯    hushed face        1            62      1.08    20
+#> 5 💔    broken heart       5           328      1.08    22
+```
+
+[`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md)
+is the per-entry version, and the pair `.emoji_n` / `.emoji_n_scored`
+keeps the coverage honest: an entry whose emoji are absent from the
+lexicon is not a low-risk entry, it is an unmeasured one.
+
+``` r
+
+ata_tweets %>%
+  emoji_risk(full_text) %>%
+  filter(.emoji_n > 1) %>%
+  select(.emoji_n, .emoji_n_scored, .emoji_ambiguity_mean,
+         .emoji_n_ambiguous) %>%
+  head(5)
+#> # A tibble: 5 × 4
+#>   .emoji_n .emoji_n_scored .emoji_ambiguity_mean .emoji_n_ambiguous
+#>      <int>           <int>                 <dbl>              <int>
+#> 1        2               2                 1.06                   2
+#> 2        2               2                 1.06                   2
+#> 3        2               2                 0.973                  1
+#> 4        2               2                 1.06                   2
+#> 5        3               2                 0.889                  1
+```
+
+The same counts also put an error bar on the sentiment score itself. A
+glyph annotated eight times should not carry the authority of one
+annotated eight thousand times, and `emoji_sentiment(se = TRUE)` says
+so:
+
+``` r
+
+ata_tweets %>%
+  emoji_sentiment(full_text, se = TRUE) %>%
+  filter(!is.na(.emoji_sentiment)) %>%
+  select(.emoji_n_scored, .emoji_sentiment, .emoji_sentiment_se) %>%
+  head(5)
+#> # A tibble: 5 × 3
+#>   .emoji_n_scored .emoji_sentiment .emoji_sentiment_se
+#>             <int>            <dbl>               <dbl>
+#> 1               1          -0.0934             0.0118 
+#> 2               1          -0.0934             0.0118 
+#> 3               1           0.221              0.00675
+#> 4               1           0.746              0.00587
+#> 5               1          -0.0934             0.0118
 ```
 
 ## Scoring emoji emotions
@@ -743,7 +882,7 @@ emoji_edges %>%
 
 ![Horizontal bar chart of the most frequent emoji pairs, labelled by the
 two glyphs of each
-pair.](introduction_files/figure-html/unnamed-chunk-27-1.png)
+pair.](introduction_files/figure-html/unnamed-chunk-32-1.png)
 
 Set `directed = TRUE` to order each pair by first appearance, or supply
 `doc_id` to pool several rows (a conversation, a user, a day) into one
@@ -781,6 +920,59 @@ All the relational verbs canonicalise glyphs through the same
 codepoint-normalised key as the rest of the package, so qualified and
 unqualified forms of one emoji count as a single node.
 
+## The words around an emoji
+
+Which emoji occurred is only half the story: emoji are polysemous, and
+their reading is decided by the co-text.
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+returns one row per occurrence with a window of the surrounding text.
+Other emoji are blanked out of the window, so a neighbouring glyph never
+leaks into it:
+
+``` r
+
+ata_tweets %>%
+  emoji_context(full_text, window = 4) %>%
+  select(.row_number, .emoji, .emoji_context) %>%
+  head(5)
+#> # A tibble: 5 × 3
+#>   .row_number .emoji .emoji_context                   
+#>         <int> <chr>  <chr>                            
+#> 1           2 😭     stuck here in Brunswick          
+#> 2           4 😭     fever nonstop by Wizkid          
+#> 3          10 🙄     Phone dry asf                    
+#> 4          15 😂     lot of white girls . I thought it
+#> 5          17 ❤️      needs self care days
+```
+
+Aggregated over a corpus, those windows give the emoji-word associations
+that a sense inventory would otherwise have to supply – derived from
+your own data, so they are neither stale nor licence-encumbered:
+
+``` r
+
+ata_tweets %>%
+  emoji_collocations(full_text, window = 4, min_n = 5) %>%
+  head(10)
+#> # A tibble: 10 × 4
+#>    emoji word          n   pmi
+#>    <chr> <chr>     <int> <dbl>
+#>  1 🙌🏾    god           5  4.31
+#>  2 🖕🏻    underdogs     8  3.93
+#>  3 😍    lacking      11  3.49
+#>  4 😍    strapped     11  3.49
+#>  5 😍    yess         11  3.49
+#>  6 🥺    everytime     7  3.44
+#>  7 🥺    greys         7  3.44
+#>  8 🥺    accepted      5  3.44
+#>  9 🥺    clemson       5  3.44
+#> 10 🥺    into          5  3.44
+```
+
+Tokenisation stops at whitespace on purpose. If you need stemming or
+stopword removal, hand the result to `tidytext` rather than expecting
+this verb to grow a tokeniser.
+
 ## Measuring how emoji are used
 
 *Where* emoji sit and *how much* of the text they occupy are studied
@@ -803,7 +995,7 @@ ata_tweets %>%
 
 ![Histogram of the mean relative position of emoji within each entry,
 showing emoji concentrated towards the end of the
-text.](introduction_files/figure-html/unnamed-chunk-29-1.png)
+text.](introduction_files/figure-html/unnamed-chunk-36-1.png)
 
 [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
 normalises the emoji count by text length (per character and per
@@ -826,6 +1018,91 @@ ata_tweets %>%
 #>          <int>      <dbl>
 #> 1            0     0.0405
 ```
+
+## Emoji over time
+
+Almost every substantive emoji study is longitudinal. Our sample has no
+timestamp, so the dates below are *synthetic* – they illustrate the
+mechanics, not a finding:
+
+``` r
+
+dated <- ata_tweets %>%
+  mutate(posted_at = as.Date("2021-01-01") + (seq_len(n()) - 1) %% 540)
+
+dated %>%
+  emoji_trend(full_text, posted_at, by = "quarter", top_n = 3)
+#> # A tibble: 18 × 5
+#>    .period    emoji name                       n   share
+#>    <date>     <chr> <chr>                  <int>   <dbl>
+#>  1 2021-01-01 😂    face with tears of joy    31 0.194  
+#>  2 2021-01-01 😭    loudly crying face        17 0.106  
+#>  3 2021-01-01 😩    weary face                 9 0.0562 
+#>  4 2021-04-01 😂    face with tears of joy    42 0.214  
+#>  5 2021-04-01 😩    weary face                 8 0.0408 
+#>  6 2021-04-01 😭    loudly crying face         8 0.0408 
+#>  7 2021-07-01 😭    loudly crying face        26 0.166  
+#>  8 2021-07-01 😂    face with tears of joy    22 0.140  
+#>  9 2021-07-01 😩    weary face                 3 0.0191 
+#> 10 2021-10-01 😂    face with tears of joy    34 0.221  
+#> 11 2021-10-01 😭    loudly crying face        13 0.0844 
+#> 12 2021-10-01 😩    weary face                 9 0.0584 
+#> 13 2022-01-01 😂    face with tears of joy    18 0.157  
+#> 14 2022-01-01 😭    loudly crying face        12 0.104  
+#> 15 2022-01-01 😩    weary face                 4 0.0348 
+#> 16 2022-04-01 😭    loudly crying face        22 0.186  
+#> 17 2022-04-01 😂    face with tears of joy    13 0.110  
+#> 18 2022-04-01 😩    weary face                 1 0.00847
+```
+
+[`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+asks a different question – not how often an emoji is used but how much
+of the *repertoire* changes from one period to the next:
+
+``` r
+
+dated %>%
+  emoji_turnover(full_text, posted_at, by = "quarter")
+#> # A tibble: 5 × 8
+#>   .period    .period_prev n_types_prev n_types jaccard n_new n_lost n_core
+#>   <date>     <date>              <int>   <int>   <dbl> <int>  <int>  <int>
+#> 1 2021-04-01 2021-01-01             56      79   0.298    48     25     31
+#> 2 2021-07-01 2021-04-01             79      57   0.225    32     54     25
+#> 3 2021-10-01 2021-07-01             57      65   0.232    42     34     23
+#> 4 2022-01-01 2021-10-01             65      56   0.260    31     40     25
+#> 5 2022-04-01 2022-01-01             56      49   0.25     28     35     21
+```
+
+Two of the time verbs need no timestamp at all, because the reference
+table already records the Unicode version that introduced each glyph.
+That makes “how new is this corpus’s emoji vocabulary?” a single call:
+
+``` r
+
+ata_tweets %>%
+  emoji_version_profile(full_text) %>%
+  head(8)
+#> # A tibble: 8 × 7
+#>   version version_num release_date n_types n_tokens share_types share_tokens
+#>   <chr>         <dbl> <date>         <int>    <int>       <dbl>        <dbl>
+#> 1 0.6             0.6 2010-10-11        74      517     0.396        0.574  
+#> 2 0.7             0.7 2014-06-16         1        4     0.00535      0.00444
+#> 3 1.0             1   2015-06-09        44      126     0.235        0.14   
+#> 4 2.0             2   2015-11-12         1        1     0.00535      0.00111
+#> 5 3.0             3   2016-06-21        17       58     0.0909       0.0644 
+#> 6 4.0             4   2016-11-22        17       38     0.0909       0.0422 
+#> 7 5.0             5   2017-06-20         8       19     0.0428       0.0211 
+#> 8 11.0           11   2018-06-05         8       84     0.0428       0.0933
+```
+
+With real timestamps,
+[`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+goes one step further and compares each glyph’s first appearance in the
+corpus with its Unicode release date – see
+[`emoji_unicode_releases()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_releases.md)
+for that lookup, and
+[`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)
+for month-of-year, day-of-week and hour-of-day cycles.
 
 ## Emoji as model features
 
@@ -855,6 +1132,89 @@ ata_tweets %>%
 #>  9           9     0  0        0     0     0
 #> 10          10     0  0        0     0     0
 #> # ℹ 1,990 more rows
+```
+
+## Text-emoji mismatch
+
+Two separate literatures converge on one statistic. NLP sarcasm
+detection uses emoji-text sentiment incongruity as a feature; marketing
+research finds that a mismatch between a review’s words and its emoji
+lowers perceived helpfulness and authenticity. Both want the same
+number.
+
+tidyEmoji deliberately does not score text – that choice belongs in your
+script, where the method is visible. Here is a deliberately crude
+word-list scorer standing in for `tidytext` + AFINN, `sentimentr` or a
+transformer:
+
+``` r
+
+positive <- c("love", "great", "best", "happy", "good", "thanks", "beautiful")
+negative <- c("hate", "worst", "bad", "sad", "awful", "sick", "tired")
+
+scored <- ata_tweets %>%
+  mutate(text_score = vapply(
+    strsplit(tolower(full_text), "[^a-z]+"),
+    function(w) as.numeric(sum(w %in% positive) - sum(w %in% negative)),
+    numeric(1)
+  ))
+```
+
+`scale` has no default: AFINN runs -5 to 5, VADER -1 to 1, and a model’s
+logits on nothing in particular, so you have to say how the two sides
+were made comparable. `"rank"` puts both on percentiles and is the
+safest choice.
+
+``` r
+
+incong <- scored %>%
+  emoji_incongruity(full_text, text_score, scale = "rank")
+
+incong %>%
+  filter(!is.na(.emoji_incongruity)) %>%
+  count(.emoji_polarity_flip)
+#> # A tibble: 2 × 2
+#>   .emoji_polarity_flip     n
+#>   <lgl>                <int>
+#> 1 FALSE                  358
+#> 2 TRUE                    15
+
+incong %>%
+  filter(.emoji_polarity_flip) %>%
+  select(full_text, .emoji_sentiment, text_score) %>%
+  head(3)
+#> # A tibble: 3 × 3
+#>   full_text                                          .emoji_sentiment text_score
+#>   <chr>                                                         <dbl>      <dbl>
+#> 1 zay hilfiger went from juju on that BEAT , to juj…           0.0245         -1
+#> 2 Worst story 📖 I heard. I guy I met bought 200 sha…           0.176          -1
+#> 3 Ew don’t you hate when a hoe watch you and you do…           0.221          -1
+```
+
+Note what happens to entries with no scorable emoji: they get `NA`,
+never `0`. A neutral emoji and no emoji at all are different states, and
+collapsing them biases every model downstream.
+[`emoji_incongruity_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity_profile.md)
+aggregates the same numbers by glyph, and
+[`emoji_congruence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_congruence.md)
+is the identical engine under the marketing framing.
+
+``` r
+
+scored %>%
+  emoji_incongruity_profile(full_text, text_score, scale = "rank", min_n = 10)
+#> # A tibble: 9 × 7
+#>   emoji name                 n mean_incongruity sd_incongruity n_flips flip_rate
+#>   <chr> <chr>            <int>            <dbl>          <dbl>   <int>     <dbl>
+#> 1 😂    face with tears…   160           0.233         0.382         9    0.0562
+#> 2 😭    loudly crying f…    98          -0.265         0.400         3    0.0306
+#> 3 😩    weary face          34          -0.587         0.476         1    0.0294
+#> 4 💯    hundred points      20           0.0123        0.278         0    0     
+#> 5 😍    smiling face wi…    20           0.876         0.223         0    0     
+#> 6 ❤️     red heart           11           0.967         0.129         0    0     
+#> 7 💀    skull               10          -0.620         0.255         0    0     
+#> 8 😒    unamused face       10          -0.892         0.00850       0    0     
+#> 9 😡    enraged face        10          -0.447         0.320         0    0
 ```
 
 ## Translating emoji to and from text
@@ -947,6 +1307,73 @@ emoji_search("celebration")
 #> # ℹ 17 more rows
 ```
 
+## Emoji in language-model pipelines
+
+Emoji are now a preprocessing decision in every LLM pipeline, and the
+decision matters: they inflate token counts several-fold, and models
+disambiguate them poorly.
+[`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
+gives the exact sizes plus a clearly-labelled estimate – pass your real
+tokeniser through `tokenizer` when the number matters:
+
+``` r
+
+ata_tweets %>%
+  emoji_token_cost(full_text) %>%
+  filter(.emoji_n > 0) %>%
+  summarise(emoji = sum(.emoji_n),
+            bytes = sum(.emoji_bytes),
+            codepoints = sum(.emoji_codepoints),
+            est_tokens = sum(.emoji_token_estimate))
+#> # A tibble: 1 × 4
+#>   emoji bytes codepoints est_tokens
+#>   <int> <int>      <int>      <int>
+#> 1   900  4437       1166       2245
+```
+
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+then applies one *named* policy to the column. The capability is not new
+– most of it exists across
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+and the extraction verbs – but the named argument shows up in a script
+diff and in a methods section, which is the point:
+
+``` r
+
+demo_llm <- data.frame(text = "ship it \U0001f680 today")
+for (p in c("keep", "strip", "name", "shortcode", "placeholder")) {
+  cat(format(p, width = 12), emoji_sanitize(demo_llm, text, policy = p)$text,
+      "\n")
+}
+#> keep         ship it 🚀 today 
+#> strip        ship it today 
+#> name         ship it rocket today 
+#> shortcode    ship it :rocket: today 
+#> placeholder  ship it [emoji] today
+```
+
+## Recording provenance
+
+“Emoji” is not a fixed object. Which glyphs exist, what they are called
+and which lexicon scored them all depend on versions, and a result is
+not reproducible without them.
+[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+puts the lot in one row you can paste into a methods section:
+
+``` r
+
+emoji_provenance() %>% glimpse()
+#> Rows: 1
+#> Columns: 7
+#> $ tidyEmoji         <chr> "0.4.0"
+#> $ emoji_pkg         <chr> "16.0.0"
+#> $ unicode_emoji     <chr> "16.0"
+#> $ n_emoji           <int> 5042
+#> $ sentiment_lexicon <chr> "novak2015 (969 emoji)"
+#> $ emotion_lexicon   <chr> "emotag1200 (150 emoji)"
+#> $ R                 <chr> "4.6.1"
+```
+
 ## Bundled datasets
 
 tidyEmoji ships four datasets, each documented with its own help page:
@@ -972,6 +1399,11 @@ Emojis. *PLoS ONE* 10(12): e0144296.
 <https://doi.org/10.1371/journal.pone.0144296>. The Emoji Sentiment
 Ranking is distributed under the Creative Commons Attribution-ShareAlike
 4.0 International (CC BY-SA 4.0) licence.
+
+Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L, Hecht B
+(2016). “Blissfully Happy” or “Ready to Fight”: Varying Interpretations
+of Emoji. *ICWSM 2016*. The source of the disagreement result behind
+[`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md).
 
 Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the Association
 between Emojis and Emotions. *EMNLP 2020*.

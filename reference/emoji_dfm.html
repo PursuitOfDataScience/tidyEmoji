@@ -15,7 +15,7 @@ bound to outcome columns for tidymodels-style workflows."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ bound to outcome columns for tidymodels-style workflows."><meta property="og:ima
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Document-by-emoji feature matrix</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/R/emoji-dfm.R" class="external-link"><code>R/emoji-dfm.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/R/emoji-dfm.R" class="external-link"><code>R/emoji-dfm.R</code></a></small>
       <div class="d-none name"><code>emoji_dfm.Rd</code></div>
     </div>
 
@@ -88,10 +88,11 @@ corpus yields just the document column.</p>
     <p>By default every row of <code>data</code> is a document and the first output column,
 <code>.row_number</code>, is its position in <code>data</code> (matching
 <code><a href="emoji_extract_unnest.html">emoji_extract_unnest()</a></code>). Give <code>doc_id</code> to aggregate rows sharing an id
-into one document; the id column keeps its name. Emoji columns are named by
-the glyph itself, canonicalised through the package's codepoint key (so
-qualified and unqualified forms count as one feature), and ordered by
-descending total count (ties broken by glyph).</p>
+into one document; the id column keeps its name, and documents appear in the
+order their id is first seen in <code>data</code>, never in the session's collation
+order. Emoji columns are named by the glyph itself, canonicalised through
+the package's codepoint key (so qualified and unqualified forms count as one
+feature), and ordered by descending total count (ties broken by glyph).</p>
 <p>For <code>weighting = "tfidf"</code>, the cell for emoji <em>e</em> in document <em>d</em> is
 <code>count(d, e) * log(N / df(e))</code>, where <code>N</code> is the number of documents and
 <code>df(e)</code> the number of documents containing <em>e</em>. An emoji that appears in

@@ -15,7 +15,7 @@ so emoji carrying the U+FE0F variation selector still resolve."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ so emoji carrying the U+FE0F variation selector still resolve."><meta property="
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Replace emoji in a text column with words (demojize)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.3.0/R/emoji-translate.R" class="external-link"><code>R/emoji-translate.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/R/emoji-translate.R" class="external-link"><code>R/emoji-translate.R</code></a></small>
       <div class="d-none name"><code>emoji_to_text.Rd</code></div>
     </div>
 
@@ -76,7 +76,8 @@ so emoji carrying the <code>U+FE0F</code> variation selector still resolve.</p>
 <dt id="arg-wrap">wrap<a class="anchor" aria-label="anchor" href="#arg-wrap"></a></dt>
 <dd><p>When <code>format = "shortcode"</code>, the wrapper applied to each
 shortcode, written as a template with <code>{x}</code> standing for the shortcode.
-Default <code>":{x}:"</code>. Ignored for <code>format = "name"</code>.</p></dd>
+Default <code>":{x}:"</code>. Must contain <code>{x}</code>, or every emoji would be replaced by
+the same literal string. Ignored for <code>format = "name"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
