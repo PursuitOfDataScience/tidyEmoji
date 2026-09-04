@@ -71,12 +71,35 @@ emoji_lexicons <- function() {
 #' emoji_score(data.frame(text = "great \U0001f600"), text, lexicon = "mine")
 #' @export
 register_emoji_lexicon <- function(name, tbl, by = "emoji") {
-  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
+  if (!is.character(name) || length(name) != 1L || is.na(name) ||
+      !nzchar(name)) {
     stop("`name` must be a single non-empty string.", call. = FALSE)
+  }
+  # A bundled name resolves to the bundled table before the registry is
+  # consulted, so registering under one succeeded and then did nothing.
+  if (name %in% .emoji_reserved_lexicons()) {
+    stop(sprintf(
+      paste0("`%s` is a name one of the bundled lexicons answers to, so a ",
+             "lexicon registered under it could never be reached. Reserved: ",
+             "%s. Pick another name."),
+      name, paste(sprintf("`%s`", .emoji_reserved_lexicons()), collapse = ", ")
+    ), call. = FALSE)
   }
   if (!is.data.frame(tbl)) stop("`tbl` must be a data frame.", call. = FALSE)
   if (!by %in% names(tbl)) {
     stop(sprintf("`tbl` has no column `%s`.", by), call. = FALSE)
+  }
+  # Resolve the score column now rather than at first use: a lexicon with no
+  # usable score column registered happily and only failed later, from inside
+  # emoji_score(), where the message named `tbl` -- an argument of the call
+  # that had long since returned.
+  if (!length(intersect(c("sentiment_score", "score", emoji_emotion_dims()),
+                        names(tbl)))) {
+    stop(sprintf(
+      paste0("`tbl` has no score column. Supply one named `score` or ",
+             "`sentiment_score`, or emotion columns (%s)."),
+      paste(emoji_emotion_dims(), collapse = ", ")
+    ), call. = FALSE)
   }
   tbl <- as.data.frame(tbl)
   tbl$key <- emoji_key(tbl[[by]])
@@ -141,7 +164,7 @@ emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
     }
   }
 
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
 
@@ -157,7 +180,7 @@ emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
     sum(!is.na(s))
   }, integer(1))
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_score <- means
   out$.emoji_n_scored <- n_scored
   out$.emoji_n <- as.integer(lengths(lst))

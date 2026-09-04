@@ -5,12 +5,12 @@
 # re-joined, so they count as one emoji everywhere.
 # ---------------------------------------------------------------------------
 
-exhaling  <- "\U0001F62E‍\U0001F4A8"                    # face exhaling
-spiral    <- "\U0001F635‍\U0001F4AB"                    # face with spiral eyes
-heartfire <- "❤️‍\U0001F525"                  # heart on fire
-holding   <- "\U0001F9D1‍\U0001F91D‍\U0001F9D1"    # people holding hands
-family    <- "\U0001F468‍\U0001F469‍\U0001F467‍\U0001F466"
-blondwoman <- "\U0001F471‍♀️"                 # woman: blond hair
+exhaling  <- "\U0001F62E\u200D\U0001F4A8"                    # face exhaling
+spiral    <- "\U0001F635\u200D\U0001F4AB"                    # face with spiral eyes
+heartfire <- "\u2764\uFE0F\u200D\U0001F525"                  # heart on fire
+holding   <- "\U0001F9D1\u200D\U0001F91D\u200D\U0001F9D1"    # people holding hands
+family    <- "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"
+blondwoman <- "\U0001F471\u200D\u2640\uFE0F"                 # woman: blond hair
 
 test_that("ZWJ sequences count as a single emoji", {
   df <- data.frame(text = c(exhaling, spiral, heartfire, holding, family,

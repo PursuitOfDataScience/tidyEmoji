@@ -7,9 +7,17 @@
 emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Lexicon to use. Either a string naming a bundled lexicon
 (\code{"emotag1200"}, the default), the name of a registered lexicon (see
@@ -24,14 +32,27 @@ Default \code{FALSE} adds eight \verb{.emoji_<emotion>} columns plus \code{.emoj
 \code{.emoji_n_scored}.}
 }
 \value{
-\code{data}, as a tibble, with emotion columns added. Rows without emoji,
-or whose emoji are absent from the lexicon, receive \code{NA} scores.
+\code{data}, as a tibble. With \code{long = FALSE} (the default), eight
+emotion columns -- \code{.emoji_anger}, \code{.emoji_anticipation},
+\code{.emoji_disgust}, \code{.emoji_fear}, \code{.emoji_joy}, \code{.emoji_sadness},
+\code{.emoji_surprise}, \code{.emoji_trust} -- plus \code{.emoji_n} and
+\code{.emoji_n_scored}, one row per input row. With \code{long = TRUE}, one row per
+input row \emph{per emotion}, carrying \code{.emoji_emotion} and \code{.emoji_score}
+instead of the eight columns. Rows without emoji, or whose emoji are
+absent from the lexicon, receive \code{NA} scores.
 }
 \description{
 \code{emoji_emotion()} scores each row's emoji across the eight Plutchik emotions
 (anger, anticipation, disgust, fear, joy, sadness, surprise, trust) using the
 bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020). Scores each range from 0 to
 1 and are averaged over the emoji in the row that appear in the lexicon.
+}
+\details{
+\strong{The lexicon is 150 glyphs, about 4\% of the distinct emoji tidyEmoji can
+detect}, so a row of post-2018 emoji will score \code{NA} and still be a row
+full of emoji. Read \code{.emoji_n_scored} alongside \code{.emoji_n} before concluding
+a corpus carries no emotion; see \link{emoji_emotion_lexicon} for the figure and
+its denominator.
 }
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))

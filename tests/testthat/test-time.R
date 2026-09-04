@@ -53,7 +53,7 @@ test_that("emoji_trend honours by, top_n and measure", {
   weekly <- emoji_trend(df, text, when, by = "week")
   expect_equal(as.integer(format(unique(weekly$.period), "%u")),
                rep(1L, length(unique(weekly$.period))))   # Mondays
-  expect_error(emoji_trend(df, text, when, by = "fortnight"))
+  expect_error(emoji_trend(df, text, when, by = "fortnight"), "should be one of")
   expect_error(emoji_trend(df, text, when, top_n = -1), "non-negative")
 })
 

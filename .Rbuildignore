@@ -11,7 +11,9 @@
 ^pkgdown$
 ^data-raw$
 ^next_release\.md$
+^features\.md$
 ^\.git$
 ^\.gitignore$
+^\.claude$
 ^tidyEmoji\.Rcheck$
 ^tidyEmoji_.*\.tar\.gz$

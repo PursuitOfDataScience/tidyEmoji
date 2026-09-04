@@ -50,8 +50,8 @@ test_that("emoji_pairs supports doc_id grouping", {
 test_that("emoji_pairs canonicalises qualified/unqualified twins to one node", {
   # The extractor returns the bare victory hand (U+270C) unqualified but the
   # qualified form (U+270C U+FE0F) as-is; both must become one node.
-  qualified   <- "✌️"
-  unqualified <- "✌"
+  qualified   <- "\u270C\uFE0F"
+  unqualified <- "\u270C"
   df <- data.frame(text = c(paste0(qualified, laugh),
                             paste0(unqualified, laugh)))
   out <- emoji_pairs(df, text)

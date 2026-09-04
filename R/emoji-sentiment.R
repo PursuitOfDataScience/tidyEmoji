@@ -5,6 +5,12 @@
 #' from -1 (negative) through 0 (neutral) to +1 (positive). Rows that contain no
 #' emoji, or whose emoji are absent from the lexicon, receive `NA`.
 #'
+#' **The lexicon covers about 19% of the distinct emoji tidyEmoji can detect**,
+#' and nothing added to Unicode after 2015, so `NA` is a common and meaningful
+#' answer. `.emoji_n_scored` reports the shortfall per row: `0` means the row
+#' had emoji that the lexicon could not score, `NA` that it had none at all.
+#' See [emoji_sentiment_lexicon] for the figure and its denominator.
+#'
 #' @details
 #' Detection is grapheme-aware. Some lexicon entries are stored as unqualified,
 #' text-presentation code points (notably the bare heart, \code{U+2764},
@@ -71,7 +77,7 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     }
   }
 
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
 
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
@@ -88,7 +94,7 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     sum(!is.na(s))
   }, integer(1))
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(lengths(lst))
   out$.emoji_n_scored <- n_scored
   out$.emoji_sentiment <- means

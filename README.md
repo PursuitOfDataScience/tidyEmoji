@@ -218,7 +218,7 @@ emoji-word table — corpus-derived senses, with no licence baggage and
 nothing stale. On the time axis, `emoji_trend()` and `emoji_turnover()`
 follow usage and vocabulary churn, while `emoji_version_profile()` and
 `emoji_adoption_lag()` use the Unicode version of each glyph to ask how
-new a corpus's repertoire is.
+new a corpus’s repertoire is.
 
 ``` r
 reviews %>% emoji_context(text, window = 5)

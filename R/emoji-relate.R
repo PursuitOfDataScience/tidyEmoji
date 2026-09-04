@@ -7,13 +7,13 @@
 # doc_id value are concatenated (in row order) into one document. Rows whose
 # doc_id is NA form their own single document.
 .emoji_doc_glyphs <- function(data, text, doc_id) {
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   lst <- lapply(lst, emoji_canonical)
   q <- rlang::enquo(doc_id)
   if (rlang::quo_is_null(q)) {
     return(lst)
   }
-  ids <- dplyr::pull(data, !!q)
+  ids <- .emoji_col(data, !!q, arg = "doc_id")
   split_idx <- .emoji_id_split(ids)
   lapply(split_idx, function(i) unlist(lst[i], use.names = FALSE))
 }
@@ -58,11 +58,9 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
                         sort = TRUE) {
   .emoji_check_flag(directed, "directed")
   .emoji_check_flag(sort, "sort")
-  if (dplyr::is_grouped_df(data)) {
-    lifecycle::deprecate_warn(
-      "0.3.0", "emoji_pairs(data = \"must be ungrouped data\")",
-      details = "emoji_pairs() currently ignores groups. Use doc_id to define documents."
-    )
+  if (.emoji_warn_grouped(
+        data, "emoji_pairs", "0.3.0",
+        details = "emoji_pairs() ignores groups. Use doc_id to define documents.")) {
     data <- dplyr::ungroup(data)
   }
   docs <- .emoji_doc_glyphs(data, {{ text }}, {{ doc_id }})
@@ -114,13 +112,19 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
                                sort = TRUE) {
   .emoji_check_flag(diagonal, "diagonal")
+  # Warn under this verb's own name, then ungroup: delegating to emoji_pairs()
+  # while still grouped named emoji_pairs() in the warning -- a function the
+  # user never called -- and lifecycle's per-topic deduplication then silenced
+  # the warning entirely for anyone who had already called emoji_pairs().
+  if (.emoji_warn_grouped(
+        data, "emoji_cooccurrence", "0.4.0",
+        details = "emoji_cooccurrence() ignores groups. Use doc_id to define documents.")) {
+    data <- dplyr::ungroup(data)
+  }
   out <- emoji_pairs(data, {{ text }}, doc_id = {{ doc_id }},
                      directed = FALSE, sort = sort)
   if (isTRUE(diagonal)) {
-    docs <- .emoji_doc_glyphs(
-      if (dplyr::is_grouped_df(data)) dplyr::ungroup(data) else data,
-      {{ text }}, {{ doc_id }}
-    )
+    docs <- .emoji_doc_glyphs(data, {{ text }}, {{ doc_id }})
     present <- unlist(lapply(docs, unique), use.names = FALSE)
     if (length(present)) {
       diag_tbl <- tibble::tibble(item1 = present, item2 = present) %>%
@@ -161,11 +165,12 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
 #' emoji_ngrams(df, text, n = 3)
 #' @export
 emoji_ngrams <- function(data, text, n = 2, sep = " ") {
-  if (!is.numeric(n) || length(n) != 1L || is.na(n) || !is.finite(n) || n < 1) {
-    stop("`n` must be a single finite integer >= 1.", call. = FALSE)
+  if (!.emoji_is_count(n, min = 1)) {
+    stop("`n` must be a single finite whole number >= 1.", call. = FALSE)
   }
+  .emoji_check_string(sep, "sep")
   n <- as.integer(n)
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   lst <- lapply(lst, emoji_canonical)
 
   per_row <- lapply(seq_along(lst), function(i) {

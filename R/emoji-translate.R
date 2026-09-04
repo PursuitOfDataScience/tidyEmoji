@@ -35,7 +35,7 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
     stop("`wrap` must be a single string containing `{x}`, the placeholder ",
          "for the shortcode.", call. = FALSE)
   }
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
 
@@ -64,20 +64,10 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   }, character(1))
   rewritten[was_na] <- NA_character_
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   col_name <- .emoji_col_name(data, {{ text }})
   out[[col_name]] <- rewritten
-  out
-}
-
-# Internal: resolve the (single) column name selected by a tidy selection like
-# `{{ text }}`, without depending on rlang/tidyselect directly.
-.emoji_col_name <- function(data, col) {
-  nm <- names(dplyr::select(data, {{ col }}))
-  if (length(nm) != 1L) {
-    stop("`text` must select exactly one column.", call. = FALSE)
-  }
-  nm
+  .emoji_regroup(out, col_name)
 }
 
 # Internal: replace each emoji glyph with its replacement, in reading order,
@@ -134,7 +124,7 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #'               text)
 #' @export
 text_to_emoji <- function(data, text) {
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
   name_map <- emoji::emoji_name   # named vector: name -> glyph
@@ -150,10 +140,10 @@ text_to_emoji <- function(data, text) {
     }, character(1))
   })
   v[was_na] <- NA_character_
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   col_name <- .emoji_col_name(data, {{ text }})
   out[[col_name]] <- v
-  out
+  .emoji_regroup(out, col_name)
 }
 
 

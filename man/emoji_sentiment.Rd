@@ -7,9 +7,17 @@
 emoji_sentiment(data, text, lexicon = "novak2015", se = FALSE)
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Lexicon to use. The default, \code{"novak2015"}, uses the bundled
 \link{emoji_sentiment_lexicon}. A registered lexicon (see
@@ -33,6 +41,12 @@ from -1 (negative) through 0 (neutral) to +1 (positive). Rows that contain no
 emoji, or whose emoji are absent from the lexicon, receive \code{NA}.
 }
 \details{
+\strong{The lexicon covers about 19\% of the distinct emoji tidyEmoji can detect},
+and nothing added to Unicode after 2015, so \code{NA} is a common and meaningful
+answer. \code{.emoji_n_scored} reports the shortfall per row: \code{0} means the row
+had emoji that the lexicon could not score, \code{NA} that it had none at all.
+See \link{emoji_sentiment_lexicon} for the figure and its denominator.
+
 Detection is grapheme-aware. Some lexicon entries are stored as unqualified,
 text-presentation code points (notably the bare heart, \code{U+2764},
 without the \code{U+FE0F} variation selector); those are not treated as

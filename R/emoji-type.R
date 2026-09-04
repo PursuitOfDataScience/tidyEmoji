@@ -87,7 +87,7 @@ as_emoji_type <- function(x) {
 #' emoji_type(df, text)
 #' @export
 emoji_type <- function(data, text) {
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   type_lookup <- stats::setNames(as_emoji_type(all_glyphs), all_glyphs)
   types <- vapply(lst, function(g) {
@@ -99,7 +99,7 @@ emoji_type <- function(data, text) {
     paste(tt, collapse = "|")
   }, character(1))
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_type <- types
   out
 }
@@ -123,7 +123,7 @@ emoji_type <- function(data, text) {
 #' emoji_faceness(df, text)
 #' @export
 emoji_faceness <- function(data, text) {
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   type_lookup <- stats::setNames(as_emoji_type(all_glyphs), all_glyphs)
   typed <- lapply(lst, function(g) {
@@ -135,10 +135,19 @@ emoji_faceness <- function(data, text) {
   n_typed <- as.integer(lengths(typed))
   n_face <- vapply(typed, function(tt) sum(tt == "face"), integer(1))
 
-  out <- tibble::as_tibble(data)
+  # typed allocate-then-fill: ifelse() returned logical(0) for a zero-row input
+  typed_out <- rep(NA_integer_, length(has_emoji))
+  face_out <- rep(NA_integer_, length(has_emoji))
+  faceness <- rep(NA_real_, length(has_emoji))
+  typed_out[has_emoji] <- n_typed[has_emoji]
+  face_out[has_emoji] <- n_face[has_emoji]
+  scoreable <- n_typed > 0L
+  faceness[scoreable] <- n_face[scoreable] / n_typed[scoreable]
+
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(lengths(lst))
-  out$.emoji_n_typed <- ifelse(has_emoji, n_typed, NA_integer_)
-  out$.emoji_n_face <- ifelse(has_emoji, n_face, NA_integer_)
-  out$.emoji_faceness <- ifelse(n_typed > 0L, n_face / n_typed, NA_real_)
+  out$.emoji_n_typed <- typed_out
+  out$.emoji_n_face <- face_out
+  out$.emoji_faceness <- faceness
   out
 }

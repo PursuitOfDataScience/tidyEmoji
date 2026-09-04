@@ -37,7 +37,7 @@ test_that("each measure is a different, in-range statistic", {
   expect_equal(neu$ambiguity, neu$p_neu)
   ci <- emoji_ambiguity(measure = "ci_width")
   expect_true(all(ci$ambiguity >= 0, na.rm = TRUE))
-  expect_error(emoji_ambiguity(measure = "nonsense"))
+  expect_error(emoji_ambiguity(measure = "nonsense"), "should be one of")
 })
 
 test_that("emoji_ambiguity(x) keeps the caller's glyphs and order", {
@@ -53,7 +53,7 @@ test_that("emoji_ambiguity(x) keeps the caller's glyphs and order", {
 
 test_that("a qualified glyph resolves to its unqualified lexicon entry", {
   # the lexicon stores the bare heart U+2764; text carries U+2764 U+FE0F
-  out <- emoji_ambiguity("❤️")
+  out <- emoji_ambiguity("\u2764\uFE0F")
   expect_false(is.na(out$ambiguity))
 })
 

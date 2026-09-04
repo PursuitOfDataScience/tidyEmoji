@@ -13,9 +13,17 @@ emoji_sanitize(
 )
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{policy}{One of \code{"keep"} (default), \code{"strip"}, \code{"name"},
 \code{"shortcode"} or \code{"placeholder"}.}
@@ -41,7 +49,6 @@ forgotten line of \code{gsub()}.
 }
 \details{
 The policies:
-
 \itemize{
 \item \code{"keep"} returns the text untouched. It is the honest baseline for an A/B
 comparison, and it means the policy argument can stay in the script even
@@ -62,6 +69,43 @@ face glued to the end of a word yields \code{"wordgrinning face"}. If your
 tokeniser needs whitespace around them, use \code{"placeholder"} with a padded
 placeholder such as \code{" [emoji] "}.
 }
+\section{Which policies can be undone}{
+
+The five policies are not five parallel options: they are a ladder of
+information loss, and how far down it you step is invisible until you try to
+put the emoji back after the model call.\tabular{llll}{
+   \code{policy} \tab \code{"great <U+1F600> work"} becomes \tab Restorable with \code{\link[=text_to_emoji]{text_to_emoji()}}? \tab What is lost \cr
+   \code{"keep"} \tab \verb{great <U+1F600> work} \tab yes \tab nothing \cr
+   \code{"shortcode"} \tab \code{great :grinning: work} \tab \strong{yes} \tab nothing \cr
+   \code{"name"} \tab \verb{great grinning face work} \tab no \tab the delimiters; the name is now ordinary words \cr
+   \code{"placeholder"} \tab \verb{great [emoji] work} \tab no \tab \emph{which} emoji -- the position survives \cr
+   \code{"strip"} \tab \verb{great work} \tab no \tab that there was an emoji at all \cr
+}
+
+
+So if the pipeline has to restore emoji downstream, \code{"shortcode"} is the
+only policy that permits it, and it holds up on the awkward cases:
+skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
+Measured against the whole reference table of \pkg{emoji} 16.0.0: for all
+3790 emoji in their canonical (fully qualified) spelling -- the spelling a
+keyboard emits and text normally holds -- \strong{the round trip returns the
+original text byte for byte, 100\% of the time}.
+
+Unicode also lists shorter spellings of the same emoji, with the \code{U+FE0F}
+presentation selectors omitted. Feed one of those in and the round trip
+returns the \emph{canonical} spelling instead: \verb{U+270C} comes back as
+\verb{U+270C U+FE0F}. Across all 4853 catalogued spellings that is 79.5\%
+byte-identical, and the remaining 20.5\% differ by \code{U+FE0F} alone -- never
+by more. The emoji is always the same emoji, and every tidyEmoji lookup
+treats the two spellings as one, so this matters only if you are diffing raw
+bytes on text that had its selectors stripped upstream.
+
+\code{"placeholder"} keeps \emph{where} but not \emph{which}, which is enough to use "an
+emoji was here" as a model feature and not enough to reconstruct the text.
+\code{"name"} is the accessibility answer rather than the reversible one -- it
+is what a screen reader announces.
+}
+
 \examples{
 df <- data.frame(text = c("ship it \U0001f680", "no emoji"))
 emoji_sanitize(df, text, policy = "strip")

@@ -66,9 +66,9 @@
     stop("`threshold` must be a single number.", call. = FALSE)
   }
 
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
-  ts <- dplyr::pull(data, {{ text_score }})
+  ts <- .emoji_col(data, {{ text_score }}, arg = "text_score")
   if (!is.numeric(ts)) {
     stop("`text_score` must be a numeric column of text sentiment scores. ",
          "tidyEmoji does not score text: produce it with tidytext, ",
@@ -100,7 +100,7 @@
     sign(es) != sign(ts)
   flip[is.na(es) | is.na(ts)] <- NA
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(lengths(lst))
   out$.emoji_n_scored <- n_scored
   out$.emoji_sentiment <- es
@@ -153,6 +153,14 @@
 #' emoji sit mid-sentence then has nothing eligible to score, so it gets `NA`
 #' and `.emoji_n_scored = NA`, while `.emoji_n` still counts every emoji in the
 #' row.
+#'
+#' "Ends the text" is literal: only whitespace may follow the last glyph, so
+#' `"great \U0001f602"` has a final run and `"great \U0001f602."` does not --
+#' a trailing full stop, bracket or quote mark disqualifies it. The run itself
+#' extends back over any glyphs separated from each other by whitespace alone,
+#' so `"great \U0001f602 \U0001f60d"` contributes both. If your corpus
+#' punctuates after emoji, strip trailing punctuation before scoring, or use
+#' `where = "all"`.
 #'
 #' @inheritParams emoji_summary
 #' @param text_score Unquoted numeric column holding the text's own sentiment.
@@ -271,13 +279,14 @@ emoji_incongruity_profile <- function(data, text, text_score,
          "cross-method choice), \"zscore\", or \"none\" if your text score is ",
          "already on the -1 to 1 emoji scale.", call. = FALSE)
   }
-  if (!is.numeric(min_n) || length(min_n) != 1L || is.na(min_n) || min_n < 0) {
-    stop("`min_n` must be a single non-negative number.", call. = FALSE)
+  if (!.emoji_is_count(min_n, finite = FALSE)) {
+    stop("`min_n` must be a single non-negative whole number.", call. = FALSE)
   }
+  .emoji_warn_grouped(data, "emoji_incongruity_profile", "0.4.0")
   scored <- .emoji_incongruity_impl(data, {{ text }}, {{ text_score }},
                                     method = method, scale = scale,
                                     where = where, threshold = threshold)
-  lst <- lapply(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                 emoji_canonical)
   n_per_row <- lengths(lst)
   glyphs <- unlist(lst, use.names = FALSE)

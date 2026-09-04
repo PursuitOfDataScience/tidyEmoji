@@ -40,15 +40,13 @@
 emoji_dfm <- function(data, text, doc_id = NULL,
                       weighting = c("count", "binary", "tfidf")) {
   weighting <- match.arg(weighting)
-  if (dplyr::is_grouped_df(data)) {
-    lifecycle::deprecate_warn(
-      "0.3.0", "emoji_dfm(data = \"must be ungrouped data\")",
-      details = "emoji_dfm() currently ignores groups. Use doc_id to define documents."
-    )
+  if (.emoji_warn_grouped(
+        data, "emoji_dfm", "0.3.0",
+        details = "emoji_dfm() ignores groups. Use doc_id to define documents.")) {
     data <- dplyr::ungroup(data)
   }
 
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   lst <- lapply(lst, emoji_canonical)
 
   q <- rlang::enquo(doc_id)
@@ -57,8 +55,8 @@ emoji_dfm <- function(data, text, doc_id = NULL,
     doc_vals <- seq_along(lst)
     docs <- lst
   } else {
-    ids <- dplyr::pull(data, !!q)
-    doc_col <- names(dplyr::select(data, !!q))
+    doc_col <- .emoji_col_name(data, !!q, arg = "doc_id")
+    ids <- data[[doc_col]]
     # documents come out in first-appearance order of the id: factor() would
     # sort the levels with the session's collation, making the row order of the
     # result locale-dependent
@@ -74,6 +72,18 @@ emoji_dfm <- function(data, text, doc_id = NULL,
   names(out) <- doc_col
   if (!length(glyphs)) {
     return(out)
+  }
+  # Every emoji becomes a column named with the glyph itself, so a doc_id
+  # column that happens to be named with one of those glyphs would be
+  # overwritten by the count column and the document identifiers would vanish
+  # silently. There is no room for both names, so say so.
+  if (doc_col %in% glyphs) {
+    stop(sprintf(
+      paste0("`doc_id` names the column `%s`, which is also an emoji in the ",
+             "corpus, and the result needs that name for the emoji's count ",
+             "column. Rename the column."),
+      doc_col
+    ), call. = FALSE)
   }
 
   counts <- vapply(docs, function(g) {

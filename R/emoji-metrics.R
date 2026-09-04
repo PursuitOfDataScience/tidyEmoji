@@ -11,16 +11,28 @@
 #' position, and it is a studied signal: emoji cluster near the end of
 #' messages.
 #'
-#' The relative position of an occurrence starting at character `s` in a text
-#' of `L` characters is `(s - 1) / (L - 1)` (taken as 0 when `L <= 1`).
-#' Positions are counted in characters (code points), the same unit as
-#' [substr()].
+#' @details
+#' `.emoji_first` and `.emoji_last` are code-point offsets, the unit
+#' [substr()] uses, so they can be fed straight back to it.
+#'
+#' `.emoji_rel_position` is *not* measured in code points. Each emoji counts as
+#' one position however many code points it is built from, so an emoji that is
+#' the last thing in the text scores 1 whether it is a single-code-point
+#' smiley, a two-code-point flag or a seven-code-point family. Counting code
+#' points instead put a sentence-final family emoji a third of the way through
+#' its message. Everything that is not an emoji still counts one position per
+#' code point, so a combining accent elsewhere in the text counts twice; that
+#' affects the denominator only, and only for text carrying such marks.
+#'
+#' Positions are in *logical* (storage) order, not visual order. In a
+#' right-to-left script an emoji that is logically last renders at the reader's
+#' left, so "final" here means final in the string, not final on the screen.
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with added columns `.emoji_n`, `.emoji_first`
-#'   and `.emoji_last` (character positions where the first/last emoji start)
-#'   and `.emoji_rel_position` (mean relative position in `[0, 1]`). Rows
-#'   without emoji get `NA` positions.
+#'   and `.emoji_last` (code-point offsets where the first/last emoji start)
+#'   and `.emoji_rel_position` (mean relative position in `[0, 1]`, counting
+#'   each emoji as one position). Rows without emoji get `NA` positions.
 #' @seealso [emoji_density()] and [emoji_ratio()] for intensity metrics.
 #' @examples
 #' df <- data.frame(text = c("\U0001f600 leading", "trailing \U0001f600",
@@ -28,7 +40,7 @@
 #' emoji_position(df, text)
 #' @export
 emoji_position <- function(data, text) {
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   locs <- .emoji_locations(v)
   n <- vapply(locs, nrow, integer(1))
   len <- nchar(v)
@@ -40,15 +52,24 @@ emoji_position <- function(data, text) {
   last <- vapply(locs, function(m) {
     if (is.null(m) || nrow(m) == 0L) NA_integer_ else as.integer(max(m[, "start"]))
   }, integer(1))
+  # The denominator counts each emoji once, not once per code point. With
+  # nchar() a seven-code-point family emoji inflated the length by six, so an
+  # emoji that was genuinely the last thing in the message came back at 0.333
+  # -- a proportion that reads as "a third of the way through" and is simply
+  # wrong. Collapsing each located span to one unit is what makes 1.0 mean
+  # "at the end".
   rel <- vapply(seq_along(locs), function(i) {
     m <- locs[[i]]
     if (is.null(m) || nrow(m) == 0L) return(NA_real_)
-    L <- len[i]
+    extra <- m[, "end"] - m[, "start"]          # code points beyond the first
+    L <- len[i] - sum(extra)                    # length in positions
     if (L <= 1L) return(0)
-    mean((m[, "start"] - 1) / (L - 1))
+    # shift each start left by the extra code points of the emoji before it
+    pos <- m[, "start"] - c(0L, cumsum(extra)[-length(extra)])
+    mean((pos - 1) / (L - 1))
   }, numeric(1))
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(n)
   out$.emoji_first <- first
   out$.emoji_last <- last
@@ -73,7 +94,7 @@ emoji_position <- function(data, text) {
 #' emoji_density(df, text)
 #' @export
 emoji_density <- function(data, text) {
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   n <- lengths(emoji_glyph_list(v))
   n_char <- nchar(v)
   # maximal runs of non-whitespace
@@ -82,12 +103,23 @@ emoji_density <- function(data, text) {
   }, integer(1))
   n_token[is.na(v)] <- NA_integer_
 
-  out <- tibble::as_tibble(data)
+  # Allocated NA_real_ first, then filled, rather than built with ifelse():
+  # ifelse() takes the result's type from its arguments, so on a zero-row input
+  # it returned logical(0) where a populated call returns double, breaking the
+  # package's own promise that empty input yields a *typed* zero-row tibble.
+  per_char <- rep(NA_real_, length(v))
+  per_token <- rep(NA_real_, length(v))
+  measurable <- !is.na(n_char) & n_char > 0L
+  per_char[measurable] <- n[measurable] / n_char[measurable]
+  tok <- measurable & !is.na(n_token)
+  per_token[tok] <- n[tok] / n_token[tok]
+  # text made only of whitespace has characters but no tokens: no emoji in it
+  per_token[tok & n_token == 0L] <- 0
+
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(n)
-  out$.emoji_per_char <- ifelse(is.na(n_char) | n_char == 0L, NA_real_,
-                                n / n_char)
-  out$.emoji_per_token <- ifelse(is.na(n_token) | n_char == 0L, NA_real_,
-                                 ifelse(n_token == 0L, 0, n / n_token))
+  out$.emoji_per_char <- per_char
+  out$.emoji_per_token <- per_token
   out
 }
 
@@ -115,7 +147,7 @@ emoji_density <- function(data, text) {
 #' emoji_ratio(df, text)
 #' @export
 emoji_ratio <- function(data, text) {
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   locs <- .emoji_locations(v)
   n_char <- nchar(v)
@@ -124,8 +156,10 @@ emoji_ratio <- function(data, text) {
     if (is.null(m) || nrow(m) == 0L) 0L else as.integer(sum(m[, "end"] - m[, "start"] + 1L))
   }, integer(1))
 
-  ratio <- ifelse(is.na(n_char) | n_char == 0L, NA_real_,
-                  emoji_chars / n_char)
+  # typed allocate-then-fill, as in emoji_density() above
+  ratio <- rep(NA_real_, length(v))
+  measurable <- !is.na(n_char) & n_char > 0L
+  ratio[measurable] <- emoji_chars[measurable] / n_char[measurable]
 
   # emoji-only: strip the located emoji, then whitespace; nothing may remain
   residual <- vapply(seq_along(v), function(i) {
@@ -145,7 +179,7 @@ emoji_ratio <- function(data, text) {
   only <- !was_na & emoji_chars > 0L & !nzchar(gsub("\\s", "", residual))
   only[was_na] <- NA
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_ratio <- ratio
   out$.emoji_only <- only
   out

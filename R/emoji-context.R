@@ -88,13 +88,12 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
                           keep_text = FALSE) {
   unit <- match.arg(unit)
   .emoji_check_flag(keep_text, "keep_text")
-  if (!is.numeric(window) || length(window) != 1L || is.na(window) ||
-      !is.finite(window) || window < 0) {
-    stop("`window` must be a single finite number >= 0.", call. = FALSE)
+  if (!.emoji_is_count(window)) {
+    stop("`window` must be a single finite whole number >= 0.", call. = FALSE)
   }
   window <- as.integer(window)
   col_name <- .emoji_col_name(data, {{ text }})
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
   locs <- .emoji_locations(v)
   masked <- .emoji_mask(v, locs)
@@ -124,7 +123,7 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
     .emoji_context = trimws(paste(left, right))
   )
   if (isTRUE(keep_text)) {
-    txt <- as.character(dplyr::pull(data, {{ text }}))
+    txt <- .emoji_text_col(data, {{ text }})
     nm <- if (col_name %in% names(out)) paste0(col_name, ".text") else col_name
     out[[nm]] <- txt[occ$.row_number]
     out <- out[c(".row_number", nm,
@@ -177,9 +176,10 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 emoji_collocations <- function(data, text, window = 5, min_n = 3,
                                measure = c("pmi", "count")) {
   measure <- match.arg(measure)
-  if (!is.numeric(min_n) || length(min_n) != 1L || is.na(min_n) || min_n < 0) {
-    stop("`min_n` must be a single non-negative number.", call. = FALSE)
+  if (!.emoji_is_count(min_n, finite = FALSE)) {
+    stop("`min_n` must be a single non-negative whole number.", call. = FALSE)
   }
+  .emoji_warn_grouped(data, "emoji_collocations", "0.4.0")
   empty <- tibble::tibble(emoji = character(), word = character(),
                           n = integer(), pmi = numeric())
   ctx <- emoji_context(data, {{ text }}, window = window, unit = "word")
