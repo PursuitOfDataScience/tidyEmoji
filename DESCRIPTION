@@ -52,6 +52,7 @@ Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
+    commonmark,
     ggplot2,
     readr,
     forcats,

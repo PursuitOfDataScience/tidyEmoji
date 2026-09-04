@@ -1732,6 +1732,59 @@ in `Suggests` plus a `tests/spelling.R`. §1's gap list already scopes
 "{covr}/spelling CI" as future work, so the wordlist makes the manual check
 correct now and the CI wiring stays where the roadmap put it.
 
+**Round 27 (2026-09-04) — CI caught a defect two of my own audits had cleared,
+and the first fix was the wrong one.**
+
+Pushing PR #8 failed on all five platforms with one error, identical everywhere:
+
+    [ FAIL 1 | WARN 0 | SKIP 2 | PASS 1228 ]
+    Error in loadNamespace(x): there is no package called 'commonmark'
+
+`utils::news()` parses a Markdown `NEWS.md` through **commonmark**, which is
+neither an `Imports` nor a `Suggests` of this package. It was simply present in
+the development library because roxygen2 depends on it. The round-18 test that
+checks `NEWS.md` parses therefore passed here and could not pass anywhere else.
+
+**Two of my own audits had cleared this, and both were structurally incapable
+of catching it.**
+
+- Round 24 ran `_R_CHECK_DEPENDS_ONLY_=true`, saw it pass, and concluded
+  "nothing reaches outside the declared imports". **That mode masks
+  `Suggests`.** `commonmark` is in neither field, so there was nothing to mask
+  -- the mode cannot detect a package you never declared at all.
+- Round 22's static audit grepped for `pkg::` and `library()` in the tests.
+  **The reach is inside `utils::news()`**, so no amount of grepping the test
+  sources would have found it.
+
+**My first fix was the wrong one.** `skip_if_not_installed("commonmark")`
+turned the failure green -- by making the test skip on CI *permanently*, so the
+`NEWS.md` check would never again run anywhere but this machine. A guard that
+silences the only environment you care about is not a fix. **`commonmark` is
+now in `Suggests`**, so CI installs it and the test actually runs; the guard
+stays for minimal installs, which is what guards are for.
+
+**And a check that would have caught it, which is the part worth keeping.**
+Diff the namespaces the suite loads against the recursive closure of the
+declared dependencies, computed from installed metadata so it needs no network:
+
+```r
+after   <- loadedNamespaces()                    # after test_dir()
+closure <- <recursive Depends/Imports/LinkingTo of Imports+Suggests+Depends>
+setdiff(after, c(closure, base_packages))
+```
+
+Before the fix that printed `commonmark rstudioapi xml2`; after it, only
+`rstudioapi xml2`. **Those two are in testthat's own `Suggests`** -- testthat
+probes for them itself and degrades without them, which is why CI reported one
+failure and not three. So the check needs a reader who can tell "our test
+needs this" from "testthat probed for this", which is why it belongs in the
+release checklist rather than in the suite as an assertion.
+
+**The general lesson, and it is the third time this loop has produced it:** a
+verification that passes tells you nothing until you know what it is capable
+of failing on. `--as-cran` versus a plain check (round 24), a symmetric PMI
+fixture (round 18), and now `DEPENDS_ONLY` against an undeclared package.
+
 - **Two things round 2 checked and found sound**, worth recording so they
   are not re-audited: every `verb(data, text)` export survives zero-row,
   all-`NA`, empty-string, `factor` and `numeric` text columns without error;
