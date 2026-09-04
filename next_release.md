@@ -1692,6 +1692,46 @@ The untried mode here was the *locale*: round 3 confirmed detection survives
   itself rejected for containing a stray non-ASCII byte. The tooling caught in
   one keystroke the exact class of mistake the guard exists to catch.
 
+**Round 26 (2026-09-04) — spell-checking 25 rounds of prose, and one real
+packaging omission.**
+
+Thousands of words of documentation were written across this loop and none of
+it had ever been spell-checked. `{spelling}` and `{hunspell}` were already
+installed.
+
+- **No typos.** All 139 flagged words are legitimate: author surnames, package
+  names, acronyms, domain vocabulary, and one word I had to look up --
+  `multipleness`, which is the authors' own coinage in a real paper title
+  (*Journal of Business Research*, 2022), not an error.
+- **The real find: `DESCRIPTION` had no `Language` field.** So the check
+  defaulted to `en-US` and flagged 55 *correct* British spellings as errors,
+  which is what made a 139-word noise list out of a gate that should read zero.
+  Declaring `Language: en-GB` -- which CRAN itself reads -- drops the count to
+  84, all genuinely unknowable.
+- **`inst/WORDLIST` added** with those 84, so `spell_check_package()` now
+  reports **zero**. The point is not the current state but the next typo: it
+  will be visible instead of buried.
+- **The prose was already consistently British**, verified across ten
+  British/American pairs over `R/`, `man/`, the vignette, `README`, `NEWS.md`
+  and `cran-comments.md`: **zero** American spellings. The only American tokens
+  are the exported `emoji_categorize()` and `emoji_sanitize()`, which follow R
+  convention and must not change.
+
+**A method error of mine, worth recording because it nearly became a
+"finding".** I first audited spelling with `grep -r` over `vignettes/`, which
+reported 20 American spellings and looked like a real inconsistency inside one
+file. `vignettes/` contains `ata_tweets.csv` -- 150 KB of **real tweet text**.
+The hits were in the corpus, not the documentation. **Grepping a directory that
+holds data files to draw a conclusion about prose is not a valid measurement**;
+scope to the source files by name. Same lesson as round 9's substring/prefix
+mistake, in a new disguise: the tool answered a different question than I
+asked.
+
+**Not done, deliberately:** wiring the spell check into CI needs `{spelling}`
+in `Suggests` plus a `tests/spelling.R`. §1's gap list already scopes
+"{covr}/spelling CI" as future work, so the wordlist makes the manual check
+correct now and the CI wiring stays where the roadmap put it.
+
 - **Two things round 2 checked and found sound**, worth recording so they
   are not re-audited: every `verb(data, text)` export survives zero-row,
   all-`NA`, empty-string, `factor` and `numeric` text columns without error;

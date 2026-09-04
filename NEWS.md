@@ -168,6 +168,21 @@ distribution. It is now a number.
   `emoji_ngrams(sep = )` is checked too: it reached `paste(collapse = )`, which
   failed with `invalid 'collapse' argument` and an internal call stack for `NA`
   or a number, and silently used only the first element of a longer vector.
+* `DESCRIPTION` declares `Language: en-GB`. The field was missing, so
+  `spelling::spell_check_package()` defaulted to `en-US` and flagged 55 correct
+  British spellings — `licence`, `normalised`, `analysed`, `summarise`,
+  `behaviour`, `neighbouring` — as errors, which made the check unusable as a
+  gate. The prose was already consistently British: across ten British/American
+  word pairs, the R sources, help pages, vignette, README, NEWS and
+  `cran-comments.md` contain **zero** American spellings. The only American
+  tokens are the exported names `emoji_categorize()` and `emoji_sanitize()`,
+  which follow R convention and stay.
+* A new `inst/WORDLIST` records the 84 remaining terms the dictionary cannot
+  know — author surnames, package names, and vocabulary like `codepoint`,
+  `grapheme`, `shortcode`, `keycaps`, `ZWJ`, `Plutchik`, `idf`. With the
+  language declared and the wordlist in place, `spell_check_package()` now
+  reports zero, so a future typo is visible instead of buried in 139 lines of
+  false positives.
 * The test suite now passes in a non-UTF-8 locale. Ten test files carried 114
   literal non-ASCII characters inside string literals — zero-width joiners,
   gender signs, hearts, the no-break and ideographic spaces — and R parses a

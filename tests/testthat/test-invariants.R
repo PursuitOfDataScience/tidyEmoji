@@ -870,6 +870,12 @@ test_that("a wider context window cannot lose collocations", {
 # ---------------------------------------------------------------------------
 
 test_that("NEWS.md parses into news() entries for every released version", {
+  # utils::news() parses a Markdown NEWS.md through commonmark, which is not a
+  # dependency of this package -- it happens to be installed wherever roxygen2
+  # is. Without this guard the test errored on every CI platform while passing
+  # locally, and _R_CHECK_DEPENDS_ONLY_ did not catch it either: commonmark is
+  # neither Imports nor Suggests, so nothing was hiding it.
+  skip_if_not_installed("commonmark")
   db <- suppressWarnings(utils::news(package = "tidyEmoji"))
   expect_s3_class(db, "news_db")
   expect_gt(nrow(db), 0L)
