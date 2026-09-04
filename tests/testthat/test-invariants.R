@@ -1140,3 +1140,197 @@ test_that("test sources keep non-ASCII out of their string literals", {
   }
   expect_identical(offenders, character())
 })
+
+
+# ---------------------------------------------------------------------------
+# Documented behaviour that no test exercised. Found by line coverage, not by
+# mutation testing: mutation only probes paths you already thought about,
+# whereas coverage names the code nothing runs. At 96.59% the gaps were mostly
+# error branches, but four were documented features.
+# ---------------------------------------------------------------------------
+
+test_that("emoji_score() with the emotion lexicon averages the eight dims", {
+  # ?emoji_score: "For the multi-dimensional emotag1200 lexicon the score is
+  # the mean over its eight emotion dimensions"
+  df <- data.frame(text = c(paste("hi", laugh), "plain"))
+  out <- emoji_score(df, text, lexicon = "emotag1200")
+  dims <- tidyEmoji:::emoji_emotion_map()
+  expected <- mean(dims[tidyEmoji:::emoji_key(laugh), ])
+  expect_equal(out$.emoji_score, c(expected, NA_real_))
+  expect_equal(out$.emoji_n_scored, c(1L, NA))
+  # and it is genuinely the emotion lexicon, not the sentiment one
+  expect_false(isTRUE(all.equal(out$.emoji_score[1],
+                                emoji_score(df, text)$.emoji_score[1])))
+})
+
+test_that("emoji_sentiment() accepts a data frame and a registered lexicon", {
+  df <- data.frame(text = c(paste("hi", laugh), "plain"))
+  lex <- data.frame(emoji = c(laugh, heart_eyes), score = c(0.5, -0.5))
+  expect_equal(emoji_sentiment(df, text, lexicon = lex)$.emoji_sentiment,
+               c(0.5, NA_real_))
+  register_emoji_lexicon("coverage-lex", lex)
+  expect_equal(
+    emoji_sentiment(df, text, lexicon = "coverage-lex")$.emoji_sentiment,
+    c(0.5, NA_real_)
+  )
+  # a lexicon that is neither errors rather than falling through
+  expect_error(emoji_sentiment(df, text, lexicon = 42), "must be")
+})
+
+test_that("emoji_trend(by = 'quarter') buckets to quarter starts", {
+  df <- data.frame(
+    text = rep(laugh, 4),
+    when = as.Date(c("2021-01-15", "2021-04-02", "2021-08-30", "2021-12-31"))
+  )
+  expect_equal(format(emoji_trend(df, text, when, by = "quarter")$.period),
+               c("2021-01-01", "2021-04-01", "2021-07-01", "2021-10-01"))
+  # every documented bucket returns Date periods and the full corpus total
+  for (unit in c("day", "week", "month", "quarter", "year")) {
+    tr <- emoji_trend(df, text, when, by = unit, top_n = NULL)
+    expect_s3_class(tr$.period, "Date")
+    expect_equal(sum(tr$n), 4L)
+  }
+})
+
+test_that("sort = FALSE orders the relational verbs by item, not by count", {
+  d <- data.frame(text = c(paste0(laugh, heart_eyes), paste0(heart_eyes, party),
+                           paste0(laugh, party), paste0(laugh, heart_eyes)))
+  sorted <- emoji_pairs(d, text)
+  unsorted <- emoji_pairs(d, text, sort = FALSE)
+  # same edges either way
+  expect_setequal(paste(sorted$item1, sorted$item2),
+                  paste(unsorted$item1, unsorted$item2))
+  # sort = TRUE leads with the commonest pair; sort = FALSE is in item order
+  expect_false(is.unsorted(-sorted$n))
+  expect_identical(unsorted$item1, sort(unsorted$item1, method = "radix"))
+  co <- emoji_cooccurrence(d, text, sort = FALSE)
+  expect_identical(co$item1, sort(co$item1, method = "radix"))
+})
+
+test_that("the rescalings collapse to zero when there is nothing to rank", {
+  # .emoji_rank_scale and .emoji_zscore both have a degenerate branch: one
+  # non-NA value, or zero variance. Verified in a round-3 probe and never
+  # written down.
+  df <- data.frame(text = paste("hi", laugh), sc = 0.5)
+  expect_equal(emoji_incongruity(df, text, sc, scale = "rank")$.emoji_incongruity, 0)
+  expect_equal(emoji_incongruity(df, text, sc, scale = "zscore")$.emoji_incongruity, 0)
+  # all-identical scores have zero variance, so the z-scores are all zero
+  tied <- data.frame(text = rep(paste("hi", laugh), 3), sc = rep(0.5, 3))
+  expect_equal(emoji_incongruity(tied, text, sc, scale = "zscore")$.emoji_incongruity,
+               rep(0, 3))
+})
+
+test_that("a factor time column is read as dates", {
+  df <- data.frame(text = rep(laugh, 2),
+                   when = factor(c("2020-01-01", "2020-02-01")))
+  expect_equal(format(emoji_trend(df, text, when)$.period),
+               c("2020-01-01", "2020-02-01"))
+})
+
+test_that("emoji_incongruity_profile returns a typed zero-row tibble", {
+  df <- data.frame(text = c("plain", "no emoji"), sc = c(0, 0))
+  out <- emoji_incongruity_profile(df, text, sc, scale = "none", min_n = 1)
+  expect_equal(nrow(out), 0L)
+  expect_identical(names(out), c("emoji", "name", "n", "mean_incongruity",
+                                 "sd_incongruity", "n_flips", "flip_rate"))
+  expect_type(out$emoji, "character")
+  expect_type(out$n, "integer")
+})
+
+
+# ---------------------------------------------------------------------------
+# The argument-validation errors. Every one of these was checked by hand in an
+# earlier round and none was written as a test, so removing a validation would
+# have passed the suite.
+# ---------------------------------------------------------------------------
+
+test_that("the lexicon surface rejects what it cannot use", {
+  df <- data.frame(text = paste("hi", laugh))
+  expect_error(emoji_score(df, text, lexicon = "no-such-lexicon"),
+               "Unknown lexicon")
+  expect_error(emoji_score(df, text, lexicon = 42), "must be a name")
+  expect_error(emoji_emotion(df, text, lexicon = "novak2015"),
+               "requires an emotion lexicon")
+  expect_error(register_emoji_lexicon("bad-tbl", "not a data frame"),
+               "must be a data frame")
+  expect_error(register_emoji_lexicon("bad-col", data.frame(x = 1, score = 2)),
+               "has no column")
+  # a data-frame lexicon with no usable score column, used directly
+  expect_error(emoji_score(df, text, lexicon = data.frame(emoji = laugh)),
+               "No score column")
+  # and a named score column that is not there
+  expect_error(
+    emoji_score(df, text, lexicon = data.frame(emoji = laugh, s = 1),
+                score = "nope"),
+    "no score column"
+  )
+})
+
+test_that("a registered lexicon resolves through its stored key column", {
+  # .emoji_lexicon_keys falls back to the `key` column when the glyph column
+  # is named something else -- the path register_emoji_lexicon() sets up
+  lex <- data.frame(glyph = c(laugh, heart_eyes), score = c(1, -1))
+  register_emoji_lexicon("keyed-lex", lex, by = "glyph")
+  out <- emoji_score(data.frame(text = c(paste("hi", laugh), "plain")), text,
+                     lexicon = "keyed-lex")
+  expect_equal(out$.emoji_score, c(1, NA_real_))
+})
+
+test_that("data and query arguments are validated", {
+  expect_error(emoji_search(NA), "single non-empty string")
+  expect_error(emoji_search(character(0)), "single non-empty string")
+  expect_error(emoji_summary("not a data frame", text), "must be a data frame")
+  expect_error(emoji_position(list(text = "x"), text), "must be a data frame")
+})
+
+
+test_that("the bundled lexicon's aliases resolve like its canonical name", {
+  # emoji_sentiment() has a fast path for "novak2015"; the aliases that
+  # .emoji_lexicon_lookup() also accepts take a different branch, which no
+  # test reached
+  df <- data.frame(text = c(paste("hi", laugh), "plain"))
+  canonical <- emoji_sentiment(df, text)$.emoji_sentiment
+  for (alias in c("sentiment", "emoji_sentiment_lexicon")) {
+    expect_equal(emoji_sentiment(df, text, lexicon = alias)$.emoji_sentiment,
+                 canonical)
+  }
+  expect_equal(emoji_score(df, text, lexicon = "sentiment")$.emoji_score,
+               canonical)
+})
+
+test_that("a data-frame lexicon whose glyph column is misnamed errors", {
+  df <- data.frame(text = paste("hi", laugh))
+  expect_error(
+    emoji_score(df, text, lexicon = data.frame(g = laugh, score = 1),
+                by = "nope"),
+    "no column"
+  )
+})
+
+test_that("cooccurrence honours sort = FALSE with the diagonal included", {
+  pleading <- "\U0001F97A"
+  d <- data.frame(text = c(paste0(laugh, pleading), pleading))
+  out <- emoji_cooccurrence(d, text, diagonal = TRUE, sort = FALSE)
+  expect_gt(nrow(out), 0L)
+  expect_identical(out$item1, sort(out$item1, method = "radix"))
+  # the same edges as the sorted call, just ordered differently
+  expect_setequal(paste(out$item1, out$item2),
+                  paste(emoji_cooccurrence(d, text, diagonal = TRUE)$item1,
+                        emoji_cooccurrence(d, text, diagonal = TRUE)$item2))
+})
+
+test_that("se = TRUE is NA for a row whose emoji carry no annotation counts", {
+  pleading <- "\U0001F97A"   # post-2015, so no counts behind it
+  out <- emoji_sentiment(data.frame(text = paste("x", pleading)), text,
+                         se = TRUE)
+  expect_equal(out$.emoji_n, 1L)
+  expect_equal(out$.emoji_n_scored, 0L)
+  expect_true(is.na(out$.emoji_sentiment_se))
+  # and se = TRUE is refused for a lexicon that has no counts at all
+  register_emoji_lexicon("no-counts", data.frame(emoji = laugh, score = 1))
+  expect_error(
+    emoji_sentiment(data.frame(text = laugh), text, lexicon = "no-counts",
+                    se = TRUE),
+    "annotation counts"
+  )
+})

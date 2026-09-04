@@ -168,6 +168,17 @@ distribution. It is now a number.
   `emoji_ngrams(sep = )` is checked too: it reached `paste(collapse = )`, which
   failed with `invalid 'collapse' argument` and an internal call stack for `NA`
   or a number, and silently used only the first element of a longer vector.
+* Test line coverage went from 96.6% to 99.4%, and closing the gap found four
+  **documented features that no test exercised**: `emoji_score()` with the
+  `"emotag1200"` lexicon (the mean over its eight emotion dimensions),
+  `emoji_sentiment(lexicon = )` given a data frame or a registered lexicon,
+  `emoji_trend(by = "quarter")`, and `sort = FALSE` on the relational verbs.
+  Also now covered: the lexicon aliases `"sentiment"` and
+  `"emoji_sentiment_lexicon"`, a `factor` time column, the degenerate branches
+  of the rank and z-score rescalings, `emoji_incongruity_profile()`'s zero-row
+  return, and every argument-validation error on the lexicon surface — each of
+  which had been checked by hand in an earlier round and never written down.
+  The nine lines still uncovered are guards whose callers validate first.
 * `commonmark` and `xml2` join `Suggests`. The test that checks `NEWS.md`
   parses calls `utils::news()`, and R's Markdown news reader calls both of them
   unguarded — packages that were present in the development library only
