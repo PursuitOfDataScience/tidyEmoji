@@ -2365,6 +2365,61 @@ PMI fixture (round 18), `DEPENDS_ONLY` against an undeclared package
 (round 27), and now a one-error-at-a-time CI run standing in for a
 three-package audit.
 
+**Round 30 (2026-09-04) — line coverage, which found what mutation
+testing structurally could not.**
+
+`main` went green on all five platforms plus pkgdown, so the CI gate was
+clear. [covr](https://covr.r-lib.org) was already installed and had
+never been run.
+
+**96.59%, 53 uncovered lines – and four of them were documented features
+with no test at all:**
+
+- `emoji_score(lexicon = "emotag1200")`, whose help page promises “the
+  mean over its eight emotion dimensions”.
+- `emoji_sentiment(lexicon = )` given a data frame or a registered
+  lexicon.
+- `emoji_trend(by = "quarter")`.
+- `sort = FALSE` on
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  /
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md).
+
+**This is precisely the complement to rounds 19-21.** Mutation testing
+can only probe a line you thought to mutate; it told me the suite had
+teeth on everything I had considered. Coverage names the code nothing
+runs at all – and `by = "quarter"` had never occurred to me to mutate,
+because I did not know it was untested. **The two techniques answer
+different questions and neither substitutes for the other.**
+
+A second class in the same list: **every argument-validation error on
+the lexicon surface was uncovered.** Unknown lexicon name, non-character
+lexicon, sentiment lexicon passed to
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md),
+non-data-frame `tbl`, missing glyph column, missing score column,
+misnamed `by`. I had checked all of them by hand in rounds 2 and 11 and
+written none of them down, so removing a validation would have passed
+the suite. Same for the degenerate branches of `.emoji_rank_scale()` and
+`.emoji_zscore()`, verified in a round-3 probe and never asserted. **A
+probe is not a test; the finding evaporates when the session ends.**
+
+**Now 99.42%, 9 lines uncovered, 296 test blocks.** The nine are guards
+whose callers validate first – `.emoji_lexicon_record()`’s data-frame
+check, `.emoji_replace_in_order()`’s empty-input guards, the final
+`else` in
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)’s
+lexicon dispatch that `.emoji_lexicon_lookup()` errors before. Left
+alone deliberately: chasing them would mean testing through internals
+rather than the interface, and round 19 settled that a test which cannot
+fail is worse than a comment.
+
+**Also this round:**
+[`pkgdown::check_pkgdown()`](https://pkgdown.r-lib.org/reference/check_pkgdown.html)
+reports no problems (round 4 audited the reference index by hand; this
+is the tool agreeing), and the site builds locally with no warnings.
+Both build artefacts – `docs/` at 5.8 MB and a `pkgdown/favicon/`
+directory – were removed, since neither was in the repo before.
+
 - **Two things round 2 checked and found sound**, worth recording so
   they are not re-audited: every `verb(data, text)` export survives
   zero-row, all-`NA`, empty-string, `factor` and `numeric` text columns
