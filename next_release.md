@@ -2420,6 +2420,45 @@ is the tool agreeing), and the site builds locally with no warnings.
 Both build artefacts – `docs/` at 5.8 MB and a `pkgdown/favicon/`
 directory – were removed, since neither was in the repo before.
 
+**Round 31 (2026-09-04) — the check I had disabled in every previous
+round.**
+
+Every `R CMD check` this loop has run set
+`_R_CHECK_CRAN_INCOMING_REMOTE_=false`, because a memory note says it
+hangs on this host. **That is precisely the flag that validates URLs**,
+and a dead URL is one of the commonest reasons CRAN bounces a
+submission. So URLs had never been checked – thirty rounds of “clean”
+checks with the URL check switched off.
+
+`urlchecker::url_check()` instead: **11 of 12 pass.** The twelfth is the
+CLARIN.SI handle that `cran-comments.md` already anticipated – but the
+note named the wrong host, and the real diagnosis is sharper:
+
+- `https://hdl.handle.net/11356/1048` **verifies fine** and returns
+  `302` to `https://www.clarin.si/repository/xmlui/handle/11356/1048`.
+- It is the *redirect target* that fails. The chain is `clarin.si` \<-
+  `GEANT TLS RSA 1` (Hellenic Academic and Research Institutions CA) and
+  `openssl s_client` gives
+  `Verify return code: 20 (unable to get local issuer certificate)`.
+- **The cause is this host, not the URL.** CentOS 8 with
+  `ca-certificates-2020.2.41` – a 2020 bundle with no current HARICA
+  root. `curlGetHeaders(url, verify = FALSE)` returns `200`, so the site
+  is up.
+
+`cran-comments.md` now states the redirect target, the chain, the
+openssl verify code, the bundle version and the unverified `200`, so a
+reviewer can reproduce it rather than take a hedge on trust. **The old
+wording blamed `hdl.handle.net`, which verifies perfectly well** – a
+plausible-sounding diagnosis nobody had tested.
+
+**Also checked and sound:** the `https://example.org` in
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)’s
+example is deliberate and correct – it is the IANA-reserved example
+domain, used to show that a URL’s colons do not swallow a following
+`:shortcode:`. `cran-comments.md`’s claim of no reverse dependencies
+still needs verifying against a live CRAN index, which this host’s stale
+trust store also blocks.
+
 - **Two things round 2 checked and found sound**, worth recording so
   they are not re-audited: every `verb(data, text)` export survives
   zero-row, all-`NA`, empty-string, `factor` and `numeric` text columns
