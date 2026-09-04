@@ -81,6 +81,13 @@ The package makes no network requests, at check time or at run time.
 
 0 errors | 0 warnings | 0 notes
 
+Locally, a full `R CMD check --as-cran` with the remote incoming checks
+*enabled* (`_R_CHECK_CRAN_INCOMING_REMOTE_=true`) reports 1 WARNING and 3
+NOTEs, and all four are artefacts of this host rather than the package: no
+`qpdf`, no `tidy`, an unverifiable system clock, and the URL below. The
+substantive checks all pass there: installation, examples, the `testthat`
+suite, vignette re-building and the PDF manual.
+
 On R 4.6.0 (the newest release available locally), `R CMD check` reports
 `Status: OK` -- no errors, warnings or notes -- with the test suite passing in
 full and one test skipping cleanly because 'readr', a Suggests package, is not
@@ -112,8 +119,11 @@ no unmapped characters to typeset.
 
 `?emoji_sentiment_lexicon` links to <https://hdl.handle.net/11356/1048>, the
 canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. All 12 URLs in
-the package were checked with `urlchecker::url_check()`; 11 pass and this one
-is reported on our machine only, with the precise cause below.
+the package were checked, both with `urlchecker::url_check()` and by
+`R CMD check --as-cran` with remote checks enabled; 11 pass and this one is
+reported on our machine only. R's own wording is
+`Status: Error ... (Status without verification: OK)`, and the precise cause
+follows.
 
 The handle itself is healthy: it returns `302` to
 `https://www.clarin.si/repository/xmlui/handle/11356/1048`. It is that redirect
@@ -142,5 +152,11 @@ DESCRIPTION:
 
 ## Downstream dependencies
 
-There are no reverse dependencies (checked with
-`tools::package_dependencies(reverse = TRUE)`).
+There are no reverse dependencies. Verified against a live CRAN index of 24,739
+packages with `tools::package_dependencies("tidyEmoji", db = available.packages(),
+reverse = TRUE, which = c("Depends", "Imports", "LinkingTo", "Suggests",
+"Enhances"))`, which returns none. The same index confirms the currently
+published version is 0.3.0.
+
+The DOI in DESCRIPTION and on `?emoji_sentiment_lexicon`
+(<doi:10.1371/journal.pone.0144296>) resolves to the PLoS ONE article.
