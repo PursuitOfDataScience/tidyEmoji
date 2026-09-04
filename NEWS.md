@@ -168,11 +168,14 @@ distribution. It is now a number.
   `emoji_ngrams(sep = )` is checked too: it reached `paste(collapse = )`, which
   failed with `invalid 'collapse' argument` and an internal call stack for `NA`
   or a number, and silently used only the first element of a longer vector.
-* `commonmark` joins `Suggests`. The test that checks `NEWS.md` parses calls
-  `utils::news()`, which reaches for commonmark to read a Markdown NEWS file —
-  a package that was present in the development library only because roxygen2
-  depends on it. Declaring it means CI installs it and the test runs, rather
-  than skipping everywhere but the maintainer's machine.
+* `commonmark` and `xml2` join `Suggests`. The test that checks `NEWS.md`
+  parses calls `utils::news()`, and R's Markdown news reader calls both of them
+  unguarded — packages that were present in the development library only
+  because roxygen2 and testthat pull them in. Declaring them means CI installs
+  them and the test runs, rather than skipping everywhere but the maintainer's
+  machine. `NEWS.md`'s version headings are now *also* checked directly,
+  without parsing Markdown at all, so that invariant holds even where the
+  reader is unavailable.
 * `DESCRIPTION` declares `Language: en-GB`. The field was missing, so
   `spelling::spell_check_package()` defaulted to `en-US` and flagged 55 correct
   British spellings — `licence`, `normalised`, `analysed`, `summarise`,

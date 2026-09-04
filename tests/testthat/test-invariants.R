@@ -869,13 +869,37 @@ test_that("a wider context window cannot lose collocations", {
 # a malformed heading is a user-visible break that R CMD check does not catch.
 # ---------------------------------------------------------------------------
 
+# The version headings, checked without parsing Markdown at all, so the
+# invariant holds even where the reader's dependencies are absent.
+test_that("NEWS.md has a well-formed heading for every released version", {
+  path <- testthat::test_path("..", "..", "NEWS.md")
+  skip_if_not(file.exists(path), "NEWS.md not available")
+  headings <- grep("^# ", readLines(path, warn = FALSE), value = TRUE)
+  expect_gt(length(headings), 0L)
+  # every top-level heading is "# tidyEmoji <version>"
+  expect_true(all(grepl("^# tidyEmoji [0-9]+([.][0-9]+)+$", headings)))
+  versions <- sub("^# tidyEmoji ", "", headings)
+  expect_equal(anyDuplicated(versions), 0L)
+  # newest first, and the version under development leads
+  expect_identical(versions, as.character(sort(package_version(versions),
+                                               decreasing = TRUE)))
+  desc <- read.dcf(testthat::test_path("..", "..", "DESCRIPTION"))
+  expect_identical(versions[1], unname(desc[1, "Version"]))
+})
+
 test_that("NEWS.md parses into news() entries for every released version", {
-  # utils::news() parses a Markdown NEWS.md through commonmark, which is not a
-  # dependency of this package -- it happens to be installed wherever roxygen2
-  # is. Without this guard the test errored on every CI platform while passing
-  # locally, and _R_CHECK_DEPENDS_ONLY_ did not catch it either: commonmark is
-  # neither Imports nor Suggests, so nothing was hiding it.
+  # utils::news() reads a Markdown NEWS.md through commonmark and xml2, and
+  # tools:::.build_news_db_from_package_NEWS_md calls both unguarded. Neither
+  # was a dependency of this package -- they were present here only because
+  # roxygen2 and testthat pull them in -- so this test passed locally and
+  # errored on every CI platform. Both are now in Suggests so CI runs it.
+  #
+  # Two things this cost, worth remembering: _R_CHECK_DEPENDS_ONLY_ cannot
+  # catch it, because it masks Suggests and these were in neither field; and
+  # declaring only commonmark just moved the error to xml2, because a missing
+  # dependency stops at the first one.
   skip_if_not_installed("commonmark")
+  skip_if_not_installed("xml2")
   db <- suppressWarnings(utils::news(package = "tidyEmoji"))
   expect_s3_class(db, "news_db")
   expect_gt(nrow(db), 0L)

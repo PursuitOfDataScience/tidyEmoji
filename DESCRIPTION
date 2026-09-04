@@ -53,6 +53,7 @@ Suggests:
     knitr,
     testthat (>= 3.0.0),
     commonmark,
+    xml2,
     ggplot2,
     readr,
     forcats,

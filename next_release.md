@@ -1785,6 +1785,72 @@ verification that passes tells you nothing until you know what it is capable
 of failing on. `--as-cran` versus a plain check (round 24), a symmetric PMI
 fixture (round 18), and now `DEPENDS_ONLY` against an undeclared package.
 
+**Round 28 (2026-09-04) — the same audit applied to the other two artifacts.**
+
+Round 27's `commonmark` failure came from a *test* reaching a package that is
+in neither `Imports` nor `Suggests`. `R CMD check` runs three things -- tests,
+examples, the vignette -- and CI installs every `Suggests` plus their whole
+dependency closure, so the same blind spot could hide in the other two and
+still pass. So the audit was pointed at them.
+
+The check, for the record, is: render or run the artifact in a live session,
+then diff `loadedNamespaces()` against the recursive
+`Depends`/`Imports`/`LinkingTo` closure of the declared dependencies, computed
+from installed metadata so it needs no network.
+
+- **Vignette: clean.** `rmarkdown::render()` on `introduction.Rmd` loads
+  nothing outside the 83-package closure.
+- **Examples: clean.** All 46 example blocks across the help pages run without
+  error and load nothing outside the closure.
+- **The tests' reach was two packages, not one, and this section originally
+  said otherwise.** See round 29: `xml2` was in the audit's output all along
+  and I dismissed it on the grounds that "CI reported one failure and not
+  three". That inference was invalid and cost a second CI round.
+
+This closes the thread round 27 opened. The audit belongs in the release
+checklist, run against all three artifacts, with the caveat recorded there:
+`rstudioapi` and `xml2` will always appear for the tests because they are in
+*testthat's* `Suggests` and testthat probes for them itself -- a reader has to
+tell that apart from a genuine reach, which is why it is a checklist item and
+not a suite assertion.
+
+**Round 29 (2026-09-04) — the same test failed CI twice, and the second failure
+was my reasoning, not my code.**
+
+`22bbe3b` failed on all five platforms again, same test, different package:
+
+    Error in loadNamespace(x): there is no package called 'xml2'
+
+**My round-28 audit had listed `xml2`.** I dismissed it, in writing, because
+"CI reported one failure and not three, so `xml2` and `rstudioapi` are loaded
+incidentally by testthat and present there". **That inference is invalid: a
+missing dependency stops at the first one.** CI could not have distinguished
+"xml2 is present" from "xml2 was never reached". I had the correct answer from
+my own measurement and argued myself out of it with evidence that could not
+bear on the question -- the exact error round 27 had just finished writing up.
+
+**Determined the complete set instead of discovering it one push at a time.**
+`tools:::.build_news_db_from_package_NEWS_md` and its neighbours reference
+exactly `commonmark` and `xml2`, with **no `requireNamespace` guards**, so
+either one missing is a hard error. Both are now in `Suggests`; the test guards
+on both.
+
+**And the invariant no longer depends on that stack at all.** The point of the
+test is that `NEWS.md`'s version headings are well formed -- so that is now
+asserted directly, with no Markdown parsing: every top-level heading matches
+`# tidyEmoji <version>`, versions are unique, sorted newest-first, and the
+leading one equals `DESCRIPTION`'s `Version`. Verified to have teeth by
+rewriting a heading to `# tidyEmoji v0.4.0` -- one failure. The `news()` test
+stays alongside it, because `news()` is what CRAN and users actually call, but
+it is no longer the only thing standing between a malformed heading and the
+CRAN page.
+
+**The rule this loop keeps re-deriving, now stated as bluntly as I can:**
+before treating a passing check as evidence, name the thing it would have
+failed on. `--as-cran` versus plain (round 24), the symmetric PMI fixture
+(round 18), `DEPENDS_ONLY` against an undeclared package (round 27), and now a
+one-error-at-a-time CI run standing in for a three-package audit.
+
 - **Two things round 2 checked and found sound**, worth recording so they
   are not re-audited: every `verb(data, text)` export survives zero-row,
   all-`NA`, empty-string, `factor` and `numeric` text columns without error;
