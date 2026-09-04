@@ -2459,6 +2459,53 @@ domain, used to show that a URL’s colons do not swallow a following
 still needs verifying against a live CRAN index, which this host’s stale
 trust store also blocks.
 
+**Round 32 (2026-09-04) — the memory note that cost 31 rounds of URL
+checking.**
+
+Round 31 found that every check had
+`_R_CHECK_CRAN_INCOMING_REMOTE_=false`, and blamed a memory note saying
+it hangs on this host. **This round tried it. It does not hang – it
+completes in 19 seconds.** The note was simply wrong, or had stopped
+being true, and nobody had re-measured it.
+
+So the full CRAN-equivalent check has now actually been run, remote half
+enabled, vignettes built: **1 WARNING, 3 NOTEs**, and the
+incoming-feasibility NOTE contains nothing but the maintainer line and
+the one CLARIN.SI URL – with R’s own wording
+`(Status without verification: OK)`, which is verbatim what
+`cran-comments.md` had been claiming on trust. All four results are host
+artefacts.
+
+- **The memory note is corrected**, with the flag flipped, the 19-second
+  measurement, and an explicit warning that the flag is what validates
+  URLs and DOIs. The standing check script now enables it, so every
+  future round validates URLs.
+- **Two claims in `cran-comments.md` are now verified rather than
+  asserted.** No reverse dependencies – checked against a live CRAN
+  index of 24,739 packages across
+  `Depends`/`Imports`/`LinkingTo`/`Suggests`/`Enhances`, which returns
+  none; and the same index confirms the published version is 0.3.0, so
+  0.4.0 is the correct next number. The DOI resolves to the PLoS ONE
+  article.
+- **A round-31 claim of mine was wrong and is corrected.** I said the
+  stale trust store “also blocks” the CRAN index. It does not –
+  `cloud.r-project.org` verifies fine. Only `clarin.si` fails. I had
+  generalised from one TLS failure to “the network is unusable”, which
+  is the same shape of error as the one I had just finished writing up
+  in round 29.
+- **The `no prebuilt vignette index` note seen mid-round was my own
+  artefact**, from running with
+  `--no-build-vignettes --ignore-vignettes`. It disappears in a full
+  check. Worth recording so it is not mistaken for a real finding later.
+
+**The pattern across rounds 24, 27, 29, 31 and 32 is now unmistakable,
+and it is not about verification technique – it is about inherited
+belief.** Each time, something was excluded from checking by a setting
+or an assumption that had never been re-tested: `--as-cran` suppressing
+a note, `DEPENDS_ONLY` masking Suggests, a one-error CI run standing in
+for an audit, a disabled flag, and a memory note. **Re-measure the thing
+that tells you not to look.**
+
 - **Two things round 2 checked and found sound**, worth recording so
   they are not re-audited: every `verb(data, text)` export survives
   zero-row, all-`NA`, empty-string, `factor` and `numeric` text columns
