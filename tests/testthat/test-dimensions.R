@@ -1,4 +1,8 @@
-library(dplyr)
+# No library(dplyr) here: attaching a package inside one test file leaks into
+# every alphabetically-later file in the same testthat session, masking
+# filter(), lag(), intersect(), setdiff(), setequal(), union() and testthat's
+# matches() for all of them. That makes the suite's behaviour depend on file
+# order. Qualify instead.
 
 df <- data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
                             "R is my language! \U0001f601\U0001f606\U0001f605",
@@ -9,8 +13,8 @@ df <- data.frame(tweets = c("I love tidyverse \U0001f600\U0001f603\U0001f603",
 test_that("emoji_summary counts emoji and total entries", {
   s <- emoji_summary(df, tweets)
   expect_s3_class(s, "tbl_df")
-  expect_equal(pull(s, n_with_emoji), 3)
-  expect_equal(pull(s, n_total), 5)
+  expect_equal(dplyr::pull(s, n_with_emoji), 3)
+  expect_equal(dplyr::pull(s, n_total), 5)
 })
 
 test_that("emoji_filter / emoji_tweets keep only emoji rows and return a tibble", {
@@ -23,9 +27,9 @@ test_that("emoji_filter / emoji_tweets keep only emoji rows and return a tibble"
 
 test_that("top_n_emojis returns the most frequent emoji by canonical shortcode", {
   expect_identical(
-    df %>% top_n_emojis(tweets, n = 1) %>% pull(emoji_name),
+    dplyr::pull(top_n_emojis(df, tweets, n = 1), emoji_name),
     "mask"
   )
-  expect_equal(df %>% top_n_emojis(tweets, n = 1) %>% pull(n), 3L)
+  expect_equal(dplyr::pull(top_n_emojis(df, tweets, n = 1), n), 3L)
   expect_no_warning(top_n_emojis(df, tweets, n = 1))
 })

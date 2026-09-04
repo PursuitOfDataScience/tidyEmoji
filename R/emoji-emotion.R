@@ -5,6 +5,12 @@
 #' bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020). Scores each range from 0 to
 #' 1 and are averaged over the emoji in the row that appear in the lexicon.
 #'
+#' **The lexicon is 150 glyphs, about 4% of the distinct emoji tidyEmoji can
+#' detect**, so a row of post-2018 emoji will score `NA` and still be a row
+#' full of emoji. Read `.emoji_n_scored` alongside `.emoji_n` before concluding
+#' a corpus carries no emotion; see [emoji_emotion_lexicon] for the figure and
+#' its denominator.
+#'
 #' @inheritParams emoji_summary
 #' @param lexicon Lexicon to use. Either a string naming a bundled lexicon
 #'   (`"emotag1200"`, the default), the name of a registered lexicon (see
@@ -16,8 +22,14 @@
 #'   columns `.emoji_emotion` (the emotion name) and `.emoji_score` (its mean).
 #'   Default `FALSE` adds eight `.emoji_<emotion>` columns plus `.emoji_n` and
 #'   `.emoji_n_scored`.
-#' @return `data`, as a tibble, with emotion columns added. Rows without emoji,
-#'   or whose emoji are absent from the lexicon, receive `NA` scores.
+#' @return `data`, as a tibble. With `long = FALSE` (the default), eight
+#'   emotion columns -- `.emoji_anger`, `.emoji_anticipation`,
+#'   `.emoji_disgust`, `.emoji_fear`, `.emoji_joy`, `.emoji_sadness`,
+#'   `.emoji_surprise`, `.emoji_trust` -- plus `.emoji_n` and
+#'   `.emoji_n_scored`, one row per input row. With `long = TRUE`, one row per
+#'   input row *per emotion*, carrying `.emoji_emotion` and `.emoji_score`
+#'   instead of the eight columns. Rows without emoji, or whose emoji are
+#'   absent from the lexicon, receive `NA` scores.
 #' @references Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the
 #'   Association between Emojis and Emotions. *EMNLP 2020*.
 #'   <https://aclanthology.org/2020.emnlp-main.720/>. Data released under the MIT
@@ -59,7 +71,7 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
   }
   dims <- colnames(emap)
 
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
 
@@ -84,7 +96,7 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
     sum(keys %in% rownames(emap))
   }, integer(1))
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   if (isTRUE(long)) {
     # Long form: one row per (original row, emotion), with the original columns
     # repeated and .emoji_emotion / .emoji_score added. Repeat by index rather
@@ -113,7 +125,17 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #'
 #' @inheritParams emoji_summary
 #' @param lexicon Passed to [emoji_emotion()].
-#' @return `data`, as a tibble, with a `.emoji_emotion` column added.
+#' @details
+#' Ties are broken in Plutchik order -- the order the eight emotions are listed
+#' in throughout the package (anger, anticipation, disgust, fear, joy, sadness,
+#' surprise, trust) -- so the winner is deterministic and does not depend on
+#' the row's position in the data. Read `.emoji_n_scored` alongside the label:
+#' a tie, or a near-tie, is invisible in a single winning name, and
+#' [emoji_emotion()] gives the full profile the label collapses.
+#'
+#' @return `data`, as a tibble, with `.emoji_emotion` (the winning emotion, or
+#'   `NA` when nothing was scorable) added, alongside the `.emoji_n` and
+#'   `.emoji_n_scored` counts it inherits from [emoji_emotion()].
 #' @examples
 #' df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))
 #' emoji_emotion_label(df, text)

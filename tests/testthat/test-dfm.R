@@ -38,7 +38,7 @@ test_that("emoji_dfm aggregates by doc_id and keeps the column name", {
 test_that("emoji_dfm canonicalises qualified/unqualified twins to one column", {
   # bare (U+270C) and qualified (U+270C U+FE0F) victory hands extract as
   # different glyphs; the dfm must merge them into one feature column
-  df <- data.frame(text = c("✌️", "✌"))
+  df <- data.frame(text = c("\u270C\uFE0F", "\u270C"))
   out <- emoji_dfm(df, text)
   expect_equal(ncol(out), 2L)   # .row_number + one victory-hand column
   expect_equal(out[[2L]], c(1L, 1L))

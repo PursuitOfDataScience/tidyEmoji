@@ -4,8 +4,16 @@
 #' one emoji, alongside the total number of entries. An entry is counted once
 #' regardless of how many emoji it holds.
 #'
-#' @param data A data frame or tibble containing a text column.
-#' @param text The text column to scan, supplied unquoted.
+#' @param data A data frame or tibble containing a text column. Grouped data
+#'   frames are accepted. The verbs that work a row at a time (adding columns,
+#'   or keeping and expanding rows) carry the grouping through to their result,
+#'   as [dplyr::mutate()] and [dplyr::filter()] do. The verbs that pool across
+#'   rows -- the counts, the co-occurrence edge lists, the time series -- warn
+#'   that they ignore the grouping and return one corpus-wide answer.
+#' @param text The text column to scan, supplied unquoted. What counts as an
+#'   emoji is the same in every verb; see the *Detection* section of
+#'   [tidyEmoji] for the one case that surprises people, code points that
+#'   are emoji only when they carry `U+FE0F`.
 #'
 #' @return A one-row tibble with columns \code{n_with_emoji} (entries containing at
 #'   least one emoji) and \code{n_total} (all entries).
@@ -17,13 +25,8 @@
 #' emoji_summary(df, text)
 #' @export
 emoji_summary <- function(data, text) {
-  if (dplyr::is_grouped_df(data)) {
-    lifecycle::deprecate_warn(
-      "0.2.1", "emoji_summary(data = \"must be ungrouped data\")",
-      details = "emoji_summary() currently ignores groups. Supply ungrouped data or expect a single global result."
-    )
-  }
-  v <- dplyr::pull(data, {{ text }})
+  .emoji_warn_grouped(data, "emoji_summary", "0.2.1")
+  v <- .emoji_text_col(data, {{ text }})
   has <- emoji_has(v)
   tibble::tibble(
     n_with_emoji = sum(has, na.rm = TRUE),
@@ -39,18 +42,22 @@ emoji_summary <- function(data, text) {
 #' synonym retained for backward compatibility.
 #'
 #' @inheritParams emoji_summary
-#' @return A tibble containing only the rows with at least one emoji. The
-#'   result is always a plain (ungrouped) tibble, whatever the class or
-#'   grouping of the input.
+#' @return A tibble containing only the rows with at least one emoji, with
+#'   every original column kept. A grouped input stays grouped, as it would
+#'   through [dplyr::filter()].
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600", "no emoji", "bye \U0001f44b"))
 #' emoji_filter(df, text)
 #' @export
 emoji_filter <- function(data, text) {
-  v <- dplyr::pull(data, {{ text }})
+  v <- .emoji_text_col(data, {{ text }})
   keep <- emoji_has(v)
+  # Belt-and-braces: emoji_has() cannot return NA, because emoji_glyph_list()
+  # maps NA text to "" before counting, so "NA text is never an emoji" is
+  # enforced upstream. Kept so the subscript is provably safe here rather than
+  # only safe because of what a different function does.
   keep[is.na(keep)] <- FALSE
-  tibble::as_tibble(data[keep, , drop = FALSE])
+  .emoji_as_tibble(data)[keep, , drop = FALSE]
 }
 
 #' @rdname emoji_filter

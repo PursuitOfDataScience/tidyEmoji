@@ -7,19 +7,37 @@
 emoji_emotion_label(data, text, lexicon = "emotag1200")
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Passed to \code{\link[=emoji_emotion]{emoji_emotion()}}.}
 }
 \value{
-\code{data}, as a tibble, with a \code{.emoji_emotion} column added.
+\code{data}, as a tibble, with \code{.emoji_emotion} (the winning emotion, or
+\code{NA} when nothing was scorable) added, alongside the \code{.emoji_n} and
+\code{.emoji_n_scored} counts it inherits from \code{\link[=emoji_emotion]{emoji_emotion()}}.
 }
 \description{
 \code{emoji_emotion_label()} adds \code{.emoji_emotion}, the emotion with the highest
 mean score among the row's emoji (using \code{\link[=emoji_emotion]{emoji_emotion()}}). Ties are broken
 in Plutchik order; rows with no scored emoji receive \code{NA}.
+}
+\details{
+Ties are broken in Plutchik order -- the order the eight emotions are listed
+in throughout the package (anger, anticipation, disgust, fear, joy, sadness,
+surprise, trust) -- so the winner is deterministic and does not depend on
+the row's position in the data. Read \code{.emoji_n_scored} alongside the label:
+a tie, or a near-tie, is invisible in a single winning name, and
+\code{\link[=emoji_emotion]{emoji_emotion()}} gives the full profile the label collapses.
 }
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))

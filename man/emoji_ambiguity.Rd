@@ -31,8 +31,7 @@ than described as a caveat.
 }
 \details{
 The four measures are computed from the annotation shares
-\code{(p_neg, p_neu, p_pos)}:
-
+\verb{(p_neg, p_neu, p_pos)}:
 \itemize{
 \item \code{"entropy"} (the default) is Shannon entropy in nats: 0 when the
 annotators were unanimous, \code{log(3)} (about 1.0986) when they split evenly

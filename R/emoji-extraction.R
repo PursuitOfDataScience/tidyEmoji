@@ -14,7 +14,14 @@
 #' emoji_extract_nest(df, text)
 #' @export
 emoji_extract_nest <- function(data, text) {
-  dplyr::mutate(data, .emoji_unicode = emoji_glyph_list({{ text }}))
+  # `[[<-` rather than dplyr::mutate(): mutate() evaluates `{{ text }}` in the
+  # data mask, so a missing or misspelled column was not caught by the shared
+  # resolver -- emoji_extract_nest(df) returned a bogus empty list-column
+  # instead of erroring. Assigning directly keeps `data`'s class and grouping,
+  # which is what the @return promises.
+  glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  data[[".emoji_unicode"]] <- glyphs
+  data
 }
 
 
@@ -32,12 +39,16 @@ emoji_extract_nest <- function(data, text) {
 #' emoji_extract_unnest(df, text)
 #' @export
 emoji_extract_unnest <- function(data, text) {
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   tibble::tibble(
     .row_number    = rep(seq_along(lst), lengths(lst)),
     .emoji_unicode = as.character(unlist(lst, use.names = FALSE))
   ) %>%
     dplyr::count(.row_number, .emoji_unicode, name = ".emoji_count") %>%
+    # dplyr::count() already returns its group keys in order, so the second
+    # key is redundant today. It is stated anyway: the row order of this verb
+    # is part of its contract, and it should not depend on count() continuing
+    # to sort.
     dplyr::arrange(.row_number, .emoji_unicode)
 }
 
@@ -60,9 +71,12 @@ emoji_extract_unnest <- function(data, text) {
 #' emoji_tokens(df, text)
 #' @export
 emoji_tokens <- function(data, text) {
-  data <- tibble::as_tibble(data)
-  data$.emoji <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  data <- .emoji_as_tibble(data)
+  data$.emoji <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   out <- tidyr::unnest(data, ".emoji")
+  # unnesting an empty list-column yields vctrs_unspecified, not character, so
+  # a zero-row result had a differently typed .emoji than a populated one
+  out$.emoji <- as.character(out$.emoji)
   ref <- emoji_reference()
   idx <- match(emoji_key(out$.emoji), ref$key)
   out$.emoji_name      <- ref$name[idx]

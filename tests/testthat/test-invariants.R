@@ -1,0 +1,1142 @@
+# Cross-verb invariants.
+#
+# Every check here relates two or more verbs on one fixture, so it fails when
+# the shared engine drifts even if each verb's own tests still pass. That is
+# the gap the per-verb files leave: they each pin one function's output, and
+# none of them notices when emoji_frequency() and emoji_tokens() start
+# disagreeing about how many emoji a corpus holds.
+#
+# The fixture is written out rather than sampled: sample() changed its
+# algorithm in R 3.6.0 and the package supports R >= 3.5.0, so an RNG-built
+# fixture would not be the same corpus everywhere.
+
+laugh  <- "\U0001F602"
+heart_eyes <- "\U0001F60D"
+party  <- "\U0001F389"
+tone   <- "\U0001F44D\U0001F3FD"                    # thumbs up + skin tone
+flag   <- "\U0001F1FA\U0001F1F8"                    # regional indicator pair
+family <- "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"
+qheart <- "\u2764\uFE0F"                            # qualified heart
+keycap <- "1\uFE0F\u20E3"                           # keycap digit one
+poop   <- "\U0001F4A9"
+new    <- "\U0001F97A"                              # pleading face (11.0)
+
+fixture <- function() {
+  data.frame(
+    id = 1:24,
+    text = c(
+      "no emoji at all",
+      "",
+      NA,
+      "   ",
+      laugh,
+      paste0(laugh, laugh),
+      paste("great", laugh),
+      paste(laugh, "great"),
+      paste("mid", laugh, "text"),
+      paste0(heart_eyes, party),
+      paste("hello", tone),
+      paste("flag", flag),
+      paste("our", family),
+      paste("love", qheart),
+      paste("first", keycap),
+      paste0(laugh, " ", family, " ", flag),
+      paste("plain words only here"),
+      paste0(poop, new),
+      paste("mixed", laugh, "and", tone, "and", party),
+      paste0(family, family),
+      paste("trailing spaces", laugh, "  "),
+      paste0("  ", laugh, " leading"),
+      paste(new, "is newer than", laugh),
+      paste0(keycap, keycap, keycap)
+    ),
+    when = as.Date("2021-01-01") + c(0:11, 40:51),
+    sc = seq(-1, 1, length.out = 24),
+    stringsAsFactors = FALSE
+  )
+}
+
+df <- fixture()
+pos <- emoji_position(df, text)
+total <- sum(pos$.emoji_n)
+
+test_that("the fixture is the corpus these tests assume", {
+  # if this changes, every count below has to be re-derived deliberately
+  expect_equal(nrow(df), 24L)
+  expect_equal(total, 30L)
+  expect_equal(sum(pos$.emoji_n > 0), 19L)
+})
+
+test_that("every verb that reports .emoji_n reports the same .emoji_n", {
+  expect_identical(emoji_density(df, text)$.emoji_n, pos$.emoji_n)
+  expect_identical(emoji_sentiment(df, text)$.emoji_n, pos$.emoji_n)
+  expect_identical(emoji_faceness(df, text)$.emoji_n, pos$.emoji_n)
+  expect_identical(emoji_risk(df, text)$.emoji_n, pos$.emoji_n)
+  expect_identical(emoji_token_cost(df, text)$.emoji_n, pos$.emoji_n)
+  expect_identical(emoji_score(df, text)$.emoji_n, pos$.emoji_n)
+  # .emoji_graphemes is the same count under another name
+  tc <- emoji_token_cost(df, text)
+  expect_identical(tc$.emoji_graphemes, tc$.emoji_n)
+})
+
+test_that("six independent paths agree on the corpus total", {
+  expect_equal(nrow(emoji_tokens(df, text)), total)
+  expect_equal(sum(emoji_extract_unnest(df, text)$.emoji_count), total)
+  expect_equal(nrow(emoji_context(df, text)), total)
+  expect_equal(sum(emoji_frequency(df, text)$n), total)
+  expect_equal(sum(emoji_dfm(df, text)[, -1]), total)
+  expect_equal(nrow(emoji_ngrams(df, text, n = 1)), total)
+  expect_equal(sum(emoji_version_profile(df, text)$n_tokens), total)
+  expect_equal(sum(emoji_trend(df, text, when, top_n = NULL)$n), total)
+  expect_equal(sum(emoji_seasonality(df, text, when)$n_emoji), total)
+})
+
+test_that("the per-row counts nest correctly", {
+  h <- pos$.emoji_n > 0
+  expect_true(all(pos$.emoji_first[h] <= pos$.emoji_last[h]))
+  expect_true(all(pos$.emoji_rel_position[h] >= 0 &
+                    pos$.emoji_rel_position[h] <= 1))
+  sen <- emoji_sentiment(df, text)
+  expect_true(all(sen$.emoji_n_scored[h] <= sen$.emoji_n[h]))
+  fac <- emoji_faceness(df, text)
+  expect_true(all(fac$.emoji_n_face[h] <= fac$.emoji_n_typed[h]))
+  expect_true(all(fac$.emoji_n_typed[h] <= fac$.emoji_n[h]))
+  expect_true(all(fac$.emoji_faceness[h] >= 0 & fac$.emoji_faceness[h] <= 1))
+  rsk <- emoji_risk(df, text)
+  expect_true(all(rsk$.emoji_n_ambiguous[h] <= rsk$.emoji_n[h]))
+  rat <- emoji_ratio(df, text)
+  expect_true(all(rat$.emoji_ratio >= 0 & rat$.emoji_ratio <= 1, na.rm = TRUE))
+  den <- emoji_density(df, text)
+  expect_true(all(den$.emoji_per_char >= 0 & den$.emoji_per_char <= 1,
+                  na.rm = TRUE))
+})
+
+test_that(".emoji_n_scored is NA exactly when the row has no emoji", {
+  # the invariant the whole affect surface rests on: NA means "no emoji",
+  # 0 means "emoji the lexicon cannot score"
+  sen <- emoji_sentiment(df, text)
+  expect_identical(is.na(sen$.emoji_n_scored), pos$.emoji_n == 0L)
+  sc <- emoji_score(df, text)
+  expect_identical(is.na(sc$.emoji_n_scored), pos$.emoji_n == 0L)
+  em <- emoji_emotion(df, text)
+  expect_identical(is.na(em$.emoji_n_scored), pos$.emoji_n == 0L)
+})
+
+test_that("the relational verbs agree with each other and with the dfm", {
+  expect_identical(emoji_pairs(df, text), emoji_cooccurrence(df, text))
+  cod <- emoji_cooccurrence(df, text, diagonal = TRUE)
+  diag_rows <- cod[cod$item1 == cod$item2, ]
+  binary <- emoji_dfm(df, text, weighting = "binary")
+  docfreq <- colSums(binary[, -1, drop = FALSE])
+  expect_gt(nrow(diag_rows), 0L)
+  expect_equal(unname(diag_rows$n), unname(docfreq[diag_rows$item1]))
+  # the dfm's columns are exactly the corpus's distinct emoji
+  expect_setequal(names(emoji_dfm(df, text))[-1],
+                  emoji_frequency(df, text)$emoji)
+})
+
+test_that("the aggregate shares are shares", {
+  vp <- emoji_version_profile(df, text)
+  expect_equal(sum(vp$share_tokens), 1)
+  se <- emoji_seasonality(df, text, when)
+  expect_equal(sum(se$share), 1)
+  expect_equal(sum(se$n_texts), nrow(df))
+})
+
+test_that("detection agrees across the summarise / filter / categorise trio", {
+  expect_equal(emoji_summary(df, text)$n_with_emoji,
+               nrow(emoji_filter(df, text)))
+  expect_equal(nrow(emoji_filter(df, text)), sum(pos$.emoji_n > 0))
+  # categorize keeps exactly the emoji-bearing rows -- it used to keep only
+  # the ones whose emoji it could also categorise
+  cat_rows <- emoji_categorize(df, text)
+  expect_equal(nrow(cat_rows), sum(pos$.emoji_n > 0))
+  expect_false(anyNA(cat_rows$.emoji_category))
+})
+
+test_that("a multi-code-point emoji is one emoji everywhere", {
+  # the fixture's family (7 code points) and flag (2) must count as one each.
+  # which() rather than a logical index: the fixture has an NA text, and
+  # df[NA, ] would silently add an all-NA row to the subset
+  one_family <- df[which(df$text == paste("our", family)), , drop = FALSE]
+  expect_equal(emoji_position(one_family, text)$.emoji_n, 1L)
+  expect_equal(nrow(emoji_tokens(one_family, text)), 1L)
+  expect_equal(sum(emoji_frequency(one_family, text)$n), 1L)
+  expect_equal(emoji_token_cost(one_family, text)$.emoji_graphemes, 1L)
+  # and it is at the end of its text, so rel_position is 1
+  expect_equal(emoji_position(one_family, text)$.emoji_rel_position, 1)
+})
+
+
+# ---------------------------------------------------------------------------
+# Everything positional derives from the spans the ZWJ repair produces, so a
+# change to the repair can silently break offset arithmetic in five verbs at
+# once. These pin the newly-merged sequences specifically: they are the longest
+# glyphs the engine emits, and the ones the repair invented.
+# ---------------------------------------------------------------------------
+
+merged_cases <- function() {
+  Z <- "\u200D"
+  c(heart_on_fire = paste0("\u2764", Z, "\U0001F525"),
+    man_beard     = paste0("\U0001F9D4", Z, "\u2642"),
+    walking       = "\U0001F6B6\u200D\u2640\uFE0F\u200D\u27A1\uFE0F",
+    family_zwj    = "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466")
+}
+
+test_that("a repaired span slices back to exactly its glyph", {
+  for (g in merged_cases()) {
+    s <- paste("a", g, "b")
+    m <- tidyEmoji:::.emoji_locations(s)[[1]]
+    expect_equal(nrow(m), 1L)
+    expect_identical(substring(s, m[1, "start"], m[1, "end"]), g)
+  }
+})
+
+test_that("emoji_context masking keeps offsets exact around a repaired glyph", {
+  for (g in merged_cases()) {
+    s <- paste("one two", g, "three four")
+    ctx <- emoji_context(data.frame(text = s), text, window = 2)
+    expect_equal(nrow(ctx), 1L)
+    expect_identical(ctx$.emoji_context_left, "one two")
+    expect_identical(ctx$.emoji_context_right, "three four")
+    expect_identical(ctx$.emoji, g)
+    expect_identical(substr(s, ctx$.position,
+                            ctx$.position + nchar(g) - 1L), g)
+  }
+})
+
+test_that("token_cost separates code points from graphemes on repaired glyphs", {
+  gs <- merged_cases()
+  d <- data.frame(text = paste("x", gs))
+  tc <- emoji_token_cost(d, text)
+  expect_identical(tc$.emoji_graphemes, rep(1L, length(gs)))
+  expect_identical(tc$.emoji_codepoints,
+                   vapply(gs, function(g) length(utf8ToInt(g)), integer(1),
+                          USE.NAMES = FALSE))
+  expect_true(all(tc$.emoji_codepoints >= tc$.emoji_graphemes))
+})
+
+test_that("a repaired glyph is one position, wherever it sits", {
+  for (g in merged_cases()) {
+    # sentence-final: rel = 1 whatever the glyph is built from
+    p <- emoji_position(data.frame(text = paste("hi", g)), text)
+    expect_equal(p$.emoji_n, 1L)
+    expect_equal(p$.emoji_rel_position, 1)
+    # leading, with text after it: rel = 0
+    p2 <- emoji_position(data.frame(text = paste(g, "hi")), text)
+    expect_equal(p2$.emoji_rel_position, 0)
+    # and a row that is only the emoji is a single-unit text, documented as 0
+    p3 <- emoji_position(data.frame(text = g), text)
+    expect_equal(p3$.emoji_rel_position, 0)
+  }
+})
+
+test_that("a repaired glyph survives strip and the shortcode round trip", {
+  for (g in merged_cases()) {
+    s <- paste("a", g, "b")
+    expect_identical(
+      emoji_sanitize(data.frame(text = s), text, policy = "strip")$text,
+      "a b"
+    )
+    out <- emoji_sanitize(data.frame(text = s), text,
+                          policy = "shortcode")$text
+    back <- text_to_emoji(data.frame(text = out), text)$text
+    recovered <- sub("^a ", "", sub(" b$", "", back))
+    expect_identical(tidyEmoji:::emoji_key(recovered),
+                     tidyEmoji:::emoji_key(g))
+  }
+})
+
+test_that("a repaired glyph is one emoji to every counting verb", {
+  gs <- merged_cases()
+  d <- data.frame(text = paste("x", gs, "y"))
+  expect_equal(emoji_position(d, text)$.emoji_n, rep(1L, length(gs)))
+  expect_equal(nrow(emoji_tokens(d, text)), length(gs))
+  expect_equal(nrow(emoji_context(d, text)), length(gs))
+  expect_equal(sum(emoji_frequency(d, text)$n), length(gs))
+  expect_equal(sum(emoji_dfm(d, text)[, -1]), length(gs))
+  expect_equal(nrow(emoji_categorize(d, text)), length(gs))
+  # and each resolves to a real name, not to a component
+  expect_false(anyNA(emoji_frequency(d, text)$name))
+})
+
+
+# ---------------------------------------------------------------------------
+# No user-visible ordering may depend on the session's collation. This has
+# bitten twice (emoji_to_text()'s shortcode choice in 0.3.0, emoji_dfm(doc_id)'s
+# row order in 0.4.0), so the guard is a test over every ordered output rather
+# than a convention to remember.
+# ---------------------------------------------------------------------------
+
+test_that("no ordered output depends on LC_COLLATE", {
+  A <- laugh
+  B <- heart_eyes
+  C <- party
+  d <- data.frame(text = c(A, B, C))
+  snapshot <- function() {
+    list(
+      search     = emoji_search("hand")$emoji,
+      search_sc  = emoji_search("hand")$shortcode,
+      topn       = top_n_emojis(d, text)$unicode,
+      topn_dup   = top_n_emojis(d, text, duplicated = TRUE)$emoji_name,
+      frequency  = emoji_frequency(d, text)$emoji,
+      ambiguity  = head(emoji_ambiguity()$emoji, 30),
+      flagged    = emoji_flag_ambiguous(d, text)$emoji,
+      lexicons   = emoji_lexicons()$name,
+      releases   = emoji_unicode_releases()$version,
+      categories = emoji_categorize(d, text)$.emoji_category,
+      pairs      = paste(emoji_pairs(d, text)$item1, emoji_pairs(d, text)$item2),
+      dfm_cols   = names(emoji_dfm(d, text)),
+      dfm_rows   = as.character(emoji_dfm(
+        data.frame(author = c("zoe", "Adam", "ubu"), text = c(A, B, C)),
+        text, doc_id = author)[[1]]),
+      ngrams     = emoji_ngrams(data.frame(text = paste0(A, B, C)), text)$.emoji_ngram,
+      shortcodes = emoji_to_text(d, text, format = "shortcode")$text,
+      collocs    = emoji_collocations(
+        data.frame(text = paste("good", c(A, B, C))), text, min_n = 1)$word
+    )
+  }
+  old <- Sys.getlocale("LC_COLLATE")
+  on.exit(suppressWarnings(Sys.setlocale("LC_COLLATE", old)), add = TRUE)
+  baseline <- snapshot()
+  tried <- 0L
+  for (loc in c("C", "en_US.UTF-8")) {
+    available <- tryCatch({
+      suppressWarnings(Sys.setlocale("LC_COLLATE", loc))
+      identical(Sys.getlocale("LC_COLLATE"), loc)
+    }, error = function(e) FALSE)
+    if (!available) next
+    tried <- tried + 1L
+    expect_identical(snapshot(), baseline)
+  }
+  skip_if(tried == 0L, "no alternative collation available")
+})
+
+test_that("tied counts break deterministically and not by input order", {
+  forwards <- emoji_frequency(data.frame(text = c(laugh, heart_eyes, party)),
+                              text)$emoji
+  backwards <- emoji_frequency(data.frame(text = c(party, heart_eyes, laugh)),
+                               text)$emoji
+  expect_identical(forwards, backwards)
+  expect_identical(forwards, emoji_frequency(
+    data.frame(text = c(heart_eyes, party, laugh)), text)$emoji)
+})
+
+
+# ---------------------------------------------------------------------------
+# Four verbs compute `.emoji_sentiment` / `.emoji_n_scored` from the same
+# lexicon by four separate code paths. Nothing forces them to agree, so a
+# change to one can silently make the package contradict itself -- which is
+# how the timezone defect surfaced. Pin the agreement.
+# ---------------------------------------------------------------------------
+
+test_that("the four sentiment code paths agree exactly", {
+  pleading <- "\U0001F97A"   # in no lexicon: exercises the 0 / NA distinction
+  df <- data.frame(
+    text = c(paste("great", laugh), paste0(laugh, heart_eyes), "plain", NA,
+             paste("x", pleading)),
+    sc = c(1, 0, -1, 0, 1)
+  )
+  a <- emoji_sentiment(df, text)
+  b <- emoji_incongruity(df, text, sc, scale = "none", where = "all")
+  d <- emoji_score(df, text, lexicon = "novak2015")
+  r <- emoji_risk(df, text)
+  expect_equal(b$.emoji_sentiment, a$.emoji_sentiment)
+  expect_equal(d$.emoji_score, a$.emoji_sentiment)
+  expect_identical(b$.emoji_n_scored, a$.emoji_n_scored)
+  expect_identical(d$.emoji_n_scored, a$.emoji_n_scored)
+  expect_identical(r$.emoji_n_scored, a$.emoji_n_scored)
+  expect_identical(b$.emoji_n, a$.emoji_n)
+  expect_identical(d$.emoji_n, a$.emoji_n)
+  expect_identical(r$.emoji_n, a$.emoji_n)
+  # emoji_tokens' per-glyph score is the lexicon value for that glyph
+  tk <- emoji_tokens(df, text)
+  expect_equal(
+    tk$.emoji_sentiment,
+    unname(tidyEmoji:::emoji_sentiment_map()[tidyEmoji:::emoji_key(tk$.emoji)])
+  )
+})
+
+test_that("emoji_context and emoji_density tokenise identically", {
+  # ?emoji_context claims "the same definition emoji_density() uses"; these are
+  # separate implementations ([[:space:]] vs \\s, trimws or not), so the claim
+  # needs a test rather than a comment
+  density_tokens <- function(s) sum(nzchar(strsplit(trimws(s), "\\s+")[[1]]))
+  context_tokens <- function(s) length(tidyEmoji:::.emoji_words(s))
+  cases <- c(
+    "one two three",
+    paste0("one", "\u00A0", "two three"),   # no-break space: not whitespace
+    paste0("one", "\u2003", "two three"),   # em space: is whitespace
+    paste0("one", "\u3000", "two three"),   # ideographic space
+    paste0("one", "\u1680", "two three"),   # ogham space mark
+    paste0("one", "\u200B", "two three"),   # zero-width space: not whitespace
+    "one\ttwo", "one\ntwo", "  one two  ", "\u00A0", ""
+  )
+  for (s in cases) expect_equal(context_tokens(s), density_tokens(s))
+})
+
+test_that("emoji_trend returns a complete period-by-emoji grid", {
+  df <- data.frame(
+    text = c(paste0(laugh, heart_eyes), laugh, paste0(heart_eyes, party),
+             party, paste0(laugh, party), "plain"),
+    when = as.Date(c("2021-01-05", "2021-01-20", "2021-02-10",
+                     "2021-02-25", "2021-03-03", "2021-03-15"))
+  )
+  tr <- emoji_trend(df, text, when, by = "month", top_n = NULL)
+  expect_equal(nrow(tr),
+               length(unique(tr$.period)) * length(unique(tr$emoji)))
+  expect_gt(sum(tr$n == 0L), 0L)          # the zeros a trend line needs
+  expect_equal(as.numeric(tapply(tr$share, tr$.period, sum)),
+               rep(1, length(unique(tr$.period))))
+  expect_equal(sum(tr$n), sum(emoji_frequency(df, text)$n))
+  # measure = "share" changes the emphasis, not the shape
+  trs <- emoji_trend(df, text, when, by = "month", top_n = NULL,
+                     measure = "share")
+  expect_identical(names(trs), names(tr))
+  expect_equal(nrow(trs), nrow(tr))
+})
+
+test_that("emoji_turnover agrees with set arithmetic and with itself", {
+  df <- data.frame(
+    text = c(paste0(laugh, heart_eyes), laugh, paste0(heart_eyes, party),
+             party, paste0(laugh, party), "plain"),
+    when = as.Date(c("2021-01-05", "2021-01-20", "2021-02-10",
+                     "2021-02-25", "2021-03-03", "2021-03-15"))
+  )
+  all_m <- c("jaccard", "new", "lost", "core")
+  full <- emoji_turnover(df, text, when, measure = all_m)
+  # every subset of `measure` yields a subset of the full column set, and the
+  # values do not depend on which subset was asked for
+  for (k in seq_along(all_m)) {
+    for (cmb in utils::combn(all_m, k, simplify = FALSE)) {
+      part <- emoji_turnover(df, text, when, measure = cmb)
+      expect_true(all(names(part) %in% names(full)))
+      expect_equal(nrow(part), nrow(full))
+      for (col in base::intersect(names(part), names(full))) {
+        expect_equal(part[[col]], full[[col]])
+      }
+    }
+  }
+  # and the first period pair matches set arithmetic done by hand
+  vocab <- lapply(
+    split(df$text, format(df$when, "%Y-%m")),
+    function(v) unique(unlist(tidyEmoji:::emoji_glyph_list(v)))
+  )
+  expect_equal(full$jaccard[1],
+               length(base::intersect(vocab[[1]], vocab[[2]])) /
+                 length(base::union(vocab[[1]], vocab[[2]])))
+  expect_equal(full$n_new[1], length(base::setdiff(vocab[[2]], vocab[[1]])))
+  expect_equal(full$n_lost[1], length(base::setdiff(vocab[[1]], vocab[[2]])))
+  expect_equal(full$n_core[1], length(base::intersect(vocab[[1]], vocab[[2]])))
+})
+
+
+# ---------------------------------------------------------------------------
+# emoji_incongruity(where = "final") rests on a helper that decides what
+# "ends the text" means. The definition is a research choice, so pin it: a
+# change here silently redefines the variable a user is modelling.
+# ---------------------------------------------------------------------------
+
+test_that("the trailing run is whitespace-tolerant and punctuation-strict", {
+  fg <- tidyEmoji:::.emoji_final_glyphs
+  n_final <- function(s) length(fg(s)[[1]])
+  # only whitespace may follow the last glyph
+  expect_equal(n_final(paste("great", laugh)), 1L)
+  expect_equal(n_final(paste0("great ", laugh, "   ")), 1L)
+  expect_equal(n_final(paste0("great ", laugh, "\n")), 1L)
+  expect_equal(n_final(paste0("great ", laugh, "\t")), 1L)
+  # anything else does not
+  expect_equal(n_final(paste0("great ", laugh, ".")), 0L)
+  expect_equal(n_final(paste0("great (", laugh, ")")), 0L)
+  expect_equal(n_final(paste("mid", laugh, "text")), 0L)
+  # the run extends back over whitespace-separated glyphs, and stops at text
+  expect_equal(n_final(paste0("great ", laugh, " ", heart_eyes)), 2L)
+  expect_equal(n_final(paste0("great ", laugh, heart_eyes)), 2L)
+  expect_equal(n_final(paste0("x ", laugh, " ", heart_eyes, " ", party)), 3L)
+  expect_equal(n_final(paste0("great ", laugh, " ok ", heart_eyes)), 1L)
+  # degenerate rows
+  expect_equal(n_final(laugh), 1L)
+  expect_equal(n_final(paste0("  ", laugh, "  ")), 1L)
+  expect_equal(n_final("plain text"), 0L)
+  expect_equal(n_final(""), 0L)
+  # a multi-code-point glyph is one final glyph
+  expect_equal(n_final(paste("family", family)), 1L)
+})
+
+test_that("where = 'final' scores exactly the trailing run", {
+  txt <- c(paste("great", laugh), paste("mid", laugh, "text"),
+           paste0("great ", laugh, "."), paste0("x ", laugh, " ", heart_eyes),
+           laugh, "plain")
+  df <- data.frame(text = txt, sc = 0)
+  fin <- emoji_incongruity(df, text, sc, scale = "none", where = "final")
+  all_ <- emoji_incongruity(df, text, sc, scale = "none", where = "all")
+  expect_equal(fin$.emoji_n_scored, c(1L, NA, NA, 2L, 1L, NA))
+  # never more than `where = "all"`, and .emoji_n is untouched by `where`
+  expect_true(all(fin$.emoji_n_scored <= all_$.emoji_n_scored, na.rm = TRUE))
+  expect_identical(fin$.emoji_n, all_$.emoji_n)
+})
+
+
+# ---------------------------------------------------------------------------
+# Directed and undirected pairs must describe the same co-occurrences.
+# ---------------------------------------------------------------------------
+
+test_that("directed pairs are a re-orientation, not a different count", {
+  d <- data.frame(text = c(paste0(laugh, heart_eyes),
+                           paste0(heart_eyes, laugh),
+                           paste0(laugh, heart_eyes, party)))
+  und <- emoji_pairs(d, text)
+  dir <- emoji_pairs(d, text, directed = TRUE)
+  expect_equal(sum(dir$n), sum(und$n))
+  # a pair is two distinct emoji, in either orientation
+  expect_false(any(dir$item1 == dir$item2))
+  expect_false(any(und$item1 == und$item2))
+  # the same emoji twice in one document is not a pair
+  expect_equal(nrow(emoji_pairs(data.frame(text = paste0(laugh, laugh)),
+                                text, directed = TRUE)), 0L)
+  # undirected collapses the two orientations of the same unordered pair
+  expect_lte(nrow(und), nrow(dir))
+})
+
+test_that("emoji_ngrams positions index the row's emoji sequence", {
+  d <- data.frame(text = c(paste0(laugh, heart_eyes, party), laugh, "plain",
+                           paste0(laugh, laugh, laugh, laugh)))
+  bi <- emoji_ngrams(d, text, n = 2)
+  expect_equal(bi$.row_number, c(1L, 1L, 4L, 4L, 4L))
+  expect_equal(bi$.position, c(1L, 2L, 1L, 2L, 3L))
+  # a window wider than the row contributes nothing
+  expect_equal(nrow(emoji_ngrams(d, text, n = 5)), 0L)
+  # n = 1 is one row per occurrence
+  expect_equal(nrow(emoji_ngrams(d, text, n = 1)),
+               sum(emoji_position(d, text)$.emoji_n))
+})
+
+
+# ---------------------------------------------------------------------------
+# emoji_dfm()'s weightings over *aggregated* documents. The count path was
+# tested with one document per row; tfidf's denominator is the document count,
+# so aggregating with doc_id changes N and df together.
+# ---------------------------------------------------------------------------
+
+test_that("tfidf over aggregated documents is count * log(N/df)", {
+  d <- data.frame(who = c("a", "a", "b", "c"),
+                  text = c(laugh, paste0(laugh, heart_eyes), heart_eyes,
+                           paste0(heart_eyes, party)))
+  cnt <- emoji_dfm(d, text, doc_id = who)
+  tf <- emoji_dfm(d, text, doc_id = who, weighting = "tfidf")
+  bin <- emoji_dfm(d, text, doc_id = who, weighting = "binary")
+  expect_equal(nrow(cnt), 3L)
+  expect_equal(sum(cnt[, -1]), sum(emoji_frequency(d, text)$n))
+  n_docs <- nrow(cnt)
+  for (g in names(cnt)[-1]) {
+    doc_freq <- sum(cnt[[g]] > 0)
+    expect_equal(tf[[g]], cnt[[g]] * log(n_docs / doc_freq))
+  }
+  expect_equal(as.matrix(bin[, -1]) > 0, as.matrix(cnt[, -1]) > 0)
+  # the documented consequence: an emoji in every document carries no weight
+  everywhere <- names(cnt)[-1][vapply(names(cnt)[-1],
+                                      function(g) all(cnt[[g]] > 0),
+                                      logical(1))]
+  for (g in everywhere) expect_true(all(tf[[g]] == 0))
+})
+
+test_that("emoji_emotion(long = TRUE) is the wide form, reshaped", {
+  dims <- c("anger", "anticipation", "disgust", "fear",
+            "joy", "sadness", "surprise", "trust")
+  df <- data.frame(text = c(paste("love", heart_eyes), "plain",
+                            paste("x", laugh)))
+  lg <- emoji_emotion(df, text, long = TRUE)
+  wd <- emoji_emotion(df, text, long = FALSE)
+  expect_equal(nrow(lg), nrow(df) * length(dims))
+  # Plutchik order, repeated once per input row, rows kept in order
+  expect_identical(lg$.emoji_emotion, rep(dims, times = nrow(df)))
+  expect_identical(lg$text, rep(df$text, each = length(dims)))
+  expect_equal(lg$.emoji_score,
+               as.numeric(t(as.matrix(wd[, paste0(".emoji_", dims)]))))
+})
+
+test_that("emoji_emotion_label picks the first argmax in Plutchik order", {
+  dims <- c("anger", "anticipation", "disgust", "fear",
+            "joy", "sadness", "surprise", "trust")
+  df <- data.frame(text = c(paste("x", laugh), paste("y", heart_eyes),
+                            "plain"))
+  wd <- emoji_emotion(df, text, long = FALSE)
+  lab <- emoji_emotion_label(df, text)$.emoji_emotion
+  for (i in seq_len(nrow(df))) {
+    scores <- unlist(wd[i, paste0(".emoji_", dims)])
+    if (all(is.na(scores))) {
+      expect_true(is.na(lab[i]))
+    } else {
+      expect_identical(lab[i], dims[which.max(scores)])
+    }
+  }
+})
+
+test_that("the functional-type taxonomy is total and its levels are all used", {
+  ref <- tidyEmoji:::emoji_reference()
+  types <- as_emoji_type(ref$emoji)
+  expect_false(anyNA(types))
+  levels <- tidyEmoji:::emoji_type_levels()
+  expect_true(all(unique(types) %in% levels))
+  expect_true(all(levels %in% unique(types)))
+})
+
+
+# ---------------------------------------------------------------------------
+# The affect statistics, against their definitions. Round 3 pinned tfidf, the
+# rank/z-score rescalings, PMI and entropy; these are the four that were left.
+# A data-raw rebuild or a formula "simplification" would otherwise change
+# published numbers silently.
+# ---------------------------------------------------------------------------
+
+test_that("the ambiguity measures match their definitions", {
+  L <- emoji_sentiment_lexicon
+  a <- tidyEmoji:::emoji_ambiguity_table()
+  i <- match(a$key, tidyEmoji:::emoji_key(L$emoji))
+  n <- L$negative[i] + L$neutral[i] + L$positive[i]
+  p_neg <- L$negative[i] / n
+  p_neu <- L$neutral[i] / n
+  p_pos <- L$positive[i] / n
+  expect_equal(a$p_neg, p_neg)
+  expect_equal(a$p_neu, p_neu)
+  expect_equal(a$p_pos, p_pos)
+  # Shannon entropy in nats, with 0 log 0 taken as its limit
+  plogp <- function(p) ifelse(p > 0, p * log(p), 0)
+  expect_equal(a$entropy, -(plogp(p_neg) + plogp(p_neu) + plogp(p_pos)))
+  expect_equal(a$gini, 1 - (p_neg^2 + p_neu^2 + p_pos^2))
+  expect_equal(a$neutral_share, p_neu)
+  # bounds a three-class distribution cannot exceed
+  expect_lte(max(a$entropy), log(3) + 1e-9)
+  expect_lte(max(a$gini), 2 / 3 + 1e-9)
+})
+
+test_that("the glyph standard error is a real variance over {-1, 0, 1}", {
+  L <- emoji_sentiment_lexicon
+  a <- tidyEmoji:::emoji_ambiguity_table()
+  i <- match(a$key, tidyEmoji:::emoji_key(L$emoji))
+  n <- L$negative[i] + L$neutral[i] + L$positive[i]
+  p_neg <- L$negative[i] / n
+  p_pos <- L$positive[i] / n
+  # X in {-1, 0, 1}: E[X] = p_pos - p_neg, E[X^2] = p_pos + p_neg
+  variance <- pmax((p_pos + p_neg) - (p_pos - p_neg)^2, 0)
+  expect_equal(a$se, sqrt(variance / n))
+  expect_equal(a$ci_width, 2 * stats::qnorm(0.975) * a$se)
+  expect_true(all(variance >= 0))
+  # the lexicon's own score is the same expectation
+  expect_equal(L$sentiment_score[i], p_pos - p_neg)
+  # and more annotations means a tighter estimate
+  expect_lt(stats::cor(a$se, n, method = "spearman"), 0)
+})
+
+test_that("emoji_risk(threshold = NULL) is the measure's upper quartile", {
+  tbl <- tidyEmoji:::emoji_ambiguity_table()
+  for (m in c("entropy", "gini", "neutral_share", "ci_width")) {
+    q <- unname(stats::quantile(tbl[[m]], 0.75, na.rm = TRUE))
+    df <- data.frame(text = head(tbl$emoji[!is.na(tbl[[m]])], 40))
+    expect_identical(
+      emoji_risk(df, text, measure = m)$.emoji_n_ambiguous,
+      emoji_risk(df, text, measure = m, threshold = q)$.emoji_n_ambiguous
+    )
+  }
+})
+
+test_that("emoji_sentiment(se = TRUE) propagates as documented", {
+  a <- tidyEmoji:::emoji_ambiguity_table()
+  # pick glyphs the engine can actually see: the lexicon's leading rows include
+  # text-presentation forms (the bare U+2764) that are deliberately undetected,
+  # and a row containing one scores fewer glyphs than it looks like
+  detectable <- a$emoji[lengths(tidyEmoji:::emoji_glyph_list(a$emoji)) == 1L]
+  g1 <- detectable[1]
+  g2 <- detectable[2]
+  se <- stats::setNames(a$se, a$key)
+  s1 <- se[[tidyEmoji:::emoji_key(g1)]]
+  s2 <- se[[tidyEmoji:::emoji_key(g2)]]
+  out <- emoji_sentiment(data.frame(text = c(g1, paste0(g1, g2), "plain")),
+                         text, se = TRUE)
+  expect_equal(out$.emoji_n_scored, c(1L, 2L, NA))
+  expect_equal(out$.emoji_sentiment_se[1], s1)
+  expect_equal(out$.emoji_sentiment_se[2], sqrt(s1^2 + s2^2) / 2)
+  expect_true(is.na(out$.emoji_sentiment_se[3]))
+  expect_true(all(out$.emoji_sentiment_se >= 0, na.rm = TRUE))
+})
+
+
+# ---------------------------------------------------------------------------
+# emoji_unicode_releases() is the version-to-date lookup behind
+# emoji_version_profile() and emoji_adoption_lag(). Emoji versions 0.6-5.0 and
+# Unicode versions 6.0-10.0 ran in *parallel* until they unified at 11.0, so
+# the table holds two series and its dates are not monotonic when read as one
+# list. That structure is easy to "tidy" into a single sorted column and break.
+# ---------------------------------------------------------------------------
+
+test_that("the releases table has two internally consistent series", {
+  rel <- emoji_unicode_releases()
+  expect_true(all(c("version", "version_num", "series", "release_date") %in%
+                    names(rel)))
+  expect_equal(anyDuplicated(rel$version), 0L)
+  expect_equal(rel$version_num, as.numeric(rel$version))
+  expect_false(anyNA(rel$release_date))
+  # each series is monotonic in its own numbering
+  for (s in unique(rel$series)) {
+    sub <- rel[rel$series == s, ]
+    expect_true(all(diff(sub$release_date[order(sub$version_num)]) > 0))
+  }
+  # and the two series agree where they describe the same release
+  same_day <- function(a, b) {
+    expect_identical(rel$release_date[rel$version == a],
+                     rel$release_date[rel$version == b])
+  }
+  same_day("0.7", "7.0")
+  same_day("3.0", "9.0")
+  same_day("5.0", "10.0")
+})
+
+test_that("the catalogue's versions all resolve, and only via the emoji series", {
+  ref <- tidyEmoji:::emoji_reference()
+  rel <- emoji_unicode_releases()
+  labels <- unique(tidyEmoji:::.emoji_version_label(ref$version))
+  known <- labels[!is.na(labels)]
+  expect_gt(length(known), 10L)
+  expect_true(all(known %in% rel$version[rel$series == "emoji"]))
+  # version_num is what orders them: numeric and lexical order genuinely differ
+  expect_false(identical(known[order(tidyEmoji:::.emoji_version_num(known))],
+                         known[order(known)]))
+  # glyphs with an unknown version are reported, not dropped (documented)
+  expect_gt(sum(is.na(labels)), 0L)
+})
+
+test_that("emoji_adoption_lag computes first_seen, release and lag by hand", {
+  melting <- "\U0001FAE0"   # Unicode Emoji 14.0
+  d <- data.frame(
+    text = c(laugh, paste0(laugh, heart_eyes), melting, laugh),
+    when = as.Date(c("2020-01-10", "2020-03-05", "2022-06-01", "2019-12-31"))
+  )
+  al <- emoji_adoption_lag(d, text, when)
+  ref <- tidyEmoji:::emoji_reference()
+  rel <- emoji_unicode_releases()
+  for (k in seq_len(nrow(al))) {
+    g <- al$emoji[k]
+    seen <- min(d$when[grepl(g, d$text, fixed = TRUE)])
+    ver <- tidyEmoji:::.emoji_version_label(
+      ref$version[match(tidyEmoji:::emoji_key(g), ref$key)])
+    expect_identical(al$first_seen[k], seen)
+    expect_identical(al$release_date[k], rel$release_date[match(ver, rel$version)])
+    expect_identical(al$lag_days[k], as.integer(seen - al$release_date[k]))
+  }
+  expect_type(al$lag_days, "integer")
+  # n counts occurrences, not rows
+  expect_equal(al$n[al$emoji == laugh], 3L)
+})
+
+test_that("a glyph used before its release date gets a negative lag", {
+  # documented as "usually a vendor shipping early" -- it must not be clamped,
+  # because it is also how a corpus with wrong dates announces itself
+  melting <- "\U0001FAE0"
+  al <- emoji_adoption_lag(
+    data.frame(text = melting, when = as.Date("2015-01-01")), text, when)
+  expect_lt(al$lag_days, 0L)
+  expect_identical(al$first_seen, as.Date("2015-01-01"))
+})
+
+test_that("adoption_lag and version_profile are collation-invariant", {
+  # both split() by glyph, whose factor levels come from sort() -- these two
+  # verbs were not in the collation sweep the other sixteen outputs are in
+  melting <- "\U0001FAE0"
+  d <- data.frame(text = c(laugh, heart_eyes, melting,
+                           paste0(laugh, heart_eyes, melting), party),
+                  when = as.Date("2020-01-01") + 0:4)
+  snapshot <- function() {
+    al <- emoji_adoption_lag(d, text, when)
+    vp <- emoji_version_profile(d, text)
+    list(emoji = al$emoji, lag = al$lag_days, first = al$first_seen,
+         version = vp$version, tokens = vp$n_tokens, types = vp$n_types,
+         releases = emoji_unicode_releases()$version)
+  }
+  old <- Sys.getlocale("LC_COLLATE")
+  on.exit(suppressWarnings(Sys.setlocale("LC_COLLATE", old)), add = TRUE)
+  baseline <- snapshot()
+  tried <- 0L
+  for (loc in c("C", "en_US.UTF-8")) {
+    available <- tryCatch({
+      suppressWarnings(Sys.setlocale("LC_COLLATE", loc))
+      identical(Sys.getlocale("LC_COLLATE"), loc)
+    }, error = function(e) FALSE)
+    if (!available) next
+    tried <- tried + 1L
+    expect_identical(snapshot(), baseline)
+  }
+  skip_if(tried == 0L, "no alternative collation available")
+})
+
+
+# ---------------------------------------------------------------------------
+# emoji_collocations()'s PMI. The earlier check used a symmetric fixture where
+# every marginal was equal, so any formula of roughly that shape would have
+# passed. This one is deliberately asymmetric: the six values come out as
+# log(2), log(1.5) and log(0.5), which pin the numerator and both marginals.
+# ---------------------------------------------------------------------------
+
+collocation_fixture <- function() {
+  data.frame(text = c(
+    paste("good great fine", laugh),
+    paste("good great", laugh),
+    paste("good", laugh),
+    paste("good bad", heart_eyes),
+    paste("bad awful", heart_eyes),
+    paste("bad", heart_eyes),
+    paste("bad", heart_eyes)
+  ))
+}
+
+test_that("pmi is log(n * N / (n_emoji * n_word))", {
+  d <- collocation_fixture()
+  co <- emoji_collocations(d, text, window = 5, min_n = 1)
+  # rebuild the table independently from emoji_context()
+  ctx <- emoji_context(d, text, window = 5, unit = "word")
+  words <- lapply(ctx$.emoji_context, function(s) {
+    w <- tidyEmoji:::.emoji_words(tolower(s))
+    w <- gsub("^[^[:alnum:]]+|[^[:alnum:]]+$", "", w)
+    unique(w[nzchar(w)])
+  })
+  pairs <- data.frame(
+    emoji = rep(tidyEmoji:::emoji_canonical(ctx$.emoji), lengths(words)),
+    word = unlist(words, use.names = FALSE),
+    stringsAsFactors = FALSE
+  )
+  tab <- dplyr::count(pairs, emoji, word, name = "n")
+  total <- sum(tab$n)
+  # as.numeric(), not unname(): tapply() returns a 1-d array and subsetting it
+  # keeps the dim attribute, which propagates through the arithmetic
+  e_tot <- as.numeric(tapply(tab$n, tab$emoji, sum)[tab$emoji])
+  w_tot <- as.numeric(tapply(tab$n, tab$word, sum)[tab$word])
+  tab$expected <- log(tab$n * total / (e_tot * w_tot))
+  m <- merge(as.data.frame(co), as.data.frame(tab), by = c("emoji", "word"))
+  expect_equal(nrow(m), nrow(co))
+  expect_equal(as.numeric(m$pmi), as.numeric(m$expected))
+  expect_equal(sum(co$n), total)
+  # the fixture's marginals are genuinely unequal, so the test has teeth
+  expect_gt(length(unique(w_tot)), 1L)
+})
+
+test_that("pmi signs mean what they should, and stay finite", {
+  co <- emoji_collocations(collocation_fixture(), text, window = 5, min_n = 1)
+  expect_true(all(is.finite(co$pmi)))
+  # a word used with only one emoji is positively associated with it
+  expect_true(all(co$pmi[co$word %in% c("great", "fine", "awful")] > 0))
+  # a word shared between both emoji must be negative for at least one
+  expect_true(any(co$pmi[co$word == "good"] < 0))
+})
+
+test_that("min_n is inclusive and prunes after the marginals", {
+  d <- collocation_fixture()
+  full <- emoji_collocations(d, text, window = 5, min_n = 1)
+  for (k in 1:4) {
+    part <- emoji_collocations(d, text, window = 5, min_n = k)
+    if (nrow(part)) expect_gte(min(part$n), k)
+    expect_true(all(part$n >= k))
+  }
+  # pruning must not change the pmi of the rows that survive: the marginals
+  # are corpus-level, so a pruned table still describes the whole corpus
+  part <- emoji_collocations(d, text, window = 5, min_n = 3)
+  idx <- match(paste(part$emoji, part$word), paste(full$emoji, full$word))
+  expect_equal(part$pmi, full$pmi[idx])
+})
+
+test_that("measure changes the ordering, not the rows", {
+  d <- collocation_fixture()
+  by_pmi <- emoji_collocations(d, text, min_n = 1, measure = "pmi")
+  by_n <- emoji_collocations(d, text, min_n = 1, measure = "count")
+  expect_identical(names(by_pmi), names(by_n))
+  expect_equal(nrow(by_pmi), nrow(by_n))
+  expect_setequal(paste(by_pmi$emoji, by_pmi$word),
+                  paste(by_n$emoji, by_n$word))
+  expect_false(is.unsorted(-by_pmi$pmi))
+  expect_false(is.unsorted(-by_n$n))
+})
+
+test_that("a wider context window cannot lose collocations", {
+  d <- collocation_fixture()
+  narrow <- emoji_collocations(d, text, window = 1, min_n = 1)
+  wide <- emoji_collocations(d, text, window = 20, min_n = 1)
+  expect_gte(nrow(wide), nrow(narrow))
+  expect_true(all(paste(narrow$emoji, narrow$word) %in%
+                    paste(wide$emoji, wide$word)))
+})
+
+
+# ---------------------------------------------------------------------------
+# NEWS.md is parsed by utils::news() and rendered on the CRAN package page, so
+# a malformed heading is a user-visible break that R CMD check does not catch.
+# ---------------------------------------------------------------------------
+
+# The version headings, checked without parsing Markdown at all, so the
+# invariant holds even where the reader's dependencies are absent.
+test_that("NEWS.md has a well-formed heading for every released version", {
+  path <- testthat::test_path("..", "..", "NEWS.md")
+  skip_if_not(file.exists(path), "NEWS.md not available")
+  headings <- grep("^# ", readLines(path, warn = FALSE), value = TRUE)
+  expect_gt(length(headings), 0L)
+  # every top-level heading is "# tidyEmoji <version>"
+  expect_true(all(grepl("^# tidyEmoji [0-9]+([.][0-9]+)+$", headings)))
+  versions <- sub("^# tidyEmoji ", "", headings)
+  expect_equal(anyDuplicated(versions), 0L)
+  # newest first, and the version under development leads
+  expect_identical(versions, as.character(sort(package_version(versions),
+                                               decreasing = TRUE)))
+  desc <- read.dcf(testthat::test_path("..", "..", "DESCRIPTION"))
+  expect_identical(versions[1], unname(desc[1, "Version"]))
+})
+
+test_that("NEWS.md parses into news() entries for every released version", {
+  # utils::news() reads a Markdown NEWS.md through commonmark and xml2, and
+  # tools:::.build_news_db_from_package_NEWS_md calls both unguarded. Neither
+  # was a dependency of this package -- they were present here only because
+  # roxygen2 and testthat pull them in -- so this test passed locally and
+  # errored on every CI platform. Both are now in Suggests so CI runs it.
+  #
+  # Two things this cost, worth remembering: _R_CHECK_DEPENDS_ONLY_ cannot
+  # catch it, because it masks Suggests and these were in neither field; and
+  # declaring only commonmark just moved the error to xml2, because a missing
+  # dependency stops at the first one.
+  skip_if_not_installed("commonmark")
+  skip_if_not_installed("xml2")
+  db <- suppressWarnings(utils::news(package = "tidyEmoji"))
+  expect_s3_class(db, "news_db")
+  expect_gt(nrow(db), 0L)
+  expect_false(any(is.na(db$Version) | !nzchar(db$Version)))
+  expect_true("0.4.0" %in% db$Version)
+  # the version under development must have entries in both usual categories
+  this_release <- db[db$Version == "0.4.0", ]
+  expect_true(all(c("New features", "Improvements and fixes") %in%
+                    this_release$Category))
+})
+
+
+# ---------------------------------------------------------------------------
+# Row-order independence. Collation invariance is covered elsewhere; this is
+# the other half of reproducibility, and it is what emoji_dfm()'s glyph
+# tiebreak actually protects: without it, tied columns fall back to the order
+# the glyphs happen to appear in the data, so the same corpus sorted
+# differently yields a differently-ordered feature matrix. Found by mutation
+# testing -- deleting the tiebreak passed the entire suite.
+# ---------------------------------------------------------------------------
+
+test_that("a row permutation cannot reorder any aggregate output", {
+  # every emoji has the same total count, so every ordering is a pure tie and
+  # only the tiebreak decides
+  glyphs <- c(laugh, heart_eyes, party, poop)
+  forwards <- data.frame(text = glyphs)
+  backwards <- data.frame(text = rev(glyphs))
+  shuffled <- data.frame(text = glyphs[c(3, 1, 4, 2)])
+  cols <- function(d) names(emoji_dfm(d, text))
+  expect_identical(cols(backwards), cols(forwards))
+  expect_identical(cols(shuffled), cols(forwards))
+  expect_identical(names(emoji_dfm(backwards, text, weighting = "binary")),
+                   cols(forwards))
+  # the other ordered aggregates, on the same all-tied corpus
+  expect_identical(emoji_frequency(backwards, text)$emoji,
+                   emoji_frequency(forwards, text)$emoji)
+  expect_identical(top_n_emojis(backwards, text)$unicode,
+                   top_n_emojis(forwards, text)$unicode)
+  expect_identical(emoji_version_profile(backwards, text)$version,
+                   emoji_version_profile(forwards, text)$version)
+})
+
+test_that("a row permutation cannot reorder the relational verbs", {
+  docs <- c(paste0(laugh, heart_eyes), paste0(heart_eyes, party),
+            paste0(party, laugh))
+  forwards <- data.frame(text = docs)
+  backwards <- data.frame(text = rev(docs))
+  expect_identical(emoji_pairs(backwards, text), emoji_pairs(forwards, text))
+  expect_identical(emoji_cooccurrence(backwards, text, diagonal = TRUE),
+                   emoji_cooccurrence(forwards, text, diagonal = TRUE))
+  # collocations: same pairs and values, ordering independent of row order
+  cf <- emoji_collocations(
+    data.frame(text = paste(c("good", "bad", "fine"), docs)), text, min_n = 1)
+  cb <- emoji_collocations(
+    data.frame(text = rev(paste(c("good", "bad", "fine"), docs))), text,
+    min_n = 1)
+  expect_identical(cf, cb)
+})
+
+test_that("dfm columns are ordered by count then glyph, not by appearance", {
+  # laugh is commonest, so it leads; the two singletons tie and must come back
+  # in glyph order whichever way round the data has them
+  d1 <- data.frame(text = c(paste0(laugh, laugh), party, heart_eyes))
+  d2 <- data.frame(text = c(heart_eyes, party, paste0(laugh, laugh)))
+  expect_identical(names(emoji_dfm(d1, text)), names(emoji_dfm(d2, text)))
+  expect_equal(names(emoji_dfm(d1, text))[2], laugh)
+  tied <- names(emoji_dfm(d1, text))[3:4]
+  expect_identical(tied, sort(tied, method = "radix"))
+})
+
+
+# ---------------------------------------------------------------------------
+# emoji_search() is documented to match against keywords, name *and*
+# shortcodes. Nothing tested the three fields separately, so deleting the alias
+# term from `kw_hit | nm_hit | al_hit` passed the whole suite -- found by
+# mutation testing. Some queries match on one field only.
+# ---------------------------------------------------------------------------
+
+test_that("emoji_search matches on each of its three fields", {
+  # alias-only: "thumbsup" and "grinning_face" appear in no name (which has
+  # spaces, not underscores) and in no keyword
+  e <- emoji::emojis
+  alias_only <- function(q) {
+    kw <- vapply(e$keywords, function(k) any(grepl(q, tolower(k), fixed = TRUE)),
+                 logical(1))
+    nm <- grepl(q, tolower(e$name), fixed = TRUE)
+    al <- vapply(e$aliases, function(a) any(grepl(q, tolower(a), fixed = TRUE)),
+                 logical(1))
+    sum(al & !kw & !nm)
+  }
+  expect_gt(alias_only("grinning_face"), 0L)
+  expect_gt(nrow(emoji_search("grinning_face")), 0L)
+  expect_gt(nrow(emoji_search("thumbsup")), 0L)
+  # "+1" is a shortcode whose regex metacharacter must also survive
+  expect_equal(nrow(emoji_search("+1")), 1L)
+
+  # name-only and keyword-only queries also return hits
+  expect_gt(nrow(emoji_search("with tears of joy")), 0L)   # a name substring
+  expect_gt(nrow(emoji_search("happy")), 0L)               # a keyword
+
+  # the union is at least as large as any single field
+  expect_gte(nrow(emoji_search("smiley")),
+             max(nrow(emoji_search("grinning_face")), 1L))
+})
+
+test_that("emoji_search returns the documented columns and is case-blind", {
+  out <- emoji_search("grin")
+  expect_identical(names(out),
+                   c("emoji", "name", "shortcode", "group", "keyword"))
+  expect_gt(nrow(out), 0L)
+  expect_identical(out, emoji_search("GRIN"))
+  expect_identical(out, emoji_search("Grin"))
+  # a query that matches nothing gives a typed zero-row tibble, not an error
+  none <- emoji_search("zzzzznotanemoji")
+  expect_equal(nrow(none), 0L)
+  expect_identical(names(none), names(out))
+  expect_type(none$emoji, "character")
+})
+
+
+# ---------------------------------------------------------------------------
+# as_emoji() and text_to_emoji() accept *every* GitHub alias, not just the
+# primary one each emoji is listed under. The reference table keeps only the
+# first alias as `shortcode`, so 751 of the 4698 resolve solely through
+# as_emoji()'s third-tier fallback to emoji::emoji_name -- and deleting that
+# fallback passed the whole suite. Found by mutation testing.
+# ---------------------------------------------------------------------------
+
+test_that("as_emoji resolves every alias, primary or not", {
+  ref <- tidyEmoji:::emoji_reference()
+  aliases <- unique(unlist(emoji::emojis$aliases, use.names = FALSE))
+  aliases <- aliases[!is.na(aliases) & nzchar(aliases)]
+  primary <- unique(ref$shortcode[!is.na(ref$shortcode)])
+  secondary <- base::setdiff(aliases, primary)
+  # the fallback is load-bearing: hundreds of aliases are not any emoji's first
+  expect_gt(length(secondary), 100L)
+  expect_false(anyNA(as_emoji(aliases)))
+  expect_false(anyNA(as_emoji(secondary)))
+  # named examples, so a failure says which lookup broke
+  expect_equal(as_emoji("joy"), "\U0001F602")             # primary shortcode
+  expect_equal(as_emoji("grinning_face"), "\U0001F600")   # third tier only
+  expect_equal(as_emoji("satisfied"), "\U0001F606")       # third tier only
+  # reference names and shortcodes also resolve, and an unknown gives NA
+  expect_false(anyNA(as_emoji(ref$name)))
+  expect_true(is.na(as_emoji("definitely_not_an_emoji_name")))
+})
+
+test_that("text_to_emoji converts every alias token, primary or not", {
+  ref <- tidyEmoji:::emoji_reference()
+  aliases <- unique(unlist(emoji::emojis$aliases, use.names = FALSE))
+  aliases <- aliases[!is.na(aliases) & nzchar(aliases)]
+  secondary <- base::setdiff(aliases, unique(ref$shortcode[!is.na(ref$shortcode)]))
+  tokens <- paste0(":", secondary, ":")
+  out <- text_to_emoji(data.frame(text = tokens), text)$text
+  # every token must have been rewritten
+  expect_false(any(out == tokens))
+  expect_equal(text_to_emoji(data.frame(text = "hi :grinning_face: bye"),
+                             text)$text,
+               "hi \U0001F600 bye")
+  # an unknown shortcode is left alone rather than blanked
+  expect_equal(text_to_emoji(data.frame(text = ":not_a_shortcode:"),
+                             text)$text,
+               ":not_a_shortcode:")
+})
+
+
+# ---------------------------------------------------------------------------
+# emoji_incongruity(threshold =) is documented as the gap "at or above which"
+# .emoji_incongruent is TRUE. Nothing tested the boundary, so flipping >= to >
+# passed the suite -- it would silently reclassify every row sitting exactly on
+# the threshold.
+# ---------------------------------------------------------------------------
+
+test_that("the incongruity threshold is inclusive at the boundary", {
+  # with scale = "none" and text_score 0, the gap is exactly the emoji score,
+  # so setting threshold to that same double puts the row precisely on the line
+  score <- tidyEmoji:::emoji_sentiment_map()[[tidyEmoji:::emoji_key(laugh)]]
+  df <- data.frame(text = paste("x", laugh), sc = 0)
+  on_line <- emoji_incongruity(df, text, sc, scale = "none",
+                               threshold = score)
+  expect_equal(on_line$.emoji_incongruity, score)
+  expect_true(on_line$.emoji_incongruent)
+  # just above the line is FALSE, just below is TRUE
+  just_above <- emoji_incongruity(df, text, sc, scale = "none",
+                                  threshold = score + 1e-9)
+  expect_false(just_above$.emoji_incongruent)
+  just_below <- emoji_incongruity(df, text, sc, scale = "none",
+                                  threshold = score - 1e-9)
+  expect_true(just_below$.emoji_incongruent)
+  # a row with no comparable pair stays NA rather than FALSE
+  none <- emoji_incongruity(data.frame(text = "plain", sc = 0), text, sc,
+                            scale = "none", threshold = 1)
+  expect_true(is.na(none$.emoji_incongruent))
+})
+
+
+# ---------------------------------------------------------------------------
+# Source encoding. 0.4.0 made R/ pure ASCII so the PDF reference manual builds
+# on every CRAN flavour, and that has been checked by hand every round since.
+# Automate it -- and cover the test files too, whose string literals must be
+# written as escapes rather than literal glyphs so the suite passes in a
+# non-UTF-8 locale.
+# ---------------------------------------------------------------------------
+
+non_ascii_bytes <- function(path) {
+  raw <- readBin(path, "raw", file.info(path)$size)
+  any(raw > as.raw(127L))
+}
+
+test_that("R/ sources are pure ASCII", {
+  # a literal glyph in R/ reaches the Rd files, and pdfLaTeX has no glyph for it
+  files <- list.files(testthat::test_path("..", "..", "R"),
+                      pattern = "[.]R$", full.names = TRUE)
+  skip_if(length(files) == 0L, "package sources not available")
+  expect_identical(basename(files[vapply(files, non_ascii_bytes, logical(1))]),
+                   character())
+})
+
+test_that("test sources keep non-ASCII out of their string literals", {
+  # R parses a source literal byte-wise under a non-UTF-8 locale, so a literal
+  # zero-width joiner becomes three replacement characters and every detection
+  # fixture built from it silently tests the wrong string. Comment prose is
+  # exempt: it is never parsed as data.
+  files <- list.files(testthat::test_path("."), pattern = "^test.*[.]R$",
+                      full.names = TRUE)
+  skip_if(length(files) == 0L, "test sources not available")
+  offenders <- character()
+  for (f in files) {
+    for (line in readLines(f, warn = FALSE, encoding = "UTF-8")) {
+      code <- sub("#.*$", "", line)
+      quotes <- gregexpr('"', code, fixed = TRUE)[[1]]
+      if (quotes[1] == -1L) next
+      inner <- substr(code, quotes[1], quotes[length(quotes)])
+      if (any(utf8ToInt(inner) > 127L)) {
+        offenders <- c(offenders, paste0(basename(f), ": ", trimws(line)))
+      }
+    }
+  }
+  expect_identical(offenders, character())
+})

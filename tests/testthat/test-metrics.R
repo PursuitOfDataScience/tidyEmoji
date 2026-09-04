@@ -56,7 +56,7 @@ test_that("emoji_ratio reports the emoji share and emoji-only rows", {
 })
 
 test_that("emoji_ratio counts all characters of multi-codepoint emoji", {
-  family <- "\U0001F468‍\U0001F469‍\U0001F467‍\U0001F466"
+  family <- "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"
   out <- emoji_ratio(data.frame(text = family), text)
   expect_equal(out$.emoji_ratio, 1)
   expect_true(out$.emoji_only)

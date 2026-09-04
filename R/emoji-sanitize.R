@@ -43,6 +43,41 @@
 #' tokeniser needs whitespace around them, use `"placeholder"` with a padded
 #' placeholder such as `" [emoji] "`.
 #'
+#' @section Which policies can be undone:
+#' The five policies are not five parallel options: they are a ladder of
+#' information loss, and how far down it you step is invisible until you try to
+#' put the emoji back after the model call.
+#'
+#' | `policy` | `"great <U+1F600> work"` becomes | Restorable with [text_to_emoji()]? | What is lost |
+#' |---|---|---|---|
+#' | `"keep"` | `great <U+1F600> work` | yes | nothing |
+#' | `"shortcode"` | `great :grinning: work` | **yes** | nothing |
+#' | `"name"` | `great grinning face work` | no | the delimiters; the name is now ordinary words |
+#' | `"placeholder"` | `great [emoji] work` | no | *which* emoji -- the position survives |
+#' | `"strip"` | `great work` | no | that there was an emoji at all |
+#'
+#' So if the pipeline has to restore emoji downstream, `"shortcode"` is the
+#' only policy that permits it, and it holds up on the awkward cases:
+#' skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
+#' Measured against the whole reference table of \pkg{emoji} 16.0.0: for all
+#' 3790 emoji in their canonical (fully qualified) spelling -- the spelling a
+#' keyboard emits and text normally holds -- **the round trip returns the
+#' original text byte for byte, 100% of the time**.
+#'
+#' Unicode also lists shorter spellings of the same emoji, with the `U+FE0F`
+#' presentation selectors omitted. Feed one of those in and the round trip
+#' returns the *canonical* spelling instead: `U+270C` comes back as
+#' `U+270C U+FE0F`. Across all 4853 catalogued spellings that is 79.5%
+#' byte-identical, and the remaining 20.5% differ by `U+FE0F` alone -- never
+#' by more. The emoji is always the same emoji, and every tidyEmoji lookup
+#' treats the two spellings as one, so this matters only if you are diffing raw
+#' bytes on text that had its selectors stripped upstream.
+#'
+#' `"placeholder"` keeps *where* but not *which*, which is enough to use "an
+#' emoji was here" as a model feature and not enough to reconstruct the text.
+#' `"name"` is the accessibility answer rather than the reversible one -- it
+#' is what a screen reader announces.
+#'
 #' @inheritParams emoji_summary
 #' @param policy One of `"keep"` (default), `"strip"`, `"name"`,
 #'   `"shortcode"` or `"placeholder"`.
@@ -67,18 +102,14 @@ emoji_sanitize <- function(data, text, policy = "keep",
   # policy rather than only under the ones that rewrite
   col_name <- .emoji_col_name(data, {{ text }})
   if (policy == "keep") {
-    return(tibble::as_tibble(data))
+    return(.emoji_as_tibble(data))
   }
   if (policy %in% c("name", "shortcode")) {
     return(emoji_to_text(data, {{ text }}, format = policy, wrap = wrap))
   }
-  if (policy == "placeholder" &&
-      (!is.character(placeholder) || length(placeholder) != 1L ||
-         is.na(placeholder))) {
-    stop("`placeholder` must be a single string.", call. = FALSE)
-  }
+  if (policy == "placeholder") .emoji_check_string(placeholder, "placeholder")
 
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
   locs <- .emoji_locations(v)
@@ -97,9 +128,9 @@ emoji_sanitize <- function(data, text, policy = "keep",
   }
   rewritten[was_na] <- NA_character_
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out[[col_name]] <- rewritten
-  out
+  .emoji_regroup(out, col_name)
 }
 
 
@@ -143,7 +174,7 @@ emoji_token_cost <- function(data, text, tokenizer = NULL) {
   if (!is.null(tokenizer) && !is.function(tokenizer)) {
     stop("`tokenizer` must be a function or NULL.", call. = FALSE)
   }
-  v <- as.character(dplyr::pull(data, {{ text }}))
+  v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
   lst <- emoji_glyph_list(v)
   joined <- vapply(lst, paste, character(1), collapse = "")
@@ -163,7 +194,7 @@ emoji_token_cost <- function(data, text, tokenizer = NULL) {
     est[!nzchar(joined)] <- 0L
   }
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(lengths(lst))
   out$.emoji_bytes <- n_bytes
   out$.emoji_codepoints <- n_chars

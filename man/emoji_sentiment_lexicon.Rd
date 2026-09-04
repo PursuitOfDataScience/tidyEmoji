@@ -33,6 +33,17 @@ from ~70,000 tweets in 13 European languages annotated for sentiment. The
 \code{sentiment_score} is \code{(positive - negative) / occurrences}, ranging from -1
 (negative) to +1 (positive); \code{sentiment_label} is derived from its sign.
 }
+\section{How much of the catalogue this covers}{
+
+\strong{969 rows, covering about 19\% of the distinct emoji tidyEmoji can detect}
+(3790 distinct codepoint keys in the reference table of \pkg{emoji} 16.0.0;
+see \code{\link[=emoji_provenance]{emoji_provenance()}} for the version you have). Two caveats on that
+figure, both consequences of the lexicon being built from 2015 tweets: 233
+of the 969 rows are not in the reference table at all -- see \emph{Detection
+limitations} below -- and nothing added to Unicode after 2015 is in here.
+\code{\link[=emoji_sentiment]{emoji_sentiment()}}'s \code{.emoji_n_scored} reports the shortfall per row.
+}
+
 \section{Detection limitations}{
 
 Many of the glyphs in this lexicon are stored in their \emph{unqualified},

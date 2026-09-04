@@ -14,12 +14,23 @@ emoji_trend(
 )
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{time}{Unquoted column of dates or date-times (\code{Date}, \code{POSIXct}, or
-character in \code{"YYYY-MM-DD"} form).}
+character in \code{"YYYY-MM-DD"} form). A date-time is bucketed by the calendar
+day it \emph{displays} as in its own timezone, not by its UTC day: an emoji
+posted at 23:30 New York time belongs to that day, not to the next one.
+Character values that cannot be read as a date warn and are dropped.}
 
 \item{by}{Period length: \code{"day"}, \code{"week"} (starting Monday), \code{"month"}
 (default), \code{"quarter"} or \code{"year"}.}

@@ -7,9 +7,17 @@
 emoji_ngrams(data, text, n = 2, sep = " ")
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{n}{Length of the n-gram window. Default \code{2} (bigrams).}
 

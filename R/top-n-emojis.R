@@ -15,13 +15,8 @@
 #' emoji_frequency(df, text)
 #' @export
 emoji_frequency <- function(data, text) {
-  if (dplyr::is_grouped_df(data)) {
-    lifecycle::deprecate_warn(
-      "0.2.1", "emoji_frequency(data = \"must be ungrouped data\")",
-      details = "emoji_frequency() currently ignores groups. Supply ungrouped data or expect a single global result."
-    )
-  }
-  glyphs <- unlist(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+  .emoji_warn_grouped(data, "emoji_frequency", "0.2.1")
+  glyphs <- unlist(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                    use.names = FALSE)
   if (!length(glyphs)) {
     return(tibble::tibble(emoji = character(), name = character(),
@@ -62,10 +57,11 @@ emoji_frequency <- function(data, text) {
 #' @export
 top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
                          duplicated_unicode = lifecycle::deprecated()) {
-  if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 0) {
-    # head(x, -1) silently drops the last row rather than erroring, so an
-    # accidental negative would return a quietly wrong answer
-    stop("`n` must be a single non-negative number.", call. = FALSE)
+  if (!.emoji_is_count(n, finite = FALSE)) {
+    # head(x, -1) silently drops the last row rather than erroring, and
+    # head(x, 2.5) silently returns two, so either mistake would have returned
+    # a quietly wrong answer
+    stop("`n` must be a single non-negative whole number.", call. = FALSE)
   }
   if (lifecycle::is_present(duplicated_unicode)) {
     lifecycle::deprecate_warn(
@@ -77,11 +73,7 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
   # after the legacy conversion: duplicated_unicode accepted the string "yes"
   .emoji_check_flag(duplicated, "duplicated")
 
-  if (dplyr::is_grouped_df(data)) {
-    lifecycle::deprecate_warn(
-      "0.2.1", "top_n_emojis(data = \"must be ungrouped data\")",
-      details = "top_n_emojis() currently ignores groups. Supply ungrouped data or expect a single global result."
-    )
+  if (.emoji_warn_grouped(data, "top_n_emojis", "0.2.1")) {
     # Ungroup so the downstream emoji_frequency() call does not warn a second
     # time about the same ignored grouping.
     data <- dplyr::ungroup(data)

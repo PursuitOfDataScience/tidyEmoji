@@ -33,6 +33,7 @@ License: GPL (>= 3)
 URL: https://pursuitofdatascience.github.io/tidyEmoji/
 BugReports: https://github.com/PursuitOfDataScience/tidyEmoji/issues
 Encoding: UTF-8
+Language: en-GB
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -51,6 +52,8 @@ Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
+    commonmark,
+    xml2,
     ggplot2,
     readr,
     forcats,

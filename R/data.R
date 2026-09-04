@@ -4,6 +4,17 @@
 #' Plutchik emotions (anger, anticipation, disgust, fear, joy, sadness, surprise,
 #' trust), for the 150 most popular Twitter emoji, from EmoTag1200.
 #'
+#' @section How much of the catalogue this covers:
+#' **150 glyphs, about 4% of the distinct emoji tidyEmoji can detect** (3790
+#' distinct codepoint keys in the reference table of \pkg{emoji} 16.0.0; see
+#' [emoji_provenance()] for the version you have). That is not a defect --
+#' EmoTag1200 is a carefully annotated 150-glyph resource -- but it is worth
+#' knowing *before* concluding that a corpus carries no emotion: a modern
+#' corpus is mostly post-2018 glyphs that no bundled lexicon has seen.
+#' [emoji_emotion()] reports this per row rather than hiding it:
+#' `.emoji_n_scored` is `0` when a row has emoji the lexicon cannot score, and
+#' `NA` only when the row has no emoji at all.
+#'
 #' @format A data frame with one row per emoji and the columns:
 #' \describe{
 #'   \item{key}{Codepoint-normalised key (U+FE0F stripped) for robust joining.}
@@ -59,6 +70,15 @@
 #' from ~70,000 tweets in 13 European languages annotated for sentiment. The
 #' `sentiment_score` is `(positive - negative) / occurrences`, ranging from -1
 #' (negative) to +1 (positive); `sentiment_label` is derived from its sign.
+#'
+#' @section How much of the catalogue this covers:
+#' **969 rows, covering about 19% of the distinct emoji tidyEmoji can detect**
+#' (3790 distinct codepoint keys in the reference table of \pkg{emoji} 16.0.0;
+#' see [emoji_provenance()] for the version you have). Two caveats on that
+#' figure, both consequences of the lexicon being built from 2015 tweets: 233
+#' of the 969 rows are not in the reference table at all -- see *Detection
+#' limitations* below -- and nothing added to Unicode after 2015 is in here.
+#' [emoji_sentiment()]'s `.emoji_n_scored` reports the shortfall per row.
 #'
 #' @section Detection limitations:
 #' Many of the glyphs in this lexicon are stored in their *unqualified*,

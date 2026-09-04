@@ -12,7 +12,7 @@ test_that("as_emoji_type recodes the Unicode groups", {
   expect_equal(as_emoji_type(pizza), "food")
   expect_equal(as_emoji_type(thumb), "gesture")
   expect_equal(as_emoji_type(flag), "flag")
-  expect_equal(as_emoji_type("❤️"), "symbol")   # heart, not a face
+  expect_equal(as_emoji_type("\u2764\uFE0F"), "symbol")   # heart, not a face
   expect_true(is.na(as_emoji_type("not an emoji")))
   expect_length(as_emoji_type(character(0)), 0L)
 })
@@ -65,10 +65,10 @@ test_that("emoji_sanitize keeps the column name and validates its arguments", {
   out <- emoji_sanitize(df, body, policy = "strip")
   expect_named(out, c("id", "body"))
   expect_equal(out$body, c("hi", "plain"))
-  expect_error(emoji_sanitize(df, body, policy = "delete"))
+  expect_error(emoji_sanitize(df, body, policy = "delete"), "should be one of")
   expect_error(emoji_sanitize(df, body, policy = "placeholder",
                               placeholder = c("a", "b")), "single string")
-  expect_error(emoji_sanitize(df, nope, policy = "keep"))
+  expect_error(emoji_sanitize(df, nope, policy = "keep"), "nope")
 })
 
 test_that("emoji_sanitize honours the shortcode wrap template", {

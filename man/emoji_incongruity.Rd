@@ -15,9 +15,17 @@ emoji_incongruity(
 )
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{text_score}{Unquoted numeric column holding the text's own sentiment.}
 
@@ -61,6 +69,14 @@ ironic emoji are specifically about sentence-final glyphs. A text whose
 emoji sit mid-sentence then has nothing eligible to score, so it gets \code{NA}
 and \code{.emoji_n_scored = NA}, while \code{.emoji_n} still counts every emoji in the
 row.
+
+"Ends the text" is literal: only whitespace may follow the last glyph, so
+\code{"great \\U0001f602"} has a final run and \code{"great \\U0001f602."} does not --
+a trailing full stop, bracket or quote mark disqualifies it. The run itself
+extends back over any glyphs separated from each other by whitespace alone,
+so \code{"great \\U0001f602 \\U0001f60d"} contributes both. If your corpus
+punctuates after emoji, strip trailing punctuation before scoring, or use
+\code{where = "all"}.
 }
 \section{You supply the text score}{
 
@@ -73,7 +89,7 @@ footprint where it is.
 Because those methods live on wildly different scales (AFINN runs -5 to 5,
 VADER -1 to 1, a model's logits on nothing in particular), \code{scale} has no
 default: you have to say how the two sides were made comparable.
-\code{"rank"} maps both to percentiles on \code{[-1, 1]} and is the safest choice for
+\code{"rank"} maps both to percentiles on \verb{[-1, 1]} and is the safest choice for
 cross-method comparison; \code{"zscore"} standardises both; \code{"none"} compares the
 raw numbers, which is only meaningful if your text score already lives on
 the emoji lexicon's -1 to 1 scale.
@@ -90,8 +106,8 @@ emoji_incongruity(df, text, score, scale = "none", method = "sign_flip")
 \references{
 An emoji centric approach to sarcasm detection in online
 discourse. \emph{Scientific Reports} (2025). The influence of emoji meaning
-multipleness on perceived online review helpfulness. *Journal of Business
-Research* (2022).
+multipleness on perceived online review helpfulness. \emph{Journal of Business
+Research} (2022).
 }
 \seealso{
 \code{\link[=emoji_congruence]{emoji_congruence()}} for the same engine under the marketing

@@ -173,7 +173,10 @@ emoji_ambiguity <- function(x = NULL, measure = "entropy") {
 #'   `NULL` (default) uses the lexicon's upper quartile of `measure`.
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
 #'   `.emoji_n_scored`, `.emoji_ambiguity_mean`, `.emoji_ambiguity_max` and
-#'   `.emoji_n_ambiguous`. Rows with no emoji get `NA` throughout.
+#'   `.emoji_n_ambiguous`. Rows with no emoji get `NA` throughout. A row that
+#'   has emoji the lexicon cannot score gets `.emoji_n_scored = 0`,
+#'   `.emoji_n_ambiguous = 0` and `NA` for the two averages -- there is nothing
+#'   to average, but the count of ambiguous glyphs found is genuinely zero.
 #' @seealso [emoji_ambiguity()], [emoji_flag_ambiguous()].
 #' @examples
 #' df <- data.frame(text = c("thanks \U0001f643", "great \U0001f600", "plain"))
@@ -191,7 +194,7 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
   }
   amb_map <- stats::setNames(tbl[[measure]], tbl$key)
 
-  lst <- emoji_glyph_list(dplyr::pull(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
   vals <- lapply(lst, function(g) {
@@ -201,20 +204,28 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
   })
   has_emoji <- lengths(lst) > 0L
 
-  out <- tibble::as_tibble(data)
+  out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(lengths(lst))
-  out$.emoji_n_scored <- ifelse(has_emoji, as.integer(lengths(vals)),
-                                NA_integer_)
+  # typed allocate-then-fill: ifelse() returned logical(0) for a zero-row input
+  n_scored <- rep(NA_integer_, length(has_emoji))
+  n_scored[has_emoji] <- as.integer(lengths(vals))[has_emoji]
+  out$.emoji_n_scored <- n_scored
   out$.emoji_ambiguity_mean <- vapply(
     vals, function(v) if (!length(v)) NA_real_ else mean(v), numeric(1)
   )
   out$.emoji_ambiguity_max <- vapply(
     vals, function(v) if (!length(v)) NA_real_ else max(v), numeric(1)
   )
-  out$.emoji_n_ambiguous <- vapply(
-    vals, function(v) if (!length(v)) NA_integer_ else sum(v >= threshold),
-    integer(1)
+  # A *count* of ambiguous glyphs, so a row with emoji that the lexicon cannot
+  # score has 0 of them, not an unknown number -- the same rule
+  # `.emoji_n_scored` already follows two lines up, and what the @return
+  # promises ("rows with no emoji get NA throughout"). Keying this off
+  # length(vals) instead made the two counts disagree about the same row.
+  n_amb <- rep(NA_integer_, length(has_emoji))
+  n_amb[has_emoji] <- vapply(
+    vals[has_emoji], function(v) sum(v >= threshold), integer(1)
   )
+  out$.emoji_n_ambiguous <- n_amb
   out
 }
 
@@ -243,11 +254,14 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
 emoji_flag_ambiguous <- function(data, text, top_n = 10,
                                  measure = "entropy") {
   measure <- match.arg(measure, emoji_ambiguity_measures())
-  if (!is.null(top_n) &&
-      (!is.numeric(top_n) || length(top_n) != 1L || is.na(top_n) ||
-         top_n < 0)) {
-    stop("`top_n` must be a single non-negative number, or NULL for all.",
-         call. = FALSE)
+  if (!is.null(top_n) && !.emoji_is_count(top_n, finite = FALSE)) {
+    stop("`top_n` must be a single non-negative whole number, ",
+         "or NULL for all.", call. = FALSE)
+  }
+  # as in emoji_cooccurrence(): warn under this verb's name, then ungroup so
+  # the delegated emoji_frequency() does not warn about itself instead
+  if (.emoji_warn_grouped(data, "emoji_flag_ambiguous", "0.4.0")) {
+    data <- dplyr::ungroup(data)
   }
   freq <- emoji_frequency(data, {{ text }})
   amb <- emoji_ambiguity(measure = measure)

@@ -7,9 +7,17 @@
 emoji_risk(data, text, measure = "entropy", threshold = NULL)
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 
 \item{measure}{Ambiguity statistic to use; see \code{\link[=emoji_ambiguity]{emoji_ambiguity()}}.}
 
@@ -19,7 +27,10 @@ emoji_risk(data, text, measure = "entropy", threshold = NULL)
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n},
 \code{.emoji_n_scored}, \code{.emoji_ambiguity_mean}, \code{.emoji_ambiguity_max} and
-\code{.emoji_n_ambiguous}. Rows with no emoji get \code{NA} throughout.
+\code{.emoji_n_ambiguous}. Rows with no emoji get \code{NA} throughout. A row that
+has emoji the lexicon cannot score gets \code{.emoji_n_scored = 0},
+\code{.emoji_n_ambiguous = 0} and \code{NA} for the two averages -- there is nothing
+to average, but the count of ambiguous glyphs found is genuinely zero.
 }
 \description{
 \code{emoji_risk()} scores how likely each row's emoji are to be \emph{misread}, using

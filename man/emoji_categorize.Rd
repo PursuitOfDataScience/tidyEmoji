@@ -7,19 +7,38 @@
 emoji_categorize(data, text)
 }
 \arguments{
-\item{data}{A data frame or tibble containing a text column.}
+\item{data}{A data frame or tibble containing a text column. Grouped data
+frames are accepted. The verbs that work a row at a time (adding columns,
+or keeping and expanding rows) carry the grouping through to their result,
+as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dplyr::filter()}} do. The verbs that pool across
+rows -- the counts, the co-occurrence edge lists, the time series -- warn
+that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted.}
+\item{text}{The text column to scan, supplied unquoted. What counts as an
+emoji is the same in every verb; see the \emph{Detection} section of
+\link{tidyEmoji} for the one case that surprises people, code points that
+are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
-\code{data}, as a tibble, filtered to the rows containing emoji and with an
-added \code{.emoji_category} column.
+\code{data}, as a tibble, filtered to the rows containing at least one
+emoji, with an added \code{.emoji_category} column. That column is \code{NA} for a
+row whose emoji are all absent from the reference table.
 }
 \description{
 \code{emoji_categorize()} keeps the rows of \code{data} that contain emoji and adds a
 \code{.emoji_category} column listing the distinct Unicode categories present in
 that row (for example "Smileys & Emotion"), separated by \code{|} when a row spans
 more than one category.
+}
+\details{
+A row is kept because it contains an emoji, not because that emoji could be
+categorised. If none of a row's emoji is in the reference table -- which
+happens for a zero-width-joiner sequence newer than your installed
+\pkg{emoji} package, since detection is grapheme-aware and does not require
+the sequence to be catalogued -- the row is kept with \code{.emoji_category} set
+to \code{NA}. Dropping it would silently shrink the corpus, and by exactly the
+rows a user whose Unicode coverage is behind most needs to see. Use
+\code{\link[=emoji_provenance]{emoji_provenance()}} to check which catalogue you are matching against.
 }
 \examples{
 df <- data.frame(text = c("smile \U0001f600",

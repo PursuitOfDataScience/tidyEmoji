@@ -10,7 +10,16 @@
 # rather than guessing.
 .emoji_as_date <- function(x, arg = "time") {
   if (inherits(x, "Date")) return(x)
-  if (inherits(x, "POSIXt")) return(as.Date(x))
+  if (inherits(x, "POSIXt")) {
+    # as.Date() on a POSIXct converts in UTC whatever the object's `tzone`
+    # says, so a timestamp at 23:30 in a western zone landed on the *next*
+    # calendar day -- and for an evening-heavy corpus, systematically so. It
+    # also disagreed with emoji_seasonality(period = "hour"), which reads
+    # format(x, "%H") and so had always used the timestamp's own zone: the
+    # same row could be hour 23 and the following day at once. Take the day
+    # the timestamp displays as, which is the day it was posted.
+    return(as.Date(format(x, "%Y-%m-%d")))
+  }
   if (is.factor(x)) x <- as.character(x)
   if (is.character(x)) {
     d <- suppressWarnings(as.Date(x, format = "%Y-%m-%d"))
@@ -22,6 +31,21 @@
       stop(sprintf(
         "`%s` must be a Date, a POSIXct, or a character column of dates in %s.",
         arg, "\"YYYY-MM-DD\" form"
+      ), call. = FALSE)
+    }
+    # A value that was present but did not parse becomes NA, and every time
+    # verb then drops the row -- indistinguishable, in the result, from a row
+    # whose date was genuinely missing. Say how many, since a handful of
+    # "2020-13-01" or "Jan 5 2020" in a column silently shrinks the corpus the
+    # trend is computed over.
+    unparsed <- sum(is.na(d) & !is.na(x))
+    if (unparsed > 0L) {
+      warning(sprintf(
+        paste0("%d value%s in `%s` could not be read as a date and will be ",
+               "dropped. Expected \"YYYY-MM-DD\" or \"YYYY/MM/DD\"; first ",
+               "unreadable value: %s."),
+        unparsed, if (unparsed == 1L) "" else "s", arg,
+        encodeString(x[is.na(d) & !is.na(x)][1L], quote = "\"")
       ), call. = FALSE)
     }
     return(d)
@@ -169,7 +193,10 @@ emoji_unicode_version <- function() {
 #'
 #' @inheritParams emoji_summary
 #' @param time Unquoted column of dates or date-times (`Date`, `POSIXct`, or
-#'   character in `"YYYY-MM-DD"` form).
+#'   character in `"YYYY-MM-DD"` form). A date-time is bucketed by the calendar
+#'   day it *displays* as in its own timezone, not by its UTC day: an emoji
+#'   posted at 23:30 New York time belongs to that day, not to the next one.
+#'   Character values that cannot be read as a date warn and are dropped.
 #' @param by Period length: `"day"`, `"week"` (starting Monday), `"month"`
 #'   (default), `"quarter"` or `"year"`.
 #' @param top_n Number of emoji to follow, ranked by `measure` over the whole
@@ -191,20 +218,19 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
                         measure = c("n", "share")) {
   measure <- match.arg(measure)
   by <- match.arg(by, .emoji_time_buckets())
-  if (!is.null(top_n) &&
-      (!is.numeric(top_n) || length(top_n) != 1L || is.na(top_n) ||
-         top_n < 0)) {
-    stop("`top_n` must be a single non-negative number, or NULL for all.",
-         call. = FALSE)
+  if (!is.null(top_n) && !.emoji_is_count(top_n, finite = FALSE)) {
+    stop("`top_n` must be a single non-negative whole number, ",
+         "or NULL for all.", call. = FALSE)
   }
+  .emoji_warn_grouped(data, "emoji_trend", "0.4.0")
   empty <- tibble::tibble(.period = as.Date(character()), emoji = character(),
                           name = character(), n = integer(),
                           share = numeric())
 
   period <- .emoji_time_bucket(
-    .emoji_as_date(dplyr::pull(data, {{ time }})), by
+    .emoji_as_date(.emoji_col(data, {{ time }}, arg = "time")), by
   )
-  lst <- lapply(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                 emoji_canonical)
   n_per_row <- lengths(lst)
   glyphs <- unlist(lst, use.names = FALSE)
@@ -287,11 +313,12 @@ emoji_turnover <- function(data, text, time, by = "month",
                            measure = c("jaccard", "new", "lost", "core")) {
   measure <- match.arg(measure, several.ok = TRUE)
   by <- match.arg(by, .emoji_time_buckets())
+  .emoji_warn_grouped(data, "emoji_turnover", "0.4.0")
 
   period <- .emoji_time_bucket(
-    .emoji_as_date(dplyr::pull(data, {{ time }})), by
+    .emoji_as_date(.emoji_col(data, {{ time }}, arg = "time")), by
   )
-  lst <- lapply(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                 emoji_canonical)
   periods <- sort(unique(period[!is.na(period)]))
   # iterate over indices, not over the Date vector: lapply() strips the class
@@ -364,7 +391,8 @@ emoji_turnover <- function(data, text, time, by = "month",
 #' emoji_version_profile(df, text)
 #' @export
 emoji_version_profile <- function(data, text) {
-  lst <- lapply(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+  .emoji_warn_grouped(data, "emoji_version_profile", "0.4.0")
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                 emoji_canonical)
   glyphs <- unlist(lst, use.names = FALSE)
   if (!length(glyphs)) {
@@ -425,8 +453,9 @@ emoji_version_profile <- function(data, text) {
 #' emoji_adoption_lag(df, text, when)
 #' @export
 emoji_adoption_lag <- function(data, text, time) {
-  d <- .emoji_as_date(dplyr::pull(data, {{ time }}))
-  lst <- lapply(emoji_glyph_list(dplyr::pull(data, {{ text }})),
+  .emoji_warn_grouped(data, "emoji_adoption_lag", "0.4.0")
+  d <- .emoji_as_date(.emoji_col(data, {{ time }}, arg = "time"))
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                 emoji_canonical)
   glyphs <- unlist(lst, use.names = FALSE)
   when <- rep(d, lengths(lst))
@@ -490,7 +519,8 @@ emoji_adoption_lag <- function(data, text, time) {
 emoji_seasonality <- function(data, text, time,
                               period = c("month", "weekday", "hour")) {
   period <- match.arg(period)
-  tv <- dplyr::pull(data, {{ time }})
+  .emoji_warn_grouped(data, "emoji_seasonality", "0.4.0")
+  tv <- .emoji_col(data, {{ time }}, arg = "time")
   if (period == "hour") {
     if (!inherits(tv, "POSIXt")) {
       stop("`period = \"hour\"` needs a POSIXct or POSIXlt `time` column.",
@@ -509,7 +539,7 @@ emoji_seasonality <- function(data, text, time,
     labels <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
   }
 
-  n_per_row <- lengths(emoji_glyph_list(dplyr::pull(data, {{ text }})))
+  n_per_row <- lengths(emoji_glyph_list(.emoji_text_col(data, {{ text }})))
   total <- sum(n_per_row[!is.na(idx)])
   n_texts <- vapply(levels_i, function(k) sum(!is.na(idx) & idx == k),
                     integer(1))

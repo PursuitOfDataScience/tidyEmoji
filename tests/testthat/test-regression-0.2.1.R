@@ -8,25 +8,25 @@
 test_that("emoji_tokens resolves qualified emoji (U+FE0F) to non-NA name/category", {
   # The qualified heart carries U+FE0F; the reference stores the unqualified
   # form. The name/category lookup must normalise the key first.
-  out <- emoji_tokens(data.frame(text = "❤️"), text)
+  out <- emoji_tokens(data.frame(text = "\u2764\uFE0F"), text)
   expect_false(is.na(out$.emoji_name))
   expect_false(is.na(out$.emoji_category))
 })
 
 test_that("emoji_frequency resolves qualified emoji (U+FE0F) to non-NA metadata", {
-  out <- emoji_frequency(data.frame(text = "❤️"), text)
+  out <- emoji_frequency(data.frame(text = "\u2764\uFE0F"), text)
   expect_false(is.na(out$name))
   expect_false(is.na(out$group))
 })
 
 test_that("emoji_categorize keeps qualified emoji (U+FE0F) rather than dropping the row", {
-  out <- emoji_categorize(data.frame(text = "❤️"), text)
+  out <- emoji_categorize(data.frame(text = "\u2764\uFE0F"), text)
   expect_equal(nrow(out), 1)
   expect_false(is.na(out$.emoji_category))
 })
 
 test_that("top_n_emojis(duplicated = TRUE) keeps qualified emoji via key join", {
-  out <- top_n_emojis(data.frame(text = "❤️"), text, duplicated = TRUE)
+  out <- top_n_emojis(data.frame(text = "\u2764\uFE0F"), text, duplicated = TRUE)
   expect_gt(nrow(out), 0)
 })
 
@@ -35,7 +35,7 @@ test_that("top_n_emojis(duplicated = TRUE) keeps qualified emoji via key join", 
 # ---------------------------------------------------------------------------
 
 test_that("emoji_summary and emoji_tokens agree on what 'has an emoji' means", {
-  df <- data.frame(text = c("hi \U0001f600", "plain", "❤️", ""))
+  df <- data.frame(text = c("hi \U0001f600", "plain", "\u2764\uFE0F", ""))
   s <- emoji_summary(df, text)
   tokens <- emoji_tokens(df, text)
   n_distinct_emoji_rows <- nrow(tokens)
