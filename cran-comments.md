@@ -111,10 +111,21 @@ The reference manual builds as PDF. Help pages refer to emoji by code point
 no unmapped characters to typeset.
 
 `?emoji_sentiment_lexicon` links to <https://hdl.handle.net/11356/1048>, the
-canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. It resolves
-correctly; a checking host whose certificate store cannot verify the
-`hdl.handle.net` chain may report it as a possibly-invalid URL (R itself
-reports "Status without verification: OK").
+canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. All 12 URLs in
+the package were checked with `urlchecker::url_check()`; 11 pass and this one
+is reported on our machine only, with the precise cause below.
+
+The handle itself is healthy: it returns `302` to
+`https://www.clarin.si/repository/xmlui/handle/11356/1048`. It is that redirect
+target whose certificate chain fails to verify, not `hdl.handle.net`. The chain
+`clarin.si` <- `GEANT TLS RSA 1` (Hellenic Academic and Research Institutions
+CA) ends at an intermediate, and `openssl s_client` reports
+`Verify return code: 20 (unable to get local issuer certificate)` because this
+host is CentOS 8 carrying `ca-certificates-2020.2.41` and has no current HARICA
+root. The site itself is up: `curlGetHeaders(url, verify = FALSE)` returns
+`200`. A checking host with an up-to-date root store verifies it normally, so
+we do not expect a note; it is recorded so the figure is reproducible rather
+than asserted.
 
 ## Bundled data and licence
 
