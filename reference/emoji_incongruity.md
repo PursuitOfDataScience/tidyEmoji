@@ -23,11 +23,24 @@ emoji_incongruity(
 
 - data:
 
-  A data frame or tibble containing a text column.
+  A data frame or tibble containing a text column. Grouped data frames
+  are accepted. The verbs that work a row at a time (adding columns, or
+  keeping and expanding rows) carry the grouping through to their
+  result, as
+  [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
+  and
+  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
+  do. The verbs that pool across rows – the counts, the co-occurrence
+  edge lists, the time series – warn that they ignore the grouping and
+  return one corpus-wide answer.
 
 - text:
 
-  The text column to scan, supplied unquoted.
+  The text column to scan, supplied unquoted. What counts as an emoji is
+  the same in every verb; see the *Detection* section of
+  [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  for the one case that surprises people, code points that are emoji
+  only when they carry `U+FE0F`.
 
 - text_score:
 
@@ -79,6 +92,14 @@ text whose emoji sit mid-sentence then has nothing eligible to score, so
 it gets `NA` and `.emoji_n_scored = NA`, while `.emoji_n` still counts
 every emoji in the row.
 
+"Ends the text" is literal: only whitespace may follow the last glyph,
+so `"great \U0001f602"` has a final run and `"great \U0001f602."` does
+not – a trailing full stop, bracket or quote mark disqualifies it. The
+run itself extends back over any glyphs separated from each other by
+whitespace alone, so `"great \U0001f602 \U0001f60d"` contributes both.
+If your corpus punctuates after emoji, strip trailing punctuation before
+scoring, or use `where = "all"`.
+
 ## You supply the text score
 
 tidyEmoji deliberately does not score text. `text_score` is a column you
@@ -99,7 +120,7 @@ already lives on the emoji lexicon's -1 to 1 scale.
 
 An emoji centric approach to sarcasm detection in online discourse.
 *Scientific Reports* (2025). The influence of emoji meaning multipleness
-on perceived online review helpfulness. \*Journal of Business Research\*
+on perceived online review helpfulness. *Journal of Business Research*
 (2022).
 
 ## See also

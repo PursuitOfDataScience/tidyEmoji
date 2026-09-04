@@ -16,11 +16,24 @@ emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
 
 - data:
 
-  A data frame or tibble containing a text column.
+  A data frame or tibble containing a text column. Grouped data frames
+  are accepted. The verbs that work a row at a time (adding columns, or
+  keeping and expanding rows) carry the grouping through to their
+  result, as
+  [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
+  and
+  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
+  do. The verbs that pool across rows – the counts, the co-occurrence
+  edge lists, the time series – warn that they ignore the grouping and
+  return one corpus-wide answer.
 
 - text:
 
-  The text column to scan, supplied unquoted.
+  The text column to scan, supplied unquoted. What counts as an emoji is
+  the same in every verb; see the *Detection* section of
+  [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  for the one case that surprises people, code points that are emoji
+  only when they carry `U+FE0F`.
 
 - lexicon:
 
@@ -40,8 +53,23 @@ emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
 
 ## Value
 
-`data`, as a tibble, with emotion columns added. Rows without emoji, or
-whose emoji are absent from the lexicon, receive `NA` scores.
+`data`, as a tibble. With `long = FALSE` (the default), eight emotion
+columns – `.emoji_anger`, `.emoji_anticipation`, `.emoji_disgust`,
+`.emoji_fear`, `.emoji_joy`, `.emoji_sadness`, `.emoji_surprise`,
+`.emoji_trust` – plus `.emoji_n` and `.emoji_n_scored`, one row per
+input row. With `long = TRUE`, one row per input row *per emotion*,
+carrying `.emoji_emotion` and `.emoji_score` instead of the eight
+columns. Rows without emoji, or whose emoji are absent from the lexicon,
+receive `NA` scores.
+
+## Details
+
+**The lexicon is 150 glyphs, about 4% of the distinct emoji tidyEmoji
+can detect**, so a row of post-2018 emoji will score `NA` and still be a
+row full of emoji. Read `.emoji_n_scored` alongside `.emoji_n` before
+concluding a corpus carries no emotion; see
+[emoji_emotion_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)
+for the figure and its denominator.
 
 ## References
 

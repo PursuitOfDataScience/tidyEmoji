@@ -18,11 +18,24 @@ emoji_risk(data, text, measure = "entropy", threshold = NULL)
 
 - data:
 
-  A data frame or tibble containing a text column.
+  A data frame or tibble containing a text column. Grouped data frames
+  are accepted. The verbs that work a row at a time (adding columns, or
+  keeping and expanding rows) carry the grouping through to their
+  result, as
+  [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
+  and
+  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
+  do. The verbs that pool across rows – the counts, the co-occurrence
+  edge lists, the time series – warn that they ignore the grouping and
+  return one corpus-wide answer.
 
 - text:
 
-  The text column to scan, supplied unquoted.
+  The text column to scan, supplied unquoted. What counts as an emoji is
+  the same in every verb; see the *Detection* section of
+  [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  for the one case that surprises people, code points that are emoji
+  only when they carry `U+FE0F`.
 
 - measure:
 
@@ -38,7 +51,11 @@ emoji_risk(data, text, measure = "entropy", threshold = NULL)
 
 `data`, as a tibble, with added columns `.emoji_n`, `.emoji_n_scored`,
 `.emoji_ambiguity_mean`, `.emoji_ambiguity_max` and
-`.emoji_n_ambiguous`. Rows with no emoji get `NA` throughout.
+`.emoji_n_ambiguous`. Rows with no emoji get `NA` throughout. A row that
+has emoji the lexicon cannot score gets `.emoji_n_scored = 0`,
+`.emoji_n_ambiguous = 0` and `NA` for the two averages – there is
+nothing to average, but the count of ambiguous glyphs found is genuinely
+zero.
 
 ## Details
 

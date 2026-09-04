@@ -46,7 +46,18 @@ Two design choices are worth highlighting:
   the [extraction section](#a-note-on-grapheme-aware-detection).
 - **Tidy by default.** Every verb returns a tibble, follows the
   `verb(data, text_column)` convention, and supports unquoted column
-  names, so the functions compose naturally with the pipe.
+  names, so the functions compose naturally with the pipe. Grouping
+  composes too: the verbs that work a row at a time carry a
+  [`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html)
+  through to their result, as
+  [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
+  and
+  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
+  do, while the ones that pool across rows – the counts, the
+  co-occurrence tables, the time series – warn that they ignore it and
+  return one corpus-wide answer. See
+  [`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  for the full contract.
 
 ``` r
 

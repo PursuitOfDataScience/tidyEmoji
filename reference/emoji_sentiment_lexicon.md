@@ -57,6 +57,19 @@ Emojis. PLoS ONE 10(12): e0144296.
 Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 licence. Processed by `data-raw/emoji_sentiment_lexicon.R`.
 
+## How much of the catalogue this covers
+
+**969 rows, covering about 19% of the distinct emoji tidyEmoji can
+detect** (3790 distinct codepoint keys in the reference table of emoji
+16.0.0; see
+[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+for the version you have). Two caveats on that figure, both consequences
+of the lexicon being built from 2015 tweets: 233 of the 969 rows are not
+in the reference table at all – see *Detection limitations* below – and
+nothing added to Unicode after 2015 is in here.
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)'s
+`.emoji_n_scored` reports the shortfall per row.
+
 ## Detection limitations
 
 Many of the glyphs in this lexicon are stored in their *unqualified*,

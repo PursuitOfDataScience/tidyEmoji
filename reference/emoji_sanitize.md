@@ -26,11 +26,24 @@ emoji_sanitize(
 
 - data:
 
-  A data frame or tibble containing a text column.
+  A data frame or tibble containing a text column. Grouped data frames
+  are accepted. The verbs that work a row at a time (adding columns, or
+  keeping and expanding rows) carry the grouping through to their
+  result, as
+  [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
+  and
+  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
+  do. The verbs that pool across rows – the counts, the co-occurrence
+  edge lists, the time series – warn that they ignore the grouping and
+  return one corpus-wide answer.
 
 - text:
 
-  The text column to scan, supplied unquoted.
+  The text column to scan, supplied unquoted. What counts as an emoji is
+  the same in every verb; see the *Detection* section of
+  [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  for the one case that surprises people, code points that are emoji
+  only when they carry `U+FE0F`.
 
 - policy:
 
@@ -77,6 +90,43 @@ Replacements go exactly where the glyph was, with no padding, so a
 grinning face glued to the end of a word yields `"wordgrinning face"`.
 If your tokeniser needs whitespace around them, use `"placeholder"` with
 a padded placeholder such as `" [emoji] "`.
+
+## Which policies can be undone
+
+The five policies are not five parallel options: they are a ladder of
+information loss, and how far down it you step is invisible until you
+try to put the emoji back after the model call.
+
+|  |  |  |  |
+|----|----|----|----|
+| `policy` | `"great <U+1F600> work"` becomes | Restorable with [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)? | What is lost |
+| `"keep"` | `great <U+1F600> work` | yes | nothing |
+| `"shortcode"` | `great :grinning: work` | **yes** | nothing |
+| `"name"` | `great grinning face work` | no | the delimiters; the name is now ordinary words |
+| `"placeholder"` | `great [emoji] work` | no | *which* emoji – the position survives |
+| `"strip"` | `great work` | no | that there was an emoji at all |
+
+So if the pipeline has to restore emoji downstream, `"shortcode"` is the
+only policy that permits it, and it holds up on the awkward cases:
+skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
+Measured against the whole reference table of emoji 16.0.0: for all 3790
+emoji in their canonical (fully qualified) spelling – the spelling a
+keyboard emits and text normally holds – **the round trip returns the
+original text byte for byte, 100% of the time**.
+
+Unicode also lists shorter spellings of the same emoji, with the
+`U+FE0F` presentation selectors omitted. Feed one of those in and the
+round trip returns the *canonical* spelling instead: `U+270C` comes back
+as `U+270C U+FE0F`. Across all 4853 catalogued spellings that is 79.5%
+byte-identical, and the remaining 20.5% differ by `U+FE0F` alone – never
+by more. The emoji is always the same emoji, and every tidyEmoji lookup
+treats the two spellings as one, so this matters only if you are diffing
+raw bytes on text that had its selectors stripped upstream.
+
+`"placeholder"` keeps *where* but not *which*, which is enough to use
+"an emoji was here" as a model feature and not enough to reconstruct the
+text. `"name"` is the accessibility answer rather than the reversible
+one – it is what a screen reader announces.
 
 ## See also
 
