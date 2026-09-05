@@ -4,8 +4,8 @@
 rewritten so that every `:shortcode:` token is replaced by the
 corresponding emoji glyph (the inverse of
 [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
-with `format = "shortcode"`). Shortcodes that do not match a known emoji
-are left unchanged.
+with `format = "shortcode"`, up to the presentation selector – see
+Details). Shortcodes that do not match a known emoji are left unchanged.
 
 ## Usage
 
@@ -49,11 +49,24 @@ colons used for other purposes – clock times, URLs, ratios, ordinary
 punctuation – cannot swallow a following shortcode:
 `"meet at 10:30 :wave:"` still emojizes the wave.
 
+**The round trip recovers the emoji, not necessarily the same bytes.**
+Like the vector helpers, both directions resolve through `emoji_key()`,
+which ignores `U+FE0F`, so an unqualified glyph and its fully-qualified
+form share one shortcode and this verb emits the fully-qualified (RGI)
+form of the pair. Feeding the whole emoji catalogue through
+`emoji_to_text(format = "shortcode")` and back therefore returns an
+identical code-point key for every entry, and identical bytes for the
+79% that were already fully qualified; the rest gain `U+FE0F`. A second
+round trip changes nothing, so the result is stable. Use `emoji_key()`
+rather than string equality when comparing before and after.
+
 ## See also
 
 [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md);
 [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-for the vector helper.
+for the vector helper, which resolves a bare string by Unicode name
+first and so differs from this verb on 17 strings that name one emoji
+and alias another.
 
 ## Examples
 

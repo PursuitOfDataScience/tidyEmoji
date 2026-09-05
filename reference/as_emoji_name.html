@@ -65,10 +65,26 @@
 
 <ul><li><p><code>as_emoji_name(x)</code> maps emoji glyphs to their Unicode names.</p></li>
 <li><p><code>as_emoji_shortcode(x)</code> maps emoji glyphs to their first shortcode.</p></li>
-<li><p><code>as_emoji(x)</code> maps shortcodes/names to the emoji glyph (emojize).</p></li>
+<li><p><code>as_emoji(x)</code> maps names/shortcodes to the emoji glyph (emojize).</p></li>
 </ul><p>All three resolve through <code>emoji_key()</code>, so qualified emoji (carrying
 <code>U+FE0F</code>) and unqualified forms resolve identically. Unmatched inputs return
 <code>NA</code>.</p>
+<p><code>as_emoji()</code> accepts either namespace in the same argument, and 464 strings
+belong to both – they are the exact Unicode name of one emoji and a
+shortcode alias of another. It resolves them in a fixed order: <strong>exact
+Unicode name first</strong>, then shortcode, then <span class="pkg">emoji</span>'s own name table. An
+exact name match is the stronger signal, so <code>as_emoji("dog")</code> is the emoji
+actually <em>named</em> "dog" (a dog, <code>U+1F415</code>), not the one whose alias is
+<code>:dog:</code> (a dog face, <code>U+1F436</code>).</p>
+<p>For 17 of those 464 strings the two namespaces disagree, and there
+<code>as_emoji()</code> and <code><a href="text_to_emoji.html">text_to_emoji()</a></code> differ <em>by design</em>: a <code>:dog:</code> token is
+explicitly delimited as a shortcode, so <code><a href="text_to_emoji.html">text_to_emoji()</a></code> reads it in the
+shortcode namespace and produces the dog face. The pattern is an emoji whose
+name is a bare noun versus the "... face" variant that carries the alias
+(<code>cat</code>, <code>cow</code>, <code>pig</code>, <code>tiger</code>, <code>mouse</code>, <code>rabbit</code>), or a plain object versus a
+decorated one (<code>umbrella</code>, <code>snowman</code>, <code>calendar</code>, <code>sunglasses</code>). Pass a
+shortcode through <code><a href="text_to_emoji.html">text_to_emoji()</a></code>, or the full Unicode name (<code>"dog face"</code>)
+to <code>as_emoji()</code>, if you need one namespace specifically.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

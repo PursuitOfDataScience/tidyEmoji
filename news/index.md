@@ -627,6 +627,32 @@ empirical distribution. It is now a number.
   recording what wave 1 shipped, the third-audit defect, and the design
   decisions locked at implementation.
 
+- [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  no longer claims flatly to be the inverse of
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md).
+  It is the inverse *up to the presentation selector*: because both
+  directions resolve through the `U+FE0F`-stripped code-point key, an
+  unqualified glyph and its fully-qualified form share one shortcode and
+  the fully-qualified form is what comes back. Feeding the whole
+  catalogue through and back preserves the key for all 5042 entries and
+  the exact bytes for the 79% that were already qualified; a second pass
+  changes nothing. The details now say so, and say to compare with
+  `emoji_key()` rather than string equality.
+
+- [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)’s
+  resolution order is now documented. It accepts names and shortcodes in
+  one argument, and 464 strings belong to both namespaces – the exact
+  Unicode name of one emoji and a shortcode alias of another. It has
+  always tried the exact Unicode name first, so `as_emoji("dog")` is the
+  emoji named “dog” (`U+1F415`) rather than the one aliased `:dog:` (a
+  dog face, `U+1F436`). For 17 of the 464 the namespaces disagree and
+  [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  differs from
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  by design, since a `:dog:` token is explicitly a shortcode; both
+  places now say which is which and how to ask for one namespace
+  specifically. No behaviour changed.
+
 - Emoji-dense rows no longer cost quadratic time. Five hot paths reached
   a character offset with
   [`substr()`](https://rdrr.io/r/base/substr.html)/[`substring()`](https://rdrr.io/r/base/substr.html),

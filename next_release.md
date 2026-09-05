@@ -2773,6 +2773,110 @@ NOTEs — the four documented host artefacts, unchanged.
 
 ------------------------------------------------------------------------
 
+**Round 36 (2026-09-05) — composing the verbs, which no round had
+done.**
+
+Rounds 1-34 tested verbs one at a time; round 34 compared them to each
+other. This round *composed* them and asserted algebraic properties of
+the pair, which is the next step out and reaches things single-verb
+tests structurally cannot.
+
+**The shortcode round trip, over the entire catalogue.** Feeding all
+5042 reference glyphs through `emoji_to_text(format = "shortcode")` and
+back recovers only **79.4%** byte-identically. Every one of the 1040
+apparent failures turns out to share its code-point key with the
+original: they are unqualified forms returning as their fully-qualified
+equivalents, because both directions resolve through the
+`U+FE0F`-stripped key, so a variant pair shares one shortcode and the
+qualified row is the one carrying it (the unqualified row’s `shortcode`
+is `NA`). Strip `U+FE0F` from both sides and the round trip is the exact
+identity on all 5042, and a second pass is a fixed point. So the
+behaviour is right and the **documentation was wrong**:
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+claimed flatly to be “the inverse of
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)”,
+a claim it satisfies only up to the presentation selector — and a user
+round-tripping a corpus would see a fifth of their glyphs change bytes.
+Note the vector helpers **already documented this correctly** (“All
+three resolve through `emoji_key()`, so qualified emoji … resolve
+identically”); the data-frame verb was the one member that had drifted,
+which is the same shape as round 34’s finding, in docs rather than code.
+
+**A second, sharper inconsistency: the two emojize paths disagree on 17
+strings.** `as_emoji("dog")` returns a dog (`U+1F415`) while
+`text_to_emoji(":dog:")` returns a dog face (`U+1F436`). 464 strings are
+both the exact Unicode name of one emoji and a shortcode alias of
+another; for 17 of them the namespaces point at different emoji. The
+pattern is a bare noun versus its “… face” variant (`cat`, `cow`, `pig`,
+`tiger`, `mouse`, `rabbit`, `horse`, `whale`, `camel`, `kiss`) or a
+plain object versus a decorated one (`umbrella`, `snowman`, `calendar`,
+`sunglasses`, `satellite`, `train`).
+
+**This was judged not to be a behaviour defect, and the reasoning
+matters.** The tempting fix — make
+[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+prefer shortcodes so the two agree — is wrong: `"dog"` really is the
+Unicode name of `U+1F415`, an exact name match is a stronger signal than
+an alias, and `:dog:` is *explicitly delimited* as a shortcode, so the
+two inputs genuinely mean different things. Changing the order would
+make
+[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+stop returning the emoji actually named by its argument. What was
+actually broken was documentary in three ways: the precedence chain
+(exact name, then shortcode, then ’s table) was unstated, the doc listed
+the namespaces in the opposite order to the code (“shortcodes/names”),
+and
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)’s
+`@seealso` called
+[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+“the vector helper” while they disagree on 17 inputs. All three are
+fixed; no behaviour changed.
+
+**Also verified clean, and recorded so they are not re-audited:**
+
+- [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  row sums equal `.emoji_n` per document, with presentation variants
+  folded into a single column and no duplicated column names.
+- [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  totals `choose(j, 2)` over the distinct canonical glyphs per document;
+  `emoji_ngrams(n = k)` yields exactly `max(k_row - k + 1, 0)` rows for
+  k = 2, 3, 4 and never builds an n-gram spanning two rows. Round 6’s
+  count-agreement sweep covered the frequency/tokens family but **not**
+  these three, so this closes that gap.
+- Every rewriting policy except the default `"keep"` (`strip`, `name`,
+  `placeholder`, `shortcode`) and both
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  formats compose to `.emoji_n == 0`; `"keep"` leaves the text
+  byte-identical.
+- All three text-rewriting verbs are idempotent.
+- Every ratio column sits inside its documented range.
+  `.emoji_ambiguity_mean` and `_max` reach 1.0983, which looked like a
+  bounds violation until the doc was read: entropy is in **nats**, so
+  the ceiling is `log(3)` = 1.0986, exactly as documented. The bug was
+  in the audit’s assumption, not the code.
+- Every catalogue name (5042) and every catalogue shortcode (4853)
+  emojizes to an emoji with the right key, including the **175 alternate
+  aliases**
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  never emits and the round-trip test therefore cannot reach.
+
+**Two wrong hypotheses, both killed by measurement rather than
+argument.** I predicted the qualified form won the round trip through a
+row-ordering dependence in `setNames(ref$emoji, ref$shortcode)`, and
+mutated the table order to prove the new test guarded it — the mutation
+did not bite, because the unqualified row simply has no shortcode and
+the key lookup does the work. And three expectations in the composition
+probe were mine, not the package’s:
+[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+returns occurrence rows rather than counts,
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+defaults to `policy = "keep"` so an unchanged `.emoji_n` is correct, and
+the entropy ceiling above. **When a probe disagrees with the package,
+the probe is the more likely culprit** — check the documented contract
+before writing a finding.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block
