@@ -26,7 +26,10 @@
 #'   document.
 #' @param weighting One of `"count"` (default), `"binary"` or `"tfidf"`.
 #' @return A tibble with one row per document: `.row_number` (or the `doc_id`
-#'   column) followed by one numeric column per emoji. Zero emoji in the
+#'   column) followed by one numeric column per emoji, ordered by descending
+#'   total count across the corpus with ties broken by the glyph. That ordering
+#'   is computed in the C locale, so the column order does not depend on the
+#'   session's collation and is safe to index by position. Zero emoji in the
 #'   corpus yields just the document column.
 #' @seealso [emoji_frequency()] for corpus totals; [emoji_tokens()] for the
 #'   long form this widens.

@@ -49,7 +49,11 @@ emoji_frequency <- function(data, text) {
 #' @param duplicated_unicode `r lifecycle::badge("deprecated")` Use `duplicated`
 #'   instead.
 #' @return A tibble with columns `emoji_name`, `unicode`, `emoji_category` and
-#'   `n`.
+#'   `n`, sorted by descending `n` with ties broken by the glyph so the order is
+#'   deterministic -- the same rule [emoji_frequency()] uses. When a tie
+#'   straddles position `n` the glyph order decides which side of the cut each
+#'   emoji falls on, and a corpus with fewer than `n` distinct emoji returns
+#'   every one of them rather than padding to `n`.
 #' @seealso [emoji_frequency()] for the full distribution.
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f600\U0001f3c1", "\U0001f621"))

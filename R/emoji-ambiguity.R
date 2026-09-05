@@ -101,7 +101,12 @@ emoji_ambiguity_measures <- function() {
 #'   one of `"entropy"` (default), `"gini"`, `"neutral_share"` or `"ci_width"`.
 #' @return A tibble with columns `emoji`, `key` (the codepoint-normalised join
 #'   key), `n_annotations`, `p_neg`, `p_neu`, `p_pos`, `ambiguity` and `rank`.
-#'   With `x` supplied the result has one row per element of `x`, in the same
+#'   `rank` is `1` for the most ambiguous emoji; glyphs with identical
+#'   `ambiguity` **share** the lowest rank of their group and the next distinct
+#'   value skips ahead accordingly (`rank()`'s `ties.method = "min"`), so ranks
+#'   are not necessarily consecutive. With `x = NULL` rows are ordered by
+#'   `rank` with ties broken by the glyph, so the order is deterministic; with
+#'   `x` supplied the result has one row per element of `x`, in the same
 #'   order.
 #' @references Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L,
 #'   Hecht B (2016). "Blissfully Happy" or "Ready to Fight": Varying
@@ -243,8 +248,10 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
 #' @param measure Ambiguity statistic to rank by; see [emoji_ambiguity()].
 #' @return A tibble with columns `emoji`, `name`, `n` (occurrences in the
 #'   corpus), `n_annotations`, `ambiguity` and `rank` (the glyph's rank in the
-#'   whole lexicon). Emoji absent from the lexicon cannot be ranked and are
-#'   dropped.
+#'   whole lexicon, carried over from [emoji_ambiguity()], so tied glyphs share
+#'   a rank). Rows are ordered by descending `ambiguity`, then descending `n`,
+#'   then the glyph, so the order is deterministic. Emoji absent from the
+#'   lexicon cannot be ranked and are dropped.
 #' @seealso [emoji_ambiguity()], [emoji_risk()].
 #' @examples
 #' df <- data.frame(text = c("ok \U0001f643", "yay \U0001f600 \U0001f643",

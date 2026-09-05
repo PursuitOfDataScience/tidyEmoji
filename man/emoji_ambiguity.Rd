@@ -17,7 +17,12 @@ one of \code{"entropy"} (default), \code{"gini"}, \code{"neutral_share"} or \cod
 \value{
 A tibble with columns \code{emoji}, \code{key} (the codepoint-normalised join
 key), \code{n_annotations}, \code{p_neg}, \code{p_neu}, \code{p_pos}, \code{ambiguity} and \code{rank}.
-With \code{x} supplied the result has one row per element of \code{x}, in the same
+\code{rank} is \code{1} for the most ambiguous emoji; glyphs with identical
+\code{ambiguity} \strong{share} the lowest rank of their group and the next distinct
+value skips ahead accordingly (\code{rank()}'s \code{ties.method = "min"}), so ranks
+are not necessarily consecutive. With \code{x = NULL} rows are ordered by
+\code{rank} with ties broken by the glyph, so the order is deterministic; with
+\code{x} supplied the result has one row per element of \code{x}, in the same
 order.
 }
 \description{

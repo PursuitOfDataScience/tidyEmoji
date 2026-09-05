@@ -35,7 +35,11 @@ instead.}
 }
 \value{
 A tibble with columns \code{emoji_name}, \code{unicode}, \code{emoji_category} and
-\code{n}.
+\code{n}, sorted by descending \code{n} with ties broken by the glyph so the order is
+deterministic -- the same rule \code{\link[=emoji_frequency]{emoji_frequency()}} uses. When a tie
+straddles position \code{n} the glyph order decides which side of the cut each
+emoji falls on, and a corpus with fewer than \code{n} distinct emoji returns
+every one of them rather than padding to \code{n}.
 }
 \description{
 \code{top_n_emojis()} returns the \code{n} most frequent emoji. By default each emoji

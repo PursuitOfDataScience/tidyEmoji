@@ -27,7 +27,10 @@ document.}
 }
 \value{
 A tibble with one row per document: \code{.row_number} (or the \code{doc_id}
-column) followed by one numeric column per emoji. Zero emoji in the
+column) followed by one numeric column per emoji, ordered by descending
+total count across the corpus with ties broken by the glyph. That ordering
+is computed in the C locale, so the column order does not depend on the
+session's collation and is safe to index by position. Zero emoji in the
 corpus yields just the document column.
 }
 \description{

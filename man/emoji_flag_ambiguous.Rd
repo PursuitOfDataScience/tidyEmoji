@@ -27,8 +27,10 @@ all of them.}
 \value{
 A tibble with columns \code{emoji}, \code{name}, \code{n} (occurrences in the
 corpus), \code{n_annotations}, \code{ambiguity} and \code{rank} (the glyph's rank in the
-whole lexicon). Emoji absent from the lexicon cannot be ranked and are
-dropped.
+whole lexicon, carried over from \code{\link[=emoji_ambiguity]{emoji_ambiguity()}}, so tied glyphs share
+a rank). Rows are ordered by descending \code{ambiguity}, then descending \code{n},
+then the glyph, so the order is deterministic. Emoji absent from the
+lexicon cannot be ranked and are dropped.
 }
 \description{
 \code{emoji_flag_ambiguous()} crosses the emoji actually present in a text column

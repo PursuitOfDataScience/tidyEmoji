@@ -2224,3 +2224,125 @@ test_that(".emoji_fill_by_key only fills gaps and never overwrites", {
   expect_identical(f(c("13.1", "5.0", NA), c("k", "k", "k")),
                    c("13.1", "5.0", "5.0"))
 })
+
+# ---------------------------------------------------------------------------
+# Ordering invariants. Several verbs order by a count or a score, and CI runs
+# five platforms without ever comparing their outputs to each other -- so a
+# tie order that fell back on input order, a hash, or the session's collation
+# would let every job pass while producing different results on each. Round 33
+# checked that output is independent of input row order; these check the harder
+# case, ties *within* an equal key, and that the tie is settled by a stable
+# documented secondary key rather than by accident.
+# ---------------------------------------------------------------------------
+
+# five emoji, each appearing exactly twice, so `n` is a five-way tie
+.tie_glyphs <- c("\U0001F602", "\U0001F60D", "\U0001F621", "\U0001F44D",
+                 "\U0001F525")
+.tie_data <- function(perm) {
+  txt <- unlist(lapply(perm, function(i) {
+    c(paste("a", .tie_glyphs[i]), paste("b", .tie_glyphs[i]))
+  }))
+  data.frame(id = seq_along(txt), text = txt, stringsAsFactors = FALSE)
+}
+
+test_that("counting verbs settle ties by the glyph, in the C locale", {
+  d1 <- .tie_data(1:5)
+  d2 <- .tie_data(c(5L, 3L, 1L, 4L, 2L))
+  d3 <- .tie_data(c(2L, 4L, 5L, 1L, 3L))
+
+  f1 <- emoji_frequency(d1, text)
+  expect_identical(f1$n, rep(2L, 5L))
+  # documented: descending n, ties broken by the glyph. With every n equal the
+  # whole order is the tie-break, so this pins the rule exactly.
+  expect_identical(f1$emoji, sort(.tie_glyphs, method = "radix"))
+  # and it does not move when the input rows are permuted
+  expect_identical(emoji_frequency(d2, text), f1)
+  expect_identical(emoji_frequency(d3, text), f1)
+
+  # emoji_dfm(): descending column total, ties by glyph, C locale
+  w1 <- emoji_dfm(d1, text, id)
+  glyph_cols <- setdiff(names(w1), "id")
+  totals <- colSums(as.matrix(w1[, glyph_cols, drop = FALSE]))
+  expect_identical(unname(totals), rep(2, 5))
+  expect_identical(glyph_cols, sort(.tie_glyphs, method = "radix"))
+  expect_identical(names(emoji_dfm(d2, text, id)), names(w1))
+})
+
+test_that("top_n_emojis cuts a straddling tie by the glyph and never pads", {
+  d1 <- .tie_data(1:5)
+  d2 <- .tie_data(c(5L, 3L, 1L, 4L, 2L))
+  ordered <- sort(.tie_glyphs, method = "radix")
+  for (k in c(1L, 2L, 3L, 5L)) {
+    t1 <- top_n_emojis(d1, text, n = k)
+    expect_identical(nrow(t1), k, info = paste("n =", k))
+    # the cut falls where the glyph order says it does
+    expect_identical(t1$unicode, ordered[seq_len(k)], info = paste("n =", k))
+    expect_identical(top_n_emojis(d2, text, n = k), t1, info = paste("n =", k))
+  }
+  # fewer distinct emoji than asked for: return them all, do not pad
+  wide <- top_n_emojis(d1, text, n = 7L)
+  expect_identical(nrow(wide), 5L)
+  expect_identical(wide$unicode, ordered)
+})
+
+test_that("emoji_ambiguity ranks ties with the minimum and skips accordingly", {
+  a <- emoji_ambiguity()
+  scorable <- a[!is.na(a$ambiguity), ]
+  expect_gt(nrow(scorable), 900L)
+
+  # documented: rank 1 is most ambiguous, tied glyphs share the lowest rank of
+  # their group, and the next distinct value skips by the group's size
+  expect_identical(min(scorable$rank), 1L)
+  expect_false(is.unsorted(scorable$rank))
+  tab <- table(scorable$rank)
+  groups <- as.integer(names(tab)[tab > 1L])
+  expect_gt(length(groups), 10L)
+  for (r in groups) {
+    later <- scorable$rank[scorable$rank > r]
+    if (!length(later)) next
+    expect_identical(min(later), r + as.integer(tab[as.character(r)]),
+                     info = paste("rank", r))
+  }
+  # a shared rank means ranks are not consecutive -- the ties.method = "min"
+  # tell, and the thing "average" or "first" would change
+  expect_false(identical(sort(unique(scorable$rank)),
+                         seq_along(unique(scorable$rank))))
+
+  # within one tie group the glyph order is the C-locale one
+  biggest <- groups[which.max(tab[as.character(groups)])]
+  grp <- scorable$emoji[scorable$rank == biggest]
+  expect_identical(grp, sort(grp, method = "radix"))
+
+  # and the whole table is reproducible call to call
+  expect_identical(emoji_ambiguity(), a)
+})
+
+test_that("relational and ambiguity verbs hold their order under permutation", {
+  E <- .tie_glyphs
+  d <- data.frame(
+    id = 1:6,
+    text = c(paste(E[1], E[2]), paste(E[2], E[3]), paste(E[3], E[1]),
+             paste(E[4], E[5]), paste(E[5], E[4]), paste(E[1], E[3])),
+    stringsAsFactors = FALSE
+  )
+  shuffled <- d[c(6L, 1L, 4L, 2L, 5L, 3L), , drop = FALSE]
+
+  for (verb in c("emoji_pairs", "emoji_cooccurrence")) {
+    f <- get(verb, envir = asNamespace("tidyEmoji"))
+    o <- f(d, text, doc_id = id)
+    expect_gt(nrow(o), 0L)
+    expect_identical(f(shuffled, text, doc_id = id), o, info = verb)
+    # documented tie-break on the `sort` argument: descending n, then item1,
+    # item2 -- so equal-n blocks are in C-locale item order
+    ties <- o$n == o$n[1]
+    expect_identical(o$item1[ties], sort(o$item1[ties], method = "radix"),
+                     info = verb)
+  }
+
+  fa <- emoji_flag_ambiguous(.tie_data(1:5), text)
+  expect_identical(emoji_flag_ambiguous(.tie_data(c(5L, 3L, 1L, 4L, 2L)), text),
+                   fa)
+  # documented: descending ambiguity, then descending n, then the glyph
+  expect_false(is.unsorted(rev(fa$ambiguity)))
+  expect_false(anyNA(fa$rank))
+})
