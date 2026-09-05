@@ -2969,6 +2969,30 @@ emoji, which the vignette called “the overwhelming majority” and a
 figure’s alt text called “the vast majority”. Both now say “about
 two-thirds”.
 
+**Closing the verification loop: the guard test does run in CI.** The CI
+log reports `[ FAIL 0 | WARN 0 | SKIP 3 | PASS 5473 ]` against 0 skips
+locally, so the three skips were checked rather than assumed benign.
+They are all source-availability guards, and the new R-minimum test is
+**not** among them – which also confirms empirically that
+`r-lib/actions/check-r-package@v2` sets `NOT_CRAN=true`:
+
+| skipped in CI                 | what it checks            |
+|-------------------------------|---------------------------|
+| `test-invariants.R:876`       | NEWS.md headings          |
+| `test-invariants.R:1116`      | non-ASCII in test sources |
+| `test-regression-0.4.0.R:962` | the vignette corpus       |
+
+All three inspect **repo files**, which are absent when `R CMD check`
+runs the tests from the installed package, so skipping is the correct
+behaviour and not a coverage gap. One consequence is worth knowing
+rather than fixing: the ASCII-source guard – which caught literal ZWJ
+characters in new test code twice this session – protects only when the
+suite is run from the source tree. `R/` is covered natively by
+`R CMD check`’s own non-ASCII check; `tests/` is covered only locally.
+Relocating it so CI could see it would mean shipping repo files in the
+tarball, which is worse. **So: keep running the suite locally before
+every commit; a green CI does not exercise those three.**
+
 **The lesson to carry forward.** Three rounds running, the productive
 move has been to ask what the *current* verification cannot see: round
 35 found cost because every test asserted values and none measured time;

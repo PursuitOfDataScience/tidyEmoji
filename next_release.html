@@ -1136,6 +1136,16 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 <li>All four <code>?topic</code> cross-references in the vignette and README resolve to real documented objects, including <code><a href="reference/category_unicode_crosswalk.html">?category_unicode_crosswalk</a></code>, which is a bundled dataset rather than an export and so easy to mistake for a dead link.</li>
 <li>All nine figure chunks carry <code>fig.alt</code>.</li>
 </ul><p>One prose correction: 68.2% of emoji-bearing entries carry exactly one emoji, which the vignette called “the overwhelming majority” and a figure’s alt text called “the vast majority”. Both now say “about two-thirds”.</p>
+<p><strong>Closing the verification loop: the guard test does run in CI.</strong> The CI log reports <code>[ FAIL 0 | WARN 0 | SKIP 3 | PASS 5473 ]</code> against 0 skips locally, so the three skips were checked rather than assumed benign. They are all source-availability guards, and the new R-minimum test is <strong>not</strong> among them – which also confirms empirically that <code>r-lib/actions/check-r-package@v2</code> sets <code>NOT_CRAN=true</code>:</p>
+<table class="table"><thead><tr><th>skipped in CI</th>
+<th>what it checks</th>
+</tr></thead><tbody><tr><td><code>test-invariants.R:876</code></td>
+<td>NEWS.md headings</td>
+</tr><tr><td><code>test-invariants.R:1116</code></td>
+<td>non-ASCII in test sources</td>
+</tr><tr><td><code>test-regression-0.4.0.R:962</code></td>
+<td>the vignette corpus</td>
+</tr></tbody></table><p>All three inspect <strong>repo files</strong>, which are absent when <code>R CMD check</code> runs the tests from the installed package, so skipping is the correct behaviour and not a coverage gap. One consequence is worth knowing rather than fixing: the ASCII-source guard – which caught literal ZWJ characters in new test code twice this session – protects only when the suite is run from the source tree. <code>R/</code> is covered natively by <code>R CMD check</code>’s own non-ASCII check; <code>tests/</code> is covered only locally. Relocating it so CI could see it would mean shipping repo files in the tarball, which is worse. <strong>So: keep running the suite locally before every commit; a green CI does not exercise those three.</strong></p>
 <p><strong>The lesson to carry forward.</strong> Three rounds running, the productive move has been to ask what the <em>current</em> verification cannot see: round 35 found cost because every test asserted values and none measured time; round 36 found doc drift because every test called one verb and none composed two; round 37 found mis-declared metadata because CI never runs an R older than oldrel-1. <strong>Green does not mean checked — it means checked by whatever is currently checking.</strong></p>
 <hr><p><strong>The pattern worth carrying into 0.5.0.</strong> §9 records that every release found defects in the code written just before it. This audit found its crop <strong>before</strong> the features were written — and three of the four block a planned feature group, which is why §3.1 recommends resequencing rather than folding the fixes in.</p>
 <hr></div>
