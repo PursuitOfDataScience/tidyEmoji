@@ -2458,3 +2458,142 @@ test_that("nothing in R/ folds case with tolower() outside .emoji_fold", {
   }
   expect_identical(offenders, character(0))
 })
+
+# ---------------------------------------------------------------------------
+# Calendar invariants. Round 33 established that .emoji_as_date() reads POSIXt
+# in local time rather than UTC, and that ordering is timezone-invariant.
+# Nothing tested the calendar itself: a spring-forward day is 23 hours long, an
+# autumn-back day 25 with one local hour occurring twice, and February has 29
+# days every fourth year. Those are the classic sources of a dropped or
+# duplicated bucket.
+#
+# Fixtures carry tz = "America/Chicago" explicitly, so they do not depend on
+# the ambient TZ, and the gate below skips rather than passing vacuously if a
+# platform does not apply DST for that zone.
+# ---------------------------------------------------------------------------
+
+skip_unless_dst_live <- function(tz = "America/Chicago") {
+  # 2024-11-03 01:30 occurs twice in Chicago: once in CDT, once in CST. If the
+  # platform's zoneinfo lacks the rule, both render alike and the test proves
+  # nothing.
+  a <- as.POSIXct(1730615400, origin = "1970-01-01", tz = tz)
+  b <- as.POSIXct(1730619000, origin = "1970-01-01", tz = tz)
+  same_hour <- identical(format(a, "%H"), format(b, "%H"))
+  differ <- !identical(format(a, "%Z"), format(b, "%Z"))
+  skip_if(!(same_hour && differ),
+          paste0(tz, ": this platform does not apply the DST rule"))
+  invisible(TRUE)
+}
+
+test_that("a 23-hour day is still one day", {
+  skip_unless_dst_live()
+  A <- "\U0001F602"
+  tz <- "America/Chicago"
+  # 02:00 does not exist on 2024-03-10 in Chicago
+  w <- as.POSIXct(c("2024-03-10 00:30:00", "2024-03-10 01:30:00",
+                    "2024-03-10 03:30:00", "2024-03-10 13:30:00",
+                    "2024-03-11 01:30:00"), tz = tz)
+  d <- data.frame(text = paste("x", A), when = w, stringsAsFactors = FALSE)
+
+  tr <- emoji_trend(d, text, when, by = "day")
+  expect_identical(sort(unique(as.character(tr$.period))),
+                   c("2024-03-10", "2024-03-11"))
+  expect_identical(sum(tr$n), nrow(d))
+
+  # the hour grid is complete and holds the true local hours, not UTC ones
+  se <- emoji_seasonality(d, text, when, period = "hour")
+  expect_identical(nrow(se), 24L)
+  expect_identical(sum(se$n_emoji), nrow(d))
+  expect_identical(as.integer(se$.period[se$n_emoji > 0]), c(0L, 1L, 3L, 13L))
+})
+
+test_that("a 25-hour day is one day, and its repeated hour is one bucket", {
+  skip_unless_dst_live()
+  A <- "\U0001F602"
+  tz <- "America/Chicago"
+  # 01:30 CDT and 01:30 CST are different instants with the same local hour
+  w <- as.POSIXct(c(1730615400, 1730619000, 1730622600, 1730626200),
+                  origin = "1970-01-01", tz = tz)
+  d <- data.frame(text = paste("x", A), when = w, stringsAsFactors = FALSE)
+  expect_identical(format(w[1], "%H"), format(w[2], "%H"))
+  expect_false(identical(format(w[1], "%Z"), format(w[2], "%Z")))
+
+  tr <- emoji_trend(d, text, when, by = "day")
+  expect_identical(unique(as.character(tr$.period)), "2024-11-03")
+  expect_identical(sum(tr$n), nrow(d))
+
+  se <- emoji_seasonality(d, text, when, period = "hour")
+  expect_identical(sum(se$n_emoji), nrow(d))
+  # both 01:30s land in hour 1 -- neither dropped nor split
+  expect_identical(se$n_emoji[as.integer(se$.period) == 1L], 2L)
+})
+
+test_that("emoji_trend() fills a complete grid across calendar boundaries", {
+  A <- "\U0001F602"
+  tz <- "America/Chicago"
+  spans <- list(
+    month = c("2024-01-30", "2024-02-02"),
+    year  = c("2023-12-30", "2024-01-02"),
+    leap  = c("2024-02-27", "2024-03-02"),
+    feb   = c("2023-02-26", "2023-03-02")
+  )
+  for (nm in names(spans)) {
+    days <- seq(as.Date(spans[[nm]][1]), as.Date(spans[[nm]][2]), by = "day")
+    d <- data.frame(
+      text = paste("x", A),
+      when = as.POSIXct(paste(days, "12:00:00"), tz = tz),
+      stringsAsFactors = FALSE
+    )
+    for (by in c("day", "week", "month")) {
+      tr <- emoji_trend(d, text, when, by = by)
+      per <- as.character(tr$.period)
+      expect_false(any(duplicated(unique(per))), info = paste(nm, by))
+      # no emoji is lost or double-counted by the bucketing
+      expect_identical(sum(tr$n), nrow(d), info = paste(nm, by))
+    }
+    # one bucket per calendar day, so a leap day is neither skipped nor doubled
+    tr_day <- emoji_trend(d, text, when, by = "day")
+    expect_identical(sort(unique(as.character(tr_day$.period))),
+                     as.character(days), info = nm)
+  }
+
+  # The real completeness property: every period x emoji cell exists, with an
+  # explicit zero where that emoji did not occur, so a caller can plot a series
+  # without filling gaps. Periods themselves are the observed ones, not a
+  # synthetic calendar sequence.
+  B <- "\U0001F621"
+  d2 <- data.frame(
+    text = c(paste("x", A), paste("y", B), paste("z", A)),
+    when = as.Date(c("2024-02-28", "2024-02-29", "2024-03-01")),
+    stringsAsFactors = FALSE
+  )
+  tr2 <- emoji_trend(d2, text, when, by = "day")
+  expect_identical(nrow(tr2),
+                   length(unique(tr2$.period)) * length(unique(tr2$emoji)))
+  expect_identical(sum(tr2$n), 3L)
+  expect_identical(sum(tr2$n == 0L), 3L)
+  # the leap day is one of the observed periods, carrying its own emoji
+  expect_true("2024-02-29" %in% as.character(tr2$.period))
+  expect_identical(tr2$n[as.character(tr2$.period) == "2024-02-29" &
+                           tr2$emoji == B], 1L)
+  # and February 2024 really does have 29 days, or the leap span proves nothing
+  expect_true("2024-02-29" %in%
+                as.character(seq(as.Date("2024-02-27"),
+                                 as.Date("2024-03-02"), by = "day")))
+})
+
+test_that("emoji_adoption_lag() counts calendar days, not 365-day years", {
+  H <- "\U00002764\U0000FE0F"
+  d <- data.frame(text = paste("love", H),
+                  when = as.POSIXct("2024-03-01 12:00:00",
+                                    tz = "America/Chicago"),
+                  stringsAsFactors = FALSE)
+  al <- emoji_adoption_lag(d, text, when)
+  expect_identical(nrow(al), 1L)
+  # the span crosses four leap days, so a 365-based difference would be short
+  expect_identical(
+    as.numeric(al$lag_days[1]),
+    as.numeric(as.Date(al$first_seen[1]) - as.Date(al$release_date[1]))
+  )
+  expect_false(is.na(al$lag_days[1]))
+})

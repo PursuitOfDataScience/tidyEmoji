@@ -2772,6 +2772,72 @@ fixture changes before package code runs.
 
 ---
 
+**Round 44 (2026-09-05) — the calendar, which turned out to be right.**
+
+Round 33 established that `.emoji_as_date()` reads POSIXt in local time rather
+than UTC, and that ordering is timezone-invariant. Nothing had tested the
+*calendar*: a spring-forward day is 23 hours, an autumn-back day 25 with one
+local hour occurring twice, and February has 29 days every fourth year. Those
+are the classic sources of a dropped or duplicated bucket.
+
+**The arithmetic is already correct on every axis probed**, and is now pinned:
+
+| case | result |
+|---|---|
+| spring forward (2024-03-10, 23 h) | 2 day buckets, counts conserved, seasonality hours `0,1,3,13` -- the true local hours |
+| autumn back (2024-11-03, 25 h) | 1 day bucket, counts conserved, and the repeated 01:00 holds **2** -- neither dropped nor split |
+| month / year / leap / non-leap spans x `by = day, week, month` | 12 combinations, no duplicated bucket, counts conserved |
+| `emoji_adoption_lag()` | 4890 days, exactly the `as.Date` difference -- calendar days, not 365-day years |
+
+**What "grid completeness" actually means here, which the round had to
+establish before it could test it.** `emoji_trend()` does *not* build a
+synthetic calendar sequence -- its periods are the observed ones
+(`sort(unique(counts$.period))`). What it fills is the **period x emoji cross**,
+with an explicit zero where an emoji did not occur in a period, so a caller can
+plot a series without patching gaps. `emoji_seasonality()` is the one with a
+fixed grid (`0:23`, `1:12`, `1:7`), which is why it always returns 24 rows for
+`period = "hour"` even when four hours carry data. The first version of this
+round's test asserted that every calendar day appears -- true by construction
+and therefore unmutable; it now asserts the cross-fill, which is the real
+guarantee.
+
+**Four checks in this round passed by not running, all of them mine.** This is
+now the loop's most persistent failure mode, so they are recorded individually:
+
+1. `sum(tr$n_emoji)` on `emoji_trend()` output -- there is no `n_emoji` column
+   there (it is `n`; `n_emoji` belongs to `emoji_seasonality()`), so a
+   conservation check compared 0 against 5 and reported nothing.
+2. A timezone probe built its fixtures with `tz = "UTC"`, so the objects carried
+   `tzone = "UTC"` and `format()` honoured that attribute regardless of the `TZ`
+   environment variable. It "showed" that switching TZ has no effect. Re-run on
+   a tzone-less instant, switching works exactly as expected.
+3. The DST liveness gate used the wrong epoch pair -- `1730619000` is 01:30 CST
+   and `1730622600` is 02:30 CST, so it compared two different hours, decided
+   the rule was inert and **skipped both DST tests**. The gate behaved correctly
+   (a skip, not a false pass) but for the wrong reason, which would have
+   silently disabled the round's main content. Caught only by reading the skip
+   count.
+4. A mutation run used a helper that executes `test-invariants.R` alone, so
+   reverting round 33's local-time conversion reported 0 failures. Against the
+   full suite it is 4 -- the conversion was properly pinned all along.
+
+The predecessor agent hit the same class from the other direction: its DST probe
+switched `TZ` to `America/Chicago` on a host **already** set to
+`America/Chicago`, so the switch was a no-op. It flagged the suspicion itself
+before being cut off, which is what prompted checking rather than inheriting the
+result.
+
+**The lesson, sharpened.** Every instance above is the same shape: a check that
+cannot fail looks exactly like a check that passes. The defence that actually
+works is not care -- it is *mutation*, plus reading the skip count. Three of
+this round's four new tests were confirmed to bite (the two DST tests under a
+UTC-hour mutation, the grid test under a zero-fill mutation, which also fired
+five pre-existing tests); the fourth cross-checks `lag_days` against an
+independently recomputed date difference and is reported as such rather than as
+mutation-verified.
+
+---
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release found
 defects in the code written just before it. This audit found its crop **before**
 the features were written — and three of the four block a planned feature group,
