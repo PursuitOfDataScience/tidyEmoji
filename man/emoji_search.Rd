@@ -13,7 +13,8 @@ against keywords, name and shortcodes.}
 \value{
 A tibble with columns \code{emoji}, \code{name}, \code{shortcode}, \code{group} and
 \code{keyword} (the keywords of the emoji that contained the match, collapsed
-with \verb{, }).
+with \verb{, }). \code{keyword} is the empty string, not \code{NA}, when the query matched
+the name or a shortcode rather than a keyword.
 }
 \description{
 \code{emoji_search()} finds emoji whose Unicode keywords, name or shortcodes
@@ -21,7 +22,20 @@ match a query (case-insensitive, substring match). It returns a tidy tibble
 of matches with the glyph, name, shortcode, category and the matching
 keywords, ready for further inspection or piping into other verbs.
 }
+\details{
+\code{shortcode} is the emoji's first alias. To turn it back into a glyph, pass it
+through \code{\link[=text_to_emoji]{text_to_emoji()}}, which reads a \verb{:token:} in the shortcode namespace
+and recovers every row exactly. \code{\link[=as_emoji]{as_emoji()}} resolves a bare string by
+Unicode name first, so for the handful of strings that name one emoji and
+alias another -- \code{dog}, \code{cat}, \code{cow}, \code{pig}, \code{tiger}, \code{mouse}, \code{rabbit},
+\code{horse}, \code{whale}, \code{kiss}, \code{sunglasses} -- it returns the emoji of that
+\emph{name} rather than the row you searched. See \code{\link[=as_emoji]{as_emoji()}} for why.
+}
 \examples{
 emoji_search("happy")
 emoji_search("heart")
+}
+\seealso{
+\code{\link[=text_to_emoji]{text_to_emoji()}} to turn \code{shortcode} back into a glyph;
+\code{\link[=as_emoji_name]{as_emoji_name()}} for the name of a glyph.
 }

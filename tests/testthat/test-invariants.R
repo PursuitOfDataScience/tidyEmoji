@@ -2054,3 +2054,100 @@ test_that("a zero-row lexicon behaves exactly like one that matches nothing", {
     expect_identical(a$.emoji_n, c(1L, 0L))
   })
 })
+
+# ---------------------------------------------------------------------------
+# Documentation-surface invariants. R CMD check passes an example that runs,
+# whatever it returns, and never executes a \dontrun block at all -- so example
+# quality and example coverage are both invisible to a green check.
+# ---------------------------------------------------------------------------
+
+test_that("every export is documented with examples, and none are unexecuted", {
+  man <- list.files("../../man", pattern = "[.]Rd$", full.names = TRUE)
+  skip_if(length(man) == 0L, "man/ not available")
+  # \dontrun / \donttest blocks never run under R CMD check, so they rot
+  # silently; the package deliberately has none
+  for (f in man) {
+    txt <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    expect_false(grepl("\\dontrun", txt, fixed = TRUE), info = basename(f))
+    expect_false(grepl("\\donttest", txt, fixed = TRUE), info = basename(f))
+  }
+  # and every exported object has an Rd carrying examples
+  ns <- asNamespace("tidyEmoji")
+  exports <- getNamespaceExports(ns)
+  aliases <- unlist(lapply(man, function(f) {
+    txt <- readLines(f, warn = FALSE)
+    m <- regmatches(txt, regexpr("^\\\\alias\\{[^}]*\\}", txt))
+    sub("^\\\\alias\\{", "", sub("\\}$", "", m[nzchar(m)]))
+  }))
+  has_ex <- unlist(lapply(man, function(f) {
+    txt <- readLines(f, warn = FALSE)
+    if (!any(grepl("\\examples", txt, fixed = TRUE))) return(character(0))
+    m <- regmatches(txt, regexpr("^\\\\alias\\{[^}]*\\}", txt))
+    sub("^\\\\alias\\{", "", sub("\\}$", "", m[nzchar(m)]))
+  }))
+  expect_true(all(exports %in% aliases),
+              info = paste("undocumented:",
+                           paste(setdiff(exports, aliases), collapse = ", ")))
+  expect_true(all(exports %in% has_ex),
+              info = paste("no examples:",
+                           paste(setdiff(exports, has_ex), collapse = ", ")))
+})
+
+test_that("no exported vector or list helper returns a named result", {
+  A <- "\U0001F602"
+  B <- "\U0001F621"
+  # round 38 swept data-frame columns; these return bare vectors and lists,
+  # which that sweep could not see. vapply() over a character vector names its
+  # result by default, so this is the same defect class one step out.
+  expect_null(names(as_emoji_name(c(A, B))))
+  expect_null(names(as_emoji_shortcode(c(A, B))))
+  expect_null(names(as_emoji(c("grinning", "heart"))))
+  expect_null(names(as_emoji_type(c(A, B))))
+  expect_null(names(emoji_unicode_version()))
+  # list-columns: neither the column nor its elements carry names
+  d <- data.frame(text = c(paste("a", A), paste(A, B), "plain"),
+                  stringsAsFactors = FALSE)
+  nest <- emoji_extract_nest(d, text)$.emoji_unicode
+  expect_null(names(nest))
+  expect_false(any(vapply(nest, function(x) !is.null(names(x)), logical(1))))
+  dims <- emoji_lexicons()$dimensions
+  expect_null(names(dims))
+  expect_false(any(vapply(dims, function(x) !is.null(names(x)), logical(1))))
+})
+
+test_that("emoji_search() agrees with the rest of the package", {
+  ref <- tidyEmoji:::emoji_reference()
+  res <- do.call(rbind, lapply(c("cat", "heart", "flag", "hand", "dog", "+1"),
+                               emoji_search))
+  expect_gt(nrow(res), 100L)
+
+  # every glyph search returns is one the rest of the package recognises, and
+  # its name is the name the package would give it
+  expect_true(all(tidyEmoji:::emoji_key(res$emoji) %in% ref$key))
+  expect_identical(tolower(as_emoji_name(res$emoji)), tolower(res$name))
+
+  # the documented way back from `shortcode` recovers every row exactly ...
+  sc <- res[!is.na(res$shortcode), ]
+  back <- text_to_emoji(
+    data.frame(text = paste0(":", sc$shortcode, ":"), stringsAsFactors = FALSE),
+    text
+  )$text
+  expect_identical(tidyEmoji:::emoji_key(back),
+                   tidyEmoji:::emoji_key(sc$emoji))
+
+  # ... while as_emoji() differs on exactly the dual-namespace strings, which
+  # is documented behaviour rather than a defect
+  both <- intersect(ref$name, ref$shortcode[!is.na(ref$shortcode)])
+  disagreeing <- both[
+    tidyEmoji:::emoji_key(ref$emoji[match(both, ref$name)]) !=
+      tidyEmoji:::emoji_key(ref$emoji[match(both, ref$shortcode)])
+  ]
+  via_as_emoji <- as_emoji(sc$shortcode)
+  off <- sc$shortcode[tidyEmoji:::emoji_key(via_as_emoji) !=
+                        tidyEmoji:::emoji_key(sc$emoji)]
+  expect_true(all(off %in% disagreeing))
+
+  # keyword is "" rather than NA when the match was a name or a shortcode
+  expect_false(anyNA(res$keyword))
+  expect_true(any(res$keyword == ""))
+})

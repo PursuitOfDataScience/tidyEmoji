@@ -7,9 +7,21 @@
 #'
 #' @param query A search string, matched as a case-insensitive substring
 #'   against keywords, name and shortcodes.
+#' @details
+#' `shortcode` is the emoji's first alias. To turn it back into a glyph, pass it
+#' through [text_to_emoji()], which reads a `:token:` in the shortcode namespace
+#' and recovers every row exactly. [as_emoji()] resolves a bare string by
+#' Unicode name first, so for the handful of strings that name one emoji and
+#' alias another -- `dog`, `cat`, `cow`, `pig`, `tiger`, `mouse`, `rabbit`,
+#' `horse`, `whale`, `kiss`, `sunglasses` -- it returns the emoji of that
+#' *name* rather than the row you searched. See [as_emoji()] for why.
+#'
 #' @return A tibble with columns `emoji`, `name`, `shortcode`, `group` and
 #'   `keyword` (the keywords of the emoji that contained the match, collapsed
-#'   with `, `).
+#'   with `, `). `keyword` is the empty string, not `NA`, when the query matched
+#'   the name or a shortcode rather than a keyword.
+#' @seealso [text_to_emoji()] to turn `shortcode` back into a glyph;
+#'   [as_emoji_name()] for the name of a glyph.
 #' @examples
 #' emoji_search("happy")
 #' emoji_search("heart")
