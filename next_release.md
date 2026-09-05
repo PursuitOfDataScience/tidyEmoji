@@ -2375,6 +2375,78 @@ does not mean checked — it means checked by whatever is currently checking.**
 
 ---
 
+**Round 38 (2026-09-05) — state, the last thing every test had avoided.**
+
+Every round up to here ran verbs on fresh data in isolation. Nothing asked
+whether one call leaves behind state that changes the next. The package has two
+pieces of session state: a cache environment (`reference`, `sentiment`,
+`ref_keys`, `emotion`, `ambiguity`, `type`, `lexicons`) and a user-writable
+lexicon registry. Either could in principle make an answer depend on call
+order, and no test would have noticed.
+
+**The finding: `emoji_lexicons()` returned columns with stray element names.**
+The registry is a *named* list, so `lapply(reg, ...)` and
+`vapply(reg, nrow, integer(1))` returned named results, and
+`dplyr::bind_rows()` padded the bundled rows with `""`. The result:
+
+```
+> emoji_lexicons()$n
+          mine
+ 969  150    2
+```
+
+The tibble itself printed normally -- tibble ignores element names -- which is
+exactly why 37 rounds missed it. It only shows when a user extracts a column,
+which is what programmatic use does. `sum()`, `filter()` and indexing all still
+worked, so this was cosmetic, but the `""` padding is the unmistakable
+signature of `c()` mixing named and unnamed parts and it was plainly
+unintended. Fixed with `unname()` on both, and generalised: a new test asserts
+**no verb returns a column carrying element names**, over every exported
+function that returns a data frame, with a custom lexicon registered so the
+registry path is live.
+
+**Everything else about the state came back clean, and is recorded so it is not
+re-audited:**
+
+- **Warm cache equals cold.** Nineteen verbs called twice in one session return
+  `identical()` results. Nothing is mutated in place through the cache's
+  environment reference.
+- **`emoji_ambiguity(measure =)` does not leak one measure into another.** The
+  cached table holds every measure as a column and `measure` selects one
+  afterwards, so `gini`, `entropy` and `neutral_share` are distinct and asking
+  in either order gives the same answers.
+- **Registration is isolated.** Registering an unrelated lexicon leaves
+  `emoji_sentiment()`, `emoji_score()`, `emoji_emotion()`, `emoji_risk()`,
+  `emoji_summary()`, `emoji_tokens()`, `emoji_ambiguity()` and
+  `emoji_provenance()` bit-identical.
+- **Re-registering a name replaces it** -- one row, and the new scores are the
+  ones in force -- and naming a lexicon is equivalent to passing the same table
+  inline.
+- **Bundled names are protected**: `register_emoji_lexicon("novak2015", ...)`
+  errors, so the separately-cached `$sentiment` slot can never be shadowed by a
+  registration and go incoherent.
+- **A zero-row lexicon is accepted, and that is correct.** It was the one thing
+  that looked like a validation gap. Checking the behaviour first (round 36's
+  lesson) showed it is indistinguishable from a lexicon that matches nothing:
+  both give `NA` scores, `.emoji_n_scored = 0` where the row had emoji and `NA`
+  where it had none, and the right `.emoji_n`. That is the documented
+  convention, so rejecting it would have invented a restriction rather than
+  fixed a defect.
+
+**Two of my own measurement errors, both of the same kind.** The class sweep
+first reported "42 verbs, no offenders" -- but it wrapped each call in
+`tryCatch(..., error = function(e) NULL)` and skipped the failures silently, so
+two entries never ran and the count was inflated. Rebuilt to report what
+actually executed, it was 41 of 43; and one of the two exclusions turned out to
+be **my** error, not a non-data-frame verb: `emoji_unicode_releases` is a
+*function* returning a tibble and I had referenced it without `()`. True
+coverage is 42 of 43, the only genuine exclusion being `emoji_unicode_version()`,
+which returns a length-1 character. **A sweep that swallows its own errors
+reports coverage it does not have** -- the same failure mode as round 37's
+skipped test, one level up.
+
+---
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release found
 defects in the code written just before it. This audit found its crop **before**
 the features were written — and three of the four block a planned feature group,

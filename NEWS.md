@@ -439,6 +439,16 @@ distribution. It is now a number.
 * `next_release.md`, the repo's release ledger, gains a section 13 recording
   what wave 1 shipped, the third-audit defect, and the design decisions locked
   at implementation.
+* `emoji_lexicons()` no longer returns columns carrying stray element names
+  after `register_emoji_lexicon()`. The registry is a named list, so the
+  `lapply()`/`vapply()` that built the `dimensions` and `n` columns returned
+  named results and `dplyr::bind_rows()` then padded the bundled rows with
+  `""`. The tibble printed normally, which is why this went unnoticed, but
+  extracting a column showed it: `emoji_lexicons()$n` printed a stray name
+  header above the values. Both columns are now unnamed, and a test asserts
+  that no verb returns a column with element names -- checked across the 42
+  exported functions that return a data frame, with a custom lexicon
+  registered.
 * The declared R dependency is raised from `R (>= 3.5.0)` to `R (>= 4.1.0)`,
   which is the oldest R the package can actually be installed on. The old value
   was a promise it could not keep: the current `dplyr` and `tidyr` both require

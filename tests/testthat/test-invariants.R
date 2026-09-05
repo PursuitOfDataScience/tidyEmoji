@@ -1860,3 +1860,197 @@ test_that("the declared R minimum is one the package can actually be installed o
                   " but the hard dependencies need R >= ", worst)
   )
 })
+
+# ---------------------------------------------------------------------------
+# State invariants. Every earlier round ran verbs on fresh data in isolation,
+# so nothing checked that one call leaves state affecting the next. The package
+# keeps a session cache (reference, sentiment, ref_keys, emotion, ambiguity,
+# type, lexicons) and a user-writable lexicon registry, so both the cache and
+# the registry can in principle make an answer depend on call order.
+#
+# These tests mutate the registry, which is exactly the leakage they are about,
+# so each restores it on exit.
+# ---------------------------------------------------------------------------
+
+with_clean_registry <- function(code) {
+  cache <- asNamespace("tidyEmoji")$.tidyEmoji_cache
+  saved <- cache$lexicons
+  on.exit(assign("lexicons", saved, envir = cache), add = TRUE)
+  force(code)
+}
+
+test_that("a warm cache gives the same answer as a cold one", {
+  A <- "\U0001F602"
+  B <- "\U0001F621"
+  d <- data.frame(
+    id = 1:4, text = c(paste("a", A), paste(A, B), "plain", NA_character_),
+    sc = c(0.5, -0.5, 0, 0.1), when = as.Date("2020-01-01") + 0:3,
+    stringsAsFactors = FALSE
+  )
+  calls <- list(
+    function() emoji_sentiment(d, text), function() emoji_score(d, text),
+    function() emoji_emotion(d, text), function() emoji_emotion_label(d, text),
+    function() emoji_risk(d, text), function() emoji_ambiguity(),
+    function() emoji_type(d, text), function() emoji_faceness(d, text),
+    function() emoji_summary(d, text), function() emoji_frequency(d, text),
+    function() emoji_tokens(d, text), function() emoji_dfm(d, text, id),
+    function() emoji_pairs(d, text, doc_id = id),
+    function() emoji_context(d, text), function() emoji_categorize(d, text),
+    function() emoji_to_text(d, text), function() emoji_version_profile(d, text),
+    function() emoji_trend(d, text, when), function() emoji_search("cat")
+  )
+  for (i in seq_along(calls)) {
+    once <- calls[[i]]()
+    expect_identical(calls[[i]](), once, info = paste("call", i))
+  }
+})
+
+test_that("emoji_ambiguity() does not cache one measure's values for another", {
+  # the cached table holds every measure and `measure` selects a column, so
+  # asking for two measures in either order must give the same two answers
+  g1 <- emoji_ambiguity(measure = "gini")$ambiguity
+  e1 <- emoji_ambiguity(measure = "entropy")$ambiguity
+  n1 <- emoji_ambiguity(measure = "neutral_share")$ambiguity
+  expect_false(identical(g1, e1))
+  expect_false(identical(e1, n1))
+  expect_false(identical(g1, n1))
+  # reverse the order; the values must not move
+  expect_identical(emoji_ambiguity(measure = "entropy")$ambiguity, e1)
+  expect_identical(emoji_ambiguity(measure = "gini")$ambiguity, g1)
+})
+
+test_that("emoji_lexicons() columns carry no element names after registration", {
+  with_clean_registry({
+    A <- "\U0001F602"
+    B <- "\U0001F621"
+    own <- data.frame(emoji = c(A, B), score = c(0.9, -0.9),
+                      stringsAsFactors = FALSE)
+    register_emoji_lexicon("zz_test_lex", own)
+    lx <- emoji_lexicons()
+    # vapply()/lapply() over the named registry used to return named results,
+    # which bind_rows() padded with "" for the bundled rows, so
+    # emoji_lexicons()$n printed a stray name header
+    for (cc in names(lx)) {
+      expect_null(names(lx[[cc]]), info = cc)
+    }
+    expect_identical(sum(lx$name == "zz_test_lex"), 1L)
+  })
+})
+
+test_that("no verb returns a column carrying element names", {
+  with_clean_registry({
+    A <- "\U0001F602"
+    B <- "\U0001F621"
+    register_emoji_lexicon(
+      "zz_test_lex",
+      data.frame(emoji = c(A, B), score = c(0.9, -0.9), stringsAsFactors = FALSE)
+    )
+    d <- data.frame(
+      id = 1:4, text = c(paste("a", A), paste(A, B), "plain", NA_character_),
+      sc = c(0.5, -0.5, 0, 0.1), when = as.Date("2020-01-01") + 0:3,
+      stringsAsFactors = FALSE
+    )
+    outs <- list(
+      emoji_sentiment(d, text), emoji_score(d, text), emoji_emotion(d, text),
+      emoji_risk(d, text), emoji_type(d, text), emoji_faceness(d, text),
+      emoji_summary(d, text), emoji_frequency(d, text), emoji_tokens(d, text),
+      emoji_dfm(d, text, id), emoji_pairs(d, text, doc_id = id),
+      emoji_ngrams(d, text), emoji_context(d, text),
+      emoji_collocations(d, text), emoji_categorize(d, text),
+      emoji_to_text(d, text), text_to_emoji(d, text), emoji_sanitize(d, text),
+      emoji_position(d, text), emoji_ratio(d, text), emoji_density(d, text),
+      emoji_token_cost(d, text), emoji_extract_nest(d, text),
+      emoji_extract_unnest(d, text), emoji_filter(d, text),
+      emoji_version_profile(d, text), emoji_unicode_releases(),
+      emoji_trend(d, text, when), emoji_turnover(d, text, when),
+      emoji_seasonality(d, text, when), emoji_adoption_lag(d, text, when),
+      emoji_cooccurrence(d, text, doc_id = id),
+      emoji_search("cat"), emoji_lexicons(), emoji_provenance(),
+      top_n_emojis(d, text), emoji_flag_ambiguous(d, text), emoji_ambiguity()
+    )
+    for (i in seq_along(outs)) {
+      for (cc in names(outs[[i]])) {
+        expect_null(names(outs[[i]][[cc]]),
+                    info = paste("output", i, "column", cc))
+      }
+    }
+  })
+})
+
+test_that("registering a lexicon leaves every other verb untouched", {
+  with_clean_registry({
+    A <- "\U0001F602"
+    B <- "\U0001F621"
+    d <- data.frame(
+      text = c(paste("a", A), paste(A, B), "plain", NA_character_),
+      stringsAsFactors = FALSE
+    )
+    snap <- function() {
+      list(emoji_sentiment(d, text), emoji_score(d, text),
+           emoji_emotion(d, text), emoji_risk(d, text),
+           emoji_summary(d, text), emoji_provenance(),
+           emoji_tokens(d, text), emoji_ambiguity())
+    }
+    before <- snap()
+    register_emoji_lexicon(
+      "zz_test_lex",
+      data.frame(emoji = c(A, B), score = c(0.9, -0.9), stringsAsFactors = FALSE)
+    )
+    expect_identical(snap(), before)
+  })
+})
+
+test_that("re-registering a name replaces it rather than duplicating it", {
+  with_clean_registry({
+    A <- "\U0001F602"
+    B <- "\U0001F621"
+    d <- data.frame(text = paste("a", A), stringsAsFactors = FALSE)
+    register_emoji_lexicon(
+      "zz_test_lex",
+      data.frame(emoji = c(A, B), score = c(0.9, -0.9), stringsAsFactors = FALSE)
+    )
+    second <- data.frame(emoji = c(A, B), score = c(-0.1, 0.2),
+                         stringsAsFactors = FALSE)
+    register_emoji_lexicon("zz_test_lex", second)
+    expect_identical(sum(emoji_lexicons()$name == "zz_test_lex"), 1L)
+    # the replacement's scores are the ones in force
+    expect_equal(emoji_score(d, text, lexicon = "zz_test_lex")$.emoji_score,
+                 -0.1, tolerance = 1e-12)
+    # and naming it is equivalent to passing the same table inline
+    expect_identical(emoji_score(d, text, lexicon = "zz_test_lex")$.emoji_score,
+                     emoji_score(d, text, lexicon = second)$.emoji_score)
+  })
+})
+
+test_that("a bundled lexicon name cannot be overridden by registration", {
+  with_clean_registry({
+    A <- "\U0001F602"
+    own <- data.frame(emoji = A, score = 0.9, stringsAsFactors = FALSE)
+    for (reserved in c("novak2015", "emotag1200")) {
+      expect_error(register_emoji_lexicon(reserved, own), reserved, fixed = TRUE)
+    }
+  })
+})
+
+test_that("a zero-row lexicon behaves exactly like one that matches nothing", {
+  with_clean_registry({
+    A <- "\U0001F602"
+    d <- data.frame(text = c(paste("a", A), "plain"), stringsAsFactors = FALSE)
+    register_emoji_lexicon(
+      "zz_empty",
+      data.frame(emoji = character(0), score = numeric(0),
+                 stringsAsFactors = FALSE)
+    )
+    register_emoji_lexicon(
+      "zz_nomatch",
+      data.frame(emoji = "\U0001F996", score = 0.5, stringsAsFactors = FALSE)
+    )
+    a <- emoji_score(d, text, lexicon = "zz_empty")
+    b <- emoji_score(d, text, lexicon = "zz_nomatch")
+    expect_identical(a$.emoji_score, b$.emoji_score)
+    expect_identical(a$.emoji_n_scored, b$.emoji_n_scored)
+    # documented convention: 0 scored where there were emoji, NA where none
+    expect_identical(a$.emoji_n_scored, c(0L, NA_integer_))
+    expect_identical(a$.emoji_n, c(1L, 0L))
+  })
+})

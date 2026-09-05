@@ -29,13 +29,16 @@ emoji_lexicons <- function() {
     custom <- tibble::tibble(
       name = names(reg),
       type = "custom",
-      dimensions = I(lapply(reg, function(x) {
+      # unname(): `reg` is a named list, so lapply()/vapply() over it return
+      # named results and bind_rows() then pads the bundled rows with "".
+      # `emoji_lexicons()$n` printed a stray name header as a result.
+      dimensions = I(unname(lapply(reg, function(x) {
         # drop the glyph column (whatever it was called at registration), the
         # normalised key and any label column -- they are not score dimensions
         setdiff(names(x), c(attr(x, "tidyEmoji_by") %||% "emoji",
                             "emoji", "key", "name"))
-      })),
-      n = vapply(reg, nrow, integer(1)),
+      }))),
+      n = unname(vapply(reg, nrow, integer(1))),
       source = "user-registered",
       licence = NA_character_
     )
