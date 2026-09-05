@@ -1072,7 +1072,28 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 <li>
 <strong>A fast path pinned against a slow path is only pinned if the comparison can fail.</strong> The new tests compare <code>.emoji_slice()</code> against <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring()</a></code> and <code>.emoji_window_at()</code> against <code>.emoji_window()</code> on the whole side. Both were verified to bite by mutation — an off-by-one in the code-point index and a removed widen loop each produce failures. Without that step they would have passed just as happily against a broken fast path. This is the same meta-lesson §1 keeps relearning: <strong>name the thing a passing check would have failed on.</strong>
 </li>
-</ul><p><strong>Verification.</strong> Differential equivalence: 10/10 <code>(unit, window)</code> combinations identical over 407 generated strings, including 500-space runs, adjacent emoji, leading and trailing whitespace and pure-emoji strings. The code-point path is exact on every sequence class (astral, ZWJ, <code>U+FE0F</code>, regional indicator, keycap, skin tone) and on latin1-marked input. Threshold crossing: verb output proportional and translations identical at 508, 512 and 520 glyphs. Suite 304 blocks, 0 failures. Local <code>--as-cran</code> with remote checks enabled: 1 WARNING, 3 NOTEs — the four documented host artefacts, unchanged.</p>
+</ul><p><strong>Then a sweep for the same defect class, which found two more instances and one consolidation.</strong> Having fixed three sites, the obvious next question was whether the pattern occurred elsewhere: every <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr()</a></code>/<code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring()</a></code> call in <code>R/</code> was read. Two more had it — <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code>’s residual loop (does anything but emoji remain?) and <code>.emoji_final_glyphs()</code>’s walk-back over the trailing emoji run behind <code><a href="reference/emoji_incongruity.html">emoji_incongruity()</a></code>. All four sites that cut text <em>around</em> glyph spans were doing the same thing with their own loop, so they now share <code>.emoji_gaps(s, m)</code>, which returns the <code>nrow(m) + 1</code> stretches outside the spans and holds the threshold logic once instead of three times. <code>gaps[i]</code> is the text between glyph <code>i - 1</code> and glyph <code>i</code>, so a caller indexing glyph pairs and one indexing the tail agree by construction.</p>
+<p><strong>The measurement lesson that only showed up here: a ratio can hide a quadratic.</strong> <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> measured a 2.7x increase for 4x input, which reads as comfortably linear, and on that basis it was nearly left alone. It was in fact the slowest per-row verb in the package — both measurement points were <em>already</em> deep in the quadratic regime, so the ratio between them understated the growth. Consolidating it made it <strong>13x faster</strong> (0.326s to 0.024s at 1600 emoji). Ratios locate super-linear growth only when one endpoint is still in the linear regime; absolute cost is what says whether a path is worth fixing. Both numbers were needed, and the ratio alone would have closed the investigation early.</p>
+<table class="table"><thead><tr><th>site</th>
+<th>before</th>
+<th>after</th>
+</tr></thead><tbody><tr><td>
+<code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> (6400 emoji)</td>
+<td>0.867s</td>
+<td>0.068s</td>
+</tr><tr><td>
+<code>.emoji_final_glyphs()</code> (6400)</td>
+<td>0.469s</td>
+<td>0.069s, ratio 8.8 to 4.1</td>
+</tr><tr><td>
+<code>.emoji_mask()</code> (6400)</td>
+<td>1.164s</td>
+<td>0.106s</td>
+</tr><tr><td>
+<code><a href="reference/emoji_context.html">emoji_context()</a></code> (1600)</td>
+<td>1.50s</td>
+<td>0.32s</td>
+</tr></tbody></table><p><strong>Verification.</strong> Differential equivalence: 10/10 <code>(unit, window)</code> combinations identical over 407 generated strings, including 500-space runs, adjacent emoji, leading and trailing whitespace and pure-emoji strings. The code-point path is exact on every sequence class (astral, ZWJ, <code>U+FE0F</code>, regional indicator, keycap, skin tone) and on latin1-marked input. Threshold crossing: verb output proportional and translations identical at 508, 512 and 520 glyphs. Suite 304 blocks, 0 failures. Local <code>--as-cran</code> with remote checks enabled: 1 WARNING, 3 NOTEs — the four documented host artefacts, unchanged.</p>
 <hr><p><strong>The pattern worth carrying into 0.5.0.</strong> §9 records that every release found defects in the code written just before it. This audit found its crop <strong>before</strong> the features were written — and three of the four block a planned feature group, which is why §3.1 recommends resequencing rather than folding the fixes in.</p>
 <hr></div>
 </div>

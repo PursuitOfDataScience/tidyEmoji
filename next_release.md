@@ -2725,6 +2725,42 @@ and
   path. This is the same meta-lesson §1 keeps relearning: **name the
   thing a passing check would have failed on.**
 
+**Then a sweep for the same defect class, which found two more instances
+and one consolidation.** Having fixed three sites, the obvious next
+question was whether the pattern occurred elsewhere: every
+[`substr()`](https://rdrr.io/r/base/substr.html)/[`substring()`](https://rdrr.io/r/base/substr.html)
+call in `R/` was read. Two more had it —
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)’s
+residual loop (does anything but emoji remain?) and
+`.emoji_final_glyphs()`’s walk-back over the trailing emoji run behind
+[`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md).
+All four sites that cut text *around* glyph spans were doing the same
+thing with their own loop, so they now share `.emoji_gaps(s, m)`, which
+returns the `nrow(m) + 1` stretches outside the spans and holds the
+threshold logic once instead of three times. `gaps[i]` is the text
+between glyph `i - 1` and glyph `i`, so a caller indexing glyph pairs
+and one indexing the tail agree by construction.
+
+**The measurement lesson that only showed up here: a ratio can hide a
+quadratic.**
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+measured a 2.7x increase for 4x input, which reads as comfortably
+linear, and on that basis it was nearly left alone. It was in fact the
+slowest per-row verb in the package — both measurement points were
+*already* deep in the quadratic regime, so the ratio between them
+understated the growth. Consolidating it made it **13x faster** (0.326s
+to 0.024s at 1600 emoji). Ratios locate super-linear growth only when
+one endpoint is still in the linear regime; absolute cost is what says
+whether a path is worth fixing. Both numbers were needed, and the ratio
+alone would have closed the investigation early.
+
+| site | before | after |
+|----|----|----|
+| [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md) (6400 emoji) | 0.867s | 0.068s |
+| `.emoji_final_glyphs()` (6400) | 0.469s | 0.069s, ratio 8.8 to 4.1 |
+| `.emoji_mask()` (6400) | 1.164s | 0.106s |
+| [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md) (1600) | 1.50s | 0.32s |
+
 **Verification.** Differential equivalence: 10/10 `(unit, window)`
 combinations identical over 407 generated strings, including 500-space
 runs, adjacent emoji, leading and trailing whitespace and pure-emoji
