@@ -439,20 +439,23 @@ distribution. It is now a number.
 * `next_release.md`, the repo's release ledger, gains a section 13 recording
   what wave 1 shipped, the third-audit defect, and the design decisions locked
   at implementation.
-* Emoji-dense rows no longer cost quadratic time. Three hot paths reached a
+* Emoji-dense rows no longer cost quadratic time. Five hot paths reached a
   character offset with `substr()`/`substring()`, which rescans a multi-byte
   string from its first byte on every call, so the work grew with the square of
-  the emoji in a row: `.emoji_slice()` (used by nearly every verb),
-  `.emoji_replace_in_order()` (the translation verbs) and the per-occurrence
+  the emoji in a row: glyph slicing (used by nearly every verb), the splice in
+  the translation verbs, the residual test in `emoji_ratio()`, the
+  trailing-run walk-back behind `emoji_incongruity()`, and the per-occurrence
   window loop in `emoji_context()`, which handed the whole prefix and suffix to
   a windowing function that only ever needed the few tokens next to the glyph.
-  The first two now index code points past a threshold, keeping ordinary rows on
-  the existing path; the third reads a bounded slice anchored at the glyph. On a
-  row holding 6400 emoji, `emoji_summary()` and `emoji_sentiment()` are about
-  ten times faster, `emoji_context()` about four, and every stage of the engine
-  now scales linearly. Results are unchanged -- the fast paths are pinned to the
-  slow ones by tests that compare them directly, and fall back whenever
-  `utf8ToInt()` cannot represent the string.
+  The four that cut text around glyph spans now share one helper that converts
+  the string once and slices code points past a threshold, keeping ordinary
+  rows on the existing path; `emoji_context()` reads a bounded slice anchored
+  at the glyph. Measured on a row holding 6400 emoji: `emoji_ratio()` about
+  thirteen times faster, `emoji_summary()` and `emoji_sentiment()` about ten,
+  the trailing-run walk-back about seven, `emoji_context()` about four, and
+  every stage of the engine now scales linearly. Results are unchanged -- the
+  fast paths are pinned to the slow ones by tests that compare them directly,
+  and fall back whenever `utf8ToInt()` cannot represent the string.
 
 # tidyEmoji 0.3.0
 

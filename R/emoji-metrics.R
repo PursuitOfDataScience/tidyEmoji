@@ -167,14 +167,7 @@ emoji_ratio <- function(data, text) {
     s <- v[[i]]
     if (is.na(s)) return(NA_character_)
     if (is.null(m) || nrow(m) == 0L) return(s)
-    keep <- character(nrow(m) + 1L)
-    prev <- 1L
-    for (k in seq_len(nrow(m))) {
-      keep[k] <- substr(s, prev, m[k, "start"] - 1L)
-      prev <- m[k, "end"] + 1L
-    }
-    keep[nrow(m) + 1L] <- substr(s, prev, nchar(s))
-    paste0(keep, collapse = "")
+    paste0(.emoji_gaps(s, m), collapse = "")
   }, character(1))
   only <- !was_na & emoji_chars > 0L & !nzchar(gsub("\\s", "", residual))
   only[was_na] <- NA

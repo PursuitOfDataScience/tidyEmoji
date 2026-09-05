@@ -1545,3 +1545,66 @@ test_that("an emoji-dense row is handled exactly, not just quickly", {
   expect_true(all(ctx$.emoji_context_left == "word"))
   expect_identical(unique(ctx$.emoji), A)
 })
+
+test_that(".emoji_gaps cuts the same stretches its three callers used to cut", {
+  A <- "\U0001F602"
+  fixtures <- c(
+    paste("aaa", A, "bbb", A, "ccc"),
+    paste0(A, "x", A),
+    A,
+    paste0("  ", A, "  "),
+    strrep(A, 3L),
+    paste("caf\u00E9 na\u00EFve", A, "end")
+  )
+  for (s in fixtures) {
+    m <- tidyEmoji:::.emoji_locations(s)[[1L]]
+    if (!nrow(m)) next
+    gaps <- tidyEmoji:::.emoji_gaps(s, m)
+    # the reference is the per-gap substr() each caller used before
+    ref <- c(
+      substr(s, 1L, m[1L, "start"] - 1L),
+      if (nrow(m) > 1L) {
+        vapply(2:nrow(m),
+               function(k) substr(s, m[k - 1L, "end"] + 1L, m[k, "start"] - 1L),
+               character(1))
+      } else {
+        character(0)
+      },
+      substr(s, m[nrow(m), "end"] + 1L, nchar(s))
+    )
+    expect_identical(gaps, ref, info = s)
+    expect_length(gaps, nrow(m) + 1L)
+    # gaps interleaved with glyphs must rebuild the string exactly
+    glyphs <- tidyEmoji:::.emoji_slice(m, s)
+    expect_identical(
+      paste0(as.vector(rbind(gaps, c(glyphs, ""))), collapse = ""), s
+    )
+  }
+})
+
+test_that(".emoji_gaps agrees with substring() past the threshold", {
+  unit <- paste0("w ", "\U0001F602", " x ", "\U0001F1EC\U0001F1E7", " y ")
+  thr <- tidyEmoji:::.emoji_cp_threshold
+  for (k in c(8L, thr %/% 2L + 4L)) {
+    s <- strrep(unit, k)
+    m <- tidyEmoji:::.emoji_locations(s)[[1L]]
+    expect_identical(
+      tidyEmoji:::.emoji_gaps(s, m),
+      substring(s, c(1L, m[, "end"] + 1L), c(m[, "start"] - 1L, nchar(s))),
+      info = paste("glyphs =", nrow(m))
+    )
+  }
+  expect_gte(nrow(tidyEmoji:::.emoji_locations(strrep(unit, thr %/% 2L + 4L))[[1L]]), thr)
+})
+
+test_that("the trailing-emoji run is unchanged by the shared gap helper", {
+  A <- "\U0001F602"
+  H <- "\U0001F621"
+  v <- c(paste("great news", A, H), paste("great", A, "news"),
+         paste("mixed", A, "x", H), paste0("only ", A), "no emoji",
+         paste("three", A, H, A))
+  # a run is the trailing emoji separated from each other only by whitespace;
+  # "mixed" stops the walk at the last glyph because "x" separates the pair
+  expect_identical(lengths(tidyEmoji:::.emoji_final_glyphs(v)),
+                   c(2L, 0L, 1L, 1L, 0L, 3L))
+})

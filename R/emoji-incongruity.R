@@ -41,18 +41,16 @@
     m <- locs[[i]]
     if (is.null(m) || nrow(m) == 0L) return(character(0))
     s <- v[[i]]
+    # gaps[i] is the text between glyph i - 1 and glyph i; gaps[n + 1] the
+    # text after the last glyph. Cutting them one at a time made a row ending
+    # in a long emoji run quadratic, since each cut rescanned the string.
+    gaps <- .emoji_gaps(s, m)
+    blank <- !nzchar(gsub("[[:space:]]", "", gaps))
     # nothing but whitespace may follow the last emoji
-    if (nzchar(gsub("[[:space:]]", "",
-                    substr(s, m[nrow(m), "end"] + 1L, nchar(s))))) {
-      return(character(0))
-    }
+    if (!blank[nrow(m) + 1L]) return(character(0))
     # walk back over the trailing run of emoji separated only by whitespace
     k <- nrow(m)
-    while (k > 1L) {
-      between <- substr(s, m[k - 1L, "end"] + 1L, m[k, "start"] - 1L)
-      if (nzchar(gsub("[[:space:]]", "", between))) break
-      k <- k - 1L
-    }
+    while (k > 1L && blank[k]) k <- k - 1L
     .emoji_slice(m[seq(k, nrow(m)), , drop = FALSE], s)
   })
 }

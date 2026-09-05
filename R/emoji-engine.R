@@ -245,6 +245,42 @@ emoji_sentiment_map <- function() {
   substring(s, m[, "start"], m[, "end"])
 }
 
+# The nrow(m) + 1 stretches of `s` lying *outside* the emoji spans in `m`, in
+# order: before the first glyph, between each adjacent pair, and after the
+# last. Three verbs need the non-emoji text and each used to cut it out with
+# its own substr() loop -- the translation verbs splice replacements between
+# these stretches, emoji_ratio() concatenates them to test whether anything but
+# emoji remains, and emoji_incongruity() walks back over the trailing ones
+# looking for whitespace. Cutting the string happens here instead, once.
+#
+# `gaps[i]` for i >= 2 is the text between glyph i - 1 and glyph i, so a
+# consumer indexing glyph pairs and one indexing the tail agree by
+# construction. Same threshold reasoning as .emoji_slice(): m one-at-a-time
+# substr() calls cost O(m * L), so past .emoji_cp_threshold convert once and
+# slice code points, and fall back whenever utf8ToInt() cannot represent the
+# string.
+.emoji_gaps <- function(s, m) {
+  n <- nrow(m)
+  if (!n) return(s)
+  starts <- c(1L, m[, "end"] + 1L)
+  ends <- c(m[, "start"] - 1L, NA_integer_)
+  cp <- if (n >= .emoji_cp_threshold) {
+    tryCatch(utf8ToInt(s), error = function(e) NA_integer_)
+  } else {
+    NA_integer_
+  }
+  if (anyNA(cp)) {
+    ends[n + 1L] <- nchar(s)
+    return(substring(s, starts, ends))
+  }
+  ends[n + 1L] <- length(cp)
+  vapply(seq_len(n + 1L),
+         function(i) if (starts[i] > ends[i]) "" else {
+           intToUtf8(cp[starts[i]:ends[i]])
+         },
+         character(1))
+}
+
 # A list, one element per element of `x`, of the emoji glyphs it contains.
 emoji_glyph_list <- function(x) {
   x <- as.character(x)
