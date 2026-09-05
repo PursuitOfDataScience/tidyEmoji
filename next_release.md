@@ -2506,6 +2506,52 @@ a note, `DEPENDS_ONLY` masking Suggests, a one-error CI run standing in
 for an audit, a disabled flag, and a memory note. **Re-measure the thing
 that tells you not to look.**
 
+**Round 33 (2026-09-04) — what actually ships, and the last inherited
+beliefs.**
+
+Two things had never been measured, only assumed.
+
+- **The tarball’s contents, listed against the repo.** Round 1 caught
+  `.claude` shipping by accident; nothing has verified the whole
+  manifest since. It is correct: `inst/WORDLIST` and `inst/doc/` ship,
+  `vignettes/ata_tweets.csv` ships because the vignette needs it, and
+  everything build-ignored is genuinely development-only –
+  `cran-comments.md`, `next_release.md`, `data-raw/`, `_pkgdown.yml`,
+  the `.github` workflows, the `.Rproj`. **`LICENSE.md` is excluded, and
+  that is right**: `License: GPL (>= 3)` is a standard licence, so
+  shipping the text is discouraged. It would be *required* only if the
+  field read `+ file LICENSE`, which it does not. 576 KB total.
+- **`man/figures/logo.png` is byte-identical reproducible from
+  `logo.svg`.** Rendered through the pipeline `[[svg-rendering-hpc]]`
+  documents – python3 + GObject librsvg 2.42 + pycairo at width 480 –
+  the output has the same md5 as the shipped file. So the logo has the
+  same provenance guarantee round 5 established for `data-raw/`: the
+  binary in the repo is derivable from its source, not a one-off nobody
+  can rebuild.
+
+**Memory audit, prompted by round 32’s discovery that a stale note had
+suppressed URL checking for 31 rounds.** Every factual claim in the
+project’s memory notes was re-tested:
+
+- `[[svg-rendering-hpc]]` – accurate. `rsvg-convert`, `magick`,
+  `convert` and `inkscape` are all still absent; the pycairo route still
+  works.
+- `[[r-cmd-check-hpc]]` – corrected last round; the gcc paths it names
+  still exist.
+- `[[fetch-before-claiming-repo-state]]` – clone is current.
+- `[[r-environment-hpc]]` – **one inaccuracy, and it was mine.** My
+  round-1 edit said `Rlibs/4.4` “HAS `emoji` 16.0.0”. It does not:
+  `emoji` is in the R 4.4.1 **site** library, and `R_LIBS=Rlibs/4.4`
+  only works because the site library is searched too. That wording is
+  exactly what made round 23 briefly conclude a cross-version check was
+  impractical when `emoji` turned out to be missing for R 4.6.
+  Corrected, with the fix recorded: `emoji` is pure R and installs into
+  a scratch library in seconds.
+
+**Nothing in the package changed this round.** At this maturity that is
+the expected outcome, and the value is in the two provenance facts now
+being measured rather than assumed.
+
 - **Two things round 2 checked and found sound**, worth recording so
   they are not re-audited: every `verb(data, text)` export survives
   zero-row, all-`NA`, empty-string, `factor` and `numeric` text columns
