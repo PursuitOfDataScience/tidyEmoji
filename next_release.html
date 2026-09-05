@@ -1147,6 +1147,27 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 <td>the vignette corpus</td>
 </tr></tbody></table><p>All three inspect <strong>repo files</strong>, which are absent when <code>R CMD check</code> runs the tests from the installed package, so skipping is the correct behaviour and not a coverage gap. One consequence is worth knowing rather than fixing: the ASCII-source guard – which caught literal ZWJ characters in new test code twice this session – protects only when the suite is run from the source tree. <code>R/</code> is covered natively by <code>R CMD check</code>’s own non-ASCII check; <code>tests/</code> is covered only locally. Relocating it so CI could see it would mean shipping repo files in the tarball, which is worse. <strong>So: keep running the suite locally before every commit; a green CI does not exercise those three.</strong></p>
 <p><strong>The lesson to carry forward.</strong> Three rounds running, the productive move has been to ask what the <em>current</em> verification cannot see: round 35 found cost because every test asserted values and none measured time; round 36 found doc drift because every test called one verb and none composed two; round 37 found mis-declared metadata because CI never runs an R older than oldrel-1. <strong>Green does not mean checked — it means checked by whatever is currently checking.</strong></p>
+<hr><p><strong>Round 38 (2026-09-05) — state, the last thing every test had avoided.</strong></p>
+<p>Every round up to here ran verbs on fresh data in isolation. Nothing asked whether one call leaves behind state that changes the next. The package has two pieces of session state: a cache environment (<code>reference</code>, <code>sentiment</code>, <code>ref_keys</code>, <code>emotion</code>, <code>ambiguity</code>, <code>type</code>, <code>lexicons</code>) and a user-writable lexicon registry. Either could in principle make an answer depend on call order, and no test would have noticed.</p>
+<p><strong>The finding: <code><a href="reference/emoji_lexicons.html">emoji_lexicons()</a></code> returned columns with stray element names.</strong> The registry is a <em>named</em> list, so <code>lapply(reg, ...)</code> and <code>vapply(reg, nrow, integer(1))</code> returned named results, and <code><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">dplyr::bind_rows()</a></code> padded the bundled rows with <code>""</code>. The result:</p>
+<pre><code>&gt; emoji_lexicons()$n
+          mine
+ 969  150    2</code></pre>
+<p>The tibble itself printed normally – tibble ignores element names – which is exactly why 37 rounds missed it. It only shows when a user extracts a column, which is what programmatic use does. <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter()</a></code> and indexing all still worked, so this was cosmetic, but the <code>""</code> padding is the unmistakable signature of <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> mixing named and unnamed parts and it was plainly unintended. Fixed with <code><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname()</a></code> on both, and generalised: a new test asserts <strong>no verb returns a column carrying element names</strong>, over every exported function that returns a data frame, with a custom lexicon registered so the registry path is live.</p>
+<p><strong>Everything else about the state came back clean, and is recorded so it is not re-audited:</strong></p>
+<ul><li>
+<strong>Warm cache equals cold.</strong> Nineteen verbs called twice in one session return <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> results. Nothing is mutated in place through the cache’s environment reference.</li>
+<li>
+<strong><code>emoji_ambiguity(measure =)</code> does not leak one measure into another.</strong> The cached table holds every measure as a column and <code>measure</code> selects one afterwards, so <code>gini</code>, <code>entropy</code> and <code>neutral_share</code> are distinct and asking in either order gives the same answers.</li>
+<li>
+<strong>Registration is isolated.</strong> Registering an unrelated lexicon leaves <code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code>, <code><a href="reference/emoji_score.html">emoji_score()</a></code>, <code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code>, <code><a href="reference/emoji_risk.html">emoji_risk()</a></code>, <code><a href="reference/emoji_summary.html">emoji_summary()</a></code>, <code><a href="reference/emoji_tokens.html">emoji_tokens()</a></code>, <code><a href="reference/emoji_ambiguity.html">emoji_ambiguity()</a></code> and <code><a href="reference/emoji_provenance.html">emoji_provenance()</a></code> bit-identical.</li>
+<li>
+<strong>Re-registering a name replaces it</strong> – one row, and the new scores are the ones in force – and naming a lexicon is equivalent to passing the same table inline.</li>
+<li>
+<strong>Bundled names are protected</strong>: <code>register_emoji_lexicon("novak2015", ...)</code> errors, so the separately-cached <code>$sentiment</code> slot can never be shadowed by a registration and go incoherent.</li>
+<li>
+<strong>A zero-row lexicon is accepted, and that is correct.</strong> It was the one thing that looked like a validation gap. Checking the behaviour first (round 36’s lesson) showed it is indistinguishable from a lexicon that matches nothing: both give <code>NA</code> scores, <code>.emoji_n_scored = 0</code> where the row had emoji and <code>NA</code> where it had none, and the right <code>.emoji_n</code>. That is the documented convention, so rejecting it would have invented a restriction rather than fixed a defect.</li>
+</ul><p><strong>Two of my own measurement errors, both of the same kind.</strong> The class sweep first reported “42 verbs, no offenders” – but it wrapped each call in <code>tryCatch(..., error = function(e) NULL)</code> and skipped the failures silently, so two entries never ran and the count was inflated. Rebuilt to report what actually executed, it was 41 of 43; and one of the two exclusions turned out to be <strong>my</strong> error, not a non-data-frame verb: <code>emoji_unicode_releases</code> is a <em>function</em> returning a tibble and I had referenced it without <code>()</code>. True coverage is 42 of 43, the only genuine exclusion being <code><a href="reference/emoji_unicode_version.html">emoji_unicode_version()</a></code>, which returns a length-1 character. <strong>A sweep that swallows its own errors reports coverage it does not have</strong> – the same failure mode as round 37’s skipped test, one level up.</p>
 <hr><p><strong>The pattern worth carrying into 0.5.0.</strong> §9 records that every release found defects in the code written just before it. This audit found its crop <strong>before</strong> the features were written — and three of the four block a planned feature group, which is why §3.1 recommends resequencing rather than folding the fixes in.</p>
 <hr></div>
 </div>
@@ -1405,7 +1426,7 @@ keywords  aliases</code></pre>
 <h2 id="id_4-feature-specifications">4. Feature specifications<a class="anchor" aria-label="anchor" href="#id_4-feature-specifications"></a></h2>
 <div class="section level3">
 <h3 id="id_41-modifiers-identity-and-representation">4.1 Modifiers, identity and representation<a class="anchor" aria-label="anchor" href="#id_41-modifiers-identity-and-representation"></a></h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_skin_tone</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span></span>
 <span><span class="co">#&gt; .emoji_skin_tone: default | light | medium_light | medium | medium_dark | dark</span></span>
 <span><span class="co">#&gt; .emoji_modifiable (logical), .emoji_n_modifiable, .emoji_n_modified</span></span>
@@ -1439,7 +1460,7 @@ keywords  aliases</code></pre>
 </div>
 <div class="section level3">
 <h3 id="id_42-geography-flags-and-countries">4.2 Geography: flags and countries<a class="anchor" aria-label="anchor" href="#id_42-geography-flags-and-countries"></a></h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_country</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>      <span class="co"># adds .emoji_iso2, .emoji_country_name</span></span>
 <span><span class="fu">emoji_flag</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>                  <span class="co"># ISO-2 &lt;-&gt; flag emoji, vectorised, both ways</span></span>
 <span><span class="fu">emoji_subdivision</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span><span class="op">)</span>  <span class="co"># tag sequences: the Scotland flag -&gt; GB-SCT</span></span></code></pre></div>
@@ -1455,7 +1476,7 @@ keywords  aliases</code></pre>
 <div class="section level3">
 <h3 id="id_43-accessibility--new-in-this-roadmap">4.3 Accessibility — new in this roadmap<a class="anchor" aria-label="anchor" href="#id_43-accessibility--new-in-this-roadmap"></a></h3>
 <p>Screen readers announce each emoji’s Unicode name, so a run of six emoji becomes six spoken names, and an emoji between two words interrupts the sentence. The CHI 2020 and CSCW 2024 work above turned that into two concrete interventions, and tidyEmoji already has the machinery for both.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># PREVIEW: what a screen reader will actually say</span></span>
 <span><span class="fu">emoji_speak</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, sep <span class="op">=</span> <span class="st">" "</span><span class="op">)</span></span>
 <span><span class="co">#&gt; the text with every emoji replaced by its spoken name</span></span>
@@ -1482,7 +1503,7 @@ keywords  aliases</code></pre>
 <div class="section level3">
 <h3 id="id_44-unicode-property-surface">4.4 Unicode property surface<a class="anchor" aria-label="anchor" href="#id_44-unicode-property-surface"></a></h3>
 <p>Now that <code>qualified</code>, <code>points</code>, <code>runes</code> and <code>nrunes</code> are <strong>confirmed present</strong> upstream (§2.1), this shrinks to exposing what we join to:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_properties</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>      <span class="co"># one row per glyph: qualification, modifiable,</span></span>
 <span>                         <span class="co"># component, group/subgroup, version, codepoints</span></span>
 <span><span class="fu">as_emoji_canonical</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>    <span class="co"># export the internal canonicaliser</span></span></code></pre></div>
@@ -1503,7 +1524,7 @@ keywords  aliases</code></pre>
 <div class="section level3">
 <h3 id="id_46-the-keyword-and-alias-surface--newly-cheap">4.6 The keyword and alias surface — newly cheap<a class="anchor" aria-label="anchor" href="#id_46-the-keyword-and-alias-surface--newly-cheap"></a></h3>
 <p>§2.1 found <code>keywords</code> and <code>aliases</code> populated for all 5042 glyphs. Today <code><a href="reference/emoji_search.html">emoji_search()</a></code> matches on <code>name</code> only, so a user searching “happy” misses <code>grinning face</code>, whose keywords include <em>happy</em> — the data to fix that is already installed.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_keywords</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>                    <span class="co"># long: one row per (glyph, keyword)</span></span>
 <span><span class="fu">emoji_find</span><span class="op">(</span><span class="va">terms</span>, match <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"any"</span>, <span class="st">"all"</span><span class="op">)</span><span class="op">)</span>   <span class="co"># keywords -&gt; glyphs, vectorised</span></span>
 <span></span>
@@ -1532,7 +1553,7 @@ keywords  aliases</code></pre>
 </ul><p><strong>The catalogue-wide figure is the better headline</strong>, because it does not depend on one lexicon’s provenance: of the 5042 RGI emoji, <strong>1252 carry <code>U+FE0F</code>, and 216 of those become undetectable if it is dropped.</strong> That is the number the help page now states.</p>
 <p><strong>One caution the <code>presentation = "any"</code> design must handle.</strong> <code>©</code>, <code>®</code> and <code>™</code> are inside the recoverable set — they are RGI emoji as <code>©️</code>, <code>®️</code>, <code>™️</code>. Matching them unqualified would count the copyright sign in a legal footer as emoji use, which is a worse error than the one being fixed. Whatever the opt-in looks like, those three (and anything else whose bare form is ordinary punctuation) need excluding, or the argument needs a third level.</p>
 <p><strong>Proposal — make it an argument, not a footnote.</strong></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, presentation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"emoji"</span>, <span class="st">"any"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; "emoji" (default, today's behaviour): require emoji presentation</span></span>
 <span><span class="co">#&gt; "any": also match unqualified / text-presentation code points that are</span></span>
@@ -1556,7 +1577,7 @@ keywords  aliases</code></pre>
 <p>A zero for 🫠 in 2019 is a <strong>structural</strong> zero. Melting face did not exist until Emoji 14.0 (2021). A zero for 😀 in 2019 is a <strong>count</strong> zero.</p>
 </blockquote>
 <p><code><a href="reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> already carries the release dates and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> already knows each glyph’s version, so the package has everything needed to label this — and <code><a href="reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code> is already doing adjacent arithmetic.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/emoji_trend.html">emoji_trend</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, <span class="va">time</span>, zeros <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed"</span>, <span class="st">"structural"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; "structural" adds .emoji_available (logical): was this glyph even</span></span>
 <span><span class="co">#&gt;   encodable at this timestamp?</span></span>
@@ -1926,7 +1947,7 @@ keywords  aliases</code></pre>
 <a class="anchor" aria-label="anchor" href="#id_101-legal-ediscovery-and-forensic-linguistics--build"></a></h3>
 <p>Emoji litigation is growing and diversifying: contract formation (a thumbs-up answering “are you prepared to buy?”), employment disputes, criminal matters and IP. “Emoji forensics” is now a named subfield (Danesi 2021), and courts are grappling with <em>variation</em> — the same nominal emoji rendering differently across platforms is itself the evidentiary problem (Nature HSSC 2022).</p>
 <p><strong>Why this fits tidyEmoji specifically.</strong> This community’s need is the exact inverse of NLP’s. NLP wants glyphs normalised away; forensics wants them pinned down: which codepoints exactly, with or without <code>U+FE0F</code>, which Unicode version introduced it, could this glyph have rendered differently on the sender’s device. tidyEmoji already has <code><a href="reference/emoji_provenance.html">emoji_provenance()</a></code>, <code><a href="reference/emoji_unicode_version.html">emoji_unicode_version()</a></code>, the <code>U+FE0F</code>-stripped join key and <code>emoji_properties()</code> (§4.4). What is missing is the <em>comparison</em> verb and the honest negative answer:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_identical</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>      <span class="co"># do these two glyph occurrences share codepoints</span></span>
 <span>                           <span class="co"># exactly? and if not, how do they differ?</span></span>
 <span><span class="fu">emoji_codepoints</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>        <span class="co"># already implied by emoji_properties(); make the</span></span>
@@ -1939,7 +1960,7 @@ keywords  aliases</code></pre>
 <a class="anchor" aria-label="anchor" href="#id_102-software-engineering-research--build-the-input-shape-gap"></a></h3>
 <p>The best-developed emoji literature we do not serve. Lu &amp; Cao mined 66 months of GitHub; “More than React” analysed <strong>365,811 pull requests across 1,850 repositories</strong> and found reaction counts correlate with review time and that first-time contributors receive fewer reactions; “Emotional Contagion in Code” (2025) analysed <strong>106,743 reactions</strong> over 2,098 issues, reporting 57.4% positive sentiment and positive cascades outnumbering negative 23:1.</p>
 <p><strong>The gap is structural, not thematic.</strong> GitHub reaction data is not text. It arrives as <em>(item, glyph, count)</em> — a tally. Every tidyEmoji verb takes a text column and derives counts by extraction. A researcher holding <code>(pr_id, "👍", 12)</code> cannot use <code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code>, <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code> or <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> at all without fabricating synthetic strings, which is what they currently do.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_from_counts</span><span class="op">(</span><span class="va">data</span>, <span class="va">emoji</span>, <span class="va">n</span>, id <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="co">#&gt; pivot a tally into the internal long form the scoring verbs consume,</span></span>
 <span><span class="co">#&gt; so emoji_sentiment() / emoji_emotion() / emoji_dfm() work on reaction data</span></span>
@@ -1970,7 +1991,7 @@ keywords  aliases</code></pre>
 <h3 id="id_106-survey-methodology-and-psychometrics--a-genuinely-new-audience">10.6 Survey methodology and psychometrics — a genuinely new audience<a class="anchor" aria-label="anchor" href="#id_106-survey-methodology-and-psychometrics--a-genuinely-new-audience"></a></h3>
 <p>Emoji are used as <strong>scale anchors</strong> in survey instruments, and the psychometric literature has tested whether that works. Phan et al. (2019) anchored vocational interest scales with emoji; İlhan et al. (2022) compared emoji-labelled and verbally-labelled Likert categories. Findings are mixed and that is the useful part: emoji-anchored scales sometimes match verbal ones and sometimes are <em>less</em> reliable, so instrument designers need to check rather than assume.</p>
 <p>This community holds ordinal data keyed by glyph — structurally the same tally shape as §10.2, which is why the two should be built together.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_scale</span><span class="op">(</span><span class="va">x</span>, levels <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>   <span class="co"># declare an ordered emoji scale</span></span>
 <span><span class="fu">as_emoji_ordinal</span><span class="op">(</span><span class="va">x</span>, <span class="va">scale</span><span class="op">)</span>      <span class="co"># glyph -&gt; ordered factor, with unmapped</span></span>
 <span>                                <span class="co"># glyphs surfaced rather than dropped</span></span></code></pre></div>
@@ -1988,7 +2009,7 @@ keywords  aliases</code></pre>
 <p><strong>The methodological caveat is the interesting part, and it is a trap.</strong> The same work finds emoji use is subject to <strong>accommodation</strong> — authors adjust their emoji choices to their addressee. So a per-author emoji profile pooled across conversations mixes the author’s style with their audience’s influence, and attribution built on the pooled profile will be optimistic. Any credible analysis conditions on addressee or conversation.</p>
 <p><strong>What tidyEmoji already gives them:</strong> <code>emoji_frequency(group_by = author)</code> and <code>emoji_dfm(doc_id = author)</code> produce the author-by-emoji matrix directly.</p>
 <p><strong>What is missing is distinctiveness.</strong> Raw frequency identifies the corpus’s common emoji, not the author’s characteristic ones. The measure wanted is TF-IDF-shaped — emoji over-represented in one author relative to the corpus baseline — and <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> already returns the matrix it needs:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_distinctive</span><span class="op">(</span><span class="va">data</span>, <span class="va">text</span>, <span class="va">group</span>, measure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tfidf"</span>, <span class="st">"log_odds"</span>, <span class="st">"keyness"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; per group: which emoji are characteristic, not merely frequent</span></span></code></pre></div>
 <p>This generalises well beyond authorship — the same verb answers “which emoji distinguish these subreddits / these brands / these age cohorts”, which is a question §2.4’s marketing literature and §10.9 both ask. <strong>Effort</strong> S-M (it is arithmetic over an existing matrix). <strong>Risk</strong> low. Schedule with wave 3.</p>
@@ -2025,7 +2046,7 @@ keywords  aliases</code></pre>
 <strong>Generalise the type vocabulary the way lexicons were generalised.</strong> There is <code><a href="reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> for affect; there is no <code>register_emoji_types()</code> for functional schemes. Adding it lets political-communication researchers, the marketing T-C-C-M literature (§2.4) and the AAC work (§10.12) each load their own scheme instead of asking us to bless one.</li>
 <li>
 <strong>Ship no political type scheme.</strong> Same reasoning as §10.3 and §10.4: the vocabulary is contested, national, and shifts with each election cycle.</li>
-</ul><div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+</ul><div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">register_emoji_types</span><span class="op">(</span><span class="va">name</span>, <span class="va">mapping</span><span class="op">)</span>   <span class="co"># mirror of register_emoji_lexicon()</span></span>
 <span><span class="fu">emoji_types</span><span class="op">(</span><span class="op">)</span>                         <span class="co"># mirror of emoji_lexicons()</span></span></code></pre></div>
 <p><strong>Effort</strong> S — it is the lexicon API’s shape applied to a second axis, and the generic scorer <code><a href="reference/emoji_score.html">emoji_score()</a></code> already demonstrates the pattern. <strong>Value</strong> compounding: one mechanism serves at least four literatures. Schedule with wave 3 alongside §10.8’s <code>emoji_distinctive()</code>, which the same communities want.</p>
@@ -2040,7 +2061,7 @@ keywords  aliases</code></pre>
 <h3 id="id_1013-multimodal-and-retrieval--emoji-as-a-stimulus-set">10.13 Multimodal and retrieval — emoji as a stimulus set<a class="anchor" aria-label="anchor" href="#id_1013-multimodal-and-retrieval--emoji-as-a-stimulus-set"></a></h3>
 <p>§2.4 tracks what <em>text</em> LLMs do with emoji (EMODIS, the silent-failure work). Vision-language models are a separate and newer question, because an emoji is both a code point and a picture, so a VLM can be asked to reason about it in either channel. <strong>EmojiGrid</strong> evaluates 25 leading open and proprietary VLMs on emoji understanding and reports a large gap between foundational perceptual tasks and higher-level cognition — models handle “what is this glyph” and fail on abstraction, compositional logic and emotional or semantic reasoning. Separately, retrieval work uses emoji as visual cues in query autocompletion for video search (ACM 2025), which is emoji as an <em>interface</em> element rather than corpus content.</p>
 <p><strong>The interesting inversion: this community does not want to analyse a corpus. It wants to construct one.</strong> Every other section in §10 hands tidyEmoji a text column. VLM evaluation needs the opposite service — a <em>principled stimulus set</em>: give me 200 emoji stratified by Unicode version, group, modifiability and annotation depth, so my benchmark is not accidentally 80% smileys. Right now researchers hand-pick these or scrape Emojipedia, and both are unreproducible.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">emoji_sample</span><span class="op">(</span><span class="va">n</span>, strata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"version"</span>, <span class="st">"modifiable"</span>, <span class="st">"qualified"</span><span class="op">)</span>,</span>
 <span>             seed <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="co">#&gt; reproducible, stratified draw from the RGI set, with the strata recorded</span></span>
@@ -2213,7 +2234,7 @@ keywords  aliases</code></pre>
 <p>Save as <code>tests/testthat/test-regression-0.5.0.R</code>.</p>
 <div class="section level3">
 <h3 id="id_121-part-a--behaviour-verified-correct-now-defended">12.1 Part A — behaviour verified correct, now defended<a class="anchor" aria-label="anchor" href="#id_121-part-a--behaviour-verified-correct-now-defended"></a></h3>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fixtures for behaviour the 2026-08-30/31 audit confirmed correct.</span></span>
 <span><span class="co"># These should pass on the current tree; a failure here is a regression.</span></span>
 <span></span>
@@ -2333,7 +2354,7 @@ keywords  aliases</code></pre>
 <div class="section level3">
 <h3 id="id_122-part-b--the-defects-written-as-the-target-behaviour">12.2 Part B — the defects, written as the target behaviour<a class="anchor" aria-label="anchor" href="#id_122-part-b--the-defects-written-as-the-target-behaviour"></a></h3>
 <p><em>These <strong>fail on the current tree</strong>. They are the acceptance criteria for §3.1’s 0.5.0 correctness items, in the same order as §1.</em></p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># TDD spec for the 0.5.0 correctness release. Each test names the roadmap</span></span>
 <span><span class="co"># section that found the defect. Expect failures until that item lands.</span></span>
 <span></span>
