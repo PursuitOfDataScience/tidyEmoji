@@ -439,6 +439,18 @@ distribution. It is now a number.
 * `next_release.md`, the repo's release ledger, gains a section 13 recording
   what wave 1 shipped, the third-audit defect, and the design decisions locked
   at implementation.
+* Three test assertions that were weaker than the behaviour they described are
+  now exact. Two counted the residual of the ZWJ segmentation work with
+  `<= 2` -- the catalogued spellings that go undetected, and those that leave a
+  joiner orphaned -- where the true number is exactly two, and one bounded a
+  row count that is exactly two. An inequality in that position accepts a
+  regression back up to the bound without reporting it, and a count cannot see
+  the residual *set* change while its size stays the same. The two residual
+  spellings (`U+1F441 U+200D U+1F5E8` and `U+1F3F3 U+200D U+26A7`) are now
+  named, with the reason they are irreparable asserted alongside them: neither
+  carries `U+FE0F`, and each one's fully-qualified sibling is detected as a
+  single glyph, so the residual is confined to the spelling and never reaches
+  the emoji. No package code changed.
 * `emoji_version_profile()` and `emoji_adoption_lag()` now resolve a Unicode
   version for every emoji they detect. The upstream `emoji::emojis` table
   records the introducing version on the *unqualified* member of a variation

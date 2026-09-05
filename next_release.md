@@ -2569,6 +2569,64 @@ suspicious of.
 
 ---
 
+**Round 41 (2026-09-05) -- auditing the assertions themselves.**
+
+Round 40 found, by accident, that a test was pinning a defect in place:
+`expect_gt(sum(is.na(labels)), 0L)` *required* missing data, and passed only
+because the version column had 1252 gaps. That was worth generalising, because
+nothing in forty rounds had pointed the verification at itself. This round swept
+the suite for assertions of the same family -- ones that require missing data,
+require a failure, or bound a quantity loosely enough to hide a regression.
+
+**Most of the `is.na` assertions are legitimate** and were left alone: they pin
+the documented no-emoji convention on a named row, which is exactly what they
+should do. One that looked suspicious after round 40 --
+`expect_true(is.na(vp$version))` in `test-regression-0.4.0.R` -- is correct: its
+fixture is a *synthetic* glyph (grinning ZWJ grinning) absent from the
+catalogue, so it has no version for a real reason and round 40's fill does not
+touch it.
+
+**Three assertions were weaker than the truth**, all bounding a quantity that
+is in fact exact:
+
+| assertion | bound | actual |
+|---|---|---|
+| `sum(n == 0L)` -- catalogued ZWJ spellings undetected | `<= 2` | exactly 2 |
+| `sum(orphaned_joiners(zwj) > 0L)` -- spellings losing a joiner | `<= 2` | exactly 2, the *same* two |
+| `nrow(out)` -- `emoji_flag_ambiguous()` on a two-emoji fixture | `<= 2` | exactly 2 |
+
+**Why an inequality is the wrong shape here.** These bounds are the residual of
+rounds 8-10, which took orphaned joiners from 793 to 2. Written as `<= 2` they
+accept 0, 1 or 2 -- so if a future change reintroduced one, the suite would stay
+green, and the comment explaining "the only two" would quietly become wrong.
+Worse, no count can detect the residual *set* changing while its size holds at
+two. So the two spellings are now **named** (`U+1F441 U+200D U+1F5E8`,
+`U+1F3F3 U+200D U+26A7`), and the reason they are irreparable is asserted rather
+than only commented: neither carries `U+FE0F` -- which is why there is no
+detectable component to grow from -- and each one's fully-qualified sibling is
+detected as a single glyph, so the residual is a property of the spelling and
+never of the emoji. The two sets are also asserted equal to each other, which
+the two separate count bounds never established.
+
+Mutation-verified individually: substituting one expected glyph **while keeping
+the set size at two** fails (the case the old bound structurally could not
+catch), adding a spurious member to the joiner-losing set fails, and moving the
+row count to `3L` fails.
+
+**Two loose bounds were deliberately left loose**, and that distinction is the
+point. `expect_gt(length(zwj), 2000L)` and `expect_gt(length(canonical),
+3000L)` (actual 2501 and 3790) are lower bounds on *fixture size*, not claims
+about the package's correctness -- they exist to confirm the fixture is
+non-trivial, and pinning them exactly would break the suite on any `emoji`
+package update that adds glyphs. **A bound is right when the thing it bounds is
+genuinely allowed to vary, and wrong when it is not**; the audit is about
+telling those two apart, not about replacing every inequality.
+
+No package code changed this round. Suite 331 blocks, 5887 assertions, 0
+failures.
+
+---
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release found
 defects in the code written just before it. This audit found its crop **before**
 the features were written — and three of the four block a planned feature group,

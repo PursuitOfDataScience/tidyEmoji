@@ -115,7 +115,9 @@ test_that("emoji_flag_ambiguous ranks the corpus's own emoji", {
   out <- emoji_flag_ambiguous(df, text)
   expect_named(out, c("emoji", "name", "n", "n_annotations", "ambiguity",
                       "rank"))
-  expect_lte(nrow(out), 2L)
+  # exactly two: the fixture's two distinct emoji, both scorable by novak2015
+  expect_identical(nrow(out), 2L)
+  expect_false(anyNA(out$ambiguity))
   expect_false(is.unsorted(rev(out$ambiguity)))
   expect_equal(nrow(emoji_flag_ambiguous(df, text, top_n = 1)), 1L)
   expect_equal(nrow(emoji_flag_ambiguous(data.frame(text = "plain"), text)), 0L)

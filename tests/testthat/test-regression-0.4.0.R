@@ -947,11 +947,30 @@ test_that("no catalogued ZWJ sequence is split into several glyphs", {
   n <- lengths(tidyEmoji:::emoji_glyph_list(zwj))
   # 232 of them used to split
   expect_equal(sum(n > 1L), 0L)
-  # the only two that go undetected are unqualified forms whose every
-  # component needs U+FE0F, and their qualified spellings are found
-  expect_lte(sum(n == 0L), 2L)
+  # Exactly two go undetected, and they are these two: unqualified forms whose
+  # every component needs U+FE0F, so there is no detectable component to grow
+  # from. Asserting the *set* rather than a count matters -- `<= 2` accepted a
+  # regression from 0 to 2 silently, and no count can see the set change while
+  # its size stays the same.
+  undetected <- zwj[n == 0L]
+  expect_identical(
+    sort(undetected),
+    sort(c("\U0001F441\u200D\U0001F5E8", "\U0001F3F3\u200D\u26A7"))
+  )
+  # neither carries U+FE0F, which is the whole reason they cannot be repaired
+  expect_false(any(grepl("\uFE0F", undetected, fixed = TRUE)))
+  # and each one's fully-qualified sibling is detected as a single glyph, so
+  # the residual is confined to the spelling and never to the emoji itself
   expect_length(tidyEmoji:::emoji_glyph_list("\U0001F441\uFE0F\u200D\U0001F5E8\uFE0F")[[1]], 1L)
   expect_length(tidyEmoji:::emoji_glyph_list("\U0001F3F3\uFE0F\u200D\u26A7\uFE0F")[[1]], 1L)
+  for (g in undetected) {
+    sibs <- ref$emoji[ref$key == tidyEmoji:::emoji_key(g)]
+    expect_true(any(vapply(
+      sibs,
+      function(s) length(tidyEmoji:::emoji_glyph_list(s)[[1]]) == 1L,
+      logical(1)
+    )), info = g)
+  }
 })
 
 test_that("real corpus text leaves no joiner orphaned", {
@@ -979,11 +998,22 @@ test_that("a lone match grows over the joiners the merge rules cannot reach", {
                "man: beard")
   expect_equal(as_emoji_name(gl(paste0("\U0001F636", Z, "\U0001F32B"))[[1]]),
                "face in clouds")
-  # only two spellings in the whole catalogue still lose a joiner, and both
-  # have no detectable component at all, so there is nothing to grow from
+  # Exactly two spellings in the whole catalogue still lose a joiner, and they
+  # are the same two that go undetected above -- both have no detectable
+  # component, so there is nothing to grow from. Named rather than counted, for
+  # the same reason: `<= 2` would accept a regression from 0.
   ref <- tidyEmoji:::emoji_reference()
   zwj <- ref$emoji[grepl(Z, ref$emoji, fixed = TRUE)]
-  expect_lte(sum(orphaned_joiners(zwj) > 0L), 2L)
+  losing <- zwj[orphaned_joiners(zwj) > 0L]
+  expect_identical(
+    sort(losing),
+    sort(c("\U0001F441\u200D\U0001F5E8", "\U0001F3F3\u200D\u26A7"))
+  )
+  # the set that loses a joiner is exactly the set that goes undetected
+  expect_identical(
+    sort(losing),
+    sort(zwj[lengths(tidyEmoji:::emoji_glyph_list(zwj)) == 0L])
+  )
 })
 
 test_that("growing a lone match never swallows a neighbour", {
