@@ -26,8 +26,9 @@ entries stay \code{NA}.
 \description{
 \code{text_to_emoji()} returns a copy of \code{data} with its text column rewritten so
 that every \verb{:shortcode:} token is replaced by the corresponding emoji glyph
-(the inverse of \code{\link[=emoji_to_text]{emoji_to_text()}} with \code{format = "shortcode"}). Shortcodes
-that do not match a known emoji are left unchanged.
+(the inverse of \code{\link[=emoji_to_text]{emoji_to_text()}} with \code{format = "shortcode"}, up to the
+presentation selector -- see Details). Shortcodes that do not match a known
+emoji are left unchanged.
 }
 \details{
 A shortcode token is a colon, one or more of \code{A-Z}, \code{a-z}, \code{0-9}, \verb{_}, \code{+}
@@ -35,6 +36,17 @@ or \code{-}, and a closing colon. Restricting the token this way means colons
 used for other purposes -- clock times, URLs, ratios, ordinary punctuation
 -- cannot swallow a following shortcode: \code{"meet at 10:30 :wave:"} still
 emojizes the wave.
+
+\strong{The round trip recovers the emoji, not necessarily the same bytes.} Like
+the vector helpers, both directions resolve through \code{emoji_key()},
+which ignores \code{U+FE0F}, so an unqualified glyph and its fully-qualified form
+share one shortcode and this verb emits the fully-qualified (RGI) form of
+the pair. Feeding the whole emoji catalogue through
+\code{emoji_to_text(format = "shortcode")} and back therefore returns an
+identical code-point key for every entry, and identical bytes for the 79\%
+that were already fully qualified; the rest gain \code{U+FE0F}. A second round
+trip changes nothing, so the result is stable. Use \code{emoji_key()} rather
+than string equality when comparing before and after.
 }
 \examples{
 df <- data.frame(text = "hi :grinning: bye :waving_hand:")
@@ -45,5 +57,7 @@ text_to_emoji(data.frame(text = "https://example.org at 10:30 :grinning:"),
               text)
 }
 \seealso{
-\code{\link[=emoji_to_text]{emoji_to_text()}}; \code{\link[=as_emoji]{as_emoji()}} for the vector helper.
+\code{\link[=emoji_to_text]{emoji_to_text()}}; \code{\link[=as_emoji]{as_emoji()}} for the vector helper, which
+resolves a bare string by Unicode name first and so differs from
+this verb on 17 strings that name one emoji and alias another.
 }

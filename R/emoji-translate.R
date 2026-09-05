@@ -96,8 +96,9 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #'
 #' `text_to_emoji()` returns a copy of `data` with its text column rewritten so
 #' that every `:shortcode:` token is replaced by the corresponding emoji glyph
-#' (the inverse of [emoji_to_text()] with `format = "shortcode"`). Shortcodes
-#' that do not match a known emoji are left unchanged.
+#' (the inverse of [emoji_to_text()] with `format = "shortcode"`, up to the
+#' presentation selector -- see Details). Shortcodes that do not match a known
+#' emoji are left unchanged.
 #'
 #' @details
 #' A shortcode token is a colon, one or more of `A-Z`, `a-z`, `0-9`, `_`, `+`
@@ -106,10 +107,23 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' -- cannot swallow a following shortcode: `"meet at 10:30 :wave:"` still
 #' emojizes the wave.
 #'
+#' **The round trip recovers the emoji, not necessarily the same bytes.** Like
+#' the vector helpers, both directions resolve through \code{emoji_key()},
+#' which ignores `U+FE0F`, so an unqualified glyph and its fully-qualified form
+#' share one shortcode and this verb emits the fully-qualified (RGI) form of
+#' the pair. Feeding the whole emoji catalogue through
+#' `emoji_to_text(format = "shortcode")` and back therefore returns an
+#' identical code-point key for every entry, and identical bytes for the 79%
+#' that were already fully qualified; the rest gain `U+FE0F`. A second round
+#' trip changes nothing, so the result is stable. Use \code{emoji_key()} rather
+#' than string equality when comparing before and after.
+#'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with the text column rewritten in place. `NA`
 #'   entries stay `NA`.
-#' @seealso [emoji_to_text()]; [as_emoji()] for the vector helper.
+#' @seealso [emoji_to_text()]; [as_emoji()] for the vector helper, which
+#'   resolves a bare string by Unicode name first and so differs from
+#'   this verb on 17 strings that name one emoji and alias another.
 #' @examples
 #' df <- data.frame(text = "hi :grinning: bye :waving_hand:")
 #' text_to_emoji(df, text)
@@ -148,11 +162,30 @@ text_to_emoji <- function(data, text) {
 #'
 #' * `as_emoji_name(x)` maps emoji glyphs to their Unicode names.
 #' * `as_emoji_shortcode(x)` maps emoji glyphs to their first shortcode.
-#' * `as_emoji(x)` maps shortcodes/names to the emoji glyph (emojize).
+#' * `as_emoji(x)` maps names/shortcodes to the emoji glyph (emojize).
 #'
 #' All three resolve through \code{emoji_key()}, so qualified emoji (carrying
 #' `U+FE0F`) and unqualified forms resolve identically. Unmatched inputs return
 #' `NA`.
+#'
+#' @details
+#' `as_emoji()` accepts either namespace in the same argument, and 464 strings
+#' belong to both -- they are the exact Unicode name of one emoji and a
+#' shortcode alias of another. It resolves them in a fixed order: **exact
+#' Unicode name first**, then shortcode, then \pkg{emoji}'s own name table. An
+#' exact name match is the stronger signal, so `as_emoji("dog")` is the emoji
+#' actually *named* "dog" (a dog, `U+1F415`), not the one whose alias is
+#' `:dog:` (a dog face, `U+1F436`).
+#'
+#' For 17 of those 464 strings the two namespaces disagree, and there
+#' `as_emoji()` and [text_to_emoji()] differ *by design*: a `:dog:` token is
+#' explicitly delimited as a shortcode, so [text_to_emoji()] reads it in the
+#' shortcode namespace and produces the dog face. The pattern is an emoji whose
+#' name is a bare noun versus the "... face" variant that carries the alias
+#' (`cat`, `cow`, `pig`, `tiger`, `mouse`, `rabbit`), or a plain object versus a
+#' decorated one (`umbrella`, `snowman`, `calendar`, `sunglasses`). Pass a
+#' shortcode through [text_to_emoji()], or the full Unicode name (`"dog face"`)
+#' to `as_emoji()`, if you need one namespace specifically.
 #'
 #' @param x A character vector of emoji glyphs (for `as_emoji_name`,
 #'   `as_emoji_shortcode`) or of shortcodes/names (for `as_emoji`).

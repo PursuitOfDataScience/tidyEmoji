@@ -1608,3 +1608,223 @@ test_that("the trailing-emoji run is unchanged by the shared gap helper", {
   expect_identical(lengths(tidyEmoji:::.emoji_final_glyphs(v)),
                    c(2L, 0L, 1L, 1L, 0L, 3L))
 })
+
+# ---------------------------------------------------------------------------
+# Composition invariants. Every earlier round tested verbs one at a time; these
+# compose two and assert an algebraic property of the pair. The shortcode round
+# trip is the strongest one available: it runs over the entire catalogue, and
+# what it must preserve is the code-point key, not the bytes.
+# ---------------------------------------------------------------------------
+
+test_that("the shortcode round trip preserves every emoji in the catalogue", {
+  ref <- tidyEmoji:::emoji_reference()
+  d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
+  sc <- emoji_to_text(d, text, format = "shortcode")$text
+  back <- text_to_emoji(data.frame(text = sc, stringsAsFactors = FALSE), text)$text
+
+  # the key is preserved for every single entry -- no glyph becomes a
+  # different emoji, which byte comparison alone would not distinguish from
+  # the U+FE0F normalisation below
+  expect_identical(tidyEmoji:::emoji_key(back), tidyEmoji:::emoji_key(ref$emoji))
+  expect_false(anyNA(tidyEmoji:::emoji_key(back)))
+
+  # the only byte-level difference anywhere is the presence of U+FE0F: strip
+  # it from both sides and the round trip is the identity on all 5042 entries
+  strip <- function(x) gsub("\uFE0F", "", x, fixed = TRUE)
+  expect_identical(strip(back), strip(ref$emoji))
+  expect_gt(mean(back == ref$emoji), 0.75)
+
+  # and the result is a fixed point: a second round trip changes nothing
+  sc2 <- emoji_to_text(data.frame(text = back, stringsAsFactors = FALSE), text,
+                       format = "shortcode")$text
+  back2 <- text_to_emoji(data.frame(text = sc2, stringsAsFactors = FALSE), text)$text
+  expect_identical(back2, back)
+})
+
+test_that("colliding names and shortcodes only ever share a code-point key", {
+  ref <- tidyEmoji:::emoji_reference()
+  d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
+  for (fmt in c("name", "shortcode")) {
+    lab <- emoji_to_text(d, text, format = fmt)$text
+    dup <- unique(lab[duplicated(lab)])
+    # two glyphs may share a label, but only if they are the same emoji
+    for (x in dup) {
+      expect_length(unique(tidyEmoji:::emoji_key(ref$emoji[lab == x])), 1L)
+    }
+  }
+})
+
+test_that("the text-rewriting verbs are idempotent", {
+  ref <- tidyEmoji:::emoji_reference()
+  mix <- data.frame(
+    text = c(paste("hi", ref$emoji[1], "there"), "plain text",
+             paste0(ref$emoji[2], ref$emoji[3]),
+             paste("mixed :smile: and", ref$emoji[9]),
+             NA_character_, ""),
+    stringsAsFactors = FALSE
+  )
+  for (v in c("emoji_sanitize", "emoji_to_text", "text_to_emoji")) {
+    f <- get(v, envir = asNamespace("tidyEmoji"))
+    once <- f(mix, text)
+    expect_identical(f(once, text)$text, once$text, info = v)
+  }
+})
+
+test_that("emoji_dfm folds presentation variants into one column", {
+  ref <- tidyEmoji:::emoji_reference()
+  pair <- ref$emoji[tidyEmoji:::emoji_key(ref$emoji) == "2764"]
+  skip_if(length(pair) < 2L, "catalogue has no U+2764 variant pair")
+  d <- data.frame(id = seq_along(pair[1:2]), text = pair[1:2],
+                  stringsAsFactors = FALSE)
+  w <- emoji_dfm(d, text, id)
+  # one id column plus exactly one emoji column, not two
+  expect_identical(ncol(w), 2L)
+  expect_false(any(duplicated(names(w))))
+})
+
+test_that("relational verbs agree arithmetically with the per-row count", {
+  A <- "\U0001F602"
+  B <- "\U0001F621"
+  C <- "\U0001F60D"
+  d <- data.frame(
+    id = 1:6,
+    text = c(paste("a", A, "b", B, "c"), paste(A, A, A), paste("only", C),
+             "no emoji here", paste(A, B, C), NA_character_),
+    stringsAsFactors = FALSE
+  )
+  k <- emoji_sentiment(d, text)$.emoji_n
+
+  # emoji_dfm(): the row sums are the row's emoji count, variants folded
+  w <- emoji_dfm(d, text, id)
+  rs <- as.integer(rowSums(as.matrix(w[, setdiff(names(w), "id"), drop = FALSE])))
+  expect_identical(rs, as.integer(k[match(w$id, d$id)]))
+
+  # emoji_pairs(): a document with j distinct emoji contributes choose(j, 2)
+  glyphs <- tidyEmoji:::emoji_glyph_list(d$text)
+  j <- vapply(glyphs,
+              function(g) length(unique(tidyEmoji:::emoji_canonical(g))),
+              integer(1))
+  pr <- emoji_pairs(d, text, doc_id = id)
+  expect_identical(sum(pr$n), as.integer(sum(choose(j, 2))))
+
+  # emoji_ngrams(): max(k - n + 1, 0) per row, and no n-gram spans two rows
+  for (nn in 2:4) {
+    ng <- emoji_ngrams(d, text, n = nn)
+    expect_identical(nrow(ng), sum(pmax(k - (nn - 1L), 0L)),
+                     info = paste("n =", nn))
+    if (nrow(ng)) {
+      own <- vapply(seq_len(nrow(ng)), function(i) {
+        parts <- strsplit(ng$.emoji_ngram[i], " ", fixed = TRUE)[[1L]]
+        all(parts %in% tidyEmoji:::emoji_canonical(glyphs[[ng$.row_number[i]]]))
+      }, logical(1))
+      expect_true(all(own), info = paste("n =", nn))
+    }
+  }
+})
+
+test_that("every policy that rewrites emoji away composes to zero emoji", {
+  A <- "\U0001F602"
+  d <- data.frame(
+    text = c(paste("a", A, "b"), paste(A, A), "no emoji", "", NA_character_),
+    stringsAsFactors = FALSE
+  )
+  before <- emoji_sentiment(d, text)$.emoji_n
+  expect_true(any(before > 0L))
+
+  # "keep" is the default and must leave the text -- and so the count -- alone
+  expect_identical(emoji_sanitize(d, text, policy = "keep")$text, d$text)
+  expect_identical(emoji_sentiment(emoji_sanitize(d, text, policy = "keep"),
+                                   text)$.emoji_n, before)
+
+  for (pol in c("strip", "name", "placeholder", "shortcode")) {
+    out <- emoji_sanitize(d, text, policy = pol)
+    expect_identical(emoji_sentiment(out, text)$.emoji_n,
+                     rep(0L, nrow(d)), info = pol)
+  }
+  for (fmt in c("name", "shortcode")) {
+    out <- emoji_to_text(d, text, format = fmt)
+    expect_identical(emoji_sentiment(out, text)$.emoji_n,
+                     rep(0L, nrow(d)), info = fmt)
+  }
+})
+
+test_that("every ratio column stays inside its documented range", {
+  ref <- tidyEmoji:::emoji_reference()
+  d <- data.frame(
+    text = c(ref$emoji[1:300],
+             paste(ref$emoji[1:150], ref$emoji[151:300]),
+             "plain", "", NA_character_,
+             paste0(ref$emoji[5], " x"), paste0("x ", ref$emoji[5])),
+    stringsAsFactors = FALSE
+  )
+  in_range <- function(x, lo, hi) {
+    x <- x[!is.na(x)]
+    expect_true(length(x) > 0L)
+    expect_gte(min(x), lo)
+    expect_lte(max(x), hi)
+  }
+  in_range(emoji_ratio(d, text)$.emoji_ratio, 0, 1)
+  in_range(emoji_position(d, text)$.emoji_rel_position, 0, 1)
+  dens <- emoji_density(d, text)
+  in_range(dens$.emoji_per_char, 0, 1)
+  in_range(dens$.emoji_per_token, 0, 1)
+  in_range(emoji_faceness(d, text)$.emoji_faceness, 0, 1)
+  in_range(emoji_sentiment(d, text)$.emoji_sentiment, -1, 1)
+  # entropy is in nats, so its ceiling is log(3) -- not 1
+  risk <- emoji_risk(d, text)
+  in_range(risk$.emoji_ambiguity_mean, 0, log(3))
+  in_range(risk$.emoji_ambiguity_max, 0, log(3))
+})
+
+test_that("as_emoji() resolves an undelimited string by Unicode name first", {
+  ref <- tidyEmoji:::emoji_reference()
+  both <- intersect(ref$name, ref$shortcode[!is.na(ref$shortcode)])
+  # the two namespaces genuinely overlap, or this test proves nothing
+  expect_gt(length(both), 100L)
+
+  by_name <- ref$emoji[match(both, ref$name)]
+  by_short <- ref$emoji[match(both, ref$shortcode)]
+  disagree <- tidyEmoji:::emoji_key(by_name) != tidyEmoji:::emoji_key(by_short)
+
+  # documented precedence: an exact name match wins over a shortcode alias
+  expect_identical(tidyEmoji:::emoji_key(as_emoji(both)),
+                   tidyEmoji:::emoji_key(by_name))
+
+  # the worked example from the documentation
+  expect_identical(tidyEmoji:::emoji_key(as_emoji("dog")), "1F415")
+  expect_identical(
+    tidyEmoji:::emoji_key(
+      text_to_emoji(data.frame(text = ":dog:", stringsAsFactors = FALSE),
+                    text)$text
+    ),
+    "1F436"
+  )
+
+  # where the namespaces agree -- the large majority -- both paths must too
+  agree <- both[!disagree]
+  via_verb <- text_to_emoji(
+    data.frame(text = paste0(":", agree, ":"), stringsAsFactors = FALSE), text
+  )$text
+  expect_identical(tidyEmoji:::emoji_key(as_emoji(agree)),
+                   tidyEmoji:::emoji_key(via_verb))
+})
+
+test_that("every shortcode and name in the catalogue emojizes to the right emoji", {
+  ref <- tidyEmoji:::emoji_reference()
+
+  # names: all 5042, exactly
+  gn <- as_emoji(ref$name)
+  expect_false(anyNA(gn))
+  expect_identical(tidyEmoji:::emoji_key(gn), ref$key)
+
+  # shortcodes through the data-frame verb, which reads them unambiguously as
+  # shortcodes -- including the 175 alternate aliases emoji_to_text() never
+  # emits, so this covers ground the round-trip test cannot reach
+  has_sc <- !is.na(ref$shortcode)
+  out <- text_to_emoji(
+    data.frame(text = paste0(":", ref$shortcode[has_sc], ":"),
+               stringsAsFactors = FALSE), text
+  )$text
+  expect_false(any(grepl("^:.*:$", out)))
+  expect_identical(tidyEmoji:::emoji_key(out), ref$key[has_sc])
+})

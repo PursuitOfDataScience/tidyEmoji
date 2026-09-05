@@ -26,12 +26,30 @@ Small vector-level helpers for ad-hoc use. They do not take a data frame.
 \itemize{
 \item \code{as_emoji_name(x)} maps emoji glyphs to their Unicode names.
 \item \code{as_emoji_shortcode(x)} maps emoji glyphs to their first shortcode.
-\item \code{as_emoji(x)} maps shortcodes/names to the emoji glyph (emojize).
+\item \code{as_emoji(x)} maps names/shortcodes to the emoji glyph (emojize).
 }
 
 All three resolve through \code{emoji_key()}, so qualified emoji (carrying
 \code{U+FE0F}) and unqualified forms resolve identically. Unmatched inputs return
 \code{NA}.
+
+\code{as_emoji()} accepts either namespace in the same argument, and 464 strings
+belong to both -- they are the exact Unicode name of one emoji and a
+shortcode alias of another. It resolves them in a fixed order: \strong{exact
+Unicode name first}, then shortcode, then \pkg{emoji}'s own name table. An
+exact name match is the stronger signal, so \code{as_emoji("dog")} is the emoji
+actually \emph{named} "dog" (a dog, \verb{U+1F415}), not the one whose alias is
+\verb{:dog:} (a dog face, \verb{U+1F436}).
+
+For 17 of those 464 strings the two namespaces disagree, and there
+\code{as_emoji()} and \code{\link[=text_to_emoji]{text_to_emoji()}} differ \emph{by design}: a \verb{:dog:} token is
+explicitly delimited as a shortcode, so \code{\link[=text_to_emoji]{text_to_emoji()}} reads it in the
+shortcode namespace and produces the dog face. The pattern is an emoji whose
+name is a bare noun versus the "... face" variant that carries the alias
+(\code{cat}, \code{cow}, \code{pig}, \code{tiger}, \code{mouse}, \code{rabbit}), or a plain object versus a
+decorated one (\code{umbrella}, \code{snowman}, \code{calendar}, \code{sunglasses}). Pass a
+shortcode through \code{\link[=text_to_emoji]{text_to_emoji()}}, or the full Unicode name (\code{"dog face"})
+to \code{as_emoji()}, if you need one namespace specifically.
 }
 \examples{
 as_emoji_name(c("\U0001f600", "\u2764\ufe0f"))
