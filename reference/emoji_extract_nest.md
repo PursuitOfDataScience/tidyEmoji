@@ -36,7 +36,8 @@ emoji_extract_nest(data, text)
 
 ## Value
 
-`data` with an added list-column `.emoji_unicode`.
+`data`, as a tibble, with an added list-column `.emoji_unicode`. A
+grouped input stays grouped.
 
 ## See also
 
@@ -50,7 +51,9 @@ for one row per emoji with metadata.
 ``` r
 df <- data.frame(text = c("hi \U0001f600\U0001f603", "none"))
 emoji_extract_nest(df, text)
-#>      text .emoji_unicode
-#> 1 hi 😀😃         😀, 😃
-#> 2    none               
+#> # A tibble: 2 × 2
+#>   text    .emoji_unicode
+#>   <chr>   <list>        
+#> 1 hi 😀😃 <chr [2]>     
+#> 2 none    <chr [0]>     
 ```
