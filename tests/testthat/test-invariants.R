@@ -1828,3 +1828,35 @@ test_that("every shortcode and name in the catalogue emojizes to the right emoji
   expect_false(any(grepl("^:.*:$", out)))
   expect_identical(tidyEmoji:::emoji_key(out), ref$key[has_sc])
 })
+
+test_that("the declared R minimum is one the package can actually be installed on", {
+  # A declared minimum below what the hard dependencies require is a promise
+  # the package cannot keep: install.packages() serves only current versions,
+  # so the resolver fetches a dplyr/tidyr that refuses to install and the user
+  # gets an opaque dependency failure rather than a clear R-version message.
+  # CI cannot catch this -- its oldest job is oldrel-1, far above the floor.
+  skip_on_cran()
+  r_floor <- function(p) {
+    d <- tryCatch(utils::packageDescription(p), error = function(e) NULL)
+    if (is.null(d)) return(NULL)
+    txt <- paste(stats::na.omit(c(d$Depends, d$Imports)), collapse = ", ")
+    m <- regmatches(txt, regexpr("R \\(>=[^)]*\\)", txt))
+    if (!length(m)) return(NULL)
+    sub(".*>=[[:space:]]*", "", sub("\\)$", "", m))
+  }
+  declared <- r_floor("tidyEmoji")
+  expect_false(is.null(declared))
+
+  hard <- c("dplyr", "emoji", "lifecycle", "rlang", "tibble", "tidyr")
+  floors <- unlist(lapply(hard, r_floor))
+  skip_if(length(floors) == 0L, "no dependency declares an R floor")
+
+  worst <- floors[order(package_version(floors), decreasing = TRUE)][1L]
+  # expect_gte() would try to subtract the two, and `-` is not defined for
+  # numeric_version, so compare directly and carry the diagnosis in the message
+  expect_true(
+    package_version(declared) >= package_version(worst),
+    info = paste0("DESCRIPTION declares R >= ", declared,
+                  " but the hard dependencies need R >= ", worst)
+  )
+})

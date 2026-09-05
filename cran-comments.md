@@ -68,6 +68,14 @@ detailed in NEWS.md. The ones a user could notice:
 
 The package makes no network requests, at check time or at run time.
 
+The declared R dependency is raised from `R (>= 3.5.0)` to `R (>= 4.1.0)`. This
+is a correction, not a new requirement: the package's own code uses nothing
+newer than R 3.5, but `dplyr` and `tidyr` -- both hard dependencies -- declare
+`R (>= 4.1.0)`, so R 4.1.0 is the oldest version on which `tidyEmoji` can in
+fact be installed. The previous value produced an opaque dependency-resolution
+error on R 3.5 to 4.0 rather than a clear message about the R version.
+
+
 ## Test environments
 
 * Local: R 4.4.1 and R 4.6.0 on Linux

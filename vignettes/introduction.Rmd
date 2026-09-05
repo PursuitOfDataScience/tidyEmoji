@@ -161,7 +161,7 @@ emoji_per_tweet
 
 We can use this to plot how many emoji each emoji-bearing entry contains:
 
-```{r, fig.alt = "Bar chart of the number of emoji per emoji-bearing entry. The vast majority of entries contain a single emoji, with a long, thin tail of more emoji-heavy entries."}
+```{r, fig.alt = "Bar chart of the number of emoji per emoji-bearing entry. About two-thirds of entries contain a single emoji, with a long, thin tail of more emoji-heavy entries."}
 emoji_per_tweet %>%
   group_by(.row_number) %>%
   summarise(n_emoji = sum(.emoji_count)) %>%
@@ -173,7 +173,7 @@ emoji_per_tweet %>%
        title = "Most emoji-bearing entries contain a single emoji")
 ```
 
-The overwhelming majority of emoji-bearing entries carry just one emoji, with a
+About two-thirds of emoji-bearing entries carry just one emoji, with a
 long, thin tail of more emoji-heavy entries.
 
 ### `emoji_tokens()`

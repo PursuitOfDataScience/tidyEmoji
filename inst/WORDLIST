@@ -1,5 +1,6 @@
 AAM
 AFINN
+alt
 BPE
 catalogue's
 chainable
@@ -41,6 +42,7 @@ Mozetič
 multipleness
 nats
 NLP
+oldrel
 pkg
 pkgdown
 PLoS

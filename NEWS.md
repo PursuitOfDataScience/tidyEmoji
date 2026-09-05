@@ -439,6 +439,20 @@ distribution. It is now a number.
 * `next_release.md`, the repo's release ledger, gains a section 13 recording
   what wave 1 shipped, the third-audit defect, and the design decisions locked
   at implementation.
+* The declared R dependency is raised from `R (>= 3.5.0)` to `R (>= 4.1.0)`,
+  which is the oldest R the package can actually be installed on. The old value
+  was a promise it could not keep: the current `dplyr` and `tidyr` both require
+  `R >= 4.1.0`, and `install.packages()` serves only current versions, so a user
+  on R 3.5 or 4.0 got an opaque dependency-resolution failure instead of a clear
+  message about their R version. Nothing in the package's own code needed more
+  than R 3.5 -- the floor comes entirely from the dependency chain -- and no
+  behaviour changed. A test now checks the declared minimum against the
+  installed hard dependencies' own floors, since the CI matrix only reaches
+  oldrel-1 and so cannot detect this class of drift.
+* The introduction vignette described 68% of emoji-bearing entries as "the
+  overwhelming majority" (and "the vast majority" in a figure's alt text) where
+  the measured share carrying exactly one emoji is 68.2%. Both now say "about
+  two-thirds".
 * `text_to_emoji()` no longer claims flatly to be the inverse of
   `emoji_to_text()`. It is the inverse *up to the presentation selector*:
   because both directions resolve through the `U+FE0F`-stripped code-point key,
