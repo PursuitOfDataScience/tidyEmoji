@@ -641,6 +641,31 @@ empirical distribution. It is now a number.
   as a single glyph, so the residual is confined to the spelling and
   never reaches the emoji. No package code changed.
 
+- [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  and
+  [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+  no longer change answer with the session’s locale. Both fold case
+  before matching, and [`tolower()`](https://rdrr.io/r/base/chartr.html)
+  honours `LC_CTYPE`: under a Turkish or Azerbaijani locale it maps
+  `"I"` to a dotless i (`U+0131`) rather than `"i"`, so any query
+  containing a capital I stopped matching the catalogue’s ASCII text.
+  Measured under `tr_TR.utf8`, `emoji_search("FIRE")` returned 0 rows
+  instead of 27, `"SMILING"` 0 instead of 23, `"INDIA"` 0 instead of 2,
+  and `"I"` 37 instead of 4640;
+  [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+  counted `"BIG"` and `"big"` as two different words. Matching now folds
+  `A-Z` with [`chartr()`](https://rdrr.io/r/base/chartr.html) before
+  [`tolower()`](https://rdrr.io/r/base/chartr.html), which settles ASCII
+  deterministically while still folding non-ASCII, so a query for
+  `"VICUÑA"` or `"O’CLOCK"` keeps working. This is not a behaviour
+  change in an ASCII or Western locale: the new fold agrees with
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) on all 5042
+  catalogue names, 10701 keywords and 5761 aliases.
+  [`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md)’s
+  group-to-type recode was checked and was never affected – its
+  subgroups are already lower-case and none of the literals it matches
+  contains an `i`.
+
 - [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
   and
   [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)

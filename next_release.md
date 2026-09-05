@@ -3384,6 +3384,95 @@ reporting a verification that did not happen.
 
 ------------------------------------------------------------------------
 
+**Round 43 (2026-09-05) — the locale category nobody varied.**
+
+Round 33 established that ordering does not depend on `LC_COLLATE`. It
+never touched `LC_CTYPE`, which governs *case conversion* – and every
+case-insensitive comparison in the package went through
+[`tolower()`](https://rdrr.io/r/base/chartr.html), which honours it. CI
+cannot see this: every job runs in C or `en_US`.
+
+**The finding, measured rather than argued.** `tr_TR.utf8` turned out to
+be installed on this machine, so the mechanism was demonstrated directly
+instead of reasoned from documentation: `tolower("I")` is a dotless i
+(`U+0131`) there, not `"i"`.
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+folds the user’s query and the catalogue’s ASCII text, so the fold broke
+the comparison:
+
+| query       | `en_US` | `tr_TR` |
+|-------------|---------|---------|
+| `"I"`       | 4640    | **37**  |
+| `"SMILING"` | 23      | **0**   |
+| `"FIRE"`    | 27      | **0**   |
+| `"INDIA"`   | 2       | **0**   |
+| `"VIOLIN"`  | 1       | **0**   |
+
+Lower-case queries were fine, and queries without an I were fine – which
+is what makes it nasty: a Turkish or Azerbaijani user gets silent empty
+results for some queries and correct results for others, with nothing to
+indicate why.
+
+**A second site, found only because the first check was vacuous.**
+[`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+folds corpus words the same way. My first comparison said “identical” –
+but the fixture returned **0 rows** at the default `min_n`, so it had
+compared two empty tables. With `min_n = 1` the divergence is plain:
+`en_US` gives `big, india, trip, win`; `tr_TR` gives
+`big, bıg, ındia, trip, win, wın`, so `"BIG"` and `"big"` stop being the
+same word and the counts change with the locale rather than the data.
+**This is the third time in this loop a check has passed by not
+running** (round 37’s skipped test, round 38’s error-swallowing sweep).
+The habit that catches it is cheap: before believing a negative, assert
+the fixture is non-trivial.
+
+**The fix.** `.emoji_fold()` = `tolower(chartr("A-Z", "a-z", x))`.
+[`chartr()`](https://rdrr.io/r/base/chartr.html) settles ASCII
+deterministically *before*
+[`tolower()`](https://rdrr.io/r/base/chartr.html) can apply any locale
+rule, and [`tolower()`](https://rdrr.io/r/base/chartr.html) then still
+folds non-ASCII – which matters, because the catalogue is **not** pure
+ASCII (names carry typographic apostrophes, keywords include `vicuña`),
+so a naive ASCII-only fold would have regressed those queries. Verified
+on both axes: identical across `en_US` and `tr_TR` for every probe, and
+**identical to [`tolower()`](https://rdrr.io/r/base/chartr.html) in the
+base locale** for all 5042 names, 10701 keywords and 5761 aliases – so
+this is a fix, not a behaviour change, for anyone already in an ASCII or
+Western locale. Applied at all five
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+sites and the
+[`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+site.
+
+**One site checked and found already safe**, applied anyway.
+`.emoji_type_of()` lower-cases the Unicode subgroup before matching
+`"face"`, `"costume"`, `"hand"` and `"person-gesture"`. Classification
+was verified identical across the two locales (0 differing rows of
+5042), for a reason worth recording: the subgroups are already
+lower-case, and **none of the four matched literals contains an `i`** –
+the Turkish rule only touches i/I. The fold is used there regardless,
+since it is provably a no-op today and removes a trap that would fire if
+either the catalogue or a literal ever changed.
+
+A source guard now asserts that no
+[`tolower()`](https://rdrr.io/r/base/chartr.html),
+[`toupper()`](https://rdrr.io/r/base/chartr.html),
+[`casefold()`](https://rdrr.io/r/base/chartr.html) or `ignore.case`
+remains in `R/` outside `.emoji_fold()`, so the next case-insensitive
+comparison cannot quietly reintroduce the locale dependence.
+
+**Test design note.** The cross-locale tests `skip_if()` `tr_TR.utf8`
+cannot be set, because not every CI platform has it – Windows will not.
+To stop that becoming a vacuous pass, the locale-independence test first
+asserts that `tolower("I")` really does diverge under the switched
+locale, so a machine where the mechanism is inert cannot report success.
+Fixtures are built from `\U` escapes and only `LC_CTYPE` is varied via
+[`Sys.setlocale()`](https://rdrr.io/r/base/locales.html), never `LC_ALL`
+– the trap recorded in the appendix, which mangles UTF-8 source files so
+that the fixture changes before package code runs.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block
