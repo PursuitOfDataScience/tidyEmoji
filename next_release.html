@@ -1201,7 +1201,30 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 <code><a href="reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> listing versions absent from <code><a href="https://emilhvitfeldt.github.io/emoji/reference/emojis.html" class="external-link">emoji::emojis</a></code> (<code>6.0</code>-<code>10.0</code>, <code>17.0</code>) is the <strong>intentional two-series design</strong> – 17 emoji-spec rows plus 6 Unicode rows, with <code>series</code> distinguishing them – not staleness. Every version the profile now emits is present in the release table.</li>
 <li>
 <code>sum(n_tokens)</code> = 4830 equals the glyphs detection actually finds; the gap to 5042 is the known 95.8% standalone detection rate from rounds 8-10, not a loss in the profile.</li>
-</ul><hr><p><strong>The pattern worth carrying into 0.5.0.</strong> §9 records that every release found defects in the code written just before it. This audit found its crop <strong>before</strong> the features were written — and three of the four block a planned feature group, which is why §3.1 recommends resequencing rather than folding the fixes in.</p>
+</ul><hr><p><strong>Round 41 (2026-09-05) – auditing the assertions themselves.</strong></p>
+<p>Round 40 found, by accident, that a test was pinning a defect in place: <code>expect_gt(sum(is.na(labels)), 0L)</code> <em>required</em> missing data, and passed only because the version column had 1252 gaps. That was worth generalising, because nothing in forty rounds had pointed the verification at itself. This round swept the suite for assertions of the same family – ones that require missing data, require a failure, or bound a quantity loosely enough to hide a regression.</p>
+<p><strong>Most of the <code>is.na</code> assertions are legitimate</strong> and were left alone: they pin the documented no-emoji convention on a named row, which is exactly what they should do. One that looked suspicious after round 40 – <code>expect_true(is.na(vp$version))</code> in <code>test-regression-0.4.0.R</code> – is correct: its fixture is a <em>synthetic</em> glyph (grinning ZWJ grinning) absent from the catalogue, so it has no version for a real reason and round 40’s fill does not touch it.</p>
+<p><strong>Three assertions were weaker than the truth</strong>, all bounding a quantity that is in fact exact:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>assertion</th>
+<th>bound</th>
+<th>actual</th>
+</tr></thead><tbody><tr><td>
+<code>sum(n == 0L)</code> – catalogued ZWJ spellings undetected</td>
+<td><code>&lt;= 2</code></td>
+<td>exactly 2</td>
+</tr><tr><td>
+<code>sum(orphaned_joiners(zwj) &gt; 0L)</code> – spellings losing a joiner</td>
+<td><code>&lt;= 2</code></td>
+<td>exactly 2, the <em>same</em> two</td>
+</tr><tr><td>
+<code>nrow(out)</code> – <code><a href="reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code> on a two-emoji fixture</td>
+<td><code>&lt;= 2</code></td>
+<td>exactly 2</td>
+</tr></tbody></table><p><strong>Why an inequality is the wrong shape here.</strong> These bounds are the residual of rounds 8-10, which took orphaned joiners from 793 to 2. Written as <code>&lt;= 2</code> they accept 0, 1 or 2 – so if a future change reintroduced one, the suite would stay green, and the comment explaining “the only two” would quietly become wrong. Worse, no count can detect the residual <em>set</em> changing while its size holds at two. So the two spellings are now <strong>named</strong> (<code>U+1F441 U+200D U+1F5E8</code>, <code>U+1F3F3 U+200D U+26A7</code>), and the reason they are irreparable is asserted rather than only commented: neither carries <code>U+FE0F</code> – which is why there is no detectable component to grow from – and each one’s fully-qualified sibling is detected as a single glyph, so the residual is a property of the spelling and never of the emoji. The two sets are also asserted equal to each other, which the two separate count bounds never established.</p>
+<p>Mutation-verified individually: substituting one expected glyph <strong>while keeping the set size at two</strong> fails (the case the old bound structurally could not catch), adding a spurious member to the joiner-losing set fails, and moving the row count to <code>3L</code> fails.</p>
+<p><strong>Two loose bounds were deliberately left loose</strong>, and that distinction is the point. <code>expect_gt(length(zwj), 2000L)</code> and <code>expect_gt(length(canonical), 3000L)</code> (actual 2501 and 3790) are lower bounds on <em>fixture size</em>, not claims about the package’s correctness – they exist to confirm the fixture is non-trivial, and pinning them exactly would break the suite on any <code>emoji</code> package update that adds glyphs. <strong>A bound is right when the thing it bounds is genuinely allowed to vary, and wrong when it is not</strong>; the audit is about telling those two apart, not about replacing every inequality.</p>
+<p>No package code changed this round. Suite 331 blocks, 5887 assertions, 0 failures.</p>
+<hr><p><strong>The pattern worth carrying into 0.5.0.</strong> §9 records that every release found defects in the code written just before it. This audit found its crop <strong>before</strong> the features were written — and three of the four block a planned feature group, which is why §3.1 recommends resequencing rather than folding the fixes in.</p>
 <hr></div>
 </div>
 <div class="section level2">
