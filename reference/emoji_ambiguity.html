@@ -80,7 +80,12 @@ one of <code>"entropy"</code> (default), <code>"gini"</code>, <code>"neutral_sha
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>emoji</code>, <code>key</code> (the codepoint-normalised join
 key), <code>n_annotations</code>, <code>p_neg</code>, <code>p_neu</code>, <code>p_pos</code>, <code>ambiguity</code> and <code>rank</code>.
-With <code>x</code> supplied the result has one row per element of <code>x</code>, in the same
+<code>rank</code> is <code>1</code> for the most ambiguous emoji; glyphs with identical
+<code>ambiguity</code> <strong>share</strong> the lowest rank of their group and the next distinct
+value skips ahead accordingly (<code><a href="https://rdrr.io/r/base/rank.html" class="external-link">rank()</a></code>'s <code>ties.method = "min"</code>), so ranks
+are not necessarily consecutive. With <code>x = NULL</code> rows are ordered by
+<code>rank</code> with ties broken by the glyph, so the order is deterministic; with
+<code>x</code> supplied the result has one row per element of <code>x</code>, in the same
 order.</p>
     </div>
     <div class="section level2">

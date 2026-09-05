@@ -48,7 +48,11 @@ emoji_flag_ambiguous(data, text, top_n = 10, measure = "entropy")
 
 A tibble with columns `emoji`, `name`, `n` (occurrences in the corpus),
 `n_annotations`, `ambiguity` and `rank` (the glyph's rank in the whole
-lexicon). Emoji absent from the lexicon cannot be ranked and are
+lexicon, carried over from
+[`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md),
+so tied glyphs share a rank). Rows are ordered by descending
+`ambiguity`, then descending `n`, then the glyph, so the order is
+deterministic. Emoji absent from the lexicon cannot be ranked and are
 dropped.
 
 ## See also

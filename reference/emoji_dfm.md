@@ -48,8 +48,11 @@ emoji_dfm(data, text, doc_id = NULL, weighting = c("count", "binary", "tfidf"))
 ## Value
 
 A tibble with one row per document: `.row_number` (or the `doc_id`
-column) followed by one numeric column per emoji. Zero emoji in the
-corpus yields just the document column.
+column) followed by one numeric column per emoji, ordered by descending
+total count across the corpus with ties broken by the glyph. That
+ordering is computed in the C locale, so the column order does not
+depend on the session's collation and is safe to index by position. Zero
+emoji in the corpus yields just the document column.
 
 ## Details
 

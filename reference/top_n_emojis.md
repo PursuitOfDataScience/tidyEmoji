@@ -55,7 +55,13 @@ top_n_emojis(
 
 ## Value
 
-A tibble with columns `emoji_name`, `unicode`, `emoji_category` and `n`.
+A tibble with columns `emoji_name`, `unicode`, `emoji_category` and `n`,
+sorted by descending `n` with ties broken by the glyph so the order is
+deterministic – the same rule
+[`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+uses. When a tie straddles position `n` the glyph order decides which
+side of the cut each emoji falls on, and a corpus with fewer than `n`
+distinct emoji returns every one of them rather than padding to `n`.
 
 ## See also
 

@@ -92,7 +92,11 @@ instead.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>emoji_name</code>, <code>unicode</code>, <code>emoji_category</code> and
-<code>n</code>.</p>
+<code>n</code>, sorted by descending <code>n</code> with ties broken by the glyph so the order is
+deterministic – the same rule <code><a href="emoji_frequency.html">emoji_frequency()</a></code> uses. When a tie
+straddles position <code>n</code> the glyph order decides which side of the cut each
+emoji falls on, and a corpus with fewer than <code>n</code> distinct emoji returns
+every one of them rather than padding to <code>n</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

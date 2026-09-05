@@ -668,6 +668,31 @@ empirical distribution. It is now a number.
   where it previously could not be. A glyph with a genuinely unknown
   version is still reported rather than dropped.
 
+- The ordering verbs now document how they settle ties, which several of
+  them enforced in code without promising.
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  already said “descending `n` with ties broken by the glyph so the
+  order is deterministic”;
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md),
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md),
+  [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+  and
+  [`emoji_flag_ambiguous()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag_ambiguous.md)
+  applied the same discipline but said nothing.
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)’s
+  `@return` now records the sort order, that the glyph order decides
+  which side of the cut a straddling tie falls on, and that a corpus
+  with fewer than `n` distinct emoji returns all of them rather than
+  padding.
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)’s
+  records that emoji columns run in descending corpus total with ties
+  broken by the glyph, computed in the C locale so the column order is
+  safe to index by position and does not follow the session’s collation.
+  Both ambiguity verbs now state that `rank` uses `ties.method = "min"`:
+  tied glyphs share the lowest rank of their group and the next distinct
+  value skips ahead, so ranks are deliberately not consecutive. No
+  behaviour changed.
+
 - [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)’s
   documentation now says how to get back from its `shortcode` column to
   a glyph. The column is the emoji’s first alias, and passing it to

@@ -33,8 +33,14 @@ emoji_ambiguity(x = NULL, measure = "entropy")
 
 A tibble with columns `emoji`, `key` (the codepoint-normalised join
 key), `n_annotations`, `p_neg`, `p_neu`, `p_pos`, `ambiguity` and
-`rank`. With `x` supplied the result has one row per element of `x`, in
-the same order.
+`rank`. `rank` is `1` for the most ambiguous emoji; glyphs with
+identical `ambiguity` **share** the lowest rank of their group and the
+next distinct value skips ahead accordingly
+([`rank()`](https://rdrr.io/r/base/rank.html)'s `ties.method = "min"`),
+so ranks are not necessarily consecutive. With `x = NULL` rows are
+ordered by `rank` with ties broken by the glyph, so the order is
+deterministic; with `x` supplied the result has one row per element of
+`x`, in the same order.
 
 ## Details
 

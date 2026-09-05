@@ -85,8 +85,10 @@ all of them.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>emoji</code>, <code>name</code>, <code>n</code> (occurrences in the
 corpus), <code>n_annotations</code>, <code>ambiguity</code> and <code>rank</code> (the glyph's rank in the
-whole lexicon). Emoji absent from the lexicon cannot be ranked and are
-dropped.</p>
+whole lexicon, carried over from <code><a href="emoji_ambiguity.html">emoji_ambiguity()</a></code>, so tied glyphs share
+a rank). Rows are ordered by descending <code>ambiguity</code>, then descending <code>n</code>,
+then the glyph, so the order is deterministic. Emoji absent from the
+lexicon cannot be ranked and are dropped.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

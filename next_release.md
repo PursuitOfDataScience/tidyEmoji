@@ -3306,6 +3306,84 @@ failures.
 
 ------------------------------------------------------------------------
 
+**Round 42 (2026-09-05) — tie-breaking, which five green platforms
+cannot compare.**
+
+CI runs macOS, Windows and three Ubuntu R versions, and never compares
+their *outputs* to each other. So an ordering that fell back on input
+order, a hash, or the session’s collation would let every job pass while
+producing a different answer on each platform. Round 33 established that
+output does not depend on input row order; nothing had checked the
+harder case – ties **within** an equal key, which is exactly where such
+a fallback would surface.
+
+**The ordering itself is already sound, and that is the finding.** Every
+one of the ordering sites carries an explicit stable secondary key, and
+every [`order()`](https://rdrr.io/r/base/order.html) call passes
+`method = "radix"`, which is C-locale and so immune to collation.
+Measured with a five-way exact tie (five glyphs, each appearing twice,
+so `n` is tied throughout and the entire output order *is* the
+tie-break):
+
+- [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md),
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md),
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  column order: tie order equals the C-locale glyph order exactly, and
+  is unchanged under three different input permutations.
+- [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  /
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md):
+  equal-`n` blocks in C-locale `item1`/`item2` order,
+  permutation-stable.
+- [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md):
+  `rank` monotone, reproducible call to call, and C-locale glyph order
+  within each tie group.
+- `top_n_emojis(n = k)` returns exactly `min(k, distinct)` rows, cutting
+  a straddling tie by glyph order and never padding.
+
+**What was actually wrong was the promise, not the behaviour.**
+[`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)’s
+`@return` documents its tie rule in full;
+[`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md),
+[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+and both ambiguity verbs apply the same discipline and documented none
+of it.
+[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)’s
+rule existed only as a code comment (“column order: descending total
+count, ties by glyph. radix = C-locale ordering”) – a real contract,
+since users index dfm columns by position, kept private. Same shape as
+rounds 34 and 36, inverted: here one member *has* the documented
+contract and four siblings lack it. All four `@return` blocks now state
+it, including that `rank` uses `ties.method = "min"` so ranks are
+deliberately non-consecutive – confirmed against the data: 76 tie groups
+over 969 scorable emoji, all 75 mid-table groups skipping by exactly
+their group size, ranks running 1 to 804.
+
+**A mutation-testing mistake of my own, and the one it exposed.** Three
+perturbations were run. Dropping the glyph key from
+[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)’s
+column order produced 6 failures. Switching `ties.method` from `"min"`
+to `"first"` appeared to produce **none** – until I checked, and found
+the string occurs twice in the file and my edit had landed on the
+roxygen comment I had *just written*, not on the code. Retargeted at the
+code line it produces 2 failures and drops the tie groups to 0. **A
+mutation that edits a comment proves nothing, and a doc fix in the same
+file makes that mistake easy to make.**
+
+The third mutation is the interesting one, because it genuinely does not
+bite and should not be made to. Removing
+[`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)’s
+explicit `arrange(desc(n), emoji)` tie-break changes nothing, because
+[`dplyr::count()`](https://dplyr.tidyverse.org/reference/count.html)
+*already* returns its groups in C-locale glyph order and `arrange()` is
+stable – two independent mechanisms produce the same order. The explicit
+key stays, since it makes the guarantee local instead of resting on
+`count()`’s ordering remaining what it is, but the test can only pin the
+observable contract, not that particular line. Worth stating rather than
+reporting a verification that did not happen.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block
