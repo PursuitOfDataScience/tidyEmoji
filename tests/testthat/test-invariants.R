@@ -2399,9 +2399,13 @@ test_that(".emoji_fold does not depend on LC_CTYPE", {
   there <- with_ctype("tr_TR.utf8", tidyEmoji:::.emoji_fold(probe))
   skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
 
-  # the mechanism really is live on this machine, or the test proves nothing
+  # Only assert locale-independence where the Turkish rule is actually live.
+  # Windows accepts the locale name but its tolower() does not apply the rule,
+  # so the mechanism is inert there and the comparison would prove nothing --
+  # skip rather than fail, since an inert platform is not a broken package.
   turkish_tolower <- with_ctype("tr_TR.utf8", tolower("I"))
-  expect_false(identical(turkish_tolower, "i"))
+  skip_if(identical(turkish_tolower, "i"),
+          "this platform's tolower() does not apply the Turkish dotless-i rule")
 
   expect_identical(there, here)
   expect_identical(there[1], "i")
