@@ -3461,6 +3461,22 @@ A source guard now asserts that no
 remains in `R/` outside `.emoji_fold()`, so the next case-insensitive
 comparison cannot quietly reintroduce the locale dependence.
 
+**And the anti-vacuous guard itself failed CI, which is the sharper
+lesson.** The first push went red on **windows-latest only**:
+`Sys.setlocale("LC_CTYPE", "tr_TR.utf8")` *succeeds* on Windows, so the
+test did not skip, but Windows’
+[`tolower()`](https://rdrr.io/r/base/chartr.html) does not apply the
+Turkish rule – so the guard `expect_false(identical(tolower("I"), "i"))`
+failed. The package was fine; the test was wrong. **A guard against a
+vacuous pass must not turn a platform that cannot exercise the mechanism
+into a failure**, because “inert here” and “broken here” are different
+facts. It is now a `skip_if()` on the mechanism being live, which keeps
+the original intent – only *assert* locale-independence where the rule
+actually fires – without punishing a platform for not implementing it.
+Note the earlier skip check was not enough on its own: it tested whether
+the locale could be *set*, and Windows sets it happily while ignoring
+its casing semantics.
+
 **Test design note.** The cross-locale tests `skip_if()` `tr_TR.utf8`
 cannot be set, because not every CI platform has it – Windows will not.
 To stop that becoming a vacuous pass, the locale-independence test first
