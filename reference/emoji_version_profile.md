@@ -47,7 +47,11 @@ it is capped by your installed emoji package (see
 [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)).
 Glyphs whose version is unknown – including any the reference table does
 not carry – are reported in a row with `version = NA` rather than
-dropped.
+dropped. That row is rare in practice: the upstream table records the
+introducing version on only one spelling of a variation pair, and
+tidyEmoji fills it across every spelling sharing a codepoint key, so a
+fully-qualified glyph such as `U+2764 U+FE0F` reports the same version
+as its unqualified form.
 
 The corpus's average vintage is a weighted mean over this table, for
 example

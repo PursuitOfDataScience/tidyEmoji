@@ -3166,6 +3166,84 @@ behaviour for a source-tree check, not a regression.
 
 ------------------------------------------------------------------------
 
+**Round 40 (2026-09-05) — the dependency’s data, which no round had
+questioned.**
+
+Round 37 checked the declared **R** floor. It never checked *package*
+floors, and `Imports: emoji` carries no version constraint at all while
+the package reads that dependency’s data structures directly. Following
+that thread found the most consequential defect of the loop so far – not
+in the declaration, but in an assumption about the data behind it.
+
+**The finding: 1252 of 5042 emoji had no Unicode version, including the
+red heart.**
+[`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html)
+records the introducing version on the **unqualified** member of a
+variation pair and leaves it `NA` on the fully-qualified one:
+
+| glyph           | `qualified`     | `version` |
+|-----------------|-----------------|-----------|
+| `U+2764 U+FE0F` | fully-qualified | **NA**    |
+| `U+2764`        | unqualified     | 0.6       |
+
+`emoji_reference()` copied `version` per row, so every fully-qualified
+glyph inherited the `NA`. The consequences landed on the two verbs that
+exist to use it:
+[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+filed 207 types / 216 tokens – the red heart, the smiling face, the
+skull and crossbones, the speech bubble – into its `version = NA`
+bucket, and
+[`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+returned `NA` for all of them. For a user profiling a real corpus by
+Unicode vintage, the most common emoji in that corpus were reported as
+unknown.
+
+**This is a coherence failure against the package’s own central
+principle.** Every other glyph-to-metadata join – names, shortcodes,
+types, both lexicons – already resolves through the `U+FE0F`-stripped
+codepoint key, and rounds 34 and 36 verified that repeatedly. `version`
+was the one column that did not. The fix is `.emoji_fill_by_key()`: fill
+a row’s version from any row sharing its key. Measured before
+implementing, the fill is unambiguous – **0** keys have all-NA versions,
+**0** keys carry two different versions, and all 1252 rows are
+recoverable, so afterwards the reference has **zero** unknown versions.
+[`min()`](https://rdrr.io/r/base/Extremes.html) is used anyway, since
+first availability is what “introduced in” means if upstream ever does
+disagree. The filler writes back through a matching existing row so
+`"12.1"` stays `"12.1"` instead of becoming `12.100000`.
+
+**An existing test was asserting the defect.**
+`expect_gt(sum(is.na(labels)), 0L)` – commented “glyphs with an unknown
+version are reported, not dropped (documented)” – failed after the fix.
+Its *intent* was sound; its *mechanism* was to rely on the catalogue
+having gaps, which was only true because of the bug. It is now split in
+two: the catalogue must have **no** unknown versions, and the
+unknown-version path is exercised **synthetically** (forcing three
+reference rows to `NA` still yields an `NA` row with every token
+accounted for). Worth noting for the next round: **a test can pin a bug
+in place as firmly as it pins a feature**, and it reads exactly the same
+either way. The tell was that the assertion demanded a *lower bound on
+missing data* – a shape worth being suspicious of.
+
+**Also verified clean:**
+
+- The four structural contracts on `emoji` hold: `aliases` and
+  `keywords` are list columns, `emoji_name` is a named name-to-glyph
+  vector, `emoji_locate_all()` returns `start`/`end` matrices, and every
+  column the package reads is present.
+- [`emoji_unicode_releases()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_releases.md)
+  listing versions absent from
+  [`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html)
+  (`6.0`-`10.0`, `17.0`) is the **intentional two-series design** – 17
+  emoji-spec rows plus 6 Unicode rows, with `series` distinguishing them
+  – not staleness. Every version the profile now emits is present in the
+  release table.
+- `sum(n_tokens)` = 4830 equals the glyphs detection actually finds; the
+  gap to 5042 is the known 95.8% standalone detection rate from rounds
+  8-10, not a loss in the profile.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block

@@ -84,7 +84,11 @@ are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 is capped by your installed <span class="pkg">emoji</span> package (see
 <code><a href="emoji_unicode_version.html">emoji_unicode_version()</a></code>). Glyphs whose version is unknown – including any
 the reference table does not carry – are reported in a row with
-<code>version = NA</code> rather than dropped.</p>
+<code>version = NA</code> rather than dropped. That row is rare in practice: the
+upstream table records the introducing version on only one spelling of a
+variation pair, and tidyEmoji fills it across every spelling sharing a
+codepoint key, so a fully-qualified glyph such as <code>U+2764 U+FE0F</code> reports the
+same version as its unqualified form.</p>
 <p>The corpus's average vintage is a weighted mean over this table, for example
 <code>with(profile, weighted.mean(version_num, n_tokens, na.rm = TRUE))</code>.</p>
     </div>
