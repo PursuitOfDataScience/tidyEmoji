@@ -627,6 +627,31 @@ empirical distribution. It is now a number.
   recording what wave 1 shipped, the third-audit defect, and the design
   decisions locked at implementation.
 
+- Emoji-dense rows no longer cost quadratic time. Three hot paths
+  reached a character offset with
+  [`substr()`](https://rdrr.io/r/base/substr.html)/[`substring()`](https://rdrr.io/r/base/substr.html),
+  which rescans a multi-byte string from its first byte on every call,
+  so the work grew with the square of the emoji in a row:
+  `.emoji_slice()` (used by nearly every verb),
+  `.emoji_replace_in_order()` (the translation verbs) and the
+  per-occurrence window loop in
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md),
+  which handed the whole prefix and suffix to a windowing function that
+  only ever needed the few tokens next to the glyph. The first two now
+  index code points past a threshold, keeping ordinary rows on the
+  existing path; the third reads a bounded slice anchored at the glyph.
+  On a row holding 6400 emoji,
+  [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+  and
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  are about ten times faster,
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  about four, and every stage of the engine now scales linearly. Results
+  are unchanged – the fast paths are pinned to the slow ones by tests
+  that compare them directly, and fall back whenever
+  [`utf8ToInt()`](https://rdrr.io/r/base/utf8Conversion.html) cannot
+  represent the string.
+
 ## tidyEmoji 0.3.0
 
 CRAN release: 2026-08-04

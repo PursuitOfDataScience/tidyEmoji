@@ -2628,6 +2628,115 @@ where it applies.
 
 ------------------------------------------------------------------------
 
+**Round 35 (2026-09-04) — cost, the one axis 34 rounds never measured.**
+
+Every earlier round asked whether the verbs were *correct*. None asked
+what they *cost*. Six cross-verb correctness probes opened this round
+and all six came back clean, which is the useful signal — recorded here
+so they are not re-audited:
+
+- User column order and count are preserved by all fifteen row verbs.
+- The `NA`-vs-`0` discipline on count columns is uniform *and* already
+  documented: `.emoji_n` counts everything, derived counts are `NA` for
+  a no-emoji row (`emoji-ambiguity.R:176`, `emoji-type.R:118`,
+  `emoji-incongruity.R:154`).
+- Output-column order matches every `@return`.
+- Silent overwrite of a colliding dotted column is the documented
+  reserved-prefix contract (`R/tidyEmoji.R:11`), applied uniformly
+  across twelve verbs; duplicate input names already error through
+  tibble.
+- Declared encodings (UTF-8, unknown, latin1) all read correctly, and
+  latin1 round-trips through the three text-rewriting verbs without
+  mojibake.
+- [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)’s
+  `.position` agrees with
+  [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)’s
+  `.emoji_first` across all five sequence classes, and `.emoji_mask()`
+  is length-preserving, so character offsets stay exact.
+
+**The defect, which was structural rather than local.** Three hot paths
+reached a character offset with
+[`substr()`](https://rdrr.io/r/base/substr.html)/[`substring()`](https://rdrr.io/r/base/substr.html).
+R rescans a multi-byte string from its first byte to reach a character
+offset, so each call is O(offset) — and all three called it once per
+emoji, giving O(m\*L) in a row holding m emoji. Ratios for a 4x input
+increase (4.0 is linear, ~16 quadratic):
+
+| stage | before | after |
+|----|----|----|
+| `.emoji_locations()` | 4.1 | 4.1 (already linear) |
+| `.emoji_mask()` | 14.1 | 5.0 |
+| `.emoji_occurrences()` | 12.0 | 3.5 |
+| [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md) window loop | ~12 | 4.0 |
+
+The window loop was the most wasteful: it handed `.emoji_window()` the
+*entire* prefix and suffix, and re-evaluated `nchar(masked[r])` every
+iteration, when the answer only ever depends on the `window` tokens
+nearest the glyph. And because `.emoji_slice()` sits under
+`emoji_glyph_list()`, `.emoji_mask()` and `.emoji_occurrences()`, the
+cost was **shared** —
+[`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+and
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+paid it too, not just
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md).
+
+**The fixes.** `.emoji_slice()` and `.emoji_replace_in_order()` index
+code points ([`utf8ToInt()`](https://rdrr.io/r/base/utf8Conversion.html)
+once, then integer slices) past `.emoji_cp_threshold` (512 spans). The
+threshold matters: measured crossover is a few hundred spans, below
+which [`substring()`](https://rdrr.io/r/base/substr.html) is genuinely
+faster, so ordinary rows stay byte for byte on the path every other verb
+was built against, and [`anyNA()`](https://rdrr.io/r/base/NA.html) on
+the conversion falls back for anything
+[`utf8ToInt()`](https://rdrr.io/r/base/utf8Conversion.html) cannot
+represent.
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+reads a bounded slice anchored at the glyph, widening the budget until
+it demonstrably contains the answer — more than `window` tokens (the
+outermost may be cut by the slice edge, the nearer ones cannot be), or
+for `unit = "char"` still `window` characters after the emoji-adjacent
+whitespace is trimmed; falling back to the full side keeps pathological
+all-whitespace input exact. At 6400 emoji in one row:
+[`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+and
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+~10x faster,
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+~4x, `.emoji_mask()` 1.164s to 0.106s.
+
+**Two measurement lessons.**
+
+- **The obvious culprit was the wrong one.** After fixing the window
+  loop the residual was still super-linear, and the natural hypothesis —
+  that [`substr()`](https://rdrr.io/r/base/substr.html) on a small slice
+  still rescans, so slicing should go through a character vector — was
+  *measured and rejected*: the char-vector variant was slower on every
+  input size tried, realistic and extreme. Profiling the stages
+  separately, rather than reasoning about which was likely, is what
+  found the real cost in `.emoji_slice()`/`.emoji_replace_in_order()`.
+- **A fast path pinned against a slow path is only pinned if the
+  comparison can fail.** The new tests compare `.emoji_slice()` against
+  [`substring()`](https://rdrr.io/r/base/substr.html) and
+  `.emoji_window_at()` against `.emoji_window()` on the whole side. Both
+  were verified to bite by mutation — an off-by-one in the code-point
+  index and a removed widen loop each produce failures. Without that
+  step they would have passed just as happily against a broken fast
+  path. This is the same meta-lesson §1 keeps relearning: **name the
+  thing a passing check would have failed on.**
+
+**Verification.** Differential equivalence: 10/10 `(unit, window)`
+combinations identical over 407 generated strings, including 500-space
+runs, adjacent emoji, leading and trailing whitespace and pure-emoji
+strings. The code-point path is exact on every sequence class (astral,
+ZWJ, `U+FE0F`, regional indicator, keycap, skin tone) and on
+latin1-marked input. Threshold crossing: verb output proportional and
+translations identical at 508, 512 and 520 glyphs. Suite 304 blocks, 0
+failures. Local `--as-cran` with remote checks enabled: 1 WARNING, 3
+NOTEs — the four documented host artefacts, unchanged.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block
