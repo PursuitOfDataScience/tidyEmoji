@@ -2369,6 +2369,20 @@ with_ctype <- function(loc, code) {
   force(code)
 }
 
+# A locale that can be *set* but does not change case folding proves nothing:
+# a cross-locale test then compares two identical results and reports a pass.
+# Windows accepts "tr_TR.utf8" and goes on folding "I" to "i", so gate on the
+# observable behaviour, not on whether the locale is settable. An inert
+# platform skips with a stated reason; it never reports a vacuous pass.
+skip_unless_dotless_i <- function(loc = "tr_TR.utf8") {
+  probe <- with_ctype(loc, tolower("I"))
+  skip_if(inherits(probe, "ctype_unavailable"), paste(loc, "cannot be set"))
+  skip_if(identical(probe, "i"),
+          paste0("this platform's tolower() does not apply the ",
+                 "Turkish dotless-i rule"))
+  invisible(TRUE)
+}
+
 test_that(".emoji_fold folds ASCII deterministically and non-ASCII like tolower", {
   f <- tidyEmoji:::.emoji_fold
   expect_identical(f("I"), "i")
@@ -2397,16 +2411,7 @@ test_that(".emoji_fold does not depend on LC_CTYPE", {
              "\u0130stanbul")
   here <- tidyEmoji:::.emoji_fold(probe)
   there <- with_ctype("tr_TR.utf8", tidyEmoji:::.emoji_fold(probe))
-  skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
-
-  # Only assert locale-independence where the Turkish rule is actually live.
-  # Windows accepts the locale name but its tolower() does not apply the rule,
-  # so the mechanism is inert there and the comparison would prove nothing --
-  # skip rather than fail, since an inert platform is not a broken package.
-  turkish_tolower <- with_ctype("tr_TR.utf8", tolower("I"))
-  skip_if(identical(turkish_tolower, "i"),
-          "this platform's tolower() does not apply the Turkish dotless-i rule")
-
+  skip_unless_dotless_i()
   expect_identical(there, here)
   expect_identical(there[1], "i")
 })
@@ -2415,7 +2420,7 @@ test_that("emoji_search() returns the same rows whatever LC_CTYPE is", {
   queries <- c("I", "SMILING", "FIRE", "INDIA", "VIOLIN", "HEART", "smiling")
   here <- lapply(queries, emoji_search)
   there <- with_ctype("tr_TR.utf8", lapply(queries, emoji_search))
-  skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
+  skip_unless_dotless_i()
   for (i in seq_along(queries)) {
     expect_identical(there[[i]], here[[i]], info = queries[i])
     expect_gt(nrow(here[[i]]), 0L)
@@ -2431,7 +2436,7 @@ test_that("emoji_collocations() unifies case the same way in every locale", {
   )
   here <- emoji_collocations(d, text, min_n = 1)
   there <- with_ctype("tr_TR.utf8", emoji_collocations(d, text, min_n = 1))
-  skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
+  skip_unless_dotless_i()
   # "BIG" and "big" must be one word, not two spellings
   expect_identical(sort(here$word), c("big", "india", "trip", "win"))
   expect_identical(there, here)
