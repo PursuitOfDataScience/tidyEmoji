@@ -627,6 +627,23 @@ empirical distribution. It is now a number.
   recording what wave 1 shipped, the third-audit defect, and the design
   decisions locked at implementation.
 
+- [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)’s
+  documentation now says how to get back from its `shortcode` column to
+  a glyph. The column is the emoji’s first alias, and passing it to
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  recovers every row exactly, while
+  [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  resolves a bare string by Unicode name first and so returns a
+  different emoji for the eleven strings that name one emoji and alias
+  another (`dog`, `cat`, `cow`, `pig`, `tiger`, `mouse`, `rabbit`,
+  `horse`, `whale`, `kiss`, `sunglasses`). That is the documented
+  precedence rather than a defect, but
+  [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  advertised its result as ready for “piping into other verbs” without
+  saying which path is safe. Its `@return` also now records that
+  `keyword` is the empty string, not `NA`, when the query matched the
+  name or a shortcode rather than a keyword.
+
 - [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
   no longer returns columns carrying stray element names after
   [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md).

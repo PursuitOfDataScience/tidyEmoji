@@ -3093,6 +3093,79 @@ round 37’s skipped test, one level up.
 
 ------------------------------------------------------------------------
 
+**Round 39 (2026-09-05) — the documentation surface, where a green check
+proves least.**
+
+`R CMD check` passes an example that *runs*, whatever it returns, and
+never executes a `\dontrun` block at all. So example quality and example
+coverage are both invisible to a green check – the round-37 lens pointed
+at docs.
+
+**The state of it is good, and that is worth recording.** There are
+**no** `\dontrun` or `\donttest` blocks anywhere in `man/`, so every
+shipped example really executes under check; all 49 exports have
+examples; and evaluating every example expression produced **100 data
+frames, 0 errors and 0 degenerate results** – nothing returns zero rows
+or an all-`NA` result set, so no example quietly teaches the wrong
+thing. Both facts are now tests, each verified to bite (injecting a
+`\dontrun` and deleting an `\examples` block each produce a failure).
+
+**The finding:
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+did not say how to get back from its `shortcode` column.** Searching
+then emojizing is the obvious chain – the doc literally advertised the
+result as “ready for … piping into other verbs” – and of 1341 shortcodes
+returned across a spread of queries,
+[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+recovers 1326 and
+**[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+recovers all 1341**. The 15 misses (11 distinct) were checked against
+round 36’s set rather than assumed new: every one is in it, so this is
+the documented name-first precedence surfacing in a *third* place, not a
+fresh defect. The fix is to name the safe path in
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)’s
+`@details` and list the eleven strings. Its `@return` also now records
+that `keyword` is `""` and never `NA` when the match came from the name
+or a shortcode – 588 of 1363 rows in the probe, previously undocumented,
+and a user filtering on `!is.na(keyword)` would have got every row back.
+
+**Two defect classes checked and found already handled** – worth
+recording so they are not re-audited:
+
+- **Regex injection through user-supplied strings.** Every
+  `grepl`/`sub`/`gsub`/ `strsplit` pattern in `R/` is a package-authored
+  literal; no user string is ever used as a pattern.
+  [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  matches with `fixed = TRUE` throughout and carries a comment
+  explaining why (the `+1` alias), and `emoji_to_text(wrap =)` is
+  validated to contain `{x}` and substituted with `fixed = TRUE`.
+  `placeholder` reaches only [`rep()`](https://rdrr.io/r/base/rep.html).
+- **Stray names on vector returns.** Round 38 swept data-frame
+  *columns*; the vector- and list-returning exports were outside that
+  sweep, and [`vapply()`](https://rdrr.io/r/base/lapply.html) over a
+  character vector self-names its result by default, so the same class
+  could hide there. All four `as_emoji_*` helpers,
+  [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md),
+  and the inner elements of both list-columns (`.emoji_unicode`,
+  `dimensions`) are unnamed. Now pinned, closing the round-38 sweep’s
+  blind side.
+- **[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  is coherent with the rest of the package**: it reads
+  [`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html)
+  directly rather than `emoji_reference()`, which was the reason to
+  check it, but the two are the same 5042 rows, every glyph it returns
+  has a key the package knows, and its `name` matches
+  [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  on all 1363 hits.
+
+**A note on the new example-coverage test.** It reads `man/`, so like
+the three guards round 37 identified it will skip under `R CMD check`
+(which runs tests from the installed package, where `man/` has become
+`help/`). Expect CI to report **SKIP 4**, not 3 – that is the correct
+behaviour for a source-tree check, not a regression.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block

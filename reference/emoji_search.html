@@ -65,7 +65,23 @@ against keywords, name and shortcodes.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>emoji</code>, <code>name</code>, <code>shortcode</code>, <code>group</code> and
 <code>keyword</code> (the keywords of the emoji that contained the match, collapsed
-with <code>, </code>).</p>
+with <code>, </code>). <code>keyword</code> is the empty string, not <code>NA</code>, when the query matched
+the name or a shortcode rather than a keyword.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>shortcode</code> is the emoji's first alias. To turn it back into a glyph, pass it
+through <code><a href="text_to_emoji.html">text_to_emoji()</a></code>, which reads a <code>:token:</code> in the shortcode namespace
+and recovers every row exactly. <code><a href="as_emoji_name.html">as_emoji()</a></code> resolves a bare string by
+Unicode name first, so for the handful of strings that name one emoji and
+alias another – <code>dog</code>, <code>cat</code>, <code>cow</code>, <code>pig</code>, <code>tiger</code>, <code>mouse</code>, <code>rabbit</code>,
+<code>horse</code>, <code>whale</code>, <code>kiss</code>, <code>sunglasses</code> – it returns the emoji of that
+<em>name</em> rather than the row you searched. See <code><a href="as_emoji_name.html">as_emoji()</a></code> for why.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="text_to_emoji.html">text_to_emoji()</a></code> to turn <code>shortcode</code> back into a glyph;
+<code><a href="as_emoji_name.html">as_emoji_name()</a></code> for the name of a glyph.</p></div>
     </div>
 
     <div class="section level2">
