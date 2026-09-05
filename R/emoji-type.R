@@ -9,7 +9,10 @@
 .emoji_type_of <- function(group, subgroup) {
   group <- as.character(group)
   group[is.na(group)] <- ""
-  subgroup <- tolower(as.character(subgroup))
+  # .emoji_fold() is a no-op on the current catalogue -- every subgroup is
+  # already lower-case ASCII and none of the literals matched below contains an
+  # "i" -- but it keeps the recode locale-independent if either ever changes.
+  subgroup <- .emoji_fold(as.character(subgroup))
   subgroup[is.na(subgroup)] <- ""
   out <- rep(NA_character_, length(group))
   out[group == "Smileys & Emotion"] <- "symbol"

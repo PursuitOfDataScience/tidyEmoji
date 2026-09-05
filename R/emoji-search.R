@@ -31,16 +31,18 @@ emoji_search <- function(query) {
     stop("`query` must be a single non-empty string.", call. = FALSE)
   }
   e <- emoji::emojis
-  pat <- tolower(query)
+  pat <- .emoji_fold(query)
 
-  # Fixed (non-regex) substring matching on lower-cased text, so queries
-  # containing regex metacharacters (e.g. the "+1" alias) are safe.
+  # Fixed (non-regex) substring matching on folded text, so queries containing
+  # regex metacharacters (e.g. the "+1" alias) are safe. .emoji_fold() rather
+  # than tolower(): the latter honours LC_CTYPE, which under a Turkish locale
+  # folds "I" to a dotless i and made any query containing it miss.
   kw_hit <- vapply(e$keywords,
-                   function(k) any(grepl(pat, tolower(k), fixed = TRUE)),
+                   function(k) any(grepl(pat, .emoji_fold(k), fixed = TRUE)),
                    logical(1))
-  nm_hit <- grepl(pat, tolower(e$name), fixed = TRUE)
+  nm_hit <- grepl(pat, .emoji_fold(e$name), fixed = TRUE)
   al_hit <- vapply(e$aliases,
-                   function(a) any(grepl(pat, tolower(a), fixed = TRUE)),
+                   function(a) any(grepl(pat, .emoji_fold(a), fixed = TRUE)),
                    logical(1))
   hit <- kw_hit | nm_hit | al_hit
 
@@ -52,7 +54,7 @@ emoji_search <- function(query) {
 
   matched_kw <- vapply(which(hit), function(i) {
     k <- unlist(e$keywords[[i]])
-    k <- k[grepl(pat, tolower(k), fixed = TRUE)]
+    k <- k[grepl(pat, .emoji_fold(k), fixed = TRUE)]
     if (!length(k)) "" else paste(unique(k), collapse = ", ")
   }, character(1))
 

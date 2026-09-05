@@ -66,6 +66,27 @@ emoji_reference <- function() {
   out
 }
 
+# Locale-independent lower-casing for matching.
+#
+# `tolower()` honours LC_CTYPE, and under a Turkish or Azerbaijani locale it
+# maps "I" to a dotless i (U+0131) rather than "i". Every case-insensitive
+# comparison in the package folds a query and an ASCII target, so that rule made
+# emoji_search("FIRE") return 0 rows instead of 27, and let emoji_collocations()
+# count "BIG" and "big" as different words -- results that changed with the
+# session locale rather than the data.
+#
+# chartr() settles A-Z deterministically before tolower() can apply any
+# locale rule, and tolower() then still folds non-ASCII (the catalogue carries
+# "vicuna" with a tilde and typographic apostrophes), so this matches
+# tolower() exactly in an ASCII/Western locale while being invariant across
+# locales. Verified over all 5042 names, 10701 keywords and 5761 aliases.
+.emoji_ascii_upper <- "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+.emoji_ascii_lower <- "abcdefghijklmnopqrstuvwxyz"
+
+.emoji_fold <- function(x) {
+  tolower(chartr(.emoji_ascii_upper, .emoji_ascii_lower, x))
+}
+
 # Codepoint key used to join emoji robustly across qualified / unqualified
 # forms: the emoji variation selector U+FE0F is dropped so that, for example,
 # the qualified heart (U+2764 U+FE0F) matches the lexicon's unqualified

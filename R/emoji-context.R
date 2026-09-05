@@ -229,7 +229,7 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
 
   glyph <- emoji_canonical(ctx$.emoji)
   words <- lapply(ctx$.emoji_context, function(s) {
-    w <- .emoji_words(tolower(s))
+    w <- .emoji_words(.emoji_fold(s))
     w <- gsub("^[^[:alnum:]]+|[^[:alnum:]]+$", "", w)
     unique(w[nzchar(w)])
   })

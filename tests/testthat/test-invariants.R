@@ -2346,3 +2346,106 @@ test_that("relational and ambiguity verbs hold their order under permutation", {
   expect_false(is.unsorted(rev(fa$ambiguity)))
   expect_false(anyNA(fa$rank))
 })
+
+# ---------------------------------------------------------------------------
+# Locale invariants for case folding. Round 33 established that ordering does
+# not depend on LC_COLLATE; nothing varied LC_CTYPE, which governs case
+# conversion. tolower() honours it, and under a Turkish or Azerbaijani locale
+# maps "I" to a dotless i (U+0131), so every case-insensitive comparison in the
+# package could change answer with the session locale rather than the data.
+#
+# The contract tests below always run. The cross-locale ones need tr_TR
+# installed, which not every CI platform has, so they skip when it cannot be
+# set rather than passing vacuously.
+# ---------------------------------------------------------------------------
+
+with_ctype <- function(loc, code) {
+  old <- Sys.getlocale("LC_CTYPE")
+  ok <- suppressWarnings(Sys.setlocale("LC_CTYPE", loc))
+  if (!nzchar(ok)) {
+    return(structure(list(), class = "ctype_unavailable"))
+  }
+  on.exit(Sys.setlocale("LC_CTYPE", old), add = TRUE)
+  force(code)
+}
+
+test_that(".emoji_fold folds ASCII deterministically and non-ASCII like tolower", {
+  f <- tidyEmoji:::.emoji_fold
+  expect_identical(f("I"), "i")
+  expect_identical(f("SMILING"), "smiling")
+  expect_identical(f("Smiling"), "smiling")
+  expect_identical(f("smiling"), "smiling")
+  expect_identical(f("+1"), "+1")
+  # non-ASCII is still folded, so a query matching a catalogue name that
+  # carries a tilde or a typographic apostrophe keeps working
+  expect_identical(f("VICU\u00D1A"), "vicu\u00F1a")
+  expect_identical(f("O\u2019CLOCK"), "o\u2019clock")
+  # NA in, NA out
+  expect_identical(f(NA_character_), NA_character_)
+  expect_identical(f(character(0)), character(0))
+
+  # and over the whole catalogue it agrees with tolower() in this locale, so
+  # the switch is not a behaviour change for ASCII/Western sessions
+  e <- emoji::emojis
+  expect_identical(f(e$name), tolower(e$name))
+  expect_identical(f(unlist(e$keywords)), tolower(unlist(e$keywords)))
+  expect_identical(f(unlist(e$aliases)), tolower(unlist(e$aliases)))
+})
+
+test_that(".emoji_fold does not depend on LC_CTYPE", {
+  probe <- c("I", "SMILING", "FIRE", "INDIA", "VICU\u00D1A", "O\u2019CLOCK",
+             "\u0130stanbul")
+  here <- tidyEmoji:::.emoji_fold(probe)
+  there <- with_ctype("tr_TR.utf8", tidyEmoji:::.emoji_fold(probe))
+  skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
+
+  # the mechanism really is live on this machine, or the test proves nothing
+  turkish_tolower <- with_ctype("tr_TR.utf8", tolower("I"))
+  expect_false(identical(turkish_tolower, "i"))
+
+  expect_identical(there, here)
+  expect_identical(there[1], "i")
+})
+
+test_that("emoji_search() returns the same rows whatever LC_CTYPE is", {
+  queries <- c("I", "SMILING", "FIRE", "INDIA", "VIOLIN", "HEART", "smiling")
+  here <- lapply(queries, emoji_search)
+  there <- with_ctype("tr_TR.utf8", lapply(queries, emoji_search))
+  skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
+  for (i in seq_along(queries)) {
+    expect_identical(there[[i]], here[[i]], info = queries[i])
+    expect_gt(nrow(here[[i]]), 0L)
+  }
+})
+
+test_that("emoji_collocations() unifies case the same way in every locale", {
+  A <- "\U0001F602"
+  d <- data.frame(
+    text = c(paste("BIG win", A), paste("big WIN", A),
+             paste("India", A, "trip")),
+    stringsAsFactors = FALSE
+  )
+  here <- emoji_collocations(d, text, min_n = 1)
+  there <- with_ctype("tr_TR.utf8", emoji_collocations(d, text, min_n = 1))
+  skip_if(inherits(there, "ctype_unavailable"), "tr_TR.utf8 not available")
+  # "BIG" and "big" must be one word, not two spellings
+  expect_identical(sort(here$word), c("big", "india", "trip", "win"))
+  expect_identical(there, here)
+})
+
+test_that("nothing in R/ folds case with tolower() outside .emoji_fold", {
+  files <- list.files("../../R", pattern = "[.]R$", full.names = TRUE)
+  skip_if(length(files) == 0L, "package sources not available")
+  offenders <- character(0)
+  for (f in files) {
+    lines <- readLines(f, warn = FALSE)
+    code <- lines[!grepl("^\\s*#", lines)]
+    hits <- grep("tolower\\(|toupper\\(|casefold\\(|ignore\\.case", code)
+    for (i in hits) {
+      # the single legitimate call is the one inside .emoji_fold()
+      if (grepl("chartr", code[i], fixed = TRUE)) next
+      offenders <- c(offenders, paste0(basename(f), ": ", trimws(code[i])))
+    }
+  }
+  expect_identical(offenders, character(0))
+})
