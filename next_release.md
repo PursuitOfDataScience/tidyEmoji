@@ -2877,6 +2877,108 @@ before writing a finding.
 
 ------------------------------------------------------------------------
 
+**Round 37 (2026-09-05) — the axis CI structurally cannot see.**
+
+Rounds 35 and 36 exhausted the properties a test on this machine can
+check. This round asked a different question: **what would CI never
+catch, however green it is?** The matrix is macOS/Windows release plus
+Ubuntu devel, release and oldrel-1 — so anything about *older* R, or
+about files CI regenerates rather than compares, is invisible to it.
+
+**The finding: the declared R minimum was unachievable.** `DESCRIPTION`
+said `R (>= 3.5.0)`. The hard dependencies say otherwise:
+
+| hard dependency | its own R floor |
+|-----------------|-----------------|
+| dplyr 1.2.1     | **R \>= 4.1.0** |
+| tidyr 1.3.2     | **R \>= 4.1.0** |
+| rlang 1.3.0     | R \>= 4.0.0     |
+| lifecycle 1.0.5 | R \>= 3.6       |
+| emoji 16.0.0    | R \>= 3.5       |
+| tibble 3.3.x    | R \>= 3.4.0     |
+
+[`install.packages()`](https://rdrr.io/r/utils/install.packages.html)
+serves only current versions, so on R 3.5 to 4.0 the resolver fetches a
+`dplyr` that refuses to install and the user gets an opaque dependency
+failure instead of “this package needs a newer R”. The package’s own
+code needs nothing newer than 3.5 — checked explicitly for the native
+pipe, `\(x)` lambdas,
+[`sort_by()`](https://rdrr.io/r/base/sort_by.html),
+[`...names()`](https://rdrr.io/r/base/dots.html) and `%||%`; none
+appear, and `%||%` turned out to be **defined locally** at
+`R/emoji-engine.R:447` with a comment saying why, so it does not
+silently depend on base R 4.4. The floor is purely dependency-driven, so
+the honest value is **4.1.0**, and that is now declared, explained in
+`cran-comments.md`, and guarded by a test that compares the declared
+minimum against the installed hard dependencies’ floors.
+
+**A test that passes because it never ran is worth nothing.** The guard
+test carries `skip_on_cran()`, and my first mutation of it — lowering
+the declared minimum back to 3.5.0 — produced **no failure at all**. The
+reason was not that the test was weak but that it was *skipped*:
+`NOT_CRAN` is unset in a bare
+[`testthat::test_file()`](https://testthat.r-lib.org/reference/test_file.html)
+run. Re-running with `NOT_CRAN=true` then exposed a second, worse
+problem: the test errored **even in the correct state**, because
+`expect_gte()` subtracts its arguments to build a failure message and
+`-` is not defined for `numeric_version`. So the assertion was replaced
+with `expect_true(a >= b, info = ...)`. Two defects in one small test,
+both invisible to a green run.
+
+That prompted an audit of the whole suite’s skip behaviour, which came
+back clean: without `NOT_CRAN` exactly **one** block skips (the new
+one), and 5480 assertions still execute, so no earlier round’s “0
+failures” was vacuous. The other `skip_if_*` guards are all conditioned
+on genuinely absent resources and none fire on this host.
+`skip_on_cran()` is nonetheless the right call here, because the check
+reads *third-party* metadata: if `dplyr` later raises its own floor,
+that should not turn into a CRAN check failure for tidyEmoji.
+
+**Also verified clean, and recorded so they are not re-audited:**
+
+- **`README.md`’s committed output is not stale.** It carries 117 lines
+  of `#>` snapshots generated from `README.Rmd`, and round 34 changed
+  [`emoji_extract_nest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_nest.md)
+  from a `data.frame` to a tibble — which prints differently — so this
+  was a live staleness risk. Re-knitting and diffing *only the output
+  blocks* (prose line-wrapping differs because `knit()` skips the
+  `github_document` pandoc pass, which made a whole-file diff useless)
+  shows **zero** differences.
+- Every checkable claim in the introduction vignette holds: the
+  crosswalk really has 10 categories and
+  [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md)
+  emits exactly those 10 over the whole catalogue; the emotion lexicon’s
+  eight dimensions all sit in `[0, 1]` as stated; `breaks = seq(1, 15)`
+  does not clip anything (the plotted quantity is the per-entry total,
+  correctly derived with
+  `group_by(.row_number) |> summarise(sum(.emoji_count))`, and its
+  maximum is 33 — but `scale_x_continuous(breaks =)` sets ticks, not
+  limits); and the
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)
+  sentence attributing `n = 20` reads correctly once the whole sentence
+  is read rather than a grep window.
+- All four `?topic` cross-references in the vignette and README resolve
+  to real documented objects, including
+  [`?category_unicode_crosswalk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/category_unicode_crosswalk.md),
+  which is a bundled dataset rather than an export and so easy to
+  mistake for a dead link.
+- All nine figure chunks carry `fig.alt`.
+
+One prose correction: 68.2% of emoji-bearing entries carry exactly one
+emoji, which the vignette called “the overwhelming majority” and a
+figure’s alt text called “the vast majority”. Both now say “about
+two-thirds”.
+
+**The lesson to carry forward.** Three rounds running, the productive
+move has been to ask what the *current* verification cannot see: round
+35 found cost because every test asserted values and none measured time;
+round 36 found doc drift because every test called one verb and none
+composed two; round 37 found mis-declared metadata because CI never runs
+an R older than oldrel-1. **Green does not mean checked — it means
+checked by whatever is currently checking.**
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block

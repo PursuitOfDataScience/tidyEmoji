@@ -230,13 +230,13 @@ emoji_per_tweet %>%
        title = "Most emoji-bearing entries contain a single emoji")
 ```
 
-![Bar chart of the number of emoji per emoji-bearing entry. The vast
-majority of entries contain a single emoji, with a long, thin tail of
+![Bar chart of the number of emoji per emoji-bearing entry. About
+two-thirds of entries contain a single emoji, with a long, thin tail of
 more emoji-heavy
 entries.](introduction_files/figure-html/unnamed-chunk-7-1.png)
 
-The overwhelming majority of emoji-bearing entries carry just one emoji,
-with a long, thin tail of more emoji-heavy entries.
+About two-thirds of emoji-bearing entries carry just one emoji, with a
+long, thin tail of more emoji-heavy entries.
 
 ### `emoji_tokens()`
 
