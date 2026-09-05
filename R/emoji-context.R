@@ -45,6 +45,48 @@
 }
 
 
+# The window on one side of an emoji, read from a slice of the masked text
+# anchored at the glyph instead of the whole prefix/suffix.
+#
+# Handing `.emoji_window()` the entire side made emoji_context() quadratic in
+# the emoji per row: every occurrence copied and re-tokenised each character
+# before it, so a row with 1600 emoji cost ~1.5s where 100 cost 0.02s. The
+# answer only ever depends on the `window` tokens (or characters) nearest the
+# glyph, so a bounded slice is equivalent -- provided it demonstrably contains
+# them. It does when the slice yields more than `window` tokens (the outermost
+# one may be cut by the slice edge, the nearer `window` cannot be), or, for
+# `unit = "char"`, when it still holds `window` characters after the
+# emoji-adjacent whitespace is trimmed. Otherwise the budget doubles, and
+# falling back to the full side keeps pathological all-whitespace input exact.
+.emoji_window_at <- function(s, from, to, window, unit, side) {
+  if (from > to) return("")
+  span <- to - from + 1L
+  need <- 4L * window + 16L
+  repeat {
+    full <- need >= span
+    if (full) {
+      lo <- from
+      hi <- to
+    } else if (side == "left") {
+      lo <- to - need + 1L
+      hi <- to
+    } else {
+      lo <- from
+      hi <- from + need - 1L
+    }
+    part <- substr(s, lo, hi)
+    out <- .emoji_window(part, window, unit, side)
+    if (full) return(out)
+    enough <- if (unit == "word") {
+      length(.emoji_words(part)) > window
+    } else {
+      nchar(out) >= window
+    }
+    if (enough) return(out)
+    need <- need * 2L
+  }
+}
+
 #' The text around each emoji occurrence
 #'
 #' `emoji_context()` returns one row per emoji occurrence with a window of the
@@ -102,14 +144,14 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
   left <- character(nrow(occ))
   right <- character(nrow(occ))
   if (nrow(occ)) {
+    len <- nchar(masked)
     for (i in seq_len(nrow(occ))) {
       r <- occ$.row_number[i]
-      left[i] <- .emoji_window(
-        substr(masked[r], 1L, occ$.position[i] - 1L), window, unit, "left"
+      left[i] <- .emoji_window_at(
+        masked[r], 1L, occ$.position[i] - 1L, window, unit, "left"
       )
-      right[i] <- .emoji_window(
-        substr(masked[r], occ$.end[i] + 1L, nchar(masked[r])), window, unit,
-        "right"
+      right[i] <- .emoji_window_at(
+        masked[r], occ$.end[i] + 1L, len[r], window, unit, "right"
       )
     }
   }

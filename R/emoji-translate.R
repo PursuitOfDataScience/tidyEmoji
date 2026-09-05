@@ -82,17 +82,33 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   ep <- locs[, "end"]
   # unknown emoji keep their glyph rather than vanishing
   rpls <- ifelse(is.na(replacements), glyphs, replacements)
+  # Cutting the gaps between glyphs with substr() rescans the string from its
+  # first byte every time, so an emoji-dense row costs O(m * L). Past
+  # .emoji_cp_threshold, index code points instead; utf8ToInt() failing falls
+  # back to substr(), so the two paths cannot disagree.
+  cp <- if (length(bp) >= .emoji_cp_threshold) {
+    tryCatch(utf8ToInt(str), error = function(e) NA_integer_)
+  } else {
+    NA_integer_
+  }
+  if (anyNA(cp)) {
+    gap <- function(a, b) substr(str, a, b)
+    last <- nchar(str)
+  } else {
+    gap <- function(a, b) if (a > b) "" else intToUtf8(cp[a:b])
+    last <- length(cp)
+  }
   # Splice: prefix + replacement + middle + ... + suffix.
   pieces <- character(2L * length(bp) + 1L)
   prev <- 1L
   j <- 1L
   for (i in seq_along(bp)) {
-    pieces[j] <- substr(str, prev, bp[i] - 1L)
+    pieces[j] <- gap(prev, bp[i] - 1L)
     pieces[j + 1L] <- rpls[i]
     prev <- ep[i] + 1L
     j <- j + 2L
   }
-  pieces[j] <- substr(str, prev, nchar(str))
+  pieces[j] <- gap(prev, last)
   paste0(pieces, collapse = "")
 }
 

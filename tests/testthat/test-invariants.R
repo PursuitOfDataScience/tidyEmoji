@@ -1415,3 +1415,133 @@ test_that("row verbs add only dotted columns and summaries use bare names", {
     expect_length(grep("^[.]", names(out)), 0L)
   }
 })
+
+# ---------------------------------------------------------------------------
+# Cost invariants. Two hot paths took character substrings at a growing offset,
+# which rescans a multi-byte string from its first byte every time and made
+# emoji-dense rows quadratic. Both now switch to code-point indexing past a
+# threshold, and emoji_context() reads a bounded slice anchored at the glyph
+# instead of the whole prefix. Timing assertions would be flaky on CI, so what
+# is pinned here is the thing that could actually break: the fast paths must
+# return exactly what the slow paths returned.
+# ---------------------------------------------------------------------------
+
+test_that(".emoji_slice agrees with substring() on both sides of the threshold", {
+  unit <- paste0("w ", "\U0001F602", " x ",
+                 "\U0001F468\u200D\U0001F469\u200D\U0001F467", " y ",
+                 "\U0001F1EC\U0001F1E7", " z 1\uFE0F\u20E3 ")
+  thr <- tidyEmoji:::.emoji_cp_threshold
+  for (k in c(4L, 100L, thr %/% 4L, thr %/% 4L + 1L, thr)) {
+    s <- strrep(unit, k)
+    m <- tidyEmoji:::.emoji_locations(s)[[1L]]
+    expect_identical(
+      tidyEmoji:::.emoji_slice(m, s),
+      substring(s, m[, "start"], m[, "end"]),
+      info = paste("k =", k, "glyphs =", nrow(m))
+    )
+  }
+  # the threshold really is crossed by the fixtures above, or this proves nothing
+  expect_gte(nrow(tidyEmoji:::.emoji_locations(strrep(unit, thr))[[1L]]), thr)
+})
+
+test_that(".emoji_slice falls back when utf8ToInt() cannot represent the string", {
+  l1 <- "caf\xe9 na\xefve"
+  Encoding(l1) <- "latin1"
+  m <- tidyEmoji:::.emoji_locations(l1)[[1L]]
+  expect_identical(tidyEmoji:::.emoji_slice(m, l1), character(0))
+  # a latin1 string cannot carry emoji, but the verbs must still read it
+  d <- data.frame(text = c(l1, paste("hi", "\U0001F602")), stringsAsFactors = FALSE)
+  expect_identical(emoji_sentiment(d, text)$.emoji_n, c(0L, 1L))
+  expect_true(grepl("caf", emoji_sanitize(d, text)$text[1], fixed = TRUE))
+})
+
+test_that(".emoji_window_at equals the window taken from the whole side", {
+  A <- "\U0001F602"
+  fixtures <- c(
+    paste("aaa", A, "bbb", A, "ccc"),
+    paste0(A, strrep(" ", 400L), "tail"),
+    paste0("lead", strrep(" ", 400L), A),
+    paste0("alpha beta", strrep(" ", 2000L), A, " tail"),
+    strrep(A, 40L),
+    paste(rep(paste("word", A), 60L), collapse = " "),
+    paste0("   ", A, "   "),
+    A
+  )
+  for (s in fixtures) {
+    locs <- tidyEmoji:::.emoji_locations(s)
+    masked <- tidyEmoji:::.emoji_mask(s, locs)
+    occ <- tidyEmoji:::.emoji_occurrences(s)
+    for (unit in c("word", "char")) {
+      for (window in c(0L, 1L, 2L, 5L, 13L)) {
+        for (i in seq_len(nrow(occ))) {
+          expect_identical(
+            tidyEmoji:::.emoji_window_at(
+              masked[1L], 1L, occ$.position[i] - 1L, window, unit, "left"
+            ),
+            tidyEmoji:::.emoji_window(
+              substr(masked[1L], 1L, occ$.position[i] - 1L), window, unit, "left"
+            )
+          )
+          expect_identical(
+            tidyEmoji:::.emoji_window_at(
+              masked[1L], occ$.end[i] + 1L, nchar(masked[1L]), window, unit,
+              "right"
+            ),
+            tidyEmoji:::.emoji_window(
+              substr(masked[1L], occ$.end[i] + 1L, nchar(masked[1L])), window,
+              unit, "right"
+            )
+          )
+        }
+      }
+    }
+  }
+})
+
+test_that("verb output does not depend on which slicing path ran", {
+  unit <- paste0("w ", "\U0001F602", " x ",
+                 "\U0001F468\u200D\U0001F469\u200D\U0001F467", " y ",
+                 "\U0001F1EC\U0001F1E7", " z ")
+  thr <- tidyEmoji:::.emoji_cp_threshold
+  below <- strrep(unit, 8L)                    # substring path
+  above <- strrep(unit, thr %/% 3L + 4L)       # code-point path
+  d_lo <- data.frame(text = below, stringsAsFactors = FALSE)
+  d_hi <- data.frame(text = above, stringsAsFactors = FALSE)
+  expect_lt(length(tidyEmoji:::emoji_glyph_list(below)[[1L]]), thr)
+  expect_gte(length(tidyEmoji:::emoji_glyph_list(above)[[1L]]), thr)
+
+  # the glyph sequence is the same unit repeated, so the distinct glyphs and
+  # their cycle must match whichever path produced them
+  expect_identical(
+    unique(tidyEmoji:::emoji_glyph_list(below)[[1L]]),
+    unique(tidyEmoji:::emoji_glyph_list(above)[[1L]])
+  )
+  # and every repetition must translate to the same text
+  tr <- function(x) {
+    parts <- strsplit(emoji_to_text(x, text)$text, "w ", fixed = TRUE)[[1L]]
+    unique(parts[nzchar(parts)])
+  }
+  expect_length(tr(d_lo), 1L)
+  expect_length(tr(d_hi), 1L)
+  expect_identical(tr(d_lo), tr(d_hi))
+
+  # counts stay exactly proportional to the number of repetitions
+  n_lo <- emoji_sentiment(d_lo, text)$.emoji_n
+  n_hi <- emoji_sentiment(d_hi, text)$.emoji_n
+  expect_identical(n_lo, 3L * 8L)
+  expect_identical(n_hi, 3L * (thr %/% 3L + 4L))
+})
+
+test_that("an emoji-dense row is handled exactly, not just quickly", {
+  A <- "\U0001F602"
+  m <- 2000L
+  d <- data.frame(text = paste(rep(paste("word", A), m), collapse = " "),
+                  stringsAsFactors = FALSE)
+  expect_identical(emoji_sentiment(d, text)$.emoji_n, m)
+  ctx <- emoji_context(d, text, window = 1L)
+  expect_identical(nrow(ctx), as.integer(m))
+  # every window is the neighbouring word, never a fragment of a masked glyph
+  expect_true(all(ctx$.emoji_context_right[-m] == "word"))
+  expect_true(all(ctx$.emoji_context_left == "word"))
+  expect_identical(unique(ctx$.emoji), A)
+})

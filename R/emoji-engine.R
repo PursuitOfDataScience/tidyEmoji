@@ -215,9 +215,34 @@ emoji_sentiment_map <- function() {
   out
 }
 
+# Above this many spans in one string, index code points instead of taking
+# character substrings. `substring()` and `substr()` rescan a multi-byte string
+# from its first byte to reach a character offset, so slicing m spans out of a
+# length-L string costs O(m * L) -- quadratic, and this runs in nearly every
+# verb. Converting to code points once is linear but carries a fixed cost, so
+# below the threshold the substring path is still the faster of the two
+# (measured crossover is a few hundred spans on a 45k-character row).
+.emoji_cp_threshold <- 512L
+
 # Slice the glyphs of one string out of its start/end matrix.
+#
+# Ordinary rows hold a handful of glyphs and stay on `substring()`, byte for
+# byte the behaviour every other verb was built against. Emoji-dense rows take
+# the code-point path; `anyNA()` sends anything `utf8ToInt()` cannot represent
+# (a latin1- or bytes-marked string) back to `substring()`, so the two paths
+# cannot disagree.
 .emoji_slice <- function(m, s) {
-  if (!nrow(m)) character(0) else substring(s, m[, "start"], m[, "end"])
+  if (!nrow(m)) return(character(0))
+  if (nrow(m) >= .emoji_cp_threshold) {
+    cp <- tryCatch(utf8ToInt(s), error = function(e) NA_integer_)
+    if (!anyNA(cp)) {
+      st <- m[, "start"]
+      en <- m[, "end"]
+      return(vapply(seq_along(st),
+                    function(i) intToUtf8(cp[st[i]:en[i]]), character(1)))
+    }
+  }
+  substring(s, m[, "start"], m[, "end"])
 }
 
 # A list, one element per element of `x`, of the emoji glyphs it contains.
