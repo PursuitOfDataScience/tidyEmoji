@@ -2011,6 +2011,54 @@ memory notes was re-tested:
 expected outcome, and the value is in the two provenance facts now being
 measured rather than assumed.
 
+**Round 34 (2026-09-04) — auditing the invariant list itself, and one it caught.**
+
+§1's invariant list has already been wrong three times (§1.5 in both
+directions, §1.7's denominator, §4.7's symptom list). This round re-tested
+every remaining claim in it, mechanically, against the installed package.
+
+**Six of seven hold. One was broken, and by the invariant's own wording:**
+
+- **"tibble in / tibble out" -- `emoji_extract_nest()` returned a plain
+  `data.frame` for a plain `data.frame`.** It was the only row verb not routing
+  its output through `.emoji_as_tibble()`, the helper round 1 added for exactly
+  this; the other seventeen all use it. `?tidyEmoji` states "every verb ...
+  returns a tibble" without qualification, so the verb was wrong rather than
+  the doc. Fixed through the helper, which also keeps a `grouped_df` passing
+  straight through, so the round-1 grouping guarantee is unaffected. The
+  practical cost of the old behaviour: a list-column in a plain `data.frame`
+  prints its contents inline instead of as `<list>`.
+  **Note this predates the loop** -- the previous implementation used
+  `dplyr::mutate()`, which is equally class-preserving, so round 2's rewrite
+  carried the behaviour forward rather than introducing it.
+- The other six hold: dotted columns on user data and bare names on summary
+  tibbles; every glyph join through the `U+FE0F`-stripped key; `NA` text never
+  an emoji and zero-row output correctly typed; `.emoji_n_scored` `0` for
+  unscorable and `NA` for no-emoji; ordering identical under `C` and
+  `en_US.UTF-8`; and eight nonsense arguments all erroring.
+
+**The invariant is now a test rather than a paragraph.** One block asserts the
+tibble contract over all 38 data-first verbs at once, one asserts grouping
+survives thirteen row verbs, one asserts the dotted/bare column split. Verified
+to bite by reverting the fix -- one failure. **Nothing compared the verbs to
+each other before**, which is exactly how a single verb drifts from a contract
+all the others keep.
+
+**Also this round: every error message, rendered and read.** 42 `stop()` /
+`warning()` sites; 40 name the offending argument in backticks and the two that
+do not are clear anyway (`emoji_emotion()`'s lexicon message names the
+function; `emoji_sentiment()`'s names `se = TRUE`). Sixteen were triggered and
+read as a user would see them -- all state what is wrong *and* what to do, and
+several name the fix explicitly ("Pick another name", "Rename the column",
+"produce it with tidytext, sentimentr, vader"). No change needed.
+
+**One thing that looked like a defect and is not.**
+`emoji_to_text(wrap = "<>")` raises no error, because `wrap` is validated only
+when `format = "shortcode"`. That is documented -- "Ignored for
+`format = "name"`" -- and the same conditional pattern is consistent across
+the family: `wrap` under `policy = "shortcode"`, `placeholder` under
+`policy = "placeholder"`, each validated exactly where it applies.
+
 - **Two things round 2 checked and found sound**, worth recording so they
   are not re-audited: every `verb(data, text)` export survives zero-row,
   all-`NA`, empty-string, `factor` and `numeric` text columns without error;

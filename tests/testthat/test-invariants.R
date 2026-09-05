@@ -1334,3 +1334,84 @@ test_that("se = TRUE is NA for a row whose emoji carry no annotation counts", {
     "annotation counts"
   )
 })
+
+
+# ---------------------------------------------------------------------------
+# The output-contract invariant, asserted over every verb at once.
+# `?tidyEmoji` promises "every verb ... returns a tibble", and
+# emoji_extract_nest() was the one row verb that did not go through
+# .emoji_as_tibble(), so it handed back a plain data.frame for a plain
+# data.frame input. Nothing compared the verbs to each other, so it stood.
+# ---------------------------------------------------------------------------
+
+data_first_verbs <- function() {
+  ns <- asNamespace("tidyEmoji")
+  Filter(function(n) {
+    f <- get(n, envir = ns)
+    is.function(f) && identical(head(names(formals(f)), 2L), c("data", "text"))
+  }, sort(getNamespaceExports("tidyEmoji")))
+}
+
+call_verb <- function(name, d) {
+  f <- get(name, envir = asNamespace("tidyEmoji"))
+  if (name %in% c("emoji_trend", "emoji_turnover", "emoji_seasonality",
+                  "emoji_adoption_lag")) {
+    f(d, text, when)
+  } else if (name %in% c("emoji_incongruity", "emoji_congruence",
+                         "emoji_incongruity_profile")) {
+    f(d, text, sc, scale = "none")
+  } else {
+    f(d, text)
+  }
+}
+
+contract_fixture <- function() {
+  data.frame(
+    text = c(paste("hi", laugh), "plain"),
+    sc = c(1, 0),
+    when = as.Date(c("2020-01-01", "2020-02-01")),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("every data-first verb returns a tibble", {
+  d <- contract_fixture()
+  verbs <- data_first_verbs()
+  expect_gt(length(verbs), 30L)
+  offenders <- character()
+  for (n in verbs) {
+    out <- suppressWarnings(call_verb(n, d))
+    if (!inherits(out, "tbl_df")) offenders <- c(offenders, n)
+  }
+  expect_identical(offenders, character())
+})
+
+test_that("a grouped input keeps its grouping through the row verbs", {
+  d <- dplyr::group_by(cbind(contract_fixture(), g = c("a", "b")), g)
+  row_verbs <- c("emoji_sentiment", "emoji_position", "emoji_ratio",
+                 "emoji_density", "emoji_type", "emoji_faceness",
+                 "emoji_risk", "emoji_token_cost", "emoji_score",
+                 "emoji_extract_nest", "emoji_filter", "emoji_categorize",
+                 "emoji_tokens")
+  for (n in row_verbs) {
+    out <- suppressWarnings(call_verb(n, d))
+    expect_true(dplyr::is_grouped_df(out), info = n)
+    expect_identical(dplyr::group_vars(out), "g", info = n)
+  }
+})
+
+test_that("row verbs add only dotted columns and summaries use bare names", {
+  d <- contract_fixture()
+  for (n in c("emoji_sentiment", "emoji_position", "emoji_ratio",
+              "emoji_density", "emoji_type", "emoji_faceness", "emoji_risk",
+              "emoji_token_cost", "emoji_score", "emoji_emotion",
+              "emoji_extract_nest")) {
+    added <- setdiff(names(call_verb(n, d)), names(d))
+    expect_true(all(grepl("^[.]", added)), info = n)
+  }
+  for (n in c("emoji_summary", "emoji_frequency", "top_n_emojis",
+              "emoji_version_profile")) {
+    out <- suppressWarnings(call_verb(n, d))
+    expect_length(grep("^[.]", names(out)), 0L)
+  }
+})

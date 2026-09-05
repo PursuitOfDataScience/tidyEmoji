@@ -6,7 +6,8 @@
 #' family emoji) are kept intact as a single emoji.
 #'
 #' @inheritParams emoji_summary
-#' @return `data` with an added list-column `.emoji_unicode`.
+#' @return `data`, as a tibble, with an added list-column `.emoji_unicode`. A
+#'   grouped input stays grouped.
 #' @seealso [emoji_extract_unnest()] for a long, counted form and
 #'   [emoji_tokens()] for one row per emoji with metadata.
 #' @examples
@@ -17,11 +18,17 @@ emoji_extract_nest <- function(data, text) {
   # `[[<-` rather than dplyr::mutate(): mutate() evaluates `{{ text }}` in the
   # data mask, so a missing or misspelled column was not caught by the shared
   # resolver -- emoji_extract_nest(df) returned a bogus empty list-column
-  # instead of erroring. Assigning directly keeps `data`'s class and grouping,
-  # which is what the @return promises.
+  # instead of erroring.
+  #
+  # The output goes through .emoji_as_tibble() like every other row verb. This
+  # was the one verb that did not, so it returned a plain data.frame for a
+  # plain data.frame input while the other seventeen returned a tibble --
+  # contradicting `?tidyEmoji`'s "every verb returns a tibble". The helper
+  # still passes a grouped_df straight through, so grouping survives.
   glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
-  data[[".emoji_unicode"]] <- glyphs
-  data
+  out <- .emoji_as_tibble(data)
+  out[[".emoji_unicode"]] <- glyphs
+  out
 }
 
 

@@ -20,7 +20,8 @@ emoji is the same in every verb; see the \emph{Detection} section of
 are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
-\code{data} with an added list-column \code{.emoji_unicode}.
+\code{data}, as a tibble, with an added list-column \code{.emoji_unicode}. A
+grouped input stays grouped.
 }
 \description{
 \code{emoji_extract_nest()} returns \code{data} unchanged except for an added

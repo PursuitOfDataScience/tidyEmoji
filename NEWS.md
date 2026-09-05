@@ -168,6 +168,13 @@ distribution. It is now a number.
   `emoji_ngrams(sep = )` is checked too: it reached `paste(collapse = )`, which
   failed with `invalid 'collapse' argument` and an internal call stack for `NA`
   or a number, and silently used only the first element of a longer vector.
+* `emoji_extract_nest()` now returns a tibble, like every other verb.
+  `?tidyEmoji` promises "every verb ... returns a tibble", but this was the one
+  row verb that did not route its output through the shared helper, so a plain
+  `data.frame` in gave a plain `data.frame` back while the other seventeen
+  returned a tibble — which also meant a list-column printing badly instead of
+  as `<list>`. A grouped input still stays grouped. The whole output contract is
+  now asserted across every verb at once rather than verb by verb.
 * Test line coverage went from 96.6% to 99.4%, and closing the gap found four
   **documented features that no test exercised**: `emoji_score()` with the
   `"emotag1200"` lexicon (the mean over its eight emotion dimensions),
