@@ -68,6 +68,16 @@ detailed in NEWS.md. The ones a user could notice:
 
 The package makes no network requests, at check time or at run time.
 
+`emoji_version_profile()` and `emoji_adoption_lag()` change output for
+variation-selector emoji. The upstream `emoji::emojis` table attaches the
+introducing Unicode version to the unqualified member of a variation pair and
+leaves it `NA` on the fully-qualified one, so 1252 of 5042 reference rows had
+no version and were reported as unknown. The reference table now fills
+`version` across glyphs sharing a codepoint key, which is the normalisation
+already used for every other glyph-to-metadata join in the package. No
+codepoint key carries two different versions, so the change only fills gaps.
+
+
 The declared R dependency is raised from `R (>= 3.5.0)` to `R (>= 4.1.0)`. This
 is a correction, not a new requirement: the package's own code uses nothing
 newer than R 3.5, but `dplyr` and `tidyr` -- both hard dependencies -- declare

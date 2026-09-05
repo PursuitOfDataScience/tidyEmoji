@@ -439,6 +439,24 @@ distribution. It is now a number.
 * `next_release.md`, the repo's release ledger, gains a section 13 recording
   what wave 1 shipped, the third-audit defect, and the design decisions locked
   at implementation.
+* `emoji_version_profile()` and `emoji_adoption_lag()` now resolve a Unicode
+  version for every emoji they detect. The upstream `emoji::emojis` table
+  records the introducing version on the *unqualified* member of a variation
+  pair and leaves it `NA` on the fully-qualified one, so 1252 of 5042 reference
+  rows carried no version -- among them everyday glyphs like the red heart
+  (`U+2764 U+FE0F`), the smiling face (`U+263A U+FE0F`) and the skull and
+  crossbones (`U+2620 U+FE0F`). Those all fell into
+  `emoji_version_profile()`'s `version = NA` bucket, which is precisely what
+  that verb exists to report, and `emoji_adoption_lag()` returned `NA` for
+  them. A version describes the emoji, not one spelling of it, so the reference
+  table now fills `version` across every glyph sharing a codepoint key -- the
+  same normalisation the rest of the package already applied to names,
+  shortcodes, types and lexicon joins. No key carries two different versions,
+  so this only ever fills gaps; every one of the 1252 is recovered and the
+  unknown-version row disappears for the full catalogue. Profile counts shift
+  accordingly (Emoji 0.6 goes from 656 to 719 types), and `lag_days` is now
+  computed where it previously could not be. A glyph with a genuinely unknown
+  version is still reported rather than dropped.
 * `emoji_search()`'s documentation now says how to get back from its
   `shortcode` column to a glyph. The column is the emoji's first alias, and
   passing it to `text_to_emoji()` recovers every row exactly, while `as_emoji()`

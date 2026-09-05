@@ -35,7 +35,11 @@ The version comes from the reference table tidyEmoji detects against, so it
 is capped by your installed \pkg{emoji} package (see
 \code{\link[=emoji_unicode_version]{emoji_unicode_version()}}). Glyphs whose version is unknown -- including any
 the reference table does not carry -- are reported in a row with
-\code{version = NA} rather than dropped.
+\code{version = NA} rather than dropped. That row is rare in practice: the
+upstream table records the introducing version on only one spelling of a
+variation pair, and tidyEmoji fills it across every spelling sharing a
+codepoint key, so a fully-qualified glyph such as \verb{U+2764 U+FE0F} reports the
+same version as its unqualified form.
 
 The corpus's average vintage is a weighted mean over this table, for example
 \code{with(profile, weighted.mean(version_num, n_tokens, na.rm = TRUE))}.

@@ -30,9 +30,40 @@ emoji_reference <- function() {
       version   = e$version
     )
     ref$key <- emoji_key(ref$emoji)
+    # emoji::emojis records the introducing version on the *unqualified* member
+    # of a variation pair and leaves it NA on the fully-qualified one, so 1252
+    # of 5042 rows -- including everyday glyphs like U+2764 U+FE0F -- arrived
+    # with no version at all and emoji_version_profile() filed them as unknown.
+    # The version belongs to the emoji, not to one spelling of it, so fill it
+    # within each codepoint key. min() is the first version any spelling became
+    # available, which is what "introduced in" means; no key currently holds two
+    # different versions, so this only ever fills gaps.
+    ref$version <- .emoji_fill_by_key(ref$version, ref$key)
     .tidyEmoji_cache$reference <- ref
   }
   .tidyEmoji_cache$reference
+}
+
+# Fill NA entries of a per-glyph attribute from other rows sharing the same
+# codepoint key. Used for `version`, which the upstream table attaches to only
+# one spelling of a variation pair.
+.emoji_fill_by_key <- function(x, key) {
+  num <- suppressWarnings(as.numeric(x))
+  if (!anyNA(num)) return(x)
+  first <- vapply(
+    split(num, key),
+    function(v) if (all(is.na(v))) NA_real_ else min(v, na.rm = TRUE),
+    numeric(1)
+  )
+  filled <- first[key]
+  out <- x
+  take <- is.na(out) & !is.na(filled)
+  # write back in the column's own representation, matching an existing row so
+  # "12.1" stays "12.1" rather than becoming "12.100000"
+  lookup <- x[!is.na(num)]
+  lookup_num <- num[!is.na(num)]
+  out[take] <- lookup[match(filled[take], lookup_num)]
+  out
 }
 
 # Codepoint key used to join emoji robustly across qualified / unqualified

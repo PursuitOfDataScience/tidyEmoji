@@ -701,8 +701,35 @@ test_that("the catalogue's versions all resolve, and only via the emoji series",
   # version_num is what orders them: numeric and lexical order genuinely differ
   expect_false(identical(known[order(tidyEmoji:::.emoji_version_num(known))],
                          known[order(known)]))
-  # glyphs with an unknown version are reported, not dropped (documented)
-  expect_gt(sum(is.na(labels)), 0L)
+  # Every catalogue version now resolves. This assertion used to be the
+  # opposite -- it required some labels to be NA -- which only held because
+  # emoji::emojis records the introducing version on the unqualified member of
+  # a variation pair and leaves it NA on the fully-qualified one, so 1252 rows
+  # (U+2764 U+FE0F among them) had no version. emoji_reference() now fills
+  # version within a codepoint key, so the old assertion was encoding a defect.
+  expect_false(anyNA(labels))
+})
+
+test_that("a glyph whose version is unknown is reported, not dropped", {
+  # The catalogue no longer contains an unknown version, so drive the path
+  # directly rather than relying on a gap in the upstream data.
+  expect_true(is.na(tidyEmoji:::.emoji_version_label(NA_character_)))
+  expect_true(is.na(tidyEmoji:::.emoji_version_num(NA_character_)))
+  expect_identical(tidyEmoji:::.emoji_version_label(c("0.6", NA)),
+                   c("0.6", NA_character_))
+
+  cache <- asNamespace("tidyEmoji")$.tidyEmoji_cache
+  ref <- tidyEmoji:::emoji_reference()
+  on.exit(assign("reference", ref, envir = cache), add = TRUE)
+  hacked <- ref
+  hacked$version[1:3] <- NA_character_
+  assign("reference", hacked, envir = cache)
+
+  d <- data.frame(text = ref$emoji[1:6], stringsAsFactors = FALSE)
+  vp <- emoji_version_profile(d, text)
+  expect_true(anyNA(vp$version))
+  # nothing is lost: every glyph is still counted somewhere
+  expect_identical(sum(vp$n_tokens), 6L)
 })
 
 test_that("emoji_adoption_lag computes first_seen, release and lag by hand", {
@@ -2150,4 +2177,50 @@ test_that("emoji_search() agrees with the rest of the package", {
   # keyword is "" rather than NA when the match was a name or a shortcode
   expect_false(anyNA(res$keyword))
   expect_true(any(res$keyword == ""))
+})
+
+test_that("a version recorded on only one spelling reaches both", {
+  ref <- tidyEmoji:::emoji_reference()
+  # upstream attaches the introducing version to the unqualified member of a
+  # variation pair; the version belongs to the emoji, not to one spelling
+  expect_false(anyNA(ref$version))
+  qualified_heart <- "\U00002764\U0000FE0F"
+  unqualified_heart <- "\U00002764"
+  expect_identical(
+    ref$version[match(qualified_heart, ref$emoji)],
+    ref$version[match(unqualified_heart, ref$emoji)]
+  )
+  # and generally: every key resolves to exactly one version
+  per_key <- tapply(ref$version, ref$key, function(v) length(unique(v)))
+  expect_true(all(as.integer(per_key) == 1L))
+
+  # the filler preserves the column's own spelling rather than reformatting
+  expect_true(is.character(ref$version))
+  expect_true("12.1" %in% ref$version)
+
+  # emoji_version_profile() therefore has no unknown bucket, and still
+  # accounts for exactly the glyphs detection found
+  d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
+  vp <- emoji_version_profile(d, text)
+  expect_false(anyNA(vp$version))
+  expect_identical(sum(vp$n_tokens), sum(emoji_sentiment(d, text)$.emoji_n))
+  expect_true(all(vp$version %in% emoji_unicode_releases()$version))
+})
+
+test_that(".emoji_fill_by_key only fills gaps and never overwrites", {
+  f <- tidyEmoji:::.emoji_fill_by_key
+  # a gap is filled from a sibling under the same key
+  expect_identical(f(c("0.6", NA), c("2764", "2764")), c("0.6", "0.6"))
+  # existing values are left exactly as they are
+  expect_identical(f(c("0.6", "1.0"), c("a", "b")), c("0.6", "1.0"))
+  # unrelated keys do not donate
+  expect_identical(f(c("0.6", NA), c("a", "b")), c("0.6", NA))
+  # all-NA key groups stay NA rather than erroring
+  expect_identical(f(c(NA_character_, NA_character_), c("a", "a")),
+                   c(NA_character_, NA_character_))
+  # with nothing missing the input comes back untouched
+  expect_identical(f(c("1.0", "2.0"), c("a", "a")), c("1.0", "2.0"))
+  # the earliest version wins if a key ever carries two
+  expect_identical(f(c("13.1", "5.0", NA), c("k", "k", "k")),
+                   c("13.1", "5.0", "5.0"))
 })
