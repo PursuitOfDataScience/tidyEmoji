@@ -718,6 +718,21 @@ empirical distribution. It is now a number.
   value skips ahead, so ranks are deliberately not consecutive. No
   behaviour changed.
 
+- [`?emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
+  stated its coverage inconsistently. It read “969 rows, covering about
+  19% of the distinct emoji tidyEmoji can detect (3790 distinct
+  codepoint keys)”, but 969/3790 is 25.6%. The 19% is the right figure
+  and the attribution was wrong: only 736 of the 969 rows resolve to a
+  detectable emoji, and 736/3790 is 19.4% – which is also exactly how
+  many of the 3790 detectable emoji
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  scores. The paragraph now says so, and its arithmetic is checkable
+  against the sentence that follows it (736 resolving + 233 absent =
+  969). The
+  [`?emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)
+  figure needed no change: all 150 of its rows resolve, so 150/3790 =
+  4.0% was already exact.
+
 - [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)’s
   documentation now says how to get back from its `shortcode` column to
   a glyph. The column is the emoji’s first alias, and passing it to

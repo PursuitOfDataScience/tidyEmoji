@@ -3566,6 +3566,109 @@ difference and is reported as such rather than as mutation-verified.
 
 ------------------------------------------------------------------------
 
+**Round 45 (2026-09-05) — the package’s claims about its own data.**
+
+tidyEmoji states facts about its bundled data in **six** independent
+places:
+[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md),
+[`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md),
+`DESCRIPTION`’s Description field, the roxygen in `R/data.R`,
+`inst/CITATION`, and `cran-comments.md`. Nothing had ever cross-checked
+them against each other or against the data. For a submission whose
+Description field carries a DOI and two licence names, a figure that
+disagrees with the data is a real defect.
+
+**The finding: one coverage figure did not survive arithmetic.**
+[`?emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
+read “**969 rows, covering about 19% of the distinct emoji tidyEmoji can
+detect** (3790 distinct codepoint keys)”. But 969/3790 is **25.6%**, not
+19%.
+
+Deciding which side was wrong took the data rather than a preference.
+Every candidate reading was computed:
+
+| reading | value |
+|----|----|
+| 969 / 3790 – what the sentence literally says | 25.57% |
+| distinct *resolving* keys / 3790 | **19.42%** |
+| what [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md) actually scores, of 3790 detectable keys | **736 = 19.42%** |
+
+So **19% describes reality** and the attribution to “969 rows” was the
+error: 736 of the 969 rows resolve to a detectable emoji, and the doc’s
+own *next* sentence already said the other 233 are not in the reference
+table at all. 736 + 233 = 969. The paragraph now states the
+decomposition, so its arithmetic can be checked against the sentence
+following it.
+[`?emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)
+needed no change and the asymmetry is explained: **all 150** of its rows
+resolve, so 150/3790 = 3.96% ~ “about 4%” was already exact.
+
+**Everything else agreed, checked value by value rather than by eye:**
+
+- Row counts: 969, 150, 3790 keys, 10 categories – all match
+  [`nrow()`](https://rdrr.io/r/base/nrow.html), and `emoji_lexicons()$n`
+  matches both.
+- [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  derives every field at runtime, so it cannot drift; each one was still
+  compared against its source
+  ([`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md),
+  the installed 16.0.0, `nrow(emoji_reference())`, both lexicon sizes).
+- Citations are identical across all six sites: same authors, year 2015
+  /2020, `PLoS ONE 10(12): e0144296`, DOI
+  `10.1371/journal.pone.0144296`, and `2020.emnlp-main.720`. Licences
+  agree everywhere: CC BY-SA 4.0 and MIT. (The vignette spells the
+  authors with diacritics and `R/data.R` does not – deliberate, since R
+  sources must stay ASCII for the PDF manual.)
+- Documented formulas and ranges hold exactly: `sentiment_score` **is**
+  `(positive - negative) / occurrences` to the last bit, the three
+  annotation counts partition `occurrences` for every row (156,941
+  total), the label is the score’s sign for all 969 rows, `position` is
+  within 0-1, and the eight Plutchik dimensions are within 0-1.
+- No claim was left stale by round 40 (version filling) or round 43
+  (case folding); the “version is unknown” wording is correctly hedged
+  and still reachable, as round 44’s synthetic test shows.
+
+**A sixth claim site the brief did not know about.** `inst/CITATION` was
+found during the sweep and checked too – it carries the fullest
+bibliographic record of any site (volume, issue, pages `8957--8967`) and
+agrees with the rest.
+
+**Why this class of test is worth having even though nothing else was
+wrong.** The five new blocks compare the *documentation’s own numbers*,
+written as literals with a comment naming the help page each comes from,
+against the data. If the bundled data or the dependency changes, they
+fail and force the prose to be updated with it – which is precisely the
+drift that produced the 19% error in the first place. The `DESCRIPTION`
+check is a genuine two-source comparison rather than a restatement,
+because
+[`packageDescription()`](https://rdrr.io/r/utils/packageDescription.html)
+reads the installed file.
+
+Four of the five blocks are mutation-verified against the **full** suite
+(a round-44 lesson): an off-by-one in `emoji_lexicons()$n`, a frozen
+count in
+[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md),
+and dropping the CC BY-SA claim from `DESCRIPTION` each fail exactly one
+block; removing `U+FE0F` stripping from `emoji_key()` fails the coverage
+block among 1812 others. The fifth checks the bundled data against
+itself, so there is no code path to mutate – reported as a
+data-integrity assertion rather than as mutation-verified.
+
+**One test added after the fact, closing the other direction.** The
+tests above assert that the *data* has the properties the help pages
+claim, which catches the data drifting – an `emoji` update changing
+3790, say. But round 45’s defect went the other way: the prose was
+edited into a state the data never supported. So a further test builds
+each figure **from the data** and requires it to appear in the rendered
+`.Rd`, which fails if a number in the help page is changed without the
+data behind it. Verified by setting the page to say 700 resolve where
+the data says 736: exactly one failure, that test. It also asserts the
+percentage quoted is the one the *resolving* count gives and **not** the
+one the row count gives – the precise confusion that produced the
+defect.
+
+------------------------------------------------------------------------
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release
 found defects in the code written just before it. This audit found its
 crop **before** the features were written — and three of the four block
