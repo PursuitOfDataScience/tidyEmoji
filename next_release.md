@@ -2924,6 +2924,68 @@ row count gives -- the precise confusion that produced the defect.
 
 ---
 
+**Round 46 (2026-09-06) -- the condition surface, and a test that could not fail.**
+
+Round 2 established that every verb survives the legal-but-awkward input shapes
+without **erroring**. Nobody had checked for **warnings**, which matters
+concretely: `options(warn = 2)` turns any spurious warning into an error, and a
+CRAN reviewer reads them.
+
+**Both halves came back clean.** Every exported verb was called under a
+`withCallingHandlers` collector across six legal input shapes -- ordinary,
+zero-row, all-`NA`, empty-string, factor text and numeric text -- for **234
+verb/case pairs with 0 warnings and 0 errors**. The errors matter to the claim:
+a verb that errors cannot warn, so "no warnings" would have been vacuous
+without checking both, and the test asserts both.
+
+**A correction to a code-shape reading, worth recording because it nearly
+became a fix.** Three sites call `lifecycle::`, and only one --
+`.emoji_warn_grouped()` -- passes `env`/`user_env`. That looked exactly like the
+round-34 pattern of one member having drifted, and the obvious move was to
+"fix" the other two. Rendering the messages first showed the opposite:
+lifecycle's defaults (`env = caller_env()`, `user_env = caller_env(2)`) are
+*already correct* when `deprecate_warn()` is called directly inside the
+exported function. `.emoji_warn_grouped()` needs them only because it is a
+**helper**: the defaults would resolve both frames inside tidyEmoji, and
+lifecycle would then append *"The deprecated feature was likely used in the
+tidyEmoji package. Please report the issue"* -- telling a user to file a bug
+about their own grouped data frame. So two of the three sites are correct as
+written, and adding the arguments there would have been noise. Verified
+load-bearing where it is used: dropping the two arguments puts that line back.
+
+All three deprecations render cleanly, direct and through a wrapper, and none
+mentions reporting an issue: the grouped-data notice, the deprecated
+`top_n_emojis(duplicated_unicode)` argument, and the deprecated
+`emoji_tweets()` verb. Deduplication holds -- five repeat calls produce no
+further warning.
+
+**The round's real lesson is a test of mine that could not fail.** The natural
+assertion is "the rendered message must not contain *report the issue*". Under
+the mutation that removes `env`/`user_env`, the full suite reported **0
+failures** -- while the test's own positive control fired, so it looked live.
+The reason: whether lifecycle appends that line depends on the frame stack
+above the call. Measured with the mutant installed, it appears when the verb is
+reached **through a function** and *not* when the verb is called from
+`globalenv()`; testthat's own stack happens to fall on the quiet side. The
+message assertion is therefore untrustworthy as a regression guard no matter
+how carefully it is written.
+
+The fix was to assert the **mechanism** instead of its rendering: the helper's
+deparsed body must pass both `env = verb_env` and `user_env = caller_env`. That
+is context-independent, and it fails under the mutation (2 failures). The
+message assertions are kept as a weaker guard on the common path. Note the
+first version of the mechanism assertion also silently failed -- it anchored
+the pattern at line start, and `deparse()` puts `env = verb_env, user_env =
+caller_env` mid-line -- caught because the *clean* state reported 2 failures,
+which is the cheapest possible signal that an assertion is wrong.
+
+**That makes seven checks in this loop that passed, or failed, by not running
+what they appeared to run.** The recurring shape is now precise enough to state
+as a rule: *an assertion about a rendered message is an assertion about the
+renderer's heuristics, not about the code.* Assert the input to the renderer.
+
+---
+
 **The pattern worth carrying into 0.5.0.** §9 records that every release found
 defects in the code written just before it. This audit found its crop **before**
 the features were written — and three of the four block a planned feature group,

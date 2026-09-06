@@ -2756,3 +2756,210 @@ test_that("the coverage figures printed in the help pages are the data's", {
   expect_true(grepl(paste(nrow(emo), "glyphs"),
                     read_rd("emoji_emotion_lexicon.Rd"), fixed = TRUE))
 })
+
+# ---------------------------------------------------------------------------
+# Condition invariants. Round 2 established that every verb survives the legal
+# but awkward input shapes without erroring. Nobody checked for *warnings*,
+# which matters concretely: a user with options(warn = 2) turns any spurious
+# warning into an error, and a CRAN reviewer reads them.
+#
+# Each test below carries a positive control, because a warning collector that
+# silently swallows everything reports a clean sweep -- the failure mode this
+# loop has now hit six times.
+# ---------------------------------------------------------------------------
+
+collect_conditions <- function(f) {
+  ws <- character(0)
+  res <- withCallingHandlers(
+    tryCatch(f(), error = function(e) structure(conditionMessage(e),
+                                                class = "collected_error")),
+    warning = function(w) {
+      ws <<- c(ws, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  list(warnings = ws,
+       error = if (inherits(res, "collected_error")) as.character(res) else NULL)
+}
+
+test_that("no verb warns on input that is entirely ordinary", {
+  A <- "\U0001F602"
+  B <- "\U0001F621"
+  base <- data.frame(
+    id = 1:4,
+    text = c(paste("hello", A), "plain words", paste(A, B),
+             paste("mix", B, "end")),
+    sc = c(0.5, -0.2, 0.1, -0.7),
+    dt = as.Date("2024-01-01") + 0:3,
+    ts = as.POSIXct("2024-01-01 10:00:00", tz = "America/Chicago") +
+      (0:3) * 86400,
+    stringsAsFactors = FALSE
+  )
+
+  # the collector must be able to see a warning, or a clean sweep proves
+  # nothing -- a grouped data frame is documented to warn
+  control <- collect_conditions(
+    function() emoji_summary(dplyr::group_by(base, id), text)
+  )
+  expect_length(control$warnings, 1L)
+
+  calls <- function(d) {
+    list(
+      emoji_summary = function() emoji_summary(d, text),
+      emoji_frequency = function() emoji_frequency(d, text),
+      emoji_filter = function() emoji_filter(d, text),
+      emoji_tokens = function() emoji_tokens(d, text),
+      emoji_categorize = function() emoji_categorize(d, text),
+      emoji_extract_nest = function() emoji_extract_nest(d, text),
+      emoji_extract_unnest = function() emoji_extract_unnest(d, text),
+      top_n_emojis = function() top_n_emojis(d, text),
+      emoji_sentiment = function() emoji_sentiment(d, text),
+      emoji_score = function() emoji_score(d, text),
+      emoji_emotion = function() emoji_emotion(d, text),
+      emoji_emotion_label = function() emoji_emotion_label(d, text),
+      emoji_risk = function() emoji_risk(d, text),
+      emoji_flag_ambiguous = function() emoji_flag_ambiguous(d, text),
+      emoji_type = function() emoji_type(d, text),
+      emoji_faceness = function() emoji_faceness(d, text),
+      emoji_sanitize = function() emoji_sanitize(d, text),
+      emoji_to_text = function() emoji_to_text(d, text),
+      text_to_emoji = function() text_to_emoji(d, text),
+      emoji_position = function() emoji_position(d, text),
+      emoji_ratio = function() emoji_ratio(d, text),
+      emoji_density = function() emoji_density(d, text),
+      emoji_token_cost = function() emoji_token_cost(d, text),
+      emoji_context = function() emoji_context(d, text),
+      emoji_collocations = function() emoji_collocations(d, text),
+      emoji_ngrams = function() emoji_ngrams(d, text),
+      emoji_pairs = function() emoji_pairs(d, text, doc_id = id),
+      emoji_cooccurrence = function() emoji_cooccurrence(d, text, doc_id = id),
+      emoji_dfm = function() emoji_dfm(d, text, id),
+      emoji_version_profile = function() emoji_version_profile(d, text),
+      emoji_incongruity = function() emoji_incongruity(d, text, sc,
+                                                       scale = "none"),
+      emoji_incongruity_profile = function() emoji_incongruity_profile(
+        d, text, sc, scale = "none"),
+      emoji_congruence = function() emoji_congruence(d, text, sc,
+                                                     scale = "none"),
+      emoji_trend_date = function() emoji_trend(d, text, dt),
+      emoji_trend_time = function() emoji_trend(d, text, ts),
+      emoji_seasonality = function() emoji_seasonality(d, text, ts),
+      emoji_turnover = function() emoji_turnover(d, text, dt),
+      emoji_adoption_lag = function() emoji_adoption_lag(d, text, dt)
+    )
+  }
+  no_arg <- list(
+    emoji_ambiguity = function() emoji_ambiguity(),
+    emoji_search = function() emoji_search("cat"),
+    emoji_lexicons = function() emoji_lexicons(),
+    emoji_provenance = function() emoji_provenance(),
+    emoji_unicode_version = function() emoji_unicode_version(),
+    emoji_unicode_releases = function() emoji_unicode_releases()
+  )
+
+  # every one of these input shapes is legal, so none may warn
+  shapes <- list(
+    ordinary = base,
+    zero_row = base[0, , drop = FALSE],
+    all_na = transform(base, text = NA_character_),
+    empty_string = transform(base, text = ""),
+    factor_text = transform(base, text = factor(base$text)),
+    numeric_text = transform(base, text = c(1, 2, 3, 4))
+  )
+  for (shape in names(shapes)) {
+    d <- shapes[[shape]]
+    cl <- c(calls(d), if (identical(shape, "ordinary")) no_arg else NULL)
+    for (nm in names(cl)) {
+      got <- collect_conditions(cl[[nm]])
+      expect_identical(got$warnings, character(0),
+                       info = paste(shape, nm, paste(got$warnings,
+                                                     collapse = " | ")))
+      # a verb that errors cannot warn, so "no warnings" would be vacuous
+      # without this
+      expect_null(got$error, info = paste(shape, nm, got$error))
+    }
+  }
+})
+
+test_that("no deprecation tells the user to report a bug against tidyEmoji", {
+  # lifecycle appends "The deprecated feature was likely used in the tidyEmoji
+  # package. Please report the issue at ..." whenever it decides the call came
+  # from inside the package. For a helper that calls deprecate_warn() on a
+  # verb's behalf, the defaults resolve both frames inside tidyEmoji and that
+  # line appears -- which is why .emoji_warn_grouped() passes env/user_env.
+  # Verified load-bearing: dropping them puts the line back.
+  skip_if_not_installed("lifecycle")
+  withr_verbose <- options(lifecycle_verbosity = "warning")
+  on.exit(options(withr_verbose), add = TRUE)
+
+  A <- "\U0001F602"
+  d <- data.frame(id = 1:3,
+                  text = c(paste("hi", A), "plain", paste(A, A)),
+                  stringsAsFactors = FALSE)
+
+  probes <- list(
+    grouped_helper = function() emoji_summary(dplyr::group_by(d, id), text),
+    deprecated_arg = function() top_n_emojis(d, text,
+                                             duplicated_unicode = TRUE),
+    deprecated_verb = function() emoji_tweets(d, text)
+  )
+  # and the same three reached through a wrapper, which adds a frame between
+  # the user and the verb
+  wrapped <- list(
+    grouped_helper = function() (function(x) emoji_summary(
+      dplyr::group_by(x, id), text))(d),
+    deprecated_arg = function() (function(x) top_n_emojis(
+      x, text, duplicated_unicode = TRUE))(d),
+    deprecated_verb = function() (function(x) emoji_tweets(x, text))(d)
+  )
+
+  for (set in list(direct = probes, wrapped = wrapped)) {
+    for (nm in names(set)) {
+      got <- collect_conditions(set[[nm]])
+      # the positive control: each of these really does warn, so the
+      # absence-of-"report" assertion below is not vacuous
+      expect_length(got$warnings, 1L)
+      expect_false(grepl("report the issue", got$warnings[1], fixed = TRUE),
+                   info = paste(nm, got$warnings[1]))
+      expect_false(grepl("likely used in the tidyEmoji package",
+                         got$warnings[1], fixed = TRUE), info = nm)
+      # it names the user's verb, not an internal helper
+      expect_false(grepl(".emoji_warn_grouped", got$warnings[1], fixed = TRUE),
+                   info = nm)
+    }
+  }
+
+  # Whether the "report the issue" line appears depends on the frame stack
+  # above the call -- it shows when the verb is reached through a function and
+  # not when it is called from globalenv, so the message assertions above
+  # cannot be relied on to catch a regression under testthat's own stack.
+  # Assert the mechanism instead: a helper calling deprecate_warn() on a
+  # verb's behalf must pass both frames explicitly, because lifecycle's
+  # defaults would resolve them inside tidyEmoji and blame the package.
+  helper <- paste(deparse(body(tidyEmoji:::.emoji_warn_grouped)),
+                  collapse = " ")
+  expect_true(grepl("deprecate_warn", helper, fixed = TRUE))
+  expect_true(grepl("env = verb_env", helper, fixed = TRUE))
+  expect_true(grepl("user_env = caller_env", helper, fixed = TRUE))
+  # the verbs that call deprecate_warn() directly need no such argument,
+  # since lifecycle's defaults already point one frame above the verb
+  direct_body <- paste(deparse(body(top_n_emojis)), collapse = " ")
+  expect_true(grepl("deprecate_warn", direct_body, fixed = TRUE))
+})
+
+test_that("a deprecation warns once per session, not once per call", {
+  skip_if_not_installed("lifecycle")
+  A <- "\U0001F602"
+  d <- data.frame(id = 1:3,
+                  text = c(paste("hi", A), "plain", paste(A, A)),
+                  stringsAsFactors = FALSE)
+  # default verbosity dedups by topic, so a loop over rows cannot spam. Use a
+  # unique-enough topic by clearing the option to the default first.
+  op <- options(lifecycle_verbosity = NULL)
+  on.exit(options(op), add = TRUE)
+  got <- collect_conditions(function() {
+    for (i in 1:5) top_n_emojis(d, text, duplicated_unicode = TRUE)
+    invisible(NULL)
+  })
+  expect_lte(length(got$warnings), 1L)
+})
