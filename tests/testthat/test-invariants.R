@@ -2597,3 +2597,162 @@ test_that("emoji_adoption_lag() counts calendar days, not 365-day years", {
   )
   expect_false(is.na(al$lag_days[1]))
 })
+
+# ---------------------------------------------------------------------------
+# Provenance invariants. The package states facts about its bundled data in six
+# independent places -- emoji_provenance(), emoji_lexicons(), DESCRIPTION's
+# Description field, the roxygen in R/data.R, inst/CITATION and
+# cran-comments.md -- and nothing had ever cross-checked them against each
+# other or against the data. The numbers below are the ones the documentation
+# states, so if the data changes these fail and the prose has to be updated
+# with them.
+# ---------------------------------------------------------------------------
+
+test_that("the lexicon sizes the documentation states are the data's", {
+  # ?emoji_sentiment_lexicon and ?emoji_emotion_lexicon
+  expect_identical(nrow(emoji_sentiment_lexicon), 969L)
+  expect_identical(nrow(emoji_emotion_lexicon), 150L)
+  # "3790 distinct codepoint keys", quoted in both help pages
+  expect_identical(length(unique(tidyEmoji:::emoji_reference()$key)), 3790L)
+  # ?category_unicode_crosswalk: "The Unicode category (10 categories)"
+  expect_identical(nrow(category_unicode_crosswalk), 10L)
+
+  # emoji_lexicons() must not drift from nrow()
+  lx <- emoji_lexicons()
+  expect_identical(lx$n[lx$name == "novak2015"], nrow(emoji_sentiment_lexicon))
+  expect_identical(lx$n[lx$name == "emotag1200"], nrow(emoji_emotion_lexicon))
+})
+
+test_that("the documented coverage figures are the ones the data gives", {
+  ref <- tidyEmoji:::emoji_reference()
+  keys <- unique(ref$key)
+  sl_keys <- tidyEmoji:::emoji_key(emoji_sentiment_lexicon$emoji)
+
+  # ?emoji_sentiment_lexicon: 969 rows, 736 resolving, the other 233 not in the
+  # reference table. The three have to add up, or the paragraph is wrong -- it
+  # was: it read "969 rows, covering about 19%", and 969/3790 is 25.6%.
+  expect_identical(sum(sl_keys %in% keys), 736L)
+  expect_identical(sum(!(sl_keys %in% keys)), 233L)
+  expect_identical(736L + 233L, nrow(emoji_sentiment_lexicon))
+  expect_equal(round(100 * 736 / length(keys)), 19)
+
+  # and the verb really scores that many of the detectable emoji
+  d <- data.frame(text = ref$emoji[!duplicated(ref$key)],
+                  stringsAsFactors = FALSE)
+  scored <- emoji_sentiment(d, text)$.emoji_n_scored
+  expect_identical(sum(scored > 0, na.rm = TRUE), 736L)
+
+  # ?emoji_emotion_lexicon: "150 glyphs, about 4%" -- every row resolves here,
+  # which is why that one needs no 736-style decomposition
+  el_keys <- emoji_emotion_lexicon$key
+  expect_identical(sum(!(el_keys %in% keys)), 0L)
+  expect_equal(round(100 * nrow(emoji_emotion_lexicon) / length(keys)), 4)
+})
+
+test_that("DESCRIPTION, emoji_lexicons() and the help pages name one licence each", {
+  # DESCRIPTION is available from the installed package, so this genuinely
+  # compares two independent sources rather than restating one of them
+  desc <- utils::packageDescription("tidyEmoji")$Description
+  expect_false(is.null(desc))
+  expect_true(nzchar(desc))
+  for (claim in c("CC BY-SA 4.0", "10.1371/journal.pone.0144296",
+                  "MIT", "2020.emnlp-main.720")) {
+    expect_true(grepl(claim, desc, fixed = TRUE), info = claim)
+  }
+
+  lx <- emoji_lexicons()
+  expect_identical(lx$licence[lx$name == "novak2015"], "CC BY-SA 4.0")
+  expect_identical(lx$licence[lx$name == "emotag1200"], "MIT")
+  # the citation in emoji_lexicons()$source agrees with DESCRIPTION's
+  expect_true(grepl("e0144296", lx$source[lx$name == "novak2015"], fixed = TRUE))
+  expect_true(grepl("2015", lx$source[lx$name == "novak2015"], fixed = TRUE))
+  expect_true(grepl("2020", lx$source[lx$name == "emotag1200"], fixed = TRUE))
+  # only user-registered lexicons may have no licence
+  expect_false(anyNA(lx$licence[lx$type != "custom"]))
+})
+
+test_that("emoji_provenance() agrees with every source it reports", {
+  pv <- emoji_provenance()
+  expect_identical(nrow(pv), 1L)
+  expect_identical(pv$unicode_emoji, emoji_unicode_version())
+  expect_identical(pv$emoji_pkg, as.character(utils::packageVersion("emoji")))
+  expect_identical(pv$tidyEmoji,
+                   as.character(utils::packageVersion("tidyEmoji")))
+  expect_identical(pv$n_emoji, nrow(tidyEmoji:::emoji_reference()))
+  # the lexicon strings quote the real row counts, not frozen ones
+  expect_true(grepl(nrow(emoji_sentiment_lexicon), pv$sentiment_lexicon,
+                    fixed = TRUE))
+  expect_true(grepl(nrow(emoji_emotion_lexicon), pv$emotion_lexicon,
+                    fixed = TRUE))
+})
+
+test_that("the sentiment lexicon's documented formula and ranges hold", {
+  sl <- emoji_sentiment_lexicon
+  # ?emoji_sentiment_lexicon: "(positive - negative) / occurrences"
+  expect_equal(sl$sentiment_score,
+               (sl$positive - sl$negative) / sl$occurrences)
+  # the annotation counts are a partition of occurrences
+  expect_equal(sl$negative + sl$neutral + sl$positive, sl$occurrences)
+  # "ranging from -1 (negative) to +1 (positive)"
+  expect_gte(min(sl$sentiment_score), -1)
+  expect_lte(max(sl$sentiment_score), 1)
+  # "position: Mean position of the emoji within its text (0-1)"
+  expect_gte(min(sl$position), 0)
+  expect_lte(max(sl$position), 1)
+  # "sentiment_label is derived from its sign"
+  from_sign <- ifelse(sl$sentiment_score > 0, "positive",
+                      ifelse(sl$sentiment_score < 0, "negative", "neutral"))
+  expect_identical(sl$sentiment_label, from_sign)
+
+  # ?emoji_emotion_lexicon: eight Plutchik dimensions, each 0 to 1
+  dims <- c("anger", "anticipation", "disgust", "fear", "joy", "sadness",
+            "surprise", "trust")
+  expect_true(all(dims %in% names(emoji_emotion_lexicon)))
+  vals <- unlist(emoji_emotion_lexicon[dims])
+  expect_gte(min(vals), 0)
+  expect_lte(max(vals), 1)
+  # the documented key column is the package's own codepoint key
+  expect_identical(as.character(emoji_emotion_lexicon$key),
+                   as.character(tidyEmoji:::emoji_key(emoji_emotion_lexicon$emoji)))
+})
+
+test_that("the coverage figures printed in the help pages are the data's", {
+  # The round-45 defect went the other way from the tests above: those assert
+  # the data has the properties the docs claim, which catches the data
+  # drifting. This one builds each figure *from the data* and requires it to
+  # appear in the rendered Rd, so editing a number in the help page without
+  # the data supporting it fails too. That is the direction the defect took --
+  # "969 rows, covering about 19%", where 19% belonged to 736.
+  rd_dir <- "../../man"
+  skip_if(!dir.exists(rd_dir), "man/ not available")
+  read_rd <- function(f) paste(readLines(file.path(rd_dir, f), warn = FALSE),
+                              collapse = " ")
+
+  ref <- tidyEmoji:::emoji_reference()
+  keys <- length(unique(ref$key))
+  sent <- emoji_sentiment_lexicon
+  sent_keys <- tidyEmoji:::emoji_key(sent$emoji)
+  resolving <- sum(sent_keys %in% ref$key)
+  absent <- sum(!(sent_keys %in% ref$key))
+
+  txt <- read_rd("emoji_sentiment_lexicon.Rd")
+  for (fig in c(paste(nrow(sent), "rows"),
+                paste(resolving, "resolve"),
+                paste(absent, "rows"),
+                paste(keys, "distinct codepoint keys"))) {
+    expect_true(grepl(fig, txt, fixed = TRUE),
+                info = paste("not stated in the help page:", fig))
+  }
+  # the decomposition has to close, or the paragraph contradicts itself
+  expect_identical(resolving + absent, nrow(sent))
+  # and the percentage quoted is the one the resolving count gives, not the
+  # one the row count gives
+  expect_identical(round(100 * resolving / keys), 19)
+  expect_false(identical(round(100 * nrow(sent) / keys), 19))
+
+  emo <- emoji_emotion_lexicon
+  emo_keys <- tidyEmoji:::emoji_key(emo$emoji)
+  expect_identical(sum(emo_keys %in% ref$key), nrow(emo))
+  expect_true(grepl(paste(nrow(emo), "glyphs"),
+                    read_rd("emoji_emotion_lexicon.Rd"), fixed = TRUE))
+})

@@ -72,12 +72,13 @@
 #' (negative) to +1 (positive); `sentiment_label` is derived from its sign.
 #'
 #' @section How much of the catalogue this covers:
-#' **969 rows, covering about 19% of the distinct emoji tidyEmoji can detect**
-#' (3790 distinct codepoint keys in the reference table of \pkg{emoji} 16.0.0;
-#' see [emoji_provenance()] for the version you have). Two caveats on that
-#' figure, both consequences of the lexicon being built from 2015 tweets: 233
-#' of the 969 rows are not in the reference table at all -- see *Detection
-#' limitations* below -- and nothing added to Unicode after 2015 is in here.
+#' **969 rows, of which 736 resolve to an emoji tidyEmoji can detect -- about
+#' 19% of the 3790 distinct codepoint keys in the reference table of
+#' \pkg{emoji} 16.0.0** (see [emoji_provenance()] for the version you have).
+#' Two caveats on that figure, both consequences of the lexicon being built
+#' from 2015 tweets: the other 233 rows are not in the reference table at all
+#' -- see *Detection limitations* below -- and nothing added to Unicode after
+#' 2015 is in here.
 #' [emoji_sentiment()]'s `.emoji_n_scored` reports the shortfall per row.
 #'
 #' @section Detection limitations:
