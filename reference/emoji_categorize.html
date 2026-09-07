@@ -66,10 +66,14 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -88,6 +92,13 @@ the sequence to be catalogued – the row is kept with <code>.emoji_category</co
 to <code>NA</code>. Dropping it would silently shrink the corpus, and by exactly the
 rows a user whose Unicode coverage is behind most needs to see. Use
 <code><a href="emoji_provenance.html">emoji_provenance()</a></code> to check which catalogue you are matching against.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="emoji_type.html">emoji_type()</a></code> for the smaller functional vocabulary recoded from
+the same group and subgroup, and <code><a href="emoji_faceness.html">emoji_faceness()</a></code> for the face share it
+reduces to; <code><a href="emoji_frequency.html">emoji_frequency()</a></code> for per-glyph counts carrying <code>group</code>;
+<a href="category_unicode_crosswalk.html">category_unicode_crosswalk</a> for the ten categories themselves.</p></div>
     </div>
 
     <div class="section level2">

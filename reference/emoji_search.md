@@ -24,21 +24,32 @@ emoji_search(query)
 A tibble with columns `emoji`, `name`, `shortcode`, `group` and
 `keyword` (the keywords of the emoji that contained the match, collapsed
 with `, `). `keyword` is the empty string, not `NA`, when the query
-matched the name or a shortcode rather than a keyword.
+matched the name or a shortcode rather than a keyword. `shortcode` *is*
+`NA` when the matched spelling has no alias; see Details.
 
 ## Details
 
-`shortcode` is the emoji's first alias. To turn it back into a glyph,
-pass it through
-[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
-which reads a `:token:` in the shortcode namespace and recovers every
-row exactly.
+`shortcode` is the *matched row's* first alias, and it is `NA` when the
+matched spelling has none: 189 of the catalogue's 5042 rows carry no
+GitHub-style alias at all, so a search that hits one (7 of the 198 rows
+`emoji_search("face")` returns, for instance) has nothing to put in that
+column. Use the `emoji` column for those, or
+[`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
+which is keyed on the emoji rather than on the row and so can borrow the
+alias of the glyph's other spelling. For the same reason the two can
+disagree even when both answer – see
+[`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md).
+
+Every non-`NA` `shortcode` is a token
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+reads, and it recovers the matched row's emoji exactly.
 [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-resolves a bare string by Unicode name first, so for the handful of
-strings that name one emoji and alias another – `dog`, `cat`, `cow`,
-`pig`, `tiger`, `mouse`, `rabbit`, `horse`, `whale`, `kiss`,
-`sunglasses` – it returns the emoji of that *name* rather than the row
-you searched. See
+resolves a bare string by Unicode name first, so for the 17 strings that
+name one emoji and alias another it returns the emoji of that *name*
+rather than the row you searched. They are `calendar`, `camel`, `cat`,
+`cow`, `dog`, `horse`, `kiss`, `mouse`, `pig`, `rabbit`, `satellite`,
+`snowman`, `sunglasses`, `tiger`, `train`, `umbrella` and `whale`; that
+is the complete set, not a sample of it. See
 [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
 for why.
 

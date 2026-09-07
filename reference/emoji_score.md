@@ -31,8 +31,13 @@ emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -44,9 +49,20 @@ emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
   score column. Defaults to `"novak2015"`, matching
   [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md).
 
+  Two requirements on a data frame, both refused rather than worked
+  around. The score column must be numeric or logical: as text every
+  score comes back `NA` while the emoji still counts as scored, which
+  contradicts `.emoji_n_scored` below. And no two rows may give one
+  emoji *different* scores – spellings differing only by a variation
+  selector share a single code-point key, so a table listing both
+  `U+2764` and `U+2764 U+FE0F` has one emoji twice. Identical scores are
+  fine and collapse silently; when they differ, the row order would be
+  choosing the answer.
+
 - by:
 
-  Glyph column name when `lexicon` is a data frame. Default `"emoji"`.
+  Glyph column name when `lexicon` is a data frame, as a single string.
+  Default `"emoji"`.
 
 - score:
 
@@ -61,6 +77,19 @@ emoji) added. For the multi-dimensional `"emotag1200"` lexicon the score
 is the mean over its eight emotion dimensions; use
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
 for the per-emotion profile.
+
+That averaging is specific to the bundled lexicon. A *registered* or
+inline lexicon carrying emotion columns has no score column, so
+`emoji_score()` cannot collapse it and says so: pass it to
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+instead, or name one dimension with `score = "joy"` to score on that
+alone.
+
+`.emoji_n_scored` distinguishes the two ways a score can be missing, as
+in
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
+`0` means the row had emoji that the lexicon could not score, `NA` that
+it had no emoji to score. `.emoji_n` counts every emoji either way.
 
 ## See also
 

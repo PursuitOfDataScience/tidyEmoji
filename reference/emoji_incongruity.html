@@ -74,10 +74,14 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 
 <dt id="arg-text-score">text_score<a class="anchor" aria-label="anchor" href="#arg-text-score"></a></dt>
@@ -91,7 +95,10 @@ are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
 <dd><p>How to make the two scores comparable: <code>"rank"</code>, <code>"zscore"</code> or
-<code>"none"</code>. Required – there is no sensible default.</p></dd>
+<code>"none"</code>. Required – there is no sensible default. <code>"rank"</code> and
+<code>"zscore"</code> are computed over the rows carrying both an emoji score and a
+<code>text_score</code>, not over the whole corpus, so rows with no scorable emoji
+cannot shift the answer for the rows that have one.</p></dd>
 
 
 <dt id="arg-where">where<a class="anchor" aria-label="anchor" href="#arg-where"></a></dt>
@@ -110,6 +117,11 @@ the rank scale.</p></dd>
     <p><code>data</code>, as a tibble, with added columns <code>.emoji_n</code>,
 <code>.emoji_n_scored</code>, <code>.emoji_sentiment</code>, <code>.emoji_incongruity</code>,
 <code>.emoji_polarity_flip</code> and <code>.emoji_incongruent</code>.</p>
+<p><code>.emoji_n_scored</code> distinguishes the two ways the answer can be missing,
+as it does in <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>: <code>0</code> means the row had emoji that the
+lexicon could not score, <code>NA</code> that it had no emoji to score. The four
+derived columns are <code>NA</code> in both cases, and also wherever <code>text_score</code>
+itself is missing or not finite.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -119,7 +131,9 @@ version most sarcasm papers use and is computed on the <em>unscaled</em> scores,
 where the sign means something.</p>
 <p>A row with no scorable emoji gets <code>NA</code>, never <code>0</code>: a neutral emoji and no
 emoji at all are different states, and collapsing them silently biases every
-downstream model. The same applies to a missing <code>text_score</code>.</p>
+downstream model. The same applies to a missing <code>text_score</code>, and to an
+infinite one – a scorer that overflows is reported and treated as missing
+rather than left to turn every other row's z-score into <code>Inf</code>.</p>
 <p>With <code>where = "final"</code> only the run of emoji that ends the text is scored:
 both the illocutionary-force account of emoji and the P600 evidence on
 ironic emoji are specifically about sentence-final glyphs. A text whose
@@ -150,6 +164,13 @@ default: you have to say how the two sides were made comparable.
 cross-method comparison; <code>"zscore"</code> standardises both; <code>"none"</code> compares the
 raw numbers, which is only meaningful if your text score already lives on
 the emoji lexicon's -1 to 1 scale.</p>
+<p><code>"rank"</code> and <code>"zscore"</code> are computed over the rows the comparison is defined
+on – those carrying both an emoji score and a <code>text_score</code> – not over the
+whole corpus. A percentile only means something relative to a population,
+and the population the gap lives in is the scored subset, so rows with no
+scorable emoji cannot move the answer for the rows that have one. Subsetting
+the data to the scored rows before calling therefore gives the same numbers
+as calling on everything.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

@@ -28,7 +28,7 @@ A character vector the same length as `x`.
 
 - `as_emoji_name(x)` maps emoji glyphs to their Unicode names.
 
-- `as_emoji_shortcode(x)` maps emoji glyphs to their first shortcode.
+- `as_emoji_shortcode(x)` maps emoji glyphs to a shortcode.
 
 - `as_emoji(x)` maps names/shortcodes to the emoji glyph (emojize).
 
@@ -58,6 +58,31 @@ variant that carries the alias (`cat`, `cow`, `pig`, `tiger`, `mouse`,
 [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
 or the full Unicode name (`"dog face"`) to `as_emoji()`, if you need one
 namespace specifically.
+
+## Which shortcode you get
+
+`as_emoji_shortcode()` returns one shortcode *per emoji*, not per
+spelling: the first alias of the emoji's fully-qualified (RGI) form.
+That is what makes it agree with
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+and survive a round trip, but it is not always the first alias of the
+glyph you passed in. 344 codepoint keys have a different first alias on
+each of their two spellings, so for 175 of the catalogue's 5042 rows the
+two answers differ: `as_emoji_shortcode("\u2764")` is `"heart"`, the
+qualified heart's alias, where the bare `U+2764` row's own first alias
+is `"red_heart"`.
+
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+reports the other one – the matched row's own alias, since a search
+result is a row – so the two verbs can disagree on the same glyph. Both
+resolve back to the same emoji through
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
+which reads every alias, so where both answer the disagreement is
+cosmetic. Where they differ in substance is the 189 rows that have no
+alias:
+[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+reports `NA` for those, while `as_emoji_shortcode()` still answers for
+all 189, having borrowed the alias of the glyph's other spelling.
 
 ## See also
 

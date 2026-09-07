@@ -36,8 +36,13 @@ emoji_incongruity(
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -54,7 +59,10 @@ emoji_incongruity(
 - scale:
 
   How to make the two scores comparable: `"rank"`, `"zscore"` or
-  `"none"`. Required – there is no sensible default.
+  `"none"`. Required – there is no sensible default. `"rank"` and
+  `"zscore"` are computed over the rows carrying both an emoji score and
+  a `text_score`, not over the whole corpus, so rows with no scorable
+  emoji cannot shift the answer for the rows that have one.
 
 - where:
 
@@ -73,6 +81,13 @@ emoji_incongruity(
 `.emoji_sentiment`, `.emoji_incongruity`, `.emoji_polarity_flip` and
 `.emoji_incongruent`.
 
+`.emoji_n_scored` distinguishes the two ways the answer can be missing,
+as it does in
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
+`0` means the row had emoji that the lexicon could not score, `NA` that
+it had no emoji to score. The four derived columns are `NA` in both
+cases, and also wherever `text_score` itself is missing or not finite.
+
 ## Details
 
 `.emoji_incongruity` is `emoji - text` after scaling, so it is positive
@@ -83,7 +98,9 @@ categorical version most sarcasm papers use and is computed on the
 A row with no scorable emoji gets `NA`, never `0`: a neutral emoji and
 no emoji at all are different states, and collapsing them silently
 biases every downstream model. The same applies to a missing
-`text_score`.
+`text_score`, and to an infinite one – a scorer that overflows is
+reported and treated as missing rather than left to turn every other
+row's z-score into `Inf`.
 
 With `where = "final"` only the run of emoji that ends the text is
 scored: both the illocutionary-force account of emoji and the P600
@@ -115,6 +132,14 @@ has no default: you have to say how the two sides were made comparable.
 for cross-method comparison; `"zscore"` standardises both; `"none"`
 compares the raw numbers, which is only meaningful if your text score
 already lives on the emoji lexicon's -1 to 1 scale.
+
+`"rank"` and `"zscore"` are computed over the rows the comparison is
+defined on – those carrying both an emoji score and a `text_score` – not
+over the whole corpus. A percentile only means something relative to a
+population, and the population the gap lives in is the scored subset, so
+rows with no scorable emoji cannot move the answer for the rows that
+have one. Subsetting the data to the scored rows before calling
+therefore gives the same numbers as calling on everything.
 
 ## References
 

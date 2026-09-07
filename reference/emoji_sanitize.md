@@ -39,8 +39,13 @@ emoji_sanitize(
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -113,6 +118,30 @@ Measured against the whole reference table of emoji 16.0.0: for all 3790
 emoji in their canonical (fully qualified) spelling – the spelling a
 keyboard emits and text normally holds – **the round trip returns the
 original text byte for byte, 100% of the time**.
+
+**That row of the table assumes the default `wrap`.** Restoring the text
+means
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+can find the token, and it reads exactly `:shortcode:` – a colon, the
+alias, a colon. So `wrap` is part of the reversibility contract, not a
+cosmetic choice:
+
+- `wrap = ":{x}:"` (the default) restores the original text exactly.
+
+- A `wrap` that decorates the token – `"[:{x}:]"`, `":{x}:!"` – brings
+  the emoji back but leaves the decoration behind, so the emoji is
+  restored and the text is not.
+
+- A `wrap` with no `:token:` at all – `"{x}"`, `"<{x}>"`, `"@{x}@"`,
+  `":{x}"` – restores nothing: the shortcode stays in the text as an
+  ordinary word. This is the case to watch, because it fails silently.
+
+- `wrap = "::{x}::"` is worse than either: the inner `:grinning:`
+  matches, so the emoji comes back wrapped in the leftover colons
+  (`:<U+1F600>:`) and a further round trip keeps adding to them.
+
+Change `wrap` for readability by all means, but not on a column you
+intend to restore.
 
 Unicode also lists shorter spellings of the same emoji, with the
 `U+FE0F` presentation selectors omitted. Feed one of those in and the

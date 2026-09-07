@@ -34,8 +34,13 @@ top_n_emojis(
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -51,7 +56,10 @@ top_n_emojis(
 
 - duplicated_unicode:
 
-  **\[deprecated\]** Use `duplicated` instead.
+  **\[deprecated\]** Use `duplicated` instead. Accepts only the values
+  it ever meant – `TRUE`, `FALSE`, `"yes"` or `"no"` – and errors on
+  anything else rather than reading it as `FALSE`, which is what
+  `"TRUE"` and `1` used to get.
 
 ## Value
 

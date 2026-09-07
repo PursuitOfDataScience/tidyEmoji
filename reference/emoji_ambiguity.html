@@ -104,6 +104,30 @@ annotations grows, so it answers "how well do we know this score?" rather
 than "how much do readers disagree?".</p></li>
 </ul><p><code>rank</code> is always computed over the whole lexicon (1 = most ambiguous), so a
 rank keeps its meaning when <code>x</code> selects a handful of glyphs.</p>
+<p><strong>Read <code>n_annotations</code> before you read the ranking.</strong> The lexicon's
+annotation counts are wildly uneven – the median glyph has 18, and 69% have
+fewer than 50 – and the first three measures are shape statistics that do
+not care how many annotations produced the shape. A glyph seen by three
+annotators who split one-one-one scores the maximum entropy of <code>log(3)</code> on
+that evidence alone, which is why five of the rows tied at <code>rank = 1</code> have
+3, 3, 3, 9 and 15 annotations, and why 11 of the top 20 have fewer than 50.</p>
+<p>Three of those five are not emoji at all. The lexicon was built from 2015
+tweets and 233 of its 969 rows are characters absent from the reference
+table – box-drawing characters, dingbats, enclosed letters – so the head
+of the ranking can show a glyph such as <code>U+250C</code> that no corpus this
+package analyses will ever yield. They carry 6% of the lexicon's
+annotations and 86% of them have fewer than 50, so the <code>n_annotations</code>
+filter recommended here removes 200 of the 233 as a side effect. See the
+<em>Detection limitations</em> section of <a href="emoji_sentiment_lexicon.html">emoji_sentiment_lexicon</a> for what the
+rest of them are.</p>
+<p>The bias is at the <em>top</em> of the ranking specifically, not across it: a
+thinly annotated glyph is usually unanimous, so entropy is positively
+correlated with the annotation count overall (Spearman 0.56). What three
+annotators can do that thousands cannot is hit the exact maximum. So filter
+on <code>n_annotations</code> before interpreting the head of the table, as the
+introduction vignette does. <code>"ci_width"</code> is the measure that accounts for
+thin evidence by construction – it is a Wald interval, so it scales as
+<code>1 / sqrt(n)</code> at a given spread – rather than ignoring it.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -130,6 +154,21 @@ for the emoji in your own corpus, and <code><a href="emoji_sentiment.html">emoji
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> ❔    2754              9 0.333 0.333 0.333      1.10     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 🎭    1F3AD            15 0.333 0.333 0.333      1.10     1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 😳    1F633           846 0.327 0.327 0.345      1.10     6</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the head of that table is glyphs a handful of annotators disagreed about;</span></span></span>
+<span class="r-in"><span><span class="co"># filter on n_annotations before reading it as a finding</span></span></span>
+<span class="r-in"><span><span class="va">amb</span> <span class="op">&lt;-</span> <span class="fu">emoji_ambiguity</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">amb</span><span class="op">[</span><span class="va">amb</span><span class="op">$</span><span class="va">n_annotations</span> <span class="op">&gt;=</span> <span class="fl">500</span>, <span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 8</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   emoji key   n_annotations p_neg p_neu p_pos ambiguity  rank</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 😳    1F633           846 0.327 0.327 0.345      1.10     6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 💯    1F4AF           637 0.281 0.317 0.402      1.09    16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 😴    1F634           718 0.422 0.237 0.341      1.07    43</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 😢    1F622           749 0.385 0.224 0.391      1.07    47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 😱    1F631          <span style="text-decoration: underline;">1</span>130 0.264 0.282 0.454      1.07    50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 😭    1F62D          <span style="text-decoration: underline;">5</span>526 0.436 0.220 0.343      1.06    54</span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">emoji_ambiguity</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f602"</span>, <span class="st">"\U0001f643"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 8</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   emoji key   n_annotations  p_neg  p_neu  p_pos ambiguity  rank</span>

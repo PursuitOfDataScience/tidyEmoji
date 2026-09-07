@@ -213,6 +213,7 @@ is a number rather than a caveat.
 ``` r
 
 emoji_ambiguity()                             # every glyph, most disputed first
+                                              # (filter on n_annotations first)
 reviews %>% emoji_risk(text)                  # interpretation risk per row
 reviews %>% emoji_flag_ambiguous(text)        # the riskiest emoji in this corpus
 reviews %>% emoji_sentiment(text, se = TRUE)  # a score with a standard error

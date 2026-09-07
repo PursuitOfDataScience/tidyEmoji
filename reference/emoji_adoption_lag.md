@@ -27,8 +27,13 @@ emoji_adoption_lag(data, text, time)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -39,8 +44,25 @@ emoji_adoption_lag(data, text, time)
   character in `"YYYY-MM-DD"` form). A date-time is bucketed by the
   calendar day it *displays* as in its own timezone, not by its UTC day:
   an emoji posted at 23:30 New York time belongs to that day, not to the
-  next one. Character values that cannot be read as a date warn and are
-  dropped.
+  next one.
+
+  "Its own timezone" means the column's `tzone` attribute. A `POSIXct`
+  created without one – which is what `as.POSIXct("2024-01-01 23:30")`
+  and most CSV readers give you – has no timezone of its own, so R
+  displays it in the session's, and the buckets follow. The same column
+  then gives hour 23 on one machine and hour 4 on another. Tag the
+  column (`as.POSIXct(x, tz = "UTC")`, or `lubridate::force_tz()`) if
+  the result has to be reproducible; a `Date` column is immune either
+  way.
+
+  A character column must lead with a four-digit year: `"2024-01-01"` or
+  `"2024/01/01"`, with one- or two-digit month and day, and any trailing
+  time ignored. Values that do not warn and are dropped – but a column
+  in which *nothing* reads as a date is an error rather than a column of
+  `NA`, since there would be no time axis left. Note that `"01/02/2024"`
+  is in the second group: convert a column written that way with
+  [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its own
+  `format` first.
 
 ## Value
 

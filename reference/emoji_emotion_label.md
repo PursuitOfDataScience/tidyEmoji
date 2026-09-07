@@ -29,8 +29,13 @@ emoji_emotion_label(data, text, lexicon = "emotag1200")
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -46,6 +51,10 @@ emoji_emotion_label(data, text, lexicon = "emotag1200")
 when nothing was scorable) added, alongside the `.emoji_n` and
 `.emoji_n_scored` counts it inherits from
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md).
+The eight per-emotion columns are *not* returned – the label is the
+point – unless they were already in `data`, which is what
+`emoji_emotion() |> emoji_emotion_label()` gives you: the profile and
+the label side by side.
 
 ## Details
 
@@ -57,6 +66,16 @@ alongside the label: a tie, or a near-tie, is invisible in a single
 winning name, and
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
 gives the full profile the label collapses.
+
+## See also
+
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+for the eight scores this collapses, and the coverage caveat that
+applies to both;
+[emoji_emotion_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)
+for the underlying data;
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+for valence instead of emotion.
 
 ## Examples
 

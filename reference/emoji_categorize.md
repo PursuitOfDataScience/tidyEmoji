@@ -28,8 +28,13 @@ emoji_categorize(data, text)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -52,6 +57,18 @@ exactly the rows a user whose Unicode coverage is behind most needs to
 see. Use
 [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
 to check which catalogue you are matching against.
+
+## See also
+
+[`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md)
+for the smaller functional vocabulary recoded from the same group and
+subgroup, and
+[`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md)
+for the face share it reduces to;
+[`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+for per-glyph counts carrying `group`;
+[category_unicode_crosswalk](https://pursuitofdatascience.github.io/tidyEmoji/reference/category_unicode_crosswalk.md)
+for the ten categories themselves.
 
 ## Examples
 

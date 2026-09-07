@@ -63,7 +63,15 @@ Two design choices are worth highlighting:
 
 library(tidyEmoji)
 library(dplyr)
-library(ggplot2)
+
+# The charts below need three packages that tidyEmoji only Suggests. A vignette
+# has to build without its optional dependencies, so the plotting chunks are
+# gated on this flag rather than assuming the packages are there.
+has_plot_pkgs <- all(vapply(
+  c("ggplot2", "forcats", "stringr"),
+  requireNamespace, logical(1), quietly = TRUE
+))
+if (has_plot_pkgs) library(ggplot2)
 ```
 
 ## Example data
@@ -75,7 +83,12 @@ column will do.
 
 ``` r
 
-ata_tweets <- readr::read_csv("ata_tweets.csv", show_col_types = FALSE)
+# read.csv() rather than readr::read_csv(): readr is a Suggests package, and
+# reading one CSV does not need it
+ata_tweets <- tibble::as_tibble(
+  utils::read.csv("ata_tweets.csv", encoding = "UTF-8",
+                  stringsAsFactors = FALSE)
+)
 ata_tweets
 #> # A tibble: 2,000 × 1
 #>    full_text                                                                    
@@ -455,12 +468,12 @@ entries.](introduction_files/figure-html/unnamed-chunk-15-1.png)
 
 To count the 10 individual categories rather than their combinations,
 split the `.emoji_category` strings on `|` with
-[`tidyr::separate_rows()`](https://tidyr.tidyverse.org/reference/separate_rows.html):
+[`tidyr::separate_longer_delim()`](https://tidyr.tidyverse.org/reference/separate_longer_delim.html):
 
 ``` r
 
 ata_emoji_category %>%
-  tidyr::separate_rows(.emoji_category, sep = "\\|") %>%
+  tidyr::separate_longer_delim(.emoji_category, delim = "|") %>%
   count(.emoji_category, sort = TRUE) %>%
   mutate(.emoji_category = forcats::fct_reorder(.emoji_category, n)) %>%
   ggplot(aes(n, .emoji_category)) +
@@ -1084,9 +1097,11 @@ dated %>%
 #> 5 2022-04-01 2022-01-01             56      49   0.25     28     35     21
 ```
 
-Two of the time verbs need no timestamp at all, because the reference
-table already records the Unicode version that introduced each glyph.
-That makes “how new is this corpus’s emoji vocabulary?” a single call:
+Two of the time verbs read their time axis off the reference table,
+which already records the Unicode version that introduced each glyph.
+[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+needs no timestamp at all as a result, so “how new is this corpus’s
+emoji vocabulary?” is a single call:
 
 ``` r
 
@@ -1176,6 +1191,14 @@ logits on nothing in particular, so you have to say how the two sides
 were made comparable. `"rank"` puts both on percentiles and is the
 safest choice.
 
+The percentiles are taken over the rows the comparison is defined on –
+those with both a scorable emoji and a text score – not over the whole
+corpus. Only 373 of these 2000 tweets qualify, and ranking the text
+score against all 2000 would compare a percentile of one population with
+a percentile of another. One consequence is a useful sanity check: on
+the rank scale the mean gap over the scored rows is exactly zero, so a
+non-zero mean means your filtering, not your data.
+
 ``` r
 
 incong <- scored %>%
@@ -1217,15 +1240,15 @@ scored %>%
 #> # A tibble: 9 × 7
 #>   emoji name                 n mean_incongruity sd_incongruity n_flips flip_rate
 #>   <chr> <chr>            <int>            <dbl>          <dbl>   <int>     <dbl>
-#> 1 😂    face with tears…   160           0.233         0.382         9    0.0562
-#> 2 😭    loudly crying f…    98          -0.265         0.400         3    0.0306
-#> 3 😩    weary face          34          -0.587         0.476         1    0.0294
-#> 4 💯    hundred points      20           0.0123        0.278         0    0     
-#> 5 😍    smiling face wi…    20           0.876         0.223         0    0     
-#> 6 ❤️     red heart           11           0.967         0.129         0    0     
-#> 7 💀    skull               10          -0.620         0.255         0    0     
-#> 8 😒    unamused face       10          -0.892         0.00850       0    0     
-#> 9 😡    enraged face        10          -0.447         0.320         0    0
+#> 1 😂    face with tears…   160           0.205         0.382         9    0.0562
+#> 2 😭    loudly crying f…    98          -0.292         0.406         3    0.0306
+#> 3 😩    weary face          34          -0.615         0.481         1    0.0294
+#> 4 💯    hundred points      20          -0.0179        0.278         0    0     
+#> 5 😍    smiling face wi…    20           0.846         0.221         0    0     
+#> 6 ❤️     red heart           11           0.937         0.129         0    0     
+#> 7 💀    skull               10          -0.651         0.255         0    0     
+#> 8 😒    unamused face       10          -0.922         0.00850       0    0     
+#> 9 😡    enraged face        10          -0.475         0.325         0    0
 ```
 
 ## Translating emoji to and from text
@@ -1395,8 +1418,11 @@ tidyEmoji ships four datasets, each documented with its own help page:
 - **`emoji_emotion_lexicon`** — emoji emotion scores from EmoTag1200
   (see
   [`?emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)).
-- **`emoji_unicode_crosswalk`** — one row per emoji name, mapping names
-  / shortcodes to glyphs and categories.
+- **`emoji_unicode_crosswalk`** — one row per (name, glyph) pair,
+  mapping names / shortcodes to glyphs and categories. The mapping is
+  many-to-many both ways, so join on `key` rather than `emoji_name`
+  unless you want the duplicates (see
+  [`?emoji_unicode_crosswalk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_crosswalk.md)).
 - **`category_unicode_crosswalk`** — one row per Unicode category,
   listing its emoji.
 

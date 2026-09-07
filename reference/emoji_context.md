@@ -34,8 +34,13 @@ emoji_context(
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -61,7 +66,8 @@ columns `.row_number` (position of the entry in `data`), `.position`
 (the character position at which the emoji starts), `.emoji`,
 `.emoji_context_left`, `.emoji_context_right` and `.emoji_context` (the
 two sides joined by a space – the co-text without the glyph). Rows with
-no emoji contribute nothing.
+no emoji contribute nothing. The columns of `data` are not carried, so a
+grouping is not either – join back on `.row_number` to recover them.
 
 ## Details
 

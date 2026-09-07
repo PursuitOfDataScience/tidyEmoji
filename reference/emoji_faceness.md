@@ -28,8 +28,13 @@ emoji_faceness(data, text)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -39,6 +44,16 @@ emoji_faceness(data, text)
 `data`, as a tibble, with added columns `.emoji_n`, `.emoji_n_typed`
 (emoji whose type is known), `.emoji_n_face` and `.emoji_faceness`
 (`.emoji_n_face / .emoji_n_typed`). Rows with no emoji get `NA`.
+
+`.emoji_n_typed` distinguishes the two ways a share can be missing, as
+`.emoji_n_scored` does in
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
+`0` means the row had emoji whose type the recode does not know, `NA`
+that it had no emoji at all. `.emoji_faceness` is `NA` in both cases – a
+share of no typable emoji is not 0, it is unknown – so read the count
+before the share. See
+[`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md)
+for when a glyph can be untypable.
 
 ## See also
 

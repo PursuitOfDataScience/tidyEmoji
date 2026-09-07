@@ -126,6 +126,1638 @@ empirical distribution. It is now a number.
 
 ### Improvements and fixes
 
+This section is long because the release was audited exhaustively rather
+than spot-checked, and both kinds of finding are recorded: changes you
+can observe, and verifications that confirmed existing behaviour was
+already right. The second kind is kept deliberately – knowing that a
+figure was re-derived from the data, or that a formula was checked
+against an independent implementation, is worth as much to the next
+maintainer as knowing what moved.
+
+Entries whose first sentence is **bold** are the ones where something
+was actually wrong and got fixed – in the package, in its documentation,
+or in a test that was passing for the wrong reason. There are sixty-six
+of them, and reading just those leads gives the release without the
+verification detail. Not all sixty-six changed observable behaviour:
+several record a test that could not have failed, or a figure the
+documentation quoted incorrectly, which are worth the same prominence
+because both meant something was unverified.
+
+- The whole of this release’s polish was audited against the version it
+  started from, by installing both side by side and comparing 57 verb
+  calls over the bundled 2000-row corpus. **54 are byte-identical**, and
+  the three that differ are exactly the three intended behaviour
+  changes, in exactly the places they should be:
+  `emoji_emotion() |> emoji_emotion_label()` gains the eight emotion
+  columns and nothing else (every shared column identical, and the
+  scores equal
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)’s
+  own); and `emoji_incongruity(scale = "rank")` and `"zscore"` change on
+  precisely the 373 scored rows, with `NA` placement untouched,
+  `scale = "none"` and
+  [`emoji_congruence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_congruence.md)
+  byte-identical, and the rank-scale mean gap now 0 (-2.1e-17) where it
+  had been -0.0042. Every guard, message and validation change in this
+  release leaves valid input alone.
+
+  The same comparison over 29 adversarial inputs – list, matrix and
+  data-frame columns, duplicated and missing column names, a wide frame,
+  a non-finite score, `dd/mm/yyyy` dates, an unknown `measure`, an
+  emotion-shaped `lexicon`, `NA` search queries – shows **no guard was
+  loosened**: nothing that was rejected before is accepted now. Five
+  inputs that used to produce a plausible-looking result are refused
+  (the list and data-frame text columns, a bare list to
+  [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md),
+  a whole `dd/mm/yyyy` column, an unrecognised `measure`); two now warn
+  and drop instead of answering from bad data; eight kept erroring but
+  say something useful instead of surfacing dplyr’s, tibble’s or
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html)’s internals;
+  and twelve are unchanged in value, message and warning alike.
+
+- **A duplicated column name silently resolved to the first column.**
+  The bare-name fast path added earlier this release tested
+  `nm %in% names(data)`, which is true even when the name appears twice,
+  and `[[` then returns the first – so
+  [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+  and
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  answered from whichever column came first while the verbs that convert
+  `data` to a tibble failed with tibble’s own message instead.
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html),
+  which that path replaced, had rejected the ambiguity for all of them.
+  A data frame really can carry the name twice –
+  `read.csv(check.names = FALSE)` on a sheet with repeated headers does
+  it – and picking one of two columns unasked is a wrong answer that
+  looks right. All ten verbs tried now report the ambiguity, naming the
+  argument and the count, for every column argument.
+
+- Checked that this release’s type guards have not caught anything a
+  caller might reasonably hold text in: `difftime`, `complex`, `AsIs`,
+  `noquote`, a factor with an `NA` level and a custom-classed double all
+  still work as a `text` column, and `difftime` is still refused as
+  `time` or `text_score` with the type message rather than a coercion.
+
+- Verified
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)’s
+  window *content*, which no test had checked. The earlier round proved
+  the bounded-slice optimisation agrees with the package’s own naive
+  version – but two implementations that cut the window in the same
+  wrong place would agree just as well. It is now compared against a
+  reference sharing no code with the package: every glyph span is masked
+  to spaces, the two sides are split by a character-at-a-time whitespace
+  splitter, and the nearest `window` tokens are taken. **5160 windows
+  over `window` values 0, 1, 2, 4 and 9 match exactly**, and the
+  documented promise holds – with three emoji in a row, the middle one’s
+  window reaches past its neighbours to real words and never quotes the
+  neighbours.
+  [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)’s
+  word list was checked the same way against an independent tokenisation
+  (400 comparisons, no difference), along with each rule its
+  documentation states: lower-cased, leading and trailing punctuation
+  stripped but internal punctuation and digits kept, and a word counted
+  once per occurrence however often it repeats in the window. No defect
+  was found in either; both are now pinned.
+
+- Pinned the version cluster’s behaviour against a **future release**,
+  the one way this package can break without anything here changing.
+  [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+  and
+  [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+  read the introducing `version` out of the installed reference table
+  and join it to a release-date table kept in tidyEmoji’s own source;
+  the day Unicode 18 ships, that label will not be in the table.
+  `R CMD check` cannot reveal this, because it runs against today’s .
+  Injecting `18.0`, the data-file spelling `E18.0`, an absurd `99.9` and
+  a missing version now confirms all four degrade rather than fail: the
+  glyph keeps its row, its `release_date` and `lag_days` are `NA`
+  instead of invented, `share_tokens` still sums to 1, the other glyphs
+  are untouched, and
+  [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)
+  follows the new label. Also pinned the release table itself –
+  `version` unique across both numbering series, `version_num` equal to
+  the parsed label (string ordering would put `10.0` before `9.0`), no
+  missing dates, and within each series a later version never released
+  earlier.
+
+- Closed the gaps in the grouping contract. Grouping is what makes
+  `group_by() |> verb() |> summarise()` work, and it is upheld by two
+  separate mechanisms: `.emoji_as_tibble()` passing a `grouped_df`
+  through untouched, and `.emoji_regroup()` re-deriving the indices for
+  the three verbs that rewrite the text column. Only 13 row verbs were
+  pinned; the seven omitted ones –
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md),
+  [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md),
+  [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md),
+  [`emoji_congruence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_congruence.md),
+  [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md),
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  and
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
+  which is *all three* of the rewriting verbs – are now covered too, so
+  a stray
+  [`ungroup()`](https://dplyr.tidyverse.org/reference/group_by.html)
+  cannot change semantics silently. The mirror case is pinned as well:
+  [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md),
+  [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)
+  and
+  [`emoji_flag_ambiguous()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag_ambiguous.md)
+  must *not* be grouped, because they do not return the caller’s rows
+  and so have no group column to carry. And `.emoji_regroup()` is now
+  tested in the case it was written for, in its sharpest form – grouped
+  by the text column where `policy = "strip"` maps two distinct texts
+  onto one, collapsing three groups into two and shifting every index.
+  All four rewrites leave each group’s indices pointing at rows that
+  really carry its key, and are indistinguishable from regrouping from
+  scratch. No defect was found; the behaviour was already right in all
+  22 verbs.
+
+- **A `"bytes"`-encoded text column failed with R’s message, not the
+  package’s.** A character vector whose
+  [`Encoding()`](https://rdrr.io/r/base/Encoding.html) is `"bytes"` is a
+  bag of bytes R refuses to read as characters: `nchar(type = "chars")`,
+  [`gsub()`](https://rdrr.io/r/base/grep.html),
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) and
+  [`substr()`](https://rdrr.io/r/base/substr.html) each stop on one.
+  Emoji detection is built out of precisely those, so 22 verbs already
+  failed on such a column – but they failed with
+  `"bytes encoding is not supported by this function"`, thrown from
+  inside R, naming no argument, no column and no remedy. Strings arrive
+  marked this way from
+  [`readBin()`](https://rdrr.io/r/base/readBin.html)/[`rawToChar()`](https://rdrr.io/r/base/rawConversion.html)
+  and from text decoded with the wrong encoding upstream. The shared
+  text resolver now catches it, so all 22 give one message that names
+  the argument, the column, how many values carry the mark, and the fix.
+  Coercing was rejected deliberately: a string is usually marked
+  `"bytes"` *because* it is not valid UTF-8, so
+  [`enc2utf8()`](https://rdrr.io/r/base/Encoding.html) cannot repair it
+  and would substitute replacement characters. Only the caller knows
+  what the bytes meant, which is why the message says
+  [`iconv()`](https://rdrr.io/r/base/iconv.html) and says why
+  [`enc2utf8()`](https://rdrr.io/r/base/Encoding.html) will not do.
+
+- The same mark on a string *argument* is now refused as well – `sep`,
+  `placeholder` and `query`, which reached
+  [`gsub()`](https://rdrr.io/r/base/grep.html) and
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) with R’s message.
+  `wrap` was the worst of them and the only one that did not error at
+  all: `emoji_to_text(format = "shortcode")` pasted the template into
+  the rewritten text, which marked the **output column** `"bytes"` too.
+  The verb returned a perfectly ordinary-looking tibble whose text
+  column would then stop the next thing that touched it, arbitrarily far
+  from the cause. That
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  never returns a bytes-encoded column is now a test in its own right.
+  `latin1`- and unknown-marked text, and factors, are unaffected – they
+  are readable, and the guard is only about the encoding R will not
+  read.
+
+- **The collation test had a field that asserted nothing.** The snapshot
+  guarding “no ordered output depends on `LC_COLLATE`” compared
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)’s
+  output across locales – but over a fixture whose every row held a
+  single emoji, and both
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  and
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
+  pair *within* a row. The field was `character(0)`, which compares
+  equal to itself in every locale, so the ordering of those two verbs
+  had never been tested. `collocs` was nearly as empty: its fixture was
+  `paste("good", ...)`, so the word column was three copies of `"good"`
+  and no permutation of it could differ either. Both now use fixtures
+  that produce real output, and the test refuses any field that is empty
+  *or constant* – the two shapes that make a comparison vacuous.
+
+- The same test only tried `C` and `en_US.UTF-8`, which order the
+  fixture identically, so it could not have caught a collation bug even
+  in a populated field. It now also runs under Danish, Czech and
+  Estonian collation, which disagree with `C` about where a-ring, `ch`
+  and o-tilde sort, and it *asserts* that the fixture words re-order
+  under at least one locale it reached – so a fixture that stops being
+  collation-sensitive fails instead of passing quietly. Coverage went
+  from 16 outputs to 31, adding
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md),
+  [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md),
+  [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md),
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md),
+  [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md),
+  [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md),
+  [`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md),
+  [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+  and
+  [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md).
+  It runs faster than before despite that (8.9s to 3.9s): the old shape
+  called `emoji_search("hand")` three times per locale and six other
+  verbs twice.
+
+- Documented why the head of
+  [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)’s
+  ranking can show something that is not an emoji. The docs already
+  explained the tie at `rank = 1` by annotation count, which is right as
+  far as it goes – but three of those five rows are box-drawing and
+  dingbat characters, not emoji. The lexicon was built from 2015 tweets
+  and 233 of its 969 rows are absent from the reference table, so no
+  corpus this package analyses can yield them. They carry 6% of the
+  lexicon’s annotations, and 86% have fewer than 50, so the
+  `n_annotations` filter the page already recommends removes 200 of the
+  233 as a side effect. Every figure is pinned twice, from the data and
+  from the rendered Rd; the coverage figures on
+  \[emoji_sentiment_lexicon\] (736 in the reference table, 233 not, 3790
+  distinct keys, “about 19%”) were re-derived and all hold.
+
+- **A non-numeric score column registered happily and then scored
+  nothing.**
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  resolves the score column at registration precisely so a bad table
+  fails there rather than later – but it checked only that the column
+  *existed*, not that it held numbers. A `score` column of text (which
+  is what a stray `"NA"` or a decimal comma makes of a whole column)
+  therefore registered without complaint, and at scoring time reached
+  [`mean()`](https://rdrr.io/r/base/mean.html), which returns `NA` with
+  R’s own “argument is not numeric or logical” warning. Meanwhile
+  `.emoji_n_scored` still counted the emoji as scored, so the row
+  claimed a score it did not have – contradicting that column’s
+  documented meaning, where `0` is exactly “had emoji the lexicon could
+  not score”. Both the registration path and the bare-data-frame path
+  now refuse it and say what to look for. A logical column still works,
+  and a genuinely `NA` numeric score is still counted as unscored.
+
+- **Two lexicon rows for one emoji let the row order pick the score.**
+  Spellings that differ only by a variation selector share one
+  code-point key, so a table listing both `U+2764` and `U+2764 U+FE0F`
+  holds one emoji twice. The lookup took whichever came first: swapping
+  two rows of the caller’s own table changed `.emoji_score` from `0.5`
+  to `-0.5`, silently – the same failure as the duplicated column name
+  fixed earlier this release. Identical scores are the normal case and
+  still collapse quietly, and an `NA` beside a value is not a
+  disagreement; only genuinely conflicting scores are refused, naming
+  the key. Neither bundled lexicon has a duplicated key at all, which is
+  now asserted so the guard cannot start reaching them.
+
+- `by` is validated as a single string. It reaches `%in%`, so
+  `by = c("emoji", "other")` surfaced R’s own “the condition has length
+  \> 1” from inside
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  and
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md),
+  naming neither the argument nor the verb.
+
+- Checked the suite the way a suite should be checked: by breaking the
+  package and seeing whether it notices. Nine mutations were applied one
+  at a time to the numeric and ordering core – weakening
+  [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)’s
+  short-text guard, making whitespace-only text score `NA` per token,
+  dropping
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)’s
+  glyph tiebreaker, shifting its tf-idf denominator, moving the Monday
+  the week buckets to, moving the month a quarter starts on, ordering
+  [`emoji_unicode_releases()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_releases.md)
+  by version *string* instead of number, turning off `fixed = TRUE` in
+  [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md),
+  and removing the `"bytes"`-encoding guard. **All nine were caught**,
+  by 1 to 92 failing tests each; none survived. Three were caught by a
+  single test apiece, which is the thin margin worth knowing about
+  rather than a defect.
+
+- Verified `emoji_context(unit = "char")`, the half of that verb an
+  earlier round left alone. The word unit was checked against a
+  reference sharing no code with the package; the character unit has its
+  own bounded-slice optimisation and its own “enough characters after
+  trimming” fallback, and neither had been checked against anything but
+  itself. **4135 windows over `window` values 0, 1, 3, 7 and 25 match
+  exactly**, including the doubling fallback that whitespace-heavy input
+  triggers. Also pinned that a masked neighbour can pad a character
+  window but can never appear in it.
+
+- Tied together
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)’s
+  two naming branches, which had nothing connecting them. `emoji_name`
+  comes from
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)’s
+  `shortcode` when `duplicated = FALSE` and from a many-to-many join
+  onto `emoji_unicode_crosswalk` when `TRUE`, so a change to either
+  could leave them disagreeing about what an emoji is called – and only
+  the expanded branch was exercised anywhere. Over a corpus holding
+  every catalogued glyph, the single name is the *first* of the expanded
+  names for all 4830 of them, and neither branch leaves a glyph
+  nameless: 189 reference rows carry no alias, but canonicalisation
+  matches on the codepoint key, so such a glyph borrows the alias of its
+  other spelling. Also pinned that `n` cuts on distinct emoji rather
+  than rows, so a glyph with several aliases cannot eat another glyph’s
+  slot, and that `n = 0` gives a typed zero-row tibble in both branches.
+
+- Verified the declared `R (>= 4.1.0)` floor exactly rather than by
+  inspection: every base-package function the code calls – collected by
+  walking the syntax tree of `R/` and `tests/`, 443 distinct call names
+  – exists in a real R 4.1.0 installation. The only name that resolves
+  on 4.4 but not 4.1 is `%||%`, which entered base R in 4.4.0 and which
+  this package has always defined for itself.
+
+- **[`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  could not tell `new` from `lost`.** Mutation testing found this one:
+  swapping `n_new` to compute `setdiff(a, b)` instead of `setdiff(b, a)`
+  – so that “new emoji” reports the *lost* count – passed the entire
+  suite. Two tests looked like they covered it and neither could. One
+  asserts `n_new == 1` and `n_lost == 1`; the other checks each against
+  set arithmetic done by hand, but over a fixture whose first period
+  pair gains exactly one glyph and loses exactly one. Both numbers are
+  1, so no permutation of them is observable. The assertions were right;
+  the fixtures had no teeth – the same failure as the empty snapshot
+  field fixed above, in a subtler form. There is now a deliberately
+  asymmetric case (three glyphs arrive, none leaves), the reverse of it,
+  an assertion that the fixture *can* distinguish the two, and the
+  identity that fixes the direction: `n_new + n_core` is the later
+  period’s vocabulary and `n_lost + n_core` the earlier one’s. The
+  implementation was correct throughout; only the test was blind.
+  Re-running the mutation now fails four assertions.
+
+- **[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  mis-described its own headline number.** `n_emoji` was documented as
+  “the size of the detectable emoji set” but reports
+  `nrow(emoji_reference())` – rows of the reference table, which are
+  *spellings*. With 16.0.0 that is 5042 rows carrying only 3790 distinct
+  code-point keys, because an emoji whose presentation can be selected
+  appears both with and without `U+FE0F`, and 212 of the 5042 are not
+  detectable in text as written. This is a function built to be pasted
+  into a methods section, so “5042 detectable emoji” is a number that
+  would have gone into papers overstating the vocabulary by 1252. The
+  value is unchanged – it is the table’s size, which is the right thing
+  for a provenance row to record – and the documentation now names the
+  quantity, points at `length(unique(emoji_reference()$key))` for the
+  count of distinct emoji, and notes that the lexicon strings count rows
+  the same way. Also established the fact that makes the overstatement
+  harmless rather than a defect: no emoji is lost to an undetectable
+  spelling, because every one of the 3790 keys is reachable through at
+  least one spelling that is detected.
+
+- **[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+  could not tell type shares from token shares.** Found by extending
+  round 79’s search from one column pair to every pair a verb could
+  swap: exchanging the expressions behind `share_types` and
+  `share_tokens` passed the whole suite. The only assertion either
+  column ever had was `sum(share_tokens) == 1` – and *both* columns sum
+  to 1, so the swap was invisible. There is now a fixture where the two
+  genuinely differ (one glyph three times, another once, so
+  `share_types` is 0.5 where `share_tokens` is 0.75), each column
+  checked against its own count, and an assertion that the fixture
+  separates them. Re-running the swap fails four assertions. As with
+  `n_new`/`n_lost`, the implementation was right and only the test was
+  blind.
+
+- The same sweep exchanged nine other pairs –
+  `.emoji_first`/`.emoji_last`, `.emoji_per_char`/`.emoji_per_token`,
+  `.emoji_only`’s polarity, `.emoji_n_typed`/`.emoji_n_face`,
+  `n_types`/`n_tokens`, `release_date`/`first_seen`,
+  `n_texts`/`n_with_emoji`, `p_neg`/`p_pos` and
+  [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)’s
+  two counts – and every one was caught. The seasonality pair was the
+  closest call: its own fixture reads 2 for both columns, and the month
+  where they differ is asserted for neither, but two unrelated tests
+  fail on the swap anyway. It now has a fixture that separates them
+  directly rather than relying on that.
+
+- Audited every guard in the package by shadowing `stop` inside its own
+  namespace, which makes one suite run log every error the tests
+  actually trigger. 53 of the 54 guards fired; the one that never did
+  was
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)’s
+  fallback for a lexicon it cannot use, and reaching it exposed two
+  message defects rather than one.
+
+- **`emoji_sentiment(lexicon = "emotag1200")` said the name was
+  invalid.** The bundled emotion lexicon is the only input that reaches
+  that guard, and the message was “`lexicon` must be ‘novak2015’, a
+  registered lexicon, or a data frame” – telling a user whose name is a
+  perfectly valid bundled lexicon that it is not, and pointing nowhere.
+  It now says the lexicon is an emotion lexicon, that this verb needs
+  one score per emoji, and names both \[emoji_emotion()\] for the
+  per-emotion profile and `emoji_score(lexicon = ...)` for the mean over
+  its dimensions – the answer
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  already gave its own callers.
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)’s
+  reciprocal case now mirrors it instead of only listing what it wants.
+
+- **A guard offered an option it rejects.** `.emoji_lexicon_lookup()`’s
+  type message read “`lexicon` must be a name (string), a data frame, or
+  NULL for the default” – and `NULL` fails that very guard, since
+  `is.character(NULL)` is `FALSE`. No verb accepts or documents
+  `lexicon = NULL`. The message now describes what is taken and names
+  what was passed. Tightening it to a *single* name also fixed two
+  messages that were R’s rather than the package’s: a length-2 name
+  reached `%in%` inside an `if` and produced “the condition has length
+  \> 1”, `character(0)` produced “argument is of length zero”, and
+  `NA_character_` fell through to a misleading “Unknown lexicon `NA`”.
+
+- Two guards remain that no test can reach, and deliberately so: the
+  final `else` in each of
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  and
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md).
+  `.emoji_lexicon_lookup()` returns one of four shapes – a data frame,
+  or a record of type sentiment, emotion or custom – and both verbs now
+  handle all four, so those branches are unreachable defence against a
+  fifth rather than untested behaviour.
+
+- **The deprecated `duplicated_unicode` was more permissive than its
+  replacement, and silently so.** It converted with
+  `isTRUE(x) || identical(x, "yes")`, which collapses everything it does
+  not recognise to `FALSE`. So `duplicated_unicode = "TRUE"` and
+  `duplicated_unicode = 1` – both entirely plausible for an argument
+  that once took a string – returned the *opposite* of what was asked,
+  without a word, while `NA`, `"Yes"`, `character(0)` and a length-2
+  vector all passed unnoticed too. The current `duplicated` rejects
+  every one of them through `.emoji_check_flag()`, so migrating *to* the
+  deprecated spelling was a downgrade in safety. It now accepts exactly
+  the four values it ever meant – `TRUE`, `FALSE`, `"yes"`, `"no"` –
+  each still giving what the modern spelling gives, and errors on
+  anything else naming the replacement. Found by extending the guard
+  audit to warnings: both bare
+  [`warning()`](https://rdrr.io/r/base/warning.html) sites fire in the
+  suite, and probing the deprecation surface instead turned this up.
+
+- **Fifteen enum arguments answered a typo by naming a variable the
+  caller never wrote.**
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html) reports its own
+  formal, so `emoji_context(unit = "words")` said \*“‘arg’ should be one
+  of”word”, “char”“\* and `emoji_sanitize(policy = c("keep", "strip"))`
+  said *”‘arg’ must be of length 1”*.
+  [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  had already been given a hand-rolled check for precisely this, with a
+  comment saying it exists to name `measure`”rather than match.arg()’s
+  own `'arg'`” – and the fix was never carried to the other fifteen call
+  sites, the same written-where-noticed-and-never-grepped pattern that
+  left seven aggregators without a grouped-input guard in 0.3.0. They
+  now share `.emoji_match_arg()`: `unit`, `policy`, `format`,
+  `weighting`, `period`, `by` (twice), `measure` (five verbs), `method`,
+  `where` and `scale` all name themselves and list their options.
+
+- That conversion changes no accepted value.
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html)’s behaviours
+  are preserved deliberately and pinned: a value identical to the whole
+  choice vector still means “no value supplied” and takes the first
+  (which is why `emoji_context(unit = c("word", "char"))` is accepted
+  and `emoji_sanitize(policy = c("keep", "strip"))` is not), exact
+  matches win, and unambiguous prefixes still resolve, so `by = "mon"`
+  keeps working while an ambiguous one is refused rather than guessed.
+  The accept/reject matrix over full values, prefixes, wrong case,
+  unknown values and length-2 vectors is unchanged across all fifteen.
+
+- Converting them meant writing each choice set at the call site, since
+  `match.arg(x)` reads it from the formal and a helper cannot. That is
+  the one risk the change introduces, so a test now derives every choice
+  set from the function’s own formals and requires the error message to
+  list exactly it – no more, no fewer.
+  ([`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)’s
+  `scale` is deliberately defaultless, so it has no formal to derive
+  from and is covered by the message test instead.)
+
+- Closed the last gap in the grouping story. `.emoji_warn_grouped()`
+  exists because “silently ignoring a grouping turns a per-group
+  question into a global one”, and an earlier round pinned which verbs
+  keep a grouping and which drop it – but not whether the droppers *say
+  so*. Three do not:
+  [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md),
+  [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)
+  and
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  discard the grouping, and the grouping column with it, without a word.
+  All three are defensible, and for a reason worth stating: each returns
+  `.row_number` instead of the caller’s columns, and none of them pools
+  rows, so there is no per-group answer being quietly globalised –
+  unlike the thirteen verbs that do pool and therefore warn. That
+  distinction was recorded nowhere. Of 37 help pages exactly two
+  mentioned grouping, both promising it is kept. All four reshapers now
+  say which side they are on, and point at `.row_number` as the way to
+  join your columns back.
+
+- The three-way classification is now a contract rather than an
+  accident: every data-first verb must either keep the grouping (and the
+  column it names), or warn and ignore it, or be one of the three named
+  reshapers that return `.row_number` and none of the caller’s columns.
+  The silent set is asserted to be exactly those three, so a new verb
+  cannot join it by accident; both other groups are asserted non-empty
+  so the classification cannot go vacuous; and a verb that warns is
+  required *not* to return the grouping, which would be the confusing
+  middle case of warning about something it went on to keep.
+
+- Verified the statistical core against the raw annotation counts rather
+  than against itself, since these are numbers that reach papers. All
+  four ambiguity measures recompute exactly over all 969 rows – Shannon
+  entropy in nats with `0 log 0` taken as 0, Gini impurity, the neutral
+  share, and the standard error from `Var(X) = E[X^2] - E[X]^2` for `X`
+  in `{-1, 0, 1}` – and every documented figure on the page holds: the
+  median glyph has 18 annotations, 69.0% have fewer than 50, 11 of the
+  top 20 do, the five rows tied at `rank = 1` carry 3, 3, 3, 9 and 15,
+  and the entropy/count Spearman correlation is 0.556, which is the
+  “0.56” the page quotes. `gini`’s documented 2/3 ceiling is now
+  asserted alongside `entropy`’s `log(3)` one, which already was.
+
+- Pinned the invariant that makes `emoji_sentiment(se = TRUE)`
+  meaningful: the score map and the standard-error map cover exactly the
+  same emoji, with no `NA` in either. The row mean drops glyphs the
+  *score* map cannot score and the standard error drops glyphs the *se*
+  map cannot, so if those two sets ever diverged the reported error
+  would be the error of a mean nobody computed. `.emoji_n_scored` is now
+  checked to equal the standard error’s own denominator over a
+  many-glyph corpus, and the propagation (`sqrt(sum(se^2)) / n_scored`)
+  re-derived independently. Nothing was wrong; nothing had been
+  checking.
+
+- [`emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_type.md)’s
+  `.emoji_type` is `NA` for two different reasons – a row with no emoji,
+  and a row whose every emoji the recode cannot type – and the page
+  documented only the first. The recode maps the ten Unicode groups the
+  catalogue currently uses and starts from `NA`, so a glyph in a group
+  added to Unicode after your package was built has no type. It is the
+  same conflation \[emoji_categorize()\] already describes for
+  `.emoji_category`, and the fix is the same: say both, and say how to
+  tell them apart – \[emoji_faceness()\]’s `.emoji_n_typed` is `NA` when
+  the row had no emoji and `0` when it had emoji that could not be
+  typed.
+
+- Pinned the recode’s coverage and its behaviour on the untypable path.
+  Nothing falls through today: all 5042 catalogue rows type, every type
+  produced is one of the eleven declared levels, and all eleven are
+  reachable so none is dead. An unknown group yields `NA` rather than
+  erroring or landing silently in a catch-all. Forcing a glyph untyped
+  confirms the rest of the contract holds around it: the row keeps its
+  other emoji’s type instead of being dropped, `.emoji_n` still counts
+  the glyph because it is still an emoji, `.emoji_n_typed` falls to
+  match, and `.emoji_faceness` is the share among *typable* emoji – `NA`
+  rather than a division by zero when none of them is.
+
+- Swept the “`NA` for two reasons” class across every verb instead of
+  meeting it one at a time. Over a fixture holding all three causes – a
+  row with no emoji, a row whose emoji the lexicon or the recode cannot
+  use, and an `NA` text – the design turns out uniform and sound: every
+  *answer* column is `NA` for all three, and every *count* column
+  (`.emoji_n_scored`, `.emoji_n_typed`, `.emoji_n_ambiguous`) is `0` for
+  “had emoji I could not use” and `NA` for “had no emoji”. That is the
+  contract \[emoji_sentiment()\] states, and \[emoji_score()\],
+  \[emoji_emotion()\] and \[emoji_risk()\] each restate it. Two verbs
+  carrying the same count column never said it: \[emoji_faceness()\] and
+  \[emoji_incongruity()\]. Both do now, and the whole pattern is pinned
+  rather than left as a coincidence of six separate implementations.
+
+- **A documentation-pinning helper reported gaps that did not exist.**
+  Rd prose is line-wrapped, so a sentence written as one line in the
+  roxygen source arrives from
+  [`tools::Rd_db()`](https://rdrr.io/r/tools/Rdutils.html) with a
+  newline in the middle – and a `fixed = TRUE` match for that sentence
+  fails. Three of this round’s own assertions failed exactly that way,
+  on pages whose wording was already correct. The test helper gained
+  `rd_flat()`, which collapses whitespace first, and the thirteen
+  existing assertions that matched a multi-word phrase against
+  unflattened text were converted to it. None of them was failing – each
+  passed only because its phrase happened not to straddle a break, so
+  any edit to the surrounding prose could have turned a correct page
+  into a red test. The pass count is unchanged by the conversion, which
+  is the point.
+
+- **The suite’s dependency on one release was undeclared and
+  unexplained.** About seventy counts derived from the catalogue are
+  pinned here – 5042 rows, 3790 distinct keys, 969 lexicon rows,
+  736/233, 212 undetectable spellings, 1252 carrying `U+FE0F`, 216, 200
+  – deliberately, because the documentation quotes them and the pinning
+  is what catches doc-vs-data drift. But nothing recorded which release
+  they came from and nothing checked it, so a new Unicode version would
+  have surfaced as dozens of unrelated-looking failures with no
+  statement of the cause, plus four help pages quietly naming a release
+  the user does not have. There is now a single constant, a canary test
+  that fails loudly and says exactly which figures need re-deriving, and
+  an assertion that no help page names a *different* release. Simulating
+  the update confirms three tests fail, all three named so the cause is
+  legible, rather than seventy that are not.
+
+- Declared `emoji (>= 16.0.0)`, which had no version floor at all. The
+  other floors in `DESCRIPTION` are keyed to *arguments* the code calls,
+  which is why was not among them – tidyEmoji reads its data, not its
+  functions. The reason it needs one is different and just as real:
+  every catalogue figure in the documentation describes a single
+  release, and an older has fewer rows, so those figures would simply be
+  wrong. The floor, the version the help pages name and the pinned
+  counts are now governed by one constant and asserted to agree.
+
+- **`cran-comments.md` asserted something a reviewer could test and find
+  false.** Its explanation of the one “possibly invalid URL” note said
+  “The site itself is up: `curlGetHeaders(url, verify = FALSE)` returns
+  `200`”. That was true when written and is not now: the redirect target
+  refuses TCP connections outright, with or without TLS verification, so
+  the claim would not reproduce for anyone checking it. The passage now
+  separates what the package can vouch for from what it cannot. The
+  documented URL is healthy and that is the part that matters –
+  `https://hdl.handle.net/11356/1048` returns `HTTP/2 302` to
+  `https://www.clarin.si/repository/xmlui/handle/11356/1048`, verified
+  again for this release – and the note describes a third-party
+  CLARIN.SI host reached only by following that redirect. Both observed
+  failure modes are recorded, the original certificate-chain one and the
+  present timeout, precisely because they differ: the point is that the
+  failure is not the package’s and not stable enough to characterise. No
+  claim is made about the target’s availability.
+
+- Re-checked every other URL in the package over the network: the two
+  citations, the EmoTag repository, the pkgdown site and its
+  introduction article, the issue tracker, the CRAN page and the three
+  badges all return `200`, and only `doi.org` and the CRAN page redirect
+  (both to their expected canonical targets). The `t.co` links the URL
+  sweep turns up are rows of `vignettes/ata_tweets.csv`, not
+  documentation, and are not fetched.
+
+- Added the offline half as a test, since the network half cannot run on
+  CRAN: every URL in the help pages and `DESCRIPTION` must be well
+  formed – `https`, no whitespace, no stray backtick or quote swept in
+  from the surrounding markup, no trailing punctuation, and a parseable
+  host and path. That is the class of defect that turns a working link
+  into a reported one.
+
+- **A second stale claim in `cran-comments.md`.** It said “Two tests
+  skip: one gated on `readr (>= 2.0.0)` … and one `skip_on_cran()`
+  maintenance check” – written when the suite was much smaller, and
+  describing a suite that no longer exists: there are now seven
+  `skip_on_cran()` tests. The passage reports the re-measured inventory
+  and names all seven, marks the R 4.1.0 figure as history rather than a
+  current measurement (that tree cannot be rebuilt here, so asserting a
+  fresh number would be inventing one), and explains why a tarball check
+  skips three more than a source check – they read `README.Rmd`, the
+  `R/` tree and the vignette corpus, none of which a tarball carries.
+
+- The rest of the file was re-verified rather than trusted. The
+  marked-UTF-8 breakdown is exact – `emoji_unicode_crosswalk$unicode`
+  5761, `emoji_sentiment_lexicon$emoji` 969,
+  `emoji_emotion_lexicon$emoji` 150,
+  `category_unicode_crosswalk$unicodes` 10, summing to the 6890 it
+  quotes – and no other column in any bundled dataset carries a marked
+  string, as it claims. Against a live CRAN index: still no reverse
+  dependencies, the published version is still 0.3.0, and is still
+  16.0.0, which confirms the version floor added above is satisfiable
+  and that the documented catalogue figures describe the release CRAN
+  currently ships. The package count was refreshed from 24,744 to
+  24,748.
+
+- Those figures are now derived in a test rather than asserted in prose,
+  so they cannot drift again: the skip count, each component of the
+  UTF-8 breakdown and their total, the claim that no non-glyph column is
+  marked, and the licence. Writing it caught its own bug first –
+  counting occurrences of the string `skip_on_cran()` in the test
+  sources returns nine, because the literal appears in the counting code
+  and in comments. It counts lines that *are* the call, and the runtime
+  skip count confirms the figure independently.
+
+- `README.md` is knitted from `README.Rmd`, so every `#>` line in it is
+  output the package produced at some past moment. An existing test
+  compares the two files’ *prose*, which catches an edit made to
+  `README.md` instead of to its source – but not the likelier rot: prose
+  and code both untouched while the package’s output moves underneath
+  them. This release changed several messages and added columns, so it
+  was worth checking. **It had not gone stale** – a fresh
+  `github_document` render is byte-identical to the shipped file – but
+  nothing was checking, and now something does.
+
+- That test compares the `#>` lines rather than the whole render,
+  deliberately. The prose is re-wrapped by pandoc, whose line breaking
+  differs between versions, so diffing whole files would fail on a
+  different pandoc even when the README is perfectly current. Three
+  cosmetic markers are normalised for the same reason: testthat forces
+  `cli.unicode = FALSE`, so pillar decorates its tibbles in ASCII (`x`,
+  `~`, `i`) where a maintainer’s render uses Unicode (`\u00d7`,
+  `\u2026`, `\u2139`). Each was found by running the comparison and
+  reading what differed rather than by guessing. Everything that can
+  actually go stale – row and column counts, column names, values – is
+  compared byte for byte.
+
+- Fixed a loop in last round’s own new test that iterated zero times.
+  Its “no non-glyph column carries a marked string” check ran over a
+  hand-written list of datasets that included `emoji_tweets` – which is
+  the deprecated synonym for \[emoji_filter()\], a *function*, whose
+  [`names()`](https://rdrr.io/r/base/names.html) is empty. That entry
+  therefore asserted nothing, the same vacuity that left
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)’s
+  collation untested for a release. The list is now derived from
+  [`utils::data()`](https://rdrr.io/r/utils/data.html), so it is exactly
+  the four datasets the package ships and a fifth would be covered
+  automatically, and the number of character columns visited is pinned
+  at 13 rather than bounded below – a new one fires the test and has to
+  be classified as a glyph column or not.
+
+- Measured where the check’s time goes, since this release’s suite has
+  grown by roughly 2,100 assertions. `R CMD check --as-cran` is 158s of
+  CPU: 100s tests, 12s re-building the vignette, 7s incoming feasibility
+  (its 143s of wall time is network, not compute). Inside the suite no
+  single test dominates – the slowest is 4.5s and 21 tests over a second
+  account for 64% of the total – so there is nothing pathological to
+  trim, and the whole check sits comfortably inside CRAN’s per-flavour
+  budget.
+
+- Audited the suite for assertions that cannot fail, since the last two
+  rounds each found a defect in a test rather than in the package. Two
+  sweeps, both clean. Comparing every block’s `expect_*` count in its
+  source against the number it actually executes at runtime found
+  **one** shortfall across all 478 blocks, and that one is a genuine
+  either/or: the [`tolower()`](https://rdrr.io/r/base/chartr.html) audit
+  asserts against the `R/` sources when they are present and against the
+  installed namespace when they are not, so exactly one of its two
+  assertions runs. Scanning for assertions whose two operands are
+  syntactically identical – `expect_equal(x, x)`, `expect_true(TRUE)` –
+  found none.
+
+- The second sweep is cheap and the test sources ship, so it is now a
+  test rather than a one-off: no assertion in the suite may compare
+  something to itself, and every `test_that` block must contain at least
+  one expectation (testthat warns about an empty block but does not
+  fail, which is easy to miss in a suite this size). Both were verified
+  by injecting the defects they look for and confirming each fires.
+
+- Added metamorphic tests – properties that must hold *between* related
+  inputs. They catch a class unit tests cannot, because they need no
+  known answer: a verb can be wrong in a way no fixture reveals and
+  still be caught by “these two corpora must agree”. Four families, all
+  of which the package already satisfied: **additivity** (every glyph’s
+  count over a concatenated corpus is its count in the parts, and
+  [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)’s
+  two counters add); **scale invariance** (doubling every row doubles
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md),
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  and `n_tokens` exactly, while `share_types`, `share_tokens` and
+  [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)’s
+  PMI – all ratios – do not move at all); **padding invariance** (adding
+  emoji-free rows leaves
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md),
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)
+  and the version profile *identical*, and moves only the `n_total`
+  those rows belong to); and **row independence**.
+
+- Row independence is the sharpest of the four, and it is now a
+  contract: for thirteen row verbs, `verb(data)[i, ]` must equal
+  `verb(data[i, ])`. Exactly one row verb is allowed to break it –
+  `emoji_incongruity(scale = "rank")`, whose whole purpose is to map
+  each score to its percentile *within the corpus* – and the test
+  requires it to differ, so that if rank scaling ever quietly became
+  `scale = "none"` the suite would say so. Verified by injecting a
+  corpus coupling into
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  (dividing by the corpus maximum) and confirming the test fails.
+
+- Extended the same four families to the calendar arithmetic and to
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md).
+  Translation invariance is a strong property for a cycle, and a
+  bucketing bug would show up as a shift leaking into the counts: a
+  whole number of years cannot move a month cycle, a whole number of
+  weeks cannot move a weekday cycle, and in a zone without DST whole
+  days of seconds cannot move an hour cycle.
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+  keeps its counts and shifts every period by one constant offset;
+  [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md),
+  which compares periods to each other, is unmoved entirely. None of the
+  four time verbs depends on the order of the rows.
+
+- Pinned the DST case as behaviour rather than leaving it implicit.
+  Adding 86400 seconds twice across spring forward is *not* adding two
+  calendar days, so the displayed hours move by one and the cycle moves
+  with them – correct, because the verb buckets by the timestamp’s own
+  zone as documented. The test asserts the buckets *are* the displayed
+  hours on both sides of the shift, and that the emoji total is
+  conserved across it. (That area turned out to be well defended
+  already: injecting a UTC-instead-of-local hour read fails six tests.)
+
+- [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  conserves its cells: aggregating rows into documents with `doc_id`
+  redistributes them without creating any, the total equals
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)’s,
+  permuting rows permutes the matrix rows identically, and duplicating
+  the corpus leaves the first copy’s rows untouched – tf-idf included,
+  since `N` and `df` both double and `log(N / df)` cancels.
+
+- Checked the session cache, which nothing had examined. The package
+  memoises six things – the reference table, its key set, the sentiment
+  and emotion maps, the ambiguity table and the type map – plus the
+  user-writable lexicon registry. A memoised accessor has a failure mode
+  no other test could see: computing one value, storing another, and so
+  answering differently the first time than afterwards. All six now
+  assert that the first call equals the second and third with the slot
+  cleared beforehand, and that the call actually populates its slot, so
+  the memo is real rather than decorative. Clearing a derived slot is
+  safe because each repopulates from a source that cannot change within
+  a session.
+
+- The registry is the one slot a caller can rewrite, so it gets a
+  coherence check: registering a second table under a name already used
+  must replace the first rather than be shadowed by it,
+  [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  must list the name once and report the new row count, and
+  re-registering with a *different* glyph column must still resolve –
+  which it does, because
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  stores a computed `key` column. Verified the whole guard by making
+  `emoji_reference()` memoise a table one row shorter than the one it
+  returns; the new test fails.
+
+- Verified the pkgdown reference index, since a new exported verb that
+  nobody adds to `_pkgdown.yml` breaks
+  [`pkgdown::build_site()`](https://pkgdown.r-lib.org/reference/build_site.html)
+  with “topics missing from index” – after the release, on someone
+  else’s machine.
+  [`pkgdown::check_pkgdown()`](https://pkgdown.r-lib.org/reference/check_pkgdown.html)
+  reports no problems: all 51 help topics are reachable. A hand-rolled
+  version of that check flagged two entries the real one accepts,
+  because an alias counts as covering its topic (`emoji_tweets` lives on
+  `emoji_filter`’s page) and the package-level doc is excluded by design
+  – asking the tool rather than reimplementing its rules was the
+  difference between two false alarms and a clean answer.
+
+- That check is deliberately *not* in the test suite. Adding it raised a
+  second `R CMD check` WARNING – “‘::’ or ‘:::’ import not declared from
+  ‘pkgdown’” – and the only way to clear it is to declare in `Suggests`,
+  which would make every CRAN check machine install a heavy dependency
+  for a test that can never run there: `_pkgdown.yml` is build-ignored,
+  so the test would skip in the tarball every time. The site index is
+  verified here instead, and `build_site()` catches a regression on the
+  first run after one.
+
+- The `cran-comments.md` skip-count assertion no longer hardcodes the
+  number in two places. It counts the `skip_on_cran()` call sites and
+  derives the word the file must contain, so adding a skipped test
+  forces the submission notes to be updated – which is the point of the
+  coupling – without also forcing an edit to the test.
+
+- The missing-column message added earlier this release listed every
+  column in `data`, which is the caller’s data and can be wide. A
+  500-column frame produced a **5074-character** error and a 40-column
+  survey export 665 – burying the one name that is wrong behind the
+  hundreds that are not – and a frame with no columns at all trailed off
+  as `Available: .`. Five names are now listed and the rest counted
+  (`and 495 more`), so the message is 84-118 characters whatever the
+  data looks like, and a frame with no columns says so.
+
+- A test pins that
+  [`?register_emoji_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)‘s
+  example is the only one that registers a lexicon. `R CMD check` runs
+  every example in one session, so a registration is visible to every
+  topic sorting after it, and
+  [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  reports what is registered – today that verb sorts before
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  and the printed output is unaffected, which is alphabetical luck
+  rather than design. Running all 46 topics’ examples forward and in
+  reverse also errors nowhere, so nothing else depends on the order.
+
+- [`?emoji_pairs`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  now says what `doc_id` costs. The result has a row per pair, so it
+  grows with the *square* of the distinct emoji in a document – a
+  conversation or a day is cheap, pooling a whole corpus under one id is
+  not. Measured: 800 distinct emoji in one document is 319,600 pairs and
+  3.5s, and the bundled corpus pooled into a single document (187
+  distinct emoji) is 17,391 pairs in 0.27s. The behaviour is inherent to
+  the question rather than a defect, but the shape of the cost was not
+  written down.
+
+- [`emoji_incongruity_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity_profile.md)’s
+  statistics are now derived independently in the tests – the last
+  formula in the package that no test computed for itself. `n`,
+  `mean_incongruity`, `sd_incongruity` and `n_flips` all match crediting
+  every glyph in a row with that row’s gap, across all three `scale`
+  values, along with `flip_rate`, the documented sort order, the `NA`
+  standard deviation for a single occurrence, and `min_n` selecting rows
+  without changing a statistic. No defect found.
+
+- Two scale limits nothing had reached are now tested:
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  at its widest – one document holding every distinct emoji, 3791
+  columns, all names distinct and non-empty, tf-idf zero everywhere as
+  `log(N/df)` requires for a single document – and a wide multi-document
+  table keeping its documented column ordering and row sums. Also that a
+  missing column is reported identically for all four column arguments,
+  naming the argument and the column and never a same-named variable
+  from the caller’s session.
+
+- **A misspelled column name could be reported as the contents of one of
+  your variables.** tidyselect falls back to an *external vector* when a
+  bare name is not a column, and `text` is a common variable name – so
+  `emoji_sentiment(df, text)`, on a data frame whose column had been
+  renamed, in a session where `text` was also a character vector, gave
+  `` Can't select columns that don't exist. Columns `from the global ...` and ... ``
+  – naming the contents of the caller’s variable as though they were
+  column names – plus a tidyselect deprecation warning advising
+  [`all_of()`](https://tidyselect.r-lib.org/reference/all_of.html),
+  which is not what the caller meant. That is the same failure mode this
+  resolver was written to replace, arriving by another route. A bare
+  name is now checked against `names(data)` directly: the message names
+  the argument and the missing column and lists the ones that exist,
+  with no spurious deprecation warning. Where the column *does* exist it
+  still wins over a variable of the same name, and every other
+  tidyselect form – a string, a position,
+  [`all_of()`](https://tidyselect.r-lib.org/reference/all_of.html),
+  [`starts_with()`](https://tidyselect.r-lib.org/reference/starts_with.html)
+  – still resolves through
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html),
+  two-column selections included.
+
+- That also makes the commonest call much cheaper. Resolving a bare
+  column name no longer runs
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html):
+  **2000 resolutions went from 2.0s to 0.058s**, and a realistic loop of
+  500 per-group
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  calls from 1.32s to 0.93s. Large-corpus timings are unchanged, being
+  detection bound. It also retires the note added earlier this release
+  about five verbs resolving the name twice – at 0.03ms a resolution
+  there is nothing left to restructure.
+
+- **The time verbs’ buckets follow the session timezone when the column
+  has none, and nothing said so.**
+  [`?emoji_trend`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+  promised that a date-time is bucketed by the day it “displays as in
+  its own timezone” – but a `POSIXct` built by
+  `as.POSIXct("2024-01-01 23:30")`, which is what most CSV readers give
+  you, has no `tzone` of its own, so R displays it in the session’s. The
+  same column reports hour 23 in one session and hour 4 in another;
+  measured across UTC, America/New_York, Asia/Tokyo and
+  Pacific/Kiritimati, the hour-of-day buckets came out 0/23, 0/1, 13/14
+  and 18/19. That is correct `POSIXct` behaviour rather than a defect –
+  a column with no timezone has none to display in – but it is the same
+  reproducibility trap as the collation and ctype dependence this
+  release fixed, and it was undocumented.
+  [`?emoji_trend`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)’s
+  `time` now says to tag the column (`as.POSIXct(x, tz = "UTC")`) when
+  the result has to be reproducible.
+
+- Three tests pin the timezone axis, which nothing had varied: a
+  *tagged* `POSIXct` gives byte-identical days, hours and months across
+  four timezones spanning a date line and a DST boundary; a `Date`
+  column is immune across all five bucket widths; and an untagged
+  `POSIXct` demonstrably follows the session, so the documented warning
+  cannot quietly stop being true.
+
+- **A `time` column written `dd/mm/yyyy` was read as dates in the year
+  1, and nothing said so.**
+  [`as.Date()`](https://rdrr.io/r/base/as.Date.html)’s `%Y` accepts a
+  one- or two-digit year, so
+  `as.Date("01/02/2024", format = "%Y/%m/%d")` is `0001-02-20` – year 1,
+  month 2, day 20. The character branch tried `"%Y/%m/%d"` as a
+  fallback, so a whole column in `dd/mm/yyyy` or `mm/dd/yyyy` form –
+  most CSVs written outside ISO-land – parsed without complaint, and
+  every time verb bucketed on years 1, 3, 12 and so on. The four-digit
+  year is now required before parsing, which sends those values to the
+  paths that already existed for unreadable dates: mixed with real dates
+  they warn and are dropped, and a column where nothing reads as a date
+  errors. Every form that worked still works, including `"2024-1-1"` and
+  a trailing time.
+
+- The error for a wholly unreadable `time` column now diagnoses what it
+  found instead of restating the argument’s type, quotes the value it
+  choked on, and points at `as.Date(format = )` – so the `dd/mm/yyyy`
+  case above arrives with a route out.
+  [`?emoji_trend`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)’s
+  `time` documents the accepted forms, that a column with nothing
+  readable is an error rather than all-`NA`, and names `"01/02/2024"` as
+  the case to convert first.
+
+- **A bad `lexicon` was reported against `tbl`, an argument the scoring
+  verbs do not have.**
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md),
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  and
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  share their lexicon validation with
+  [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md),
+  whose own formal is called `tbl` – so passing a data frame as
+  `lexicon` produced
+  `` No score column found in `tbl`; supply `score` ``, telling the user
+  to fix an argument that function does not take. That is the same
+  failure mode the column resolver’s `arg` parameter was added for, and
+  the helpers now take one too: all six messages reachable through
+  `lexicon =` name `lexicon`, and the three reachable through `tbl =`
+  still name `tbl`. Two of them also read better for it –
+  `` Lexicon has no score column `nope` `` is now
+  `` `lexicon` has no column `nope` to take the score from ``.
+
+- Found by inspecting all 43
+  [`stop()`](https://rdrr.io/r/base/stop.html) messages in the package
+  for whether each names something a caller can actually type. The
+  lexicon helpers were the only exception; every other message either
+  names a real argument or fills a `%s` with one at run time. A test now
+  enforces it, allowing the argument-with-value form (`period = "hour"`)
+  that two messages use.
+
+- `.emoji_text_col()` resolved the text column’s name twice. The
+  one-value-per-row check added this release routed the read back
+  through `.emoji_col()`, which resolves the name again – and resolving
+  it runs
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html),
+  about a millisecond a call. Invisible next to detection on a real
+  corpus (20,000 rows is unchanged at 0.26-0.86s a verb), but the whole
+  cost of a verb called once per group in a loop over a split data
+  frame. The check now takes the name it already has, so the read is
+  back to one resolution.
+
+- **`emoji_turnover(measure = )` swallowed a value it did not
+  recognise.** It is the only argument in the package that takes several
+  values at once, and `match.arg(several.ok = TRUE)` returns the ones it
+  matches without a word about the rest – so
+  `measure = c("jaccard", "flip")` produced the `jaccard` column and no
+  hint that the second name was wrong. That is the absorbed-argument
+  failure mode this release swept everywhere else. An unrecognised value
+  is now an error that names `measure` and the value, and an empty,
+  `NULL`, `NA` or non-character `measure` gets one message instead of
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html)’s internal
+  `'arg' must be of length >= 1`. What had to survive does:
+  abbreviations (`"jac"`) still match, duplicates are still ignored, the
+  four-measure default is unchanged, and the columns still come back in
+  the fixed statistic order rather than the order asked for.
+  [`?emoji_turnover`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  now says all four of those things.
+
+- **A matrix column passed as `time`, `doc_id` or `text_score` failed
+  four different ways – including not failing.** A matrix holds one
+  element per *cell*, so a 2x2 column carries four values for two rows,
+  and nothing downstream noticed: a character `time` gave
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+  and
+  [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+  `invalid 'times' argument`,
+  [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)
+  `missing value where TRUE/FALSE needed`, and
+  **[`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  a result**, computed over periods that were not in the data. A
+  `doc_id` made
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  report four documents for a two-row frame, with the id column filled
+  from rows that do not exist. A `text_score` passed the type guard
+  outright – a matrix *is* numeric – and reached tibble as
+  `` Assigned data `gap` must be compatible with existing data ``. The
+  one-value-per-row check added for `text` last round now lives in the
+  shared column reader, so all four arguments get it and all ten verbs
+  give the same message.
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  was the one column read that bypassed that helper; it no longer does,
+  and a test asserts no other does either.
+
+- The type and length checks now report in the informative order. A
+  data-frame column’s [`length()`](https://rdrr.io/r/base/length.html)
+  is its *column* count, so the length check fired first and said
+  nothing about the real problem; the type check runs before it. A
+  `POSIXlt` column is unaffected – R’s
+  [`length()`](https://rdrr.io/r/base/length.html) method counts times
+  rather than list components – so `emoji_seasonality(period = "hour")`
+  still accepts one.
+
+- **A list column passed as `text` was scored from its own deparsed
+  source code.** Every verb reads the text column through one helper
+  that calls [`as.character()`](https://rdrr.io/r/base/character.html) –
+  which is exactly what lets a `factor` column work, and is harmless on
+  a numeric, `Date` or logical one. On a list column it deparses: a
+  column holding `list(c("a", "<U+1F600>"))` was read as the *source
+  text* `c("a", "<U+1F600>")`, the emoji inside that was detected, and
+  the row came back with a real-looking `.emoji_sentiment` of 0.5718 for
+  data that never contained an emoji. A data-frame column deparsed the
+  same way. Both are now refused, with a message that says why; every
+  atomic column still works exactly as before.
+
+- **A matrix column errored opaquely in two verbs and silently
+  over-counted in a third.** A matrix holds one element per *cell*, not
+  per row, so a 2x2 matrix column gave
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  and
+  [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md)
+  a tibble error naming a variable from this package’s own source
+  (`` Assigned data `glyphs` must be compatible with existing data ``)
+  while
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  happily counted all four cells against two rows. The shared reader now
+  requires one value per row, so all six verbs tried give the same
+  message; a single-column matrix has one element per row and still
+  works.
+
+- **[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  sent an emotion-lexicon user down a dead end.** It averages the eight
+  emotion dimensions into one number for the bundled `"emotag1200"`, but
+  that averaging is special-cased to the bundled table: a *registered*
+  or inline lexicon of exactly the same shape has no score column, so
+  the call failed with “No score column found in `tbl`; supply `score`”
+  – advice that cannot help, since `score` names a single column and the
+  user wants the mean. The message now names both real routes
+  ([`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  for the profile, or `score = "joy"` to score on one dimension) and
+  says the averaging is specific to the bundled lexicon;
+  [`?emoji_score`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  says the same. A table with neither a score nor an emotion column
+  keeps the original message. No behaviour changed beyond the message.
+
+- **`emoji_emotion() |> emoji_emotion_label()` silently threw away all
+  eight emotion scores.** The label verb computes the scores internally
+  and then drops every `.emoji_<emotion>` column by name – which cannot
+  tell a column it just added from one that was already in `data`. So
+  the obvious way to get the profile *and* the label kept only the
+  label, and a caller’s own column of one of those names was deleted
+  rather than overwritten. Both contradict a `@return` that says the
+  label is *added*. It now drops only the columns that call introduced:
+  [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  on plain data returns exactly what it always did, and the chain now
+  returns all thirteen columns with the label and the scores agreeing
+  with the standalone calls.
+  [`?emoji_emotion_label`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  says so.
+
+- Found by sweeping the pipelines a user would actually write, which
+  nothing had checked – every verb had only ever been tested on its own,
+  against a package whose headline claim is that the verbs “compose
+  naturally with the pipe”. Fourteen chains are now tests, along with
+  the grouped contract end to end
+  ([`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html)
+  through a row verb into
+  [`summarise()`](https://dplyr.tidyverse.org/reference/summarise.html),
+  grouping surviving a chain, and a text-rewriting verb re-deriving the
+  groups when the user grouped by that very column), re-running ten row
+  verbs on their own output, and feeding four aggregators a row verb’s
+  output column.
+
+- **[`?emoji_cooccurrence`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
+  said it “is
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  under another name, with one addition”, and it also silently drops an
+  argument.** There is no `directed` on
+  [`emoji_cooccurrence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md),
+  so a reader taking that sentence literally gets
+  `unused argument (directed = TRUE)` with no explanation. The omission
+  is right – a co-occurrence matrix is symmetric, so an ordered pair has
+  no meaning on it, and neither would the diagonal the verb exists to
+  add – but only the addition was documented. The description now states
+  both, with the reason and where to go for `directed`, and a test pins
+  the two signatures as differing by exactly `directed` and `diagonal`.
+
+- Found by a cross-product sweep of every enum and flag argument – 182
+  combinations across seventeen verbs, now a test. `method` x `scale` x
+  `where` for the three mismatch verbs, `weighting` x `doc_id` for
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md),
+  `directed` x `sort` x `diagonal` x `doc_id` for the relational pair,
+  `by` x `measure` x `top_n` for
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md),
+  all four `measure` subsets of
+  [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md),
+  and the rest. Every combination that exists returns a data frame with
+  nameable columns; the one that did not is the item above.
+
+- **[`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md)
+  was the one verb that did not validate `data`, and a bare list or a
+  character matrix silently succeeded.** It called `.emoji_as_tibble()`
+  *before* resolving the text column, and
+  [`tibble::as_tibble()`](https://tibble.tidyverse.org/reference/as_tibble.html)
+  converts a list or a matrix quite happily – so the
+  `is.data.frame(data)` guard every other verb enforces never saw the
+  original object. `emoji_tokens(list(text = c("a", "b")), text)`
+  returned a result where the other twenty-five verbs error, and `NULL`,
+  a number, a function and an environment reached dplyr’s or R’s own
+  internals (`cannot coerce class "function" to a data.frame`) rather
+  than the package’s message. The column is now resolved first, so all
+  twenty-six verbs give `` `data` must be a data frame `` for all seven
+  wrong shapes. A data frame that simply lacks the column stays a
+  different error, delegated to
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html)
+  so the message names the column.
+
+- **The detection figures this release quotes were wrong, in NEWS.md and
+  in `cran-comments.md` both.** They read “exact detection of the
+  reference table goes from 80.1% to 95.8%” and “spellings that lose a
+  joiner from 793 to 2”, which pairs a no-repair baseline with an
+  after-rules-1-and-2 one. Staging the rules and measuring each: no
+  repair gives **63.2%** (3189 of 5042 spellings read as exactly one
+  emoji equal to the whole spelling) and 1643 orphaned joiners; rule 1
+  alone, which is UAX
+  [\#29](https://github.com/PursuitOfDataScience/tidyEmoji/issues/29)’s
+  GB11, gives 75.5% and 1025; rule 2 leaves 793; rule 3 takes those
+  to 2. No staging produces 80.1%, and 793 is where rule 3 *starts*, not
+  where the three rules together do. Both documents now give 63.2% to
+  95.8% and 1643 to 2, with the intermediate figures stated so each is
+  attributable, and a test derives all six from the rules.
+
+- **Four help topics had no `@seealso` at all** – and they were the four
+  other pages point *at*:
+  [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md),
+  [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md),
+  [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)
+  and
+  [`emoji_filter()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md).
+  A reader arriving at one from the reference index or a search had no
+  route onward, while the other 44 exports did. Each now points at its
+  pair and its neighbours, and a test requires every exported topic to
+  carry one.
+
+- **[`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)’s
+  reversibility table promised more than `wrap` allows.** It says
+  `policy = "shortcode"` restores the original text, calls it “the only
+  policy that permits it”, and quotes a 100% byte-exact figure – but the
+  section never mentioned `wrap`, an argument of the same function that
+  voids the promise.
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  looks for exactly `:shortcode:`, so measured across eleven templates:
+  the default `":{x}:"` restores the text exactly; a decorating wrap
+  (`"[:{x}:]"`, `":{x}:!"`) brings the emoji back but leaves the
+  decoration; a wrap with no `:token:` (`"{x}"`, `"<{x}>"`, `"@{x}@"`,
+  `":{x}"`, `"{x}:"`, `"a{x}b"`) **restores nothing at all and does so
+  silently**, leaving the shortcode in the text as an ordinary word; and
+  `"::{x}::"` brings the emoji back wrapped in leftover colons, so it is
+  not even stable under a second pass. All four cases are now in the
+  section, with the precondition stated on
+  [`?emoji_to_text`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)’s
+  `wrap` and in
+  [`?text_to_emoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)’s
+  opening sentence, and pinned by a test.
+
+- The grouped-input warning is now asserted for all fourteen cross-row
+  aggregators at once: each warns exactly once, names *itself* rather
+  than the helper or the verb it delegates to, and does not tell the
+  user to report a bug in tidyEmoji. Previously one verb was
+  spot-checked.
+
+- **The introduction vignette could not be built without its Suggests
+  packages, so `R CMD build` failed outright on a library tree lacking
+  one.** It read its example corpus with
+  [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)
+  and drew its charts with , and , all unconditionally – optional
+  dependencies used as if they were required. Verified by building on an
+  R 4.6.0 tree with neither ‘readr’ nor ‘forcats’:
+  `Error: Vignette re-building failed`. The corpus is now read with
+  [`utils::read.csv()`](https://rdrr.io/r/utils/read.table.html) wrapped
+  in
+  [`tibble::as_tibble()`](https://tibble.tidyverse.org/reference/as_tibble.html)
+  (byte-identical `full_text`, same encodings, same 900 emoji tokens,
+  identical verb output), and the nine plotting chunks are gated on a
+  [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) flag. The
+  vignette builds either way, and the readr Suggests entry now exists
+  only for one guarded test.
+
+- **Five documentation-pinning tests were silently inert on every CRAN
+  flavour.** They read `../../man/*.Rd`, which exists only when the
+  suite runs from the source tree; inside `R CMD check` the tests
+  execute from `<pkg>.Rcheck/tests/testthat/` and skipped with “man/ not
+  available”. So every assertion that a figure or a column name really
+  appears in the rendered help page – the mechanism several of this
+  release’s fixes rely on – was never actually checked where it
+  mattered. They now read the installed help database via
+  [`tools::Rd_db()`](https://rdrr.io/r/tools/Rdutils.html), whose
+  [`as.character()`](https://rdrr.io/r/base/character.html) reconstructs
+  the markup, so `\code{...}` matches still work. Two more tests were
+  reaching for `NEWS.md`, `DESCRIPTION` and the vignette source the same
+  way; all three are installed with the package, so they read the
+  installed copy when the source tree is absent. Skips inside
+  `R CMD check` drop from 14 to 6 – two deliberate `skip_on_cran()`
+  maintenance checks, three that genuinely need `R/*.R`, and one that
+  needs the vignette’s CSV – and 160 more assertions run there than
+  before.
+
+- `cran-comments.md` contradicted itself about this host’s check result,
+  reporting both “1 WARNING and 3 NOTEs” and, three paragraphs later,
+  “one WARNING and two NOTEs” for the same run. The duplicate paragraph
+  is gone. Its other stale figures are corrected or removed: R 4.6.0
+  gives `Status: 2 NOTEs` rather than `Status: OK`, the package has 16
+  URLs rather than the 12 claimed (so the count is no longer asserted –
+  only the one URL that is reported), and the CRAN-index size is dated
+  as a snapshot. The three new dependency floors and the vignette change
+  above are now described there too.
+
+- **[`?emoji_density`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  said “emoji per character” without saying that a character is a code
+  point**, which reads as per-grapheme and is not. A multi-code-point
+  emoji inflates the denominator by all of its code points, so the same
+  visible text gives different answers: `"hi <emoji>"` is four graphemes
+  either way, but `.emoji_per_char` is `0.25` for a single-code-point
+  smiley, `0.200` for a two-code-point flag and `0.100` for a
+  seven-code-point ZWJ family. 115 of the 560 emoji-bearing rows in the
+  vignette’s corpus contain a multi-code-point emoji, so it is not an
+  edge case.
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  had always stated this basis and
+  [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+  states the opposite one (each emoji counts as one position, because a
+  proportion of a message has to);
+  [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  sat between them saying neither. It now states the basis, gives those
+  three figures, and points at `.emoji_per_token`, which does not move
+  with an emoji’s internal length. This closes the last open action from
+  the audit that fixed `.emoji_rel_position`: “grep for other
+  [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
+  thirteen are now accounted for – four feed a documented user-facing
+  figure, nine are internal offsets.
+
+- **The reproducibility claim behind the bundled data is now verified.**
+  Every dataset’s `@source` names the `data-raw/` script that builds it
+  and the vignette says they “are regenerated from the current Unicode
+  emoji list by the scripts in `data-raw/`”, but nothing had ever re-run
+  them. All four reproduce their `.rda` byte-for-byte against 16.0.0:
+  `emoji_unicode_crosswalk` (5761 rows), `category_unicode_crosswalk`
+  (10), `emoji_sentiment_lexicon` (969) and `emoji_emotion_lexicon`
+  (150). The two crosswalks derive purely from
+  [`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html),
+  so a `skip_on_cran()` test now rebuilds them and requires an exact
+  match – which will also flag the datasets as stale the next time ships
+  new glyphs.
+
+- `data-raw/emoji_emotion_lexicon.R` cited `next_release.md §4.1` for
+  why the lexicon is keyed on a selector-stripped code point. That file
+  is a planning document rewritten each release, and §4.1 is now about
+  skin-tone modifiers, so the pointer had gone stale. The reason is
+  stated in the script instead.
+
+- **Two dependency arguments the package relies on had no declared
+  version floor, and one of them would have stopped the vignette
+  building.** Found by running the suite on R 4.1.0 – the version
+  DESCRIPTION declares as the minimum – and on R 4.6.0.
+
+  - `lifecycle::deprecate_warn(env=, user_env=)` does not exist in
+    lifecycle 1.0.0; it arrived in 1.0.3, whose release notes are
+    exactly the caller-environment work those arguments were added for.
+    Every grouped-input call in the package goes through
+    `.emoji_warn_grouped()`, so on an older lifecycle a dozen verbs
+    would have failed with “unused argument”. Now
+    `lifecycle (>= 1.0.3)`.
+  - `readr::read_csv(show_col_types=)` arrived in readr 2.0.0. R 4.1.0
+    here ships readr 1.4.0, where the introduction vignette fails to
+    *build* and the corpus regression test errored instead of skipping –
+    its guard checked that readr was installed, not that it was new
+    enough. Now `readr (>= 2.0.0)` in Suggests, and the test gates on
+    `minimum_version = "2.0.0"`. The suite now passes on R 4.1.0, 4.4.1
+    and 4.6.0.
+
+- Two tests guard the class. One walks the AST of every `R/` file and
+  checks that each named argument passed to a `pkg::fun()` call is a
+  formal of that function, so an “unused argument” cannot hide until
+  someone runs against the version that lacks it. The other holds a
+  table of the five arguments the package would break without –
+  lifecycle’s `env`/`user_env`, dplyr’s `relationship` and `.locale`,
+  tidyr’s `delim`, readr’s `show_col_types` – and requires DESCRIPTION
+  to declare a floor at least as high as each one needs.
+
+- **[`?emoji_unicode_crosswalk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_crosswalk.md)
+  and the vignette both called it “one row per emoji name”, and a join
+  by that column silently duplicates rows.** The mapping is many-to-many
+  in *both* directions: 5761 rows cover 4698 distinct names and 4853
+  distinct glyphs. A glyph repeats for every alias it has (the
+  documented direction), and a name repeats for every *spelling* of the
+  emoji it names – 973 do, because the qualified and unqualified forms
+  are separate rows sharing one alias, so `A_button_blood_type_` names
+  both `U+1F170 U+FE0F` and the bare `U+1F170`. Both places now give the
+  row unit as a (name, glyph) pair and say to join on `key`, which
+  collapses the spellings. A test pins all three counts and that a
+  repeated name never spans two different emoji.
+
+- **The introduction vignette said two time verbs need no timestamp;
+  only one does.**
+  [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+  runs without a `time` column;
+  [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+  uses the same version lookup but still has to find each glyph’s first
+  appearance, so it requires one – as the vignette’s own next sentence
+  says two lines later. The claim came from misreading `emoji-time.R`‘s
+  “two of these are almost free”, which meant needing no new dataset.
+  Both the sentence and the comment that caused it are fixed, and a test
+  derives the count from the verbs’ formals.
+
+- The vignette no longer teaches a superseded function. It reached for
+  [`tidyr::separate_rows()`](https://tidyr.tidyverse.org/reference/separate_rows.html),
+  which tidyr marks **\[Superseded\]** and says will “only receive
+  critical bug fixes”, pointing at `separate_longer_delim()` instead;
+  since the vignette is the package’s primary teaching document, that is
+  the call a reader copies. Switched, with `tidyr (>= 1.3.0)` now
+  declared to match – the same release vintage as the existing
+  `dplyr (>= 1.1.0)` floor. A test scans the vignette, the README and
+  every `R/` file for fourteen superseded tidyverse calls so none creeps
+  back, and the vignette’s overview table is asserted to name every
+  export bar the soft-deprecated
+  [`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md).
+
+- **[`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)’s
+  entropy column held negative zero on 166 of its 969 rows.**
+  `-sum(1 * log(1))` is `-0` for a glyph its annotators were unanimous
+  about. It compares equal to zero and prints as `0`, so nothing
+  downstream was wrong – but `sprintf("%.3f", x)` renders it `-0.000`,
+  and formatting a table for a paper is the commonest thing anyone does
+  with that column. An entropy of `-0.000` reads as a bug in the
+  package.
+
+- **[`?emoji_ambiguity`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+  never warned that the head of its ranking is an artefact of thin
+  evidence.** The lexicon’s annotation counts run from 1 to 14622 –
+  median 18, and 69% below 50 – and entropy, Gini and neutral share are
+  shape statistics that do not care how many annotations produced the
+  shape. Three annotators splitting one-one-one score the maximum
+  entropy of `log(3)`, which is why five of the rows tied at `rank = 1`
+  have 3, 3, 3, 9 and 15 annotations, and why 11 of the top 20 have
+  fewer than 50. So `head(emoji_ambiguity())` – the help page’s own
+  first example – returned box-drawing characters and arrows, which
+  reads as the function being broken. The details now say to filter on
+  `n_annotations` first (as the introduction vignette already did), and
+  the example demonstrates the filter. They also say where the bias is
+  *not*: entropy is positively correlated with the annotation count
+  overall (Spearman 0.56), because a thinly annotated glyph is usually
+  unanimous. What three annotators can do that thousands cannot is hit
+  the exact maximum. `"ci_width"` is named as the measure that accounts
+  for thin evidence by construction, being a Wald interval that scales
+  as `1 / sqrt(n)` at a given spread – its marginal correlation with the
+  count is only -0.19, so the formula is the claim, not the correlation.
+  Behaviour is unchanged.
+
+- **[`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+  told readers to supply “the emoji-presentation (qualified) form” to
+  fix an undetected glyph, and for 12 emoji that advice does not work.**
+  The variation selector does not always go at the end. For 200 of the
+  212 catalogue spellings detection skips, appending `U+FE0F` repairs
+  them; the exceptions are the keycap sequences – `#`, `*` and `0` to
+  `9` followed by the enclosing keycap mark `U+20E3` – where the
+  selector belongs *between* the two. `U+0031 U+FE0F U+20E3` is
+  detected; `U+0031 U+20E3 U+FE0F` is not, so a reader who appended got
+  the same zero count and no hint why. The page now gives the rule that
+  repairs all 212 (insert `U+FE0F` after the first code point) and names
+  the exception. It also now states the 212 figure alongside the
+  existing 216, since those count different things – spellings that are
+  themselves undetectable, versus spellings that break when the selector
+  is dropped – and an unequal pair of numbers about the same subject
+  invites one being “corrected” into the other.
+
+- Detection is now tested in context, not only on bare glyphs. Every one
+  of the 5042 catalogue spellings is checked beside words, punctuation,
+  brackets, a bare letter, an orphan joiner, a stray selector and
+  another emoji on either side: the glyph count never changes, and next
+  to a second emoji the split is exactly the two of them (bar the 212
+  undetectable spellings, which contribute nothing). Span
+  well-formedness – ordered, non-overlapping, inside the string, and
+  slicing back to the glyph – is asserted over five string shapes. No
+  defect found; the invariant every verb rests on simply had no test
+  outside the bare case.
+
+- **One infinite `text_score` made every row’s mismatch result
+  infinite.** `scale = "zscore"` takes
+  [`sd()`](https://rdrr.io/r/stats/sd.html) of the column, which is
+  `NaN` as soon as any value is infinite; the degenerate branch then
+  subtracted an infinite mean, so the whole column came back `Inf` or
+  `NaN`. Measured on 100 rows with a single `Inf`: **0 of the 60
+  scorable rows had a finite gap.** A non-finite `text_score` is now
+  treated as missing – which is what `NaN` already was, since
+  `na.rm = TRUE` drops it – and reported, in the style of the
+  unreadable-date warning. The damage stays on its own row: the same 100
+  rows now give 59 finite gaps under all three scales.
+
+- [`?emoji_emotion`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)’s
+  `@return` said the long form carries `.emoji_emotion` and
+  `.emoji_score` “instead of the eight columns”, which reads as a
+  promise that `.emoji_n` and `.emoji_n_scored` survive. They do not –
+  `long = TRUE` returns neither. That matters because the same help page
+  opens by telling you to read `.emoji_n_scored` alongside `.emoji_n`
+  before concluding a corpus carries no emotion, advice a long-form user
+  could not follow on a lexicon covering 4% of emoji. The `@return` now
+  says the counts are dropped and where to get them. Behaviour is
+  unchanged: the long form has had this shape since 0.3.0.
+
+- Three claimed equivalences now have the differential tests they never
+  had. `.emoji_window_at()` slices a bounded piece of the masked text
+  rather than the whole side, on the argument that only the nearest
+  `window` tokens can matter; `.emoji_final_glyphs()` walks back over
+  blank gaps rather than searching for the longest qualifying suffix
+  directly. Both are now compared against a naive implementation over
+  randomly generated text (thousands of comparisons each, across
+  `window` 0 to 13 and both `unit` values), and the eight worked
+  examples in
+  [`?emoji_incongruity`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)’s
+  “ends the text” paragraph are asserted one by one. No defect found in
+  either – but neither was tested, and an optimisation that is only
+  nearly equivalent is the kind that survives a release.
+
+- **`scale = "rank"` and `scale = "zscore"` in the text-emoji mismatch
+  verbs were scaled over the wrong population, and reported mismatch
+  that was not there.** Each side was ranked (or standardised) over its
+  own non-missing rows. `text_score` is normally present on every row,
+  while the emoji score is missing wherever a row has no scorable emoji,
+  so the two percentiles referred to different populations and the
+  emoji-free rows – which contribute nothing to the output, their own
+  gap being `NA` – shifted the answer for the rows that do. On 100 rows
+  whose emoji sentiment equals their text score exactly, so the true gap
+  is `0` throughout, adding 100 emoji-free rows with higher text scores
+  moved the mean `.emoji_incongruity` to `+0.50` on the rank scale and
+  `+0.92` on the z-score scale, and made `.emoji_incongruent` flag **54
+  of the 100 as mismatched**. Both scales are now computed over the rows
+  the comparison is defined on, so subsetting to the scored rows gives
+  the same numbers as calling on everything.
+  [`emoji_congruence()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_congruence.md)
+  and
+  [`emoji_incongruity_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity_profile.md)
+  share the engine and are fixed with it. `scale = "none"` was never
+  affected and is unchanged – which is why this survived: 34 of the 40
+  `scale =` arguments in the test suite were `"none"`, and the six that
+  were not asserted only bounds, `NA` placement and the degenerate
+  one-row branch, never a value against a known truth. That is now
+  tested.
+
+- **[`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)’s
+  naming contract described two classes of output column and the package
+  has three.** Five dotted names are not `.emoji_*` – `.row_number`,
+  `.position`, `.period`, `.period_prev` and `.period_label` – and they
+  are the ones a reader is most likely to meet first, since
+  [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md),
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md),
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  and the three time verbs lead with them. The page now names all three
+  shapes, says the structural-index list is complete, notes that
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)’s
+  column names are glyphs, and says that the reserved-prefix rule
+  applies to the text column too if you happen to have named it
+  `.emoji_n`. A test asserts no verb invents a fourth dotted name and
+  that the page lists the five.
+
+- **`emoji_search(NA_character_)` failed with R’s own “missing value
+  where TRUE/FALSE needed”** instead of the verb’s own message.
+  [`nzchar()`](https://rdrr.io/r/base/nchar.html) defaults to
+  `keepNA = FALSE`, which reads `NA_character_` as the two-character
+  string `"NA"`, so the non-empty guard passed and the `NA` propagated
+  to an internal `if (!any(hit))`. The guard now tests
+  [`is.na()`](https://rdrr.io/r/base/NA.html) first, as the other
+  string-argument checks in the package already did.
+
+- **[`?text_to_emoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+  gave the right round-trip figure with the wrong reason.** It said the
+  emojize/demojize round trip returns “identical bytes for the 79% that
+  were already fully qualified”. The 79% is correct (4002 of 5042
+  entries), but those are not the fully-qualified entries, and stating
+  it that way invites the number being “corrected” to the
+  fully-qualified share (3790/5042 = 75%). Which spelling comes back is
+  decided by the shortcode table, not by the input’s selectors, so the
+  two sets differ in both directions: 212 unqualified entries keep their
+  bytes – the bare heart `U+2764` among them, because that is the
+  spelling `:heart:` maps to – and 92 already-qualified ones do not,
+  such as the man detective `U+1F575 U+FE0F U+200D U+2642`, which comes
+  back with a second selector on the gender sign. The details now say
+  which question is which, add the guarantee that matters – the 1040
+  differ by `U+FE0F` alone, never by more – and point at
+  [`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md),
+  which already tabulated both denominators correctly. Every figure and
+  both worked examples are pinned to the data.
+
+- **[`?emoji_search`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  listed 11 of the 17 strings that resolve differently** through
+  [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  than through
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
+  punctuated as if that were the whole set. It now names all 17 and says
+  so; `camel`, `satellite` and `train` were missing from every list in
+  the package. The set is derived from the data in the tests, so a new
+  `emoji` release cannot leave it stale.
+
+- **[`?emoji_search`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  promised that its `shortcode` column “recovers every row exactly”
+  through
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
+  and for some rows there is nothing to recover it from.** 189 of the
+  catalogue’s 5042 rows carry no GitHub-style alias, so
+  [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  reports `shortcode = NA` for them – 7 of the 198 rows
+  `emoji_search("face")` returns, for one. Neither the details nor the
+  `@return` said the column could be `NA`; the `@return` had gone out of
+  its way to say that `keyword` is the empty string rather than `NA`,
+  which made the omission read as a guarantee. Both now say so, and
+  point at the `emoji` column or
+  [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  – which does answer for all 189, borrowing the alias of the glyph’s
+  other spelling – as the way through.
+
+- **[`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
+  was documented as returning the glyph’s “first shortcode”, and for 175
+  of the catalogue’s 5042 rows it does not.** It returns one shortcode
+  per *emoji*, resolved through the codepoint key – the first alias of
+  the fully-qualified (RGI) spelling – which is what makes it agree with
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  and survive a round trip. 344 keys carry a different first alias on
+  each of their two spellings, so `as_emoji_shortcode("\u2764")` is
+  `"heart"` where the bare `U+2764` row’s own first alias is
+  `"red_heart"`.
+  [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  reports the other one, the matched row’s own alias, since a search
+  result is a row – so the two verbs can disagree about the same glyph.
+  Both resolve back to the same emoji through
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
+  so nothing was broken, but neither help page said which it gave. Both
+  now do, and the 344/175 split is derived from the data in the tests.
+  No behaviour changed.
+
+- [`?emoji_score`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  and
+  [`?emoji_emotion`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  now state the `.emoji_n_scored` convention that
+  [`?emoji_sentiment`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  and
+  [`?emoji_risk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md)
+  already spelled out: `0` means the row had emoji the lexicon could not
+  score, `NA` that it had no emoji to score. All five verbs behaved this
+  way; two of them did not say so.
+
+- [`?emoji_ratio`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  now covers empty text, which is neither of the two cases it described:
+  `.emoji_ratio` is `NA` (no characters to take a share of) while
+  `.emoji_only` is `FALSE` (an empty string is not a row of emoji).
+  Whitespace-only text, by contrast, has a real ratio of 0.
+
+- [`?emoji_pairs`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+  now says what `sort = FALSE` does. It sorts by `item1` then `item2` in
+  the C locale – a fixed order, not the order the pairs happened to be
+  counted in – which the parameter name alone did not suggest.
+
 - **Grouped data frames no longer break six verbs, and no longer lose
   their grouping in the rest.** Two independent bugs, found by calling
   every verb on a grouped input:
@@ -463,10 +2095,16 @@ empirical distribution. It is now a number.
   has an orphaned joiner.
 
   Together the three rules take exact detection of the reference table
-  from **80.1% to 95.8%** and orphaned joiners from **793 to 2** — the
-  two being spellings with no detectable component at all, both of which
-  have a canonical form that is found. Well-formed text costs about 6%
-  more; text that was broken now costs more and is right.
+  from **63.2% to 95.8%** (3189 of 5042 spellings read as exactly one
+  emoji equal to the whole spelling, against 4830 now) and orphaned
+  joiners from **1643 to 2** — the two being spellings with no
+  detectable component at all, both of which have a canonical form that
+  is found. Staged, so each figure is attributable: rule 1 alone, which
+  is UAX
+  [\#29](https://github.com/PursuitOfDataScience/tidyEmoji/issues/29)’s
+  GB11, gives 75.5% and leaves 1025 orphaned joiners; rule 2 leaves 793;
+  rule 3 takes those to 2. Well-formed text costs about 6% more; text
+  that was broken now costs more and is right.
 
 - [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
   names one column per emoji glyph, so a `doc_id` column named with one
@@ -790,9 +2428,13 @@ empirical distribution. It is now a number.
   unqualified glyph and its fully-qualified form share one shortcode and
   the fully-qualified form is what comes back. Feeding the whole
   catalogue through and back preserves the key for all 5042 entries and
-  the exact bytes for the 79% that were already qualified; a second pass
-  changes nothing. The details now say so, and say to compare with
-  `emoji_key()` rather than string equality.
+  the exact bytes for 79% of them; a second pass changes nothing. The
+  details now say so, and say to compare with `emoji_key()` rather than
+  string equality. They no longer attribute that 79% to the entries
+  “that were already fully qualified”: the two sets differ – 212
+  unqualified entries keep their bytes and 92 qualified ones do not –
+  because which spelling comes back is decided by the shortcode table,
+  not by the input’s selectors.
 
 - [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)’s
   resolution order is now documented. It accepts names and shortcodes in
@@ -840,6 +2482,32 @@ empirical distribution. It is now a number.
   that compare them directly, and fall back whenever
   [`utf8ToInt()`](https://rdrr.io/r/base/utf8Conversion.html) cannot
   represent the string.
+
+- `README.md`’s
+  [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+  line gained the annotation-count caveat that
+  [`?emoji_ambiguity`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)
+  and the vignette already carried.
+
+- Test coverage for this release, in one place rather than scattered
+  through the notes above. The suite now also pins: every one of the 49
+  exports called as the *first* thing in a fresh session (several
+  populate a shared cache lazily, which a suite running them in order
+  cannot expose); the functional type recode as a clean partition of all
+  32 Unicode subgroups in *Smileys & Emotion* and *People & Body*; the
+  pluggable-lexicon API through every consumer that documents it,
+  registered and inline, sentiment- and emotion-shaped, full and
+  partial; non-syntactic column names (`"my text"`, `"2024"`, `"if"`,
+  `"x-y"`) and every tidyselect form that resolves to one column; 182
+  combinations of the enum and flag arguments; fourteen verb pipelines
+  and the grouped contract end to end; the two internal optimisations
+  that claim exact equivalence, against naive implementations; and
+  `README.md` against `README.Rmd`’s prose, so it cannot drift
+  unnoticed. Three tests that scanned `R/*.R` now walk the namespace
+  instead, so they run inside `R CMD check` rather than skipping: skips
+  there are down from 14 to 5, 262 more assertions than at the start of
+  the pass, and the five that remain cannot be reached from an installed
+  package.
 
 ## tidyEmoji 0.3.0
 

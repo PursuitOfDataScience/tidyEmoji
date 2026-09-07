@@ -69,16 +69,22 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with the original columns plus <code>.emoji</code>, <code>.emoji_name</code>,
-<code>.emoji_category</code> and <code>.emoji_sentiment</code>. Rows without emoji are dropped.</p>
+<code>.emoji_category</code> and <code>.emoji_sentiment</code>. Rows without emoji are dropped.
+Your columns are kept, so a grouped input stays grouped, as it does
+through <code><a href="emoji_extract_nest.html">emoji_extract_nest()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

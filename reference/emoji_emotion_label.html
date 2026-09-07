@@ -63,10 +63,14 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 
 <dt id="arg-lexicon">lexicon<a class="anchor" aria-label="anchor" href="#arg-lexicon"></a></dt>
@@ -77,7 +81,11 @@ are emoji only when they carry <code>U+FE0F</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>data</code>, as a tibble, with <code>.emoji_emotion</code> (the winning emotion, or
 <code>NA</code> when nothing was scorable) added, alongside the <code>.emoji_n</code> and
-<code>.emoji_n_scored</code> counts it inherits from <code><a href="emoji_emotion.html">emoji_emotion()</a></code>.</p>
+<code>.emoji_n_scored</code> counts it inherits from <code><a href="emoji_emotion.html">emoji_emotion()</a></code>. The eight
+per-emotion columns are <em>not</em> returned – the label is the point – unless
+they were already in <code>data</code>, which is what
+<code>emoji_emotion() |&gt; emoji_emotion_label()</code> gives you: the profile and the
+label side by side.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -87,6 +95,12 @@ surprise, trust) – so the winner is deterministic and does not depend on
 the row's position in the data. Read <code>.emoji_n_scored</code> alongside the label:
 a tie, or a near-tie, is invisible in a single winning name, and
 <code><a href="emoji_emotion.html">emoji_emotion()</a></code> gives the full profile the label collapses.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="emoji_emotion.html">emoji_emotion()</a></code> for the eight scores this collapses, and the
+coverage caveat that applies to both; <a href="emoji_emotion_lexicon.html">emoji_emotion_lexicon</a> for the
+underlying data; <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code> for valence instead of emotion.</p></div>
     </div>
 
     <div class="section level2">

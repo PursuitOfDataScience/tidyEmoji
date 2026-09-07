@@ -31,8 +31,13 @@ emoji_ngrams(data, text, n = 2, sep = " ")
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -50,6 +55,10 @@ emoji_ngrams(data, text, n = 2, sep = " ")
 A tibble with columns `.row_number` (position of the entry in `data`),
 `.position` (where the n-gram starts within the row's emoji sequence)
 and `.emoji_ngram`. Rows with fewer than `n` emoji contribute nothing.
+The columns of `data` are not carried, so a grouping is not either –
+join back on `.row_number` to recover them. Unlike the corpus-wide verbs
+this one does not pool your rows, so there is no per-group answer being
+silently turned into a global one.
 
 ## See also
 

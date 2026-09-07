@@ -38,8 +38,13 @@ emoji_congruence(
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -56,7 +61,10 @@ emoji_congruence(
 - scale:
 
   How to make the two scores comparable: `"rank"`, `"zscore"` or
-  `"none"`. Required – there is no sensible default.
+  `"none"`. Required – there is no sensible default. `"rank"` and
+  `"zscore"` are computed over the rows carrying both an emoji score and
+  a `text_score`, not over the whole corpus, so rows with no scorable
+  emoji cannot shift the answer for the rows that have one.
 
 - where:
 

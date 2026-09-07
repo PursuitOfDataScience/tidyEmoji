@@ -75,15 +75,23 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 
 <dt id="arg-doc-id">doc_id<a class="anchor" aria-label="anchor" href="#arg-doc-id"></a></dt>
 <dd><p>Optional unquoted column identifying documents. Rows sharing
-a value are treated as one document. Default: each row is a document.</p></dd>
+a value are treated as one document. Default: each row is a document.</p>
+<p>The result has a row per pair, so it grows with the <em>square</em> of the
+distinct emoji in a document: a day or a conversation is cheap, and
+pooling a whole corpus under one id is not. 800 distinct emoji in one
+document is 319,600 pairs and a few seconds; 3790 would be 7.2 million.</p></dd>
 
 
 <dt id="arg-directed">directed<a class="anchor" aria-label="anchor" href="#arg-directed"></a></dt>
@@ -95,7 +103,9 @@ counts towards (tears-of-joy, heart-eyes), not the reverse. Default
 
 <dt id="arg-sort">sort<a class="anchor" aria-label="anchor" href="#arg-sort"></a></dt>
 <dd><p>If <code>TRUE</code> (default), sort by descending <code>n</code> (ties broken by
-<code>item1</code>, <code>item2</code> so the order is deterministic).</p></dd>
+<code>item1</code>, <code>item2</code> so the order is deterministic). <code>FALSE</code> sorts by <code>item1</code>
+then <code>item2</code> instead – still a fixed order, computed in the C locale, not
+the order the pairs happened to be counted in.</p></dd>
 
 </dl></div>
     <div class="section level2">

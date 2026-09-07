@@ -65,6 +65,35 @@ The four measures are computed from the annotation shares
 `rank` is always computed over the whole lexicon (1 = most ambiguous),
 so a rank keeps its meaning when `x` selects a handful of glyphs.
 
+**Read `n_annotations` before you read the ranking.** The lexicon's
+annotation counts are wildly uneven – the median glyph has 18, and 69%
+have fewer than 50 – and the first three measures are shape statistics
+that do not care how many annotations produced the shape. A glyph seen
+by three annotators who split one-one-one scores the maximum entropy of
+`log(3)` on that evidence alone, which is why five of the rows tied at
+`rank = 1` have 3, 3, 3, 9 and 15 annotations, and why 11 of the top 20
+have fewer than 50.
+
+Three of those five are not emoji at all. The lexicon was built from
+2015 tweets and 233 of its 969 rows are characters absent from the
+reference table – box-drawing characters, dingbats, enclosed letters –
+so the head of the ranking can show a glyph such as `U+250C` that no
+corpus this package analyses will ever yield. They carry 6% of the
+lexicon's annotations and 86% of them have fewer than 50, so the
+`n_annotations` filter recommended here removes 200 of the 233 as a side
+effect. See the *Detection limitations* section of
+[emoji_sentiment_lexicon](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
+for what the rest of them are.
+
+The bias is at the *top* of the ranking specifically, not across it: a
+thinly annotated glyph is usually unanimous, so entropy is positively
+correlated with the annotation count overall (Spearman 0.56). What three
+annotators can do that thousands cannot is hit the exact maximum. So
+filter on `n_annotations` before interpreting the head of the table, as
+the introduction vignette does. `"ci_width"` is the measure that
+accounts for thin evidence by construction – it is a Wald interval, so
+it scales as `1 / sqrt(n)` at a given spread – rather than ignoring it.
+
 ## References
 
 Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L, Hecht B
@@ -93,6 +122,21 @@ head(emoji_ambiguity())
 #> 4 ❔    2754              9 0.333 0.333 0.333      1.10     1
 #> 5 🎭    1F3AD            15 0.333 0.333 0.333      1.10     1
 #> 6 😳    1F633           846 0.327 0.327 0.345      1.10     6
+
+# the head of that table is glyphs a handful of annotators disagreed about;
+# filter on n_annotations before reading it as a finding
+amb <- emoji_ambiguity()
+head(amb[amb$n_annotations >= 500, ])
+#> # A tibble: 6 × 8
+#>   emoji key   n_annotations p_neg p_neu p_pos ambiguity  rank
+#>   <chr> <chr>         <int> <dbl> <dbl> <dbl>     <dbl> <int>
+#> 1 😳    1F633           846 0.327 0.327 0.345      1.10     6
+#> 2 💯    1F4AF           637 0.281 0.317 0.402      1.09    16
+#> 3 😴    1F634           718 0.422 0.237 0.341      1.07    43
+#> 4 😢    1F622           749 0.385 0.224 0.391      1.07    47
+#> 5 😱    1F631          1130 0.264 0.282 0.454      1.07    50
+#> 6 😭    1F62D          5526 0.436 0.220 0.343      1.06    54
+
 emoji_ambiguity(c("\U0001f602", "\U0001f643"))
 #> # A tibble: 2 × 8
 #>   emoji key   n_annotations  p_neg  p_neu  p_pos ambiguity  rank

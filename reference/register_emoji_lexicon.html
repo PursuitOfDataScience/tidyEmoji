@@ -65,11 +65,15 @@ unqualified glyphs still matches qualified text.</p>
 
 <dt id="arg-tbl">tbl<a class="anchor" aria-label="anchor" href="#arg-tbl"></a></dt>
 <dd><p>A data frame. Must contain a glyph column named <code>by</code> (default
-<code>"emoji"</code>) and at least one score column.</p></dd>
+<code>"emoji"</code>) and at least one score column, and every score column present
+must be numeric or logical – a text column is rejected here rather than
+returning <code>NA</code> for every score at first use. See <code><a href="emoji_score.html">emoji_score()</a></code> for the
+one-row-per-emoji requirement, which is checked when the lexicon is used.</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>
-<dd><p>Name of the column holding the emoji glyph. Default <code>"emoji"</code>.</p></dd>
+<dd><p>Name of the column holding the emoji glyph, as a single string.
+Default <code>"emoji"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

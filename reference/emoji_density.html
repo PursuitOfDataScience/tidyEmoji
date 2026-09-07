@@ -63,17 +63,37 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>data</code>, as a tibble, with added columns <code>.emoji_n</code>,
-<code>.emoji_per_char</code> (emoji per character of text) and <code>.emoji_per_token</code>
-(emoji per whitespace-delimited token).</p>
+<code>.emoji_per_char</code> (emoji per character, i.e. per code point, of text) and
+<code>.emoji_per_token</code> (emoji per whitespace-delimited token).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>"Character" here means <em>code point</em>, the unit <code><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar()</a></code> counts, so a
+multi-code-point emoji inflates the denominator by all of its code points.
+The same visible text therefore gives different answers depending on how the
+emoji is built: <code>"hi &lt;emoji&gt;"</code> is four graphemes either way, but
+<code>.emoji_per_char</code> is 0.25 for a single-code-point smiley, 0.200 for a
+two-code-point flag and 0.100 for a seven-code-point ZWJ family. It is not
+exotic – 115 of the 560 emoji-bearing rows in the corpus behind the
+introduction vignette contain a multi-code-point emoji.</p>
+<p>This is the same basis <code><a href="emoji_ratio.html">emoji_ratio()</a></code> uses and states, and the opposite of
+the one <code><a href="emoji_position.html">emoji_position()</a></code> uses: <code>.emoji_rel_position</code> counts each emoji as
+one position, because a proportion of the message has to. If you want a
+density that does not move with an emoji's internal length,
+<code>.emoji_per_token</code> is immune – all three examples above give 0.5.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

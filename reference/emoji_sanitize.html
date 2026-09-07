@@ -81,10 +81,14 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 
 <dt id="arg-policy">policy<a class="anchor" aria-label="anchor" href="#arg-policy"></a></dt>
@@ -139,6 +143,21 @@ Measured against the whole reference table of <span class="pkg">emoji</span> 16.
 3790 emoji in their canonical (fully qualified) spelling – the spelling a
 keyboard emits and text normally holds – <strong>the round trip returns the
 original text byte for byte, 100% of the time</strong>.</p>
+<p><strong>That row of the table assumes the default <code>wrap</code>.</strong> Restoring the text
+means <code><a href="text_to_emoji.html">text_to_emoji()</a></code> can find the token, and it reads exactly
+<code>:shortcode:</code> – a colon, the alias, a colon. So <code>wrap</code> is part of the
+reversibility contract, not a cosmetic choice:</p><ul><li><p><code>wrap = ":{x}:"</code> (the default) restores the original text exactly.</p></li>
+<li><p>A <code>wrap</code> that decorates the token – <code>"[:{x}:]"</code>, <code>":{x}:!"</code> – brings the
+emoji back but leaves the decoration behind, so the emoji is restored and
+the text is not.</p></li>
+<li><p>A <code>wrap</code> with no <code>:token:</code> at all – <code>"{x}"</code>, <code>"&lt;{x}&gt;"</code>, <code>"@{x}@"</code>,
+<code>":{x}"</code> – restores nothing: the shortcode stays in the text as an
+ordinary word. This is the case to watch, because it fails silently.</p></li>
+<li><p><code>wrap = "::{x}::"</code> is worse than either: the inner <code>:grinning:</code> matches,
+so the emoji comes back wrapped in the leftover colons (<code>:&lt;U+1F600&gt;:</code>) and
+a further round trip keeps adding to them.</p></li>
+</ul><p>Change <code>wrap</code> for readability by all means, but not on a column you intend
+to restore.</p>
 <p>Unicode also lists shorter spellings of the same emoji, with the <code>U+FE0F</code>
 presentation selectors omitted. Feed one of those in and the round trip
 returns the <em>canonical</em> spelling instead: <code>U+270C</code> comes back as

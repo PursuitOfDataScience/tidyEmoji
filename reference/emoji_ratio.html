@@ -66,10 +66,14 @@ that they ignore the grouping and return one corpus-wide answer.</p></dd>
 
 
 <dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the <em>Detection</em> section of
-<a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises people, code points that
-are emoji only when they carry <code>U+FE0F</code>.</p></dd>
+<dd><p>The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a <code>factor</code> works and a numeric,
+<code>Date</code> or logical one simply contains no emoji. A list column – or a
+data-frame column – is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+<em>Detection</em> section of <a href="tidyEmoji-package.html">tidyEmoji</a> for the one case that surprises
+people, code points that are emoji only when they carry <code>U+FE0F</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -77,7 +81,9 @@ are emoji only when they carry <code>U+FE0F</code>.</p></dd>
     <p><code>data</code>, as a tibble, with added columns <code>.emoji_ratio</code> (emoji
 characters / all characters, 0 when there are no emoji) and
 <code>.emoji_only</code> (<code>TRUE</code> when the text contains emoji and nothing else but
-whitespace). <code>NA</code> text gets <code>NA</code> in both.</p>
+whitespace). <code>NA</code> text gets <code>NA</code> in both. Empty text (<code>""</code>) has no
+characters to take a share of, so <code>.emoji_ratio</code> is <code>NA</code> there too, but
+<code>.emoji_only</code> is <code>FALSE</code>: an empty string is not a row of emoji.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

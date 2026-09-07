@@ -4,8 +4,9 @@
 rewritten so that every `:shortcode:` token is replaced by the
 corresponding emoji glyph (the inverse of
 [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
-with `format = "shortcode"`, up to the presentation selector – see
-Details). Shortcodes that do not match a known emoji are left unchanged.
+with `format = "shortcode"` *and its default* `wrap`, up to the
+presentation selector – see Details). Shortcodes that do not match a
+known emoji are left unchanged.
 
 ## Usage
 
@@ -30,8 +31,13 @@ text_to_emoji(data, text)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -52,13 +58,25 @@ punctuation – cannot swallow a following shortcode:
 **The round trip recovers the emoji, not necessarily the same bytes.**
 Like the vector helpers, both directions resolve through `emoji_key()`,
 which ignores `U+FE0F`, so an unqualified glyph and its fully-qualified
-form share one shortcode and this verb emits the fully-qualified (RGI)
-form of the pair. Feeding the whole emoji catalogue through
-`emoji_to_text(format = "shortcode")` and back therefore returns an
-identical code-point key for every entry, and identical bytes for the
-79% that were already fully qualified; the rest gain `U+FE0F`. A second
-round trip changes nothing, so the result is stable. Use `emoji_key()`
-rather than string equality when comparing before and after.
+form share one shortcode and only one of the two spellings can come
+back. Feeding the whole emoji catalogue through
+`emoji_to_text(format = "shortcode")` and back returns an identical
+code-point key for all 5042 entries and identical bytes for 79% of them.
+The other 1040 differ **by `U+FE0F` alone, never by more**: they come
+back as the spelling this verb's shortcode table carries. A second round
+trip changes nothing, so the result is stable either way – but compare
+with `emoji_key()`, never with string equality.
+
+Which 79% is *not* the same question as which were already fully
+qualified, and the two sets genuinely differ in both directions. The
+bare heart (`U+2764`) survives unchanged, because that unqualified
+spelling is the one `:heart:` maps to; the already-qualified man
+detective (`U+1F575 U+FE0F U+200D U+2642`) does not, because it comes
+back with a second selector on the gender sign. If your text holds the
+*canonical* spelling of each emoji – what a keyboard emits – the round
+trip is byte-exact for all 3790 of them; see
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md),
+which tabulates both denominators.
 
 ## See also
 

@@ -25,11 +25,17 @@ register_emoji_lexicon(name, tbl, by = "emoji")
 - tbl:
 
   A data frame. Must contain a glyph column named `by` (default
-  `"emoji"`) and at least one score column.
+  `"emoji"`) and at least one score column, and every score column
+  present must be numeric or logical – a text column is rejected here
+  rather than returning `NA` for every score at first use. See
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+  for the one-row-per-emoji requirement, which is checked when the
+  lexicon is used.
 
 - by:
 
-  Name of the column holding the emoji glyph. Default `"emoji"`.
+  Name of the column holding the emoji glyph, as a single string.
+  Default `"emoji"`.
 
 ## Value
 

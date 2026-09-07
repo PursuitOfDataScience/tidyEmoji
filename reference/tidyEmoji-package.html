@@ -50,18 +50,29 @@ A tidy toolkit for working with the emoji in any text column, such as social-med
 
 
 <p>Every verb follows <code>verb(data, text, ...)</code>, takes the text column unquoted,
-and returns a tibble. Columns <em>added to your data</em> carry a dotted
-<code>.emoji_*</code> prefix (<code>.emoji</code>, <code>.emoji_name</code>, <code>.emoji_category</code>,
-<code>.emoji_sentiment</code>, <code>.emoji_n</code>, ...) so they will not collide with your own
-columns; <em>new summary tibbles</em> (e.g. <code><a href="emoji_frequency.html">emoji_frequency()</a></code>) use bare names.
-The dotted prefix is <strong>reserved</strong>: a verb overwrites any column of its own
+and returns a tibble. Output column names come in three shapes, and which
+one you get tells you what the column is:</p><ul><li><p><strong><code>.emoji_*</code></strong> – a measurement of your text, added to your data
+(<code>.emoji</code>, <code>.emoji_name</code>, <code>.emoji_category</code>, <code>.emoji_sentiment</code>,
+<code>.emoji_n</code>, ...). Dotted so it will not collide with your own columns.</p></li>
+<li><p><strong><code>.row_number</code>, <code>.position</code>, <code>.period</code>, <code>.period_prev</code>,
+<code>.period_label</code></strong> – structural indices saying <em>where</em> a row came from
+rather than what was measured: the position of the entry in <code>data</code>
+(<code><a href="emoji_extract_unnest.html">emoji_extract_unnest()</a></code>, <code><a href="emoji_context.html">emoji_context()</a></code>, <code><a href="emoji_ngrams.html">emoji_ngrams()</a></code>,
+<code><a href="emoji_dfm.html">emoji_dfm()</a></code>), the character offset of an occurrence, or the time bucket
+(<code><a href="emoji_trend.html">emoji_trend()</a></code>, <code><a href="emoji_turnover.html">emoji_turnover()</a></code>, <code><a href="emoji_seasonality.html">emoji_seasonality()</a></code>). Dotted for
+the same reason, and reserved on the same terms. That is the whole list.</p></li>
+<li><p><strong>bare names</strong> – the columns of a <em>new</em> summary tibble, which is not your
+data with something added (<code><a href="emoji_frequency.html">emoji_frequency()</a></code>'s <code>emoji</code>, <code>name</code>, <code>n</code>;
+<code><a href="emoji_ambiguity.html">emoji_ambiguity()</a></code>'s <code>ambiguity</code>, <code>rank</code>). <code><a href="emoji_dfm.html">emoji_dfm()</a></code> is the one verb
+whose column names are data: one per emoji, named with the glyph itself.</p></li>
+</ul><p>Every dotted name is <strong>reserved</strong>: a verb overwrites any column of its own
 output name that is already there, without warning. That is what makes
 verbs chainable and re-runnable – <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code> then
 <code><a href="emoji_position.html">emoji_position()</a></code> both write <code>.emoji_n</code>, and both mean the same thing –
-but
-it also means a column of your own called <code>.emoji_n</code> will be replaced.
-Rename it first if you need to keep it.
-<code>group</code> always refers to the Unicode top-level category (the term used by
+but it also means a column of your own called <code>.emoji_n</code> will be replaced,
+and that includes the text column itself if you named it <code>.emoji_n</code>. Rename
+it first if you need to keep it.</p>
+<p><code>group</code> always refers to the Unicode top-level category (the term used by
 the underlying <code><a href="https://emilhvitfeldt.github.io/emoji/reference/emojis.html" class="external-link">emoji::emojis</a></code> table). Every glyph-to-metadata join is
 normalised through a codepoint key that strips the <code>U+FE0F</code> variation
 selector, so qualified and unqualified emoji forms resolve identically in
@@ -76,12 +87,21 @@ sequence (a family, a couple, a profession) stays intact as one emoji, and
 every verb asks the same question, so counts agree across the package.</p>
 <p>There is one systematic exclusion, and it is worth knowing before you read
 a count. Some code points are emoji only in their <em>emoji-presentation</em> form,
-that is only when followed by the variation selector <code>U+FE0F</code>. The
+that is only when the variation selector <code>U+FE0F</code> is present. The
 best-known is the heart: <code>U+2764 U+FE0F</code> is detected, the bare <code>U+2764</code> is
 not, and several keyboards emit the bare form. Across the reference
 catalogue 1252 emoji carry <code>U+FE0F</code>, and 216 of those become undetectable
 if it is dropped – in the bundled sentiment lexicon, 57 of the scorable
-glyphs.</p>
+glyphs. Counted the other way round, 212 of the catalogue's 5042 rows are
+spellings that are themselves undetectable; the two figures measure
+different things and both are right.</p>
+<p>The selector does not always go at the end. For 200 of those 212 it does,
+so appending <code>U+FE0F</code> is what makes them detectable. The exceptions are the
+12 keycap sequences – <code>#</code>, <code>*</code> and <code>0</code> to <code>9</code> followed by the enclosing
+keycap mark <code>U+20E3</code> – where the selector belongs <em>between</em> the two:
+<code>U+0031 U+FE0F U+20E3</code> is detected and <code>U+0031 U+20E3 U+FE0F</code> is not.
+Inserting <code>U+FE0F</code> after the first code point is the rule that repairs all
+212.</p>
 <p>The default does not match the bare forms, and that is deliberate rather
 than an oversight: the same set contains <code>U+00A9</code>, <code>U+00AE</code> and <code>U+2122</code>, so
 matching them unqualified would count the copyright sign in a legal footer

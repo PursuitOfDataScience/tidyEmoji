@@ -30,8 +30,13 @@ emoji_to_text(data, text, format = c("name", "shortcode"), wrap = ":{x}:")
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -48,6 +53,14 @@ emoji_to_text(data, text, format = c("name", "shortcode"), wrap = ":{x}:")
   written as a template with `{x}` standing for the shortcode. Default
   `":{x}:"`. Must contain `{x}`, or every emoji would be replaced by the
   same literal string. Ignored for `format = "name"`.
+
+  Only the default is reversible by
+  [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
+  which looks for exactly `:shortcode:`; a `wrap` that does not produce
+  that token leaves the shortcode in the text as an ordinary word,
+  silently. See
+  [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+  for the cases.
 
 ## Value
 

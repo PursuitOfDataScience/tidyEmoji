@@ -29,8 +29,13 @@ emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -58,9 +63,18 @@ columns – `.emoji_anger`, `.emoji_anticipation`, `.emoji_disgust`,
 `.emoji_fear`, `.emoji_joy`, `.emoji_sadness`, `.emoji_surprise`,
 `.emoji_trust` – plus `.emoji_n` and `.emoji_n_scored`, one row per
 input row. With `long = TRUE`, one row per input row *per emotion*,
-carrying `.emoji_emotion` and `.emoji_score` instead of the eight
-columns. Rows without emoji, or whose emoji are absent from the lexicon,
-receive `NA` scores.
+carrying `.emoji_emotion` and `.emoji_score` in place of the eight
+columns **and of the two counts** – the long form returns neither
+`.emoji_n` nor `.emoji_n_scored`. Rows without emoji, or whose emoji are
+absent from the lexicon, receive `NA` scores.
+
+`.emoji_n_scored` is what tells those two apart, as in
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
+`0` means the row had emoji the lexicon could not score, `NA` that it
+had no emoji to score. Since the long form omits it, read the counts
+from a `long = FALSE` call on the same data (the rows are in the same
+order) when the distinction matters – on a 150-glyph lexicon it usually
+does.
 
 ## Details
 

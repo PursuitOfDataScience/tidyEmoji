@@ -31,8 +31,13 @@ emoji_pairs(data, text, doc_id = NULL, directed = FALSE, sort = TRUE)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -41,6 +46,12 @@ emoji_pairs(data, text, doc_id = NULL, directed = FALSE, sort = TRUE)
 
   Optional unquoted column identifying documents. Rows sharing a value
   are treated as one document. Default: each row is a document.
+
+  The result has a row per pair, so it grows with the *square* of the
+  distinct emoji in a document: a day or a conversation is cheap, and
+  pooling a whole corpus under one id is not. 800 distinct emoji in one
+  document is 319,600 pairs and a few seconds; 3790 would be 7.2
+  million.
 
 - directed:
 
@@ -52,7 +63,9 @@ emoji_pairs(data, text, doc_id = NULL, directed = FALSE, sort = TRUE)
 - sort:
 
   If `TRUE` (default), sort by descending `n` (ties broken by `item1`,
-  `item2` so the order is deterministic).
+  `item2` so the order is deterministic). `FALSE` sorts by `item1` then
+  `item2` instead – still a fixed order, computed in the C locale, not
+  the order the pairs happened to be counted in.
 
 ## Value
 

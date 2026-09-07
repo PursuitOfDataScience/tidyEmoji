@@ -27,8 +27,13 @@ emoji_extract_unnest(data, text)
 
 - text:
 
-  The text column to scan, supplied unquoted. What counts as an emoji is
-  the same in every verb; see the *Detection* section of
+  The text column to scan, supplied unquoted. Any atomic column is
+  accepted and read as character, so a `factor` works and a numeric,
+  `Date` or logical one simply contains no emoji. A list column – or a
+  data-frame column – is refused rather than coerced, because coercing
+  one deparses it and the emoji found would be in the code rather than
+  in your data. What counts as an emoji is the same in every verb; see
+  the *Detection* section of
   [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
@@ -36,7 +41,19 @@ emoji_extract_unnest(data, text)
 ## Value
 
 A tibble with columns `.row_number`, `.emoji_unicode` and
-`.emoji_count`.
+`.emoji_count`. The columns of `data` are not carried, so a grouping is
+not either – join back on `.row_number` to recover them.
+[`emoji_extract_nest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_nest.md)
+keeps your rows, and your grouping, instead.
+
+## See also
+
+[`emoji_extract_nest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_nest.md)
+for the same emoji as a list-column that keeps your rows, and
+[`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md)
+for one row per occurrence with metadata attached;
+[`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+for corpus-level counts.
 
 ## Examples
 
