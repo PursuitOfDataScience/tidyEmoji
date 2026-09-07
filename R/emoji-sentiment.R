@@ -68,9 +68,24 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     if (identical(lex$type, "sentiment")) {
       score <- emoji_sentiment_map()
     } else if (is.data.frame(lex)) {
-      score <- .emoji_lexicon_record(lex)
+      score <- .emoji_lexicon_record(lex, arg = "lexicon")
     } else if (identical(lex$type, "custom")) {
-      score <- .emoji_lexicon_record(lex$tbl)
+      score <- .emoji_lexicon_record(lex$tbl, arg = "lexicon")
+    } else if (identical(lex$type, "emotion")) {
+      # The only input that reaches here: a bundled *emotion* lexicon. The old
+      # message said `lexicon` "must be 'novak2015', a registered lexicon, or
+      # a data frame", which is confusing for the one case that triggers it --
+      # "emotag1200" is a bundled lexicon, so the user is told their valid
+      # name is invalid, with no hint that the problem is its shape or where
+      # to go instead. emoji_score() already answers this question properly
+      # for its own caller; match it.
+      stop(sprintf(
+        paste0("`lexicon = \"%s\"` is an emotion lexicon, and ",
+               "emoji_sentiment() needs one sentiment score per emoji. Use ",
+               "emoji_emotion() for the per-emotion profile, or ",
+               "emoji_score(lexicon = \"%s\") for the mean over its ",
+               "dimensions as a single number."),
+        lexicon, lexicon), call. = FALSE)
     } else {
       stop("`lexicon` must be 'novak2015', a registered lexicon, or a data frame.",
            call. = FALSE)

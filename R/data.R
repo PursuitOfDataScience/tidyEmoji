@@ -33,9 +33,20 @@
 
 #' Emoji name, unicode and category crosswalk
 #'
-#' A table with one row per emoji *name*: each emoji glyph appears once for every
-#' GitHub-style name it is known by, so a single unicode can occur on several
-#' rows (for example the grinning face is both "grinning" and "grinning_face").
+#' A table with one row per (name, glyph) *pair*, not one row per name and not
+#' one row per glyph. 5761 rows cover 4698 distinct names and 4853 distinct
+#' glyphs, because the mapping is many-to-many in both directions:
+#'
+#' * a glyph appears once for every GitHub-style name it is known by (the
+#'   grinning face is both "grinning" and "grinning_face"), and
+#' * a name appears once for every *spelling* of the emoji it names -- 973 do,
+#'   because the qualified and unqualified forms of an emoji are separate rows
+#'   that share one alias (`A_button_blood_type_` names both
+#'   `U+1F170 U+FE0F` and the bare `U+1F170`).
+#'
+#' So a join by `emoji_name` duplicates rows for those 973 names. Join on `key`
+#' -- which collapses the spellings -- or `dplyr::distinct()` the columns you
+#' need first.
 #'
 #' @format A data frame with four columns:
 #' \describe{

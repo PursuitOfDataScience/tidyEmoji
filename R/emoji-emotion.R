@@ -28,8 +28,16 @@
 #'   `.emoji_surprise`, `.emoji_trust` -- plus `.emoji_n` and
 #'   `.emoji_n_scored`, one row per input row. With `long = TRUE`, one row per
 #'   input row *per emotion*, carrying `.emoji_emotion` and `.emoji_score`
-#'   instead of the eight columns. Rows without emoji, or whose emoji are
-#'   absent from the lexicon, receive `NA` scores.
+#'   in place of the eight columns **and of the two counts** -- the long form
+#'   returns neither `.emoji_n` nor `.emoji_n_scored`. Rows without emoji, or
+#'   whose emoji are absent from the lexicon, receive `NA` scores.
+#'
+#'   `.emoji_n_scored` is what tells those two apart, as in
+#'   [emoji_sentiment()]: `0` means the row had emoji the lexicon could not
+#'   score, `NA` that it had no emoji to score. Since the long form omits it,
+#'   read the counts from a `long = FALSE` call on the same data (the rows are
+#'   in the same order) when the distinction matters -- on a 150-glyph lexicon
+#'   it usually does.
 #' @references Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the
 #'   Association between Emojis and Emotions. *EMNLP 2020*.
 #'   <https://aclanthology.org/2020.emnlp-main.720/>. Data released under the MIT
@@ -60,9 +68,19 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
       ), call. = FALSE)
     }
     emap <- as.matrix(lex[, dims_avail, drop = FALSE])
-    rownames(emap) <- .emoji_lexicon_keys(lex)
+    rownames(emap) <- .emoji_lexicon_keys(lex, arg = "lexicon")
   } else if (identical(lex$type, "emotion")) {
     emap <- emoji_emotion_map()
+  } else if (identical(lex$type, "sentiment")) {
+    # The mirror of emoji_sentiment()'s emotion case: say which shape was
+    # passed and name the verb that takes it, rather than only listing what
+    # this one wants.
+    stop(sprintf(
+      paste0("`lexicon = \"%s\"` is a sentiment lexicon -- one score per ",
+             "emoji -- and emoji_emotion() needs the eight emotion ",
+             "dimensions. Use emoji_sentiment() for a sentiment lexicon, or ",
+             "'emotag1200' here."),
+      lexicon), call. = FALSE)
   } else {
     stop(paste0(
       "`emoji_emotion()` requires an emotion lexicon: 'emotag1200', a ",
@@ -135,7 +153,14 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #'
 #' @return `data`, as a tibble, with `.emoji_emotion` (the winning emotion, or
 #'   `NA` when nothing was scorable) added, alongside the `.emoji_n` and
-#'   `.emoji_n_scored` counts it inherits from [emoji_emotion()].
+#'   `.emoji_n_scored` counts it inherits from [emoji_emotion()]. The eight
+#'   per-emotion columns are *not* returned -- the label is the point -- unless
+#'   they were already in `data`, which is what
+#'   `emoji_emotion() |> emoji_emotion_label()` gives you: the profile and the
+#'   label side by side.
+#' @seealso [emoji_emotion()] for the eight scores this collapses, and the
+#'   coverage caveat that applies to both; [emoji_emotion_lexicon] for the
+#'   underlying data; [emoji_sentiment()] for valence instead of emotion.
 #' @examples
 #' df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))
 #' emoji_emotion_label(df, text)
@@ -152,7 +177,13 @@ emoji_emotion_label <- function(data, text, lexicon = "emotag1200") {
   label <- dims[idx]
   label[!has_score] <- NA_character_
   em$.emoji_emotion <- label
-  # drop the per-emotion columns, keep the label + counts
-  em <- em[, setdiff(names(em), cols), drop = FALSE]
+  # Drop only the per-emotion columns *this call* introduced. `data` may
+  # already carry them -- emoji_emotion() then emoji_emotion_label() is the
+  # obvious way to get the profile and the label together -- and dropping
+  # those discarded the caller's own columns, contradicting a @return that
+  # says the label is *added*. For input without them, `introduced` is the
+  # whole set and the result is exactly what it always was.
+  introduced <- setdiff(cols, names(data))
+  em <- em[, setdiff(names(em), introduced), drop = FALSE]
   em
 }

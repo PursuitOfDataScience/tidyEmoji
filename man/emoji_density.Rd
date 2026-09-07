@@ -14,20 +14,40 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n},
-\code{.emoji_per_char} (emoji per character of text) and \code{.emoji_per_token}
-(emoji per whitespace-delimited token).
+\code{.emoji_per_char} (emoji per character, i.e. per code point, of text) and
+\code{.emoji_per_token} (emoji per whitespace-delimited token).
 }
 \description{
 \code{emoji_density()} measures how emoji-heavy each text is: the number of
 emoji per character and per whitespace-delimited token. Rows with no emoji
 get densities of 0; rows whose text is \code{NA} or empty get \code{NA}.
+}
+\details{
+"Character" here means \emph{code point}, the unit \code{\link[=nchar]{nchar()}} counts, so a
+multi-code-point emoji inflates the denominator by all of its code points.
+The same visible text therefore gives different answers depending on how the
+emoji is built: \code{"hi <emoji>"} is four graphemes either way, but
+\code{.emoji_per_char} is 0.25 for a single-code-point smiley, 0.200 for a
+two-code-point flag and 0.100 for a seven-code-point ZWJ family. It is not
+exotic -- 115 of the 560 emoji-bearing rows in the corpus behind the
+introduction vignette contain a multi-code-point emoji.
+
+This is the same basis \code{\link[=emoji_ratio]{emoji_ratio()}} uses and states, and the opposite of
+the one \code{\link[=emoji_position]{emoji_position()}} uses: \code{.emoji_rel_position} counts each emoji as
+one position, because a proportion of the message has to. If you want a
+density that does not move with an emoji's internal length,
+\code{.emoji_per_token} is immune -- all three examples above give 0.5.
 }
 \examples{
 df <- data.frame(text = c("hi \U0001f600", "\U0001f600\U0001f600", "plain"))

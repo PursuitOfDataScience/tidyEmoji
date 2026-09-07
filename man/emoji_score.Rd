@@ -14,17 +14,30 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Either a string naming a bundled or registered lexicon, or a
 data frame. For data frames, \code{by} names the glyph column and \code{score} the
-score column. Defaults to \code{"novak2015"}, matching \code{\link[=emoji_sentiment]{emoji_sentiment()}}.}
+score column. Defaults to \code{"novak2015"}, matching \code{\link[=emoji_sentiment]{emoji_sentiment()}}.
 
-\item{by}{Glyph column name when \code{lexicon} is a data frame. Default
-\code{"emoji"}.}
+Two requirements on a data frame, both refused rather than worked around.
+The score column must be numeric or logical: as text every score comes
+back \code{NA} while the emoji still counts as scored, which contradicts
+\code{.emoji_n_scored} below. And no two rows may give one emoji \emph{different}
+scores -- spellings differing only by a variation selector share a single
+code-point key, so a table listing both \code{U+2764} and \verb{U+2764 U+FE0F} has
+one emoji twice. Identical scores are fine and collapse silently; when
+they differ, the row order would be choosing the answer.}
+
+\item{by}{Glyph column name when \code{lexicon} is a data frame, as a single
+string. Default \code{"emoji"}.}
 
 \item{score}{Score column name when \code{lexicon} is a data frame. If \code{NULL},
 \code{"sentiment_score"} then \code{"score"} are tried.}
@@ -35,6 +48,17 @@ score column. Defaults to \code{"novak2015"}, matching \code{\link[=emoji_sentim
 added. For the multi-dimensional \code{"emotag1200"} lexicon the score is the
 mean over its eight emotion dimensions; use \code{\link[=emoji_emotion]{emoji_emotion()}} for the
 per-emotion profile.
+
+That averaging is specific to the bundled lexicon. A \emph{registered} or
+inline lexicon carrying emotion columns has no score column, so
+\code{emoji_score()} cannot collapse it and says so: pass it to
+\code{\link[=emoji_emotion]{emoji_emotion()}} instead, or name one dimension with
+\code{score = "joy"} to score on that alone.
+
+\code{.emoji_n_scored} distinguishes the two ways a score can be missing, as in
+\code{\link[=emoji_sentiment]{emoji_sentiment()}}: \code{0} means the row had emoji that the lexicon could not
+score, \code{NA} that it had no emoji to score. \code{.emoji_n} counts every emoji
+either way.
 }
 \description{
 \code{emoji_score()} is the generic scorer that the friendly verbs

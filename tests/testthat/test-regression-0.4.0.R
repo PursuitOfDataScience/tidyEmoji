@@ -593,11 +593,21 @@ test_that("a genuinely missing date does not warn", {
 })
 
 test_that("a wholly unparseable time column still errors", {
+  # the message now diagnoses what it found rather than restating the formal's
+  # type, and shows the value it choked on
   expect_error(
     emoji_trend(data.frame(text = c(laugh, rage), when = c("x", "y")),
                 text, when),
-    "must be a Date"
+    # the message names the *argument*, `time`, as every other message in the
+    # package does -- not the column the caller happened to pass to it
+    "No value in `time` could be read as a date"
   )
+  msg <- tryCatch(
+    emoji_trend(data.frame(text = c(laugh, rage), when = c("x", "y")),
+                text, when),
+    error = function(e) conditionMessage(e))
+  expect_true(grepl('first value seen: "x"', msg, fixed = TRUE))
+  expect_true(grepl("four-digit year", msg, fixed = TRUE))
 })
 
 
@@ -976,7 +986,9 @@ test_that("no catalogued ZWJ sequence is split into several glyphs", {
 test_that("real corpus text leaves no joiner orphaned", {
   # the residual below is confined to non-canonical spellings; this pins that
   # it does not reach text people actually write
-  skip_if_not_installed("readr")
+  # `show_col_types` arrived in readr 2.0.0; readr 1.4.0 errors with
+  # "unused argument", so presence alone is not enough to run this
+  skip_if_not_installed("readr", minimum_version = "2.0.0")
   path <- testthat::test_path("..", "..", "vignettes", "ata_tweets.csv")
   skip_if_not(file.exists(path), "vignette corpus not available")
   txt <- readr::read_csv(path, show_col_types = FALSE)$full_text

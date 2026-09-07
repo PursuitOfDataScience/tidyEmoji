@@ -423,38 +423,109 @@ emoji_emotion_dims <- function() {
 
 # Build the (key -> score) record from a lexicon data frame or named score
 # column, normalised through emoji_key().
-.emoji_lexicon_record <- function(tbl, by = "emoji", score = NULL) {
+# `arg` is the name the *user* typed. This helper serves two callers with
+# different argument names -- register_emoji_lexicon(tbl = ) and
+# emoji_score() / emoji_sentiment() / emoji_emotion()'s `lexicon = ` -- and it
+# used to say "`tbl`" to both, so a user who passed a data frame as `lexicon`
+# was told to fix an argument that function does not have. Same failure mode
+# the column resolver's `arg` was added for.
+.emoji_lexicon_record <- function(tbl, by = "emoji", score = NULL,
+                                  arg = "tbl") {
   if (!is.data.frame(tbl)) {
-    stop("`tbl` must be a data frame.", call. = FALSE)
+    stop(sprintf("`%s` must be a data frame.", arg), call. = FALSE)
   }
-  keys <- .emoji_lexicon_keys(tbl, by)
+  keys <- .emoji_lexicon_keys(tbl, by, arg = arg)
   if (is.null(score)) {
     # heuristic: prefer 'sentiment_score', then 'score'
     score <- intersect(c("sentiment_score", "score"), names(tbl))[1L]
     if (is.na(score)) {
-      stop("No score column found in `tbl`; supply `score`.",
+      # An emotion-shaped table is the one case where "supply `score`" is a
+      # dead end: `score` names a single column, and a user with eight
+      # emotion columns wants their mean -- which emoji_score() computes only
+      # for the bundled "emotag1200". Say where to go instead.
+      emo <- intersect(emoji_emotion_dims(), names(tbl))
+      if (length(emo)) {
+        stop(sprintf(paste0(
+          "`%s` has no score column, but it does carry emotion columns ",
+          "(%s). emoji_score() averages emotion dimensions only for the ",
+          "bundled \"emotag1200\"; use emoji_emotion() for the per-emotion ",
+          "profile of a lexicon like this, or `score = \"%s\"` to score on ",
+          "one dimension."),
+          arg, paste(emo, collapse = ", "), emo[1L]), call. = FALSE)
+      }
+      stop(sprintf("`%s` has no score column; supply `score`.", arg),
            call. = FALSE)
     }
   }
   if (!score %in% names(tbl)) {
-    stop(sprintf("Lexicon has no score column `%s`.", score), call. = FALSE)
+    stop(sprintf("`%s` has no column `%s` to take the score from.",
+                 arg, score), call. = FALSE)
   }
   s <- tbl[[score]]
+  # The presence of a score column was checked above; its *type* was not, and
+  # the two failures that let through are both silent. A character or factor
+  # column reaches mean() untouched, which returns NA with R's own "argument
+  # is not numeric or logical" warning -- while `.emoji_n_scored` still counts
+  # the emoji as scored, so the row claims a score it does not have. A
+  # genuinely NA numeric score is counted as unscored, which is the contract
+  # this restores.
+  if (!is.numeric(s) && !is.logical(s)) {
+    stop(sprintf(
+      paste0("`%s`'s score column `%s` is %s, and a score has to be a ",
+             "number. Coercing it here would report the emoji as scored ",
+             "while every score came back `NA`. Convert the column first, ",
+             "and check what made it non-numeric -- a stray \"NA\" or a ",
+             "decimal comma turns a whole column into text."),
+      arg, score, class(s)[1L]
+    ), call. = FALSE)
+  }
+  keep <- !is.na(keys) & keys != ""
+  # Two rows can legitimately share a key -- a lexicon listing both the
+  # unqualified and the U+FE0F-qualified spelling of one emoji canonicalises
+  # to one key -- but only if they agree. When they disagree the lookup below
+  # silently takes whichever came first, so swapping two rows of the caller's
+  # own table changes the answer. Neither bundled lexicon has a duplicated
+  # key at all.
+  dk <- unique(keys[keep][duplicated(keys[keep])])
+  if (length(dk)) {
+    sk <- s[keep]
+    kk <- keys[keep]
+    bad <- dk[vapply(dk, function(k) {
+      v <- sk[kk == k]
+      v <- v[!is.na(v)]
+      length(unique(v)) > 1L
+    }, logical(1))]
+    if (length(bad)) {
+      stop(sprintf(
+        paste0("`%s` gives %d emoji more than one score: %s. Spellings that ",
+               "differ only by a variation selector share one code-point key, ",
+               "so two such rows must agree. Reading either one is a choice ",
+               "the row order would be making, not you -- collapse them ",
+               "first (one row per emoji_key())."),
+        arg, length(bad),
+        paste(sprintf("`%s`", utils::head(bad, 3L)), collapse = ", ")
+      ), call. = FALSE)
+    }
+  }
   out <- stats::setNames(s, keys)
-  out[!is.na(keys) & keys != ""]
+  out[keep]
 }
 
 # Normalised join keys for a lexicon table: prefer the glyph column `by`, and
 # fall back to a pre-computed `key` column (as stored by
 # register_emoji_lexicon()) so registered lexicons resolve regardless of what
 # their glyph column was called.
-.emoji_lexicon_keys <- function(tbl, by = "emoji") {
+.emoji_lexicon_keys <- function(tbl, by = "emoji", arg = "tbl") {
+  # `by` reaches `%in%` below, so a vector turned the guard into a length-2
+  # condition and R reported "the condition has length > 1" -- its message,
+  # naming neither this argument nor the verb the user called.
+  .emoji_check_string(by, "by")
   if (by %in% names(tbl)) {
     emoji_key(tbl[[by]])
   } else if ("key" %in% names(tbl)) {
     as.character(tbl[["key"]])
   } else {
-    stop(sprintf("Lexicon has no column `%s` to map glyphs from.", by),
+    stop(sprintf("`%s` has no column `%s` to map glyphs from.", arg, by),
          call. = FALSE)
   }
 }
@@ -476,9 +547,18 @@ emoji_emotion_dims <- function() {
 .emoji_lexicon_lookup <- function(lexicon) {
   if (is.data.frame(lexicon)) return(lexicon)
   reg <- .tidyEmoji_cache$lexicons %||% list()
-  if (!is.character(lexicon)) {
-    stop("`lexicon` must be a name (string), a data frame, or NULL for the default.",
-         call. = FALSE)
+  if (!is.character(lexicon) || length(lexicon) != 1L || is.na(lexicon)) {
+    # The message used to offer "or NULL for the default", which this very
+    # guard rejects -- is.character(NULL) is FALSE -- and which no verb
+    # accepts or documents. Describe what is actually taken, and name what
+    # was passed, since a lexicon argument is easy to fill from a variable
+    # that turned out empty.
+    stop(sprintf(
+      paste0("`lexicon` must be a single lexicon name or a data frame, not ",
+             "%s. See emoji_lexicons() for the names."),
+      if (is.null(lexicon)) "NULL" else
+        sprintf("%s of length %d", class(lexicon)[1L], length(lexicon))
+    ), call. = FALSE)
   }
   if (lexicon %in% c("novak2015", "emoji_sentiment_lexicon", "sentiment")) {
     ans <- list(type = "sentiment")
@@ -519,6 +599,22 @@ emoji_emotion_dims <- function() {
 # grouped input made the selection return two names and the caller rejected it.
 # Grouping cannot change which column a name refers to, so it is dropped for
 # the lookup only -- the caller still sees the original `data`.
+# The tail of the missing-column message: "exist. Available: `a`, `b`." --
+# truncated, because the list is the caller's data and can be long. A
+# 500-column frame gave a 5074-character error, and even a 40-column survey
+# export gave 665, burying the one thing that matters (the name that is
+# wrong) behind a wall of names that are not. A frame with no columns at all
+# used to end "Available: ." on its own.
+.emoji_available_cols <- function(nms, max_show = 5L) {
+  if (!length(nms)) {
+    return("exist -- `data` has no columns.")
+  }
+  shown <- paste(sprintf("`%s`", utils::head(nms, max_show)), collapse = ", ")
+  extra <- length(nms) - min(length(nms), max_show)
+  sprintf("exist. Available: %s%s.", shown,
+          if (extra > 0L) sprintf(", and %d more", extra) else "")
+}
+
 .emoji_col_name <- function(data, col, arg = "text") {
   if (rlang::quo_is_missing(rlang::enquo(col))) {
     stop(sprintf(
@@ -528,7 +624,54 @@ emoji_emotion_dims <- function() {
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame.", call. = FALSE)
   }
-  nm <- names(dplyr::select(dplyr::ungroup(data), {{ col }}))
+  # A bare column name is resolved against names(data) directly, without
+  # dplyr::select(). Two reasons, and the first is a correctness one.
+  #
+  # tidyselect falls back to an *external vector* of the same name when the
+  # column is absent, and `text` is a common variable name. So
+  # `emoji_sentiment(df, text)` on a data frame whose column had been renamed,
+  # in a session where `text` also happened to be a character vector, reported
+  # "Can't select columns that don't exist. Columns `global value` and ..." --
+  # naming the contents of the caller's variable as though they were column
+  # names -- and added a tidyselect deprecation warning advising `all_of()`,
+  # which is not what the caller meant at all. That is the same failure mode as
+  # the `var` message this helper was written to replace.
+  #
+  # The second is that this is the hot path: nearly every call names a bare
+  # column, and dplyr::select() costs about a millisecond.
+  #
+  # Anything that is not a bare symbol -- a string, a position, `all_of()`,
+  # `starts_with()` -- still goes to select(), so every tidyselect form works
+  # and a selection of two columns is still reported as one.
+  q <- rlang::enquo(col)
+  expr <- rlang::quo_get_expr(q)
+  if (rlang::is_symbol(expr)) {
+    # (.emoji_available_cols() builds the tail of the message; see below)
+    nm <- rlang::as_name(expr)
+    hits <- which(names(data) == nm)
+    if (!length(hits)) {
+      stop(sprintf("`%s` must name a column of `data`, and `%s` does not %s",
+                   arg, nm, .emoji_available_cols(names(data))),
+           call. = FALSE)
+    }
+    # `nm %in% names(data)` is not enough: a base data frame built with
+    # check.names = FALSE can carry the same name twice -- a spreadsheet with
+    # repeated headers read by read.csv() does exactly that -- and `[[`
+    # silently returns the first. dplyr::select(), which this path replaced,
+    # rejected the ambiguity, and without this check emoji_summary() and
+    # emoji_frequency() answered from whichever column came first while the
+    # verbs that convert `data` to a tibble failed with tibble's own message.
+    if (length(hits) > 1L) {
+      stop(sprintf(
+        paste0("`%s` matches %d columns named `%s`, so which one to read is ",
+               "ambiguous. Give the columns distinct names -- read.csv() ",
+               "does that for you without `check.names = FALSE`."),
+        arg, length(hits), nm
+      ), call. = FALSE)
+    }
+    return(nm)
+  }
+  nm <- names(dplyr::select(dplyr::ungroup(data), !!q))
   if (length(nm) != 1L) {
     stop(sprintf("`%s` must select exactly one column, not %d.",
                  arg, length(nm)), call. = FALSE)
@@ -539,13 +682,102 @@ emoji_emotion_dims <- function() {
 # The column itself, with its type intact (the time verbs need Date / POSIXct
 # to survive). `[[` rather than dplyr::pull() so grouped input needs no special
 # case.
+#
+# One value per row, checked here so every column argument gets it -- `text`,
+# `time`, `doc_id` and `text_score` all come through this helper. A matrix
+# column holds one element per *cell*, and nothing downstream noticed: a 2x2
+# character `time` gave `emoji_trend()` and `emoji_adoption_lag()`
+# "invalid 'times' argument", `emoji_seasonality()` "missing value where
+# TRUE/FALSE needed", and `emoji_turnover()` a *result*, computed over periods
+# that were not in the data. A 2x2 `doc_id` made `emoji_dfm()` report four
+# documents for two rows. A 2x2 `text_score` passed the `is.numeric()` guard --
+# a matrix is numeric -- and reached tibble as
+# "Assigned data `gap` must be compatible with existing data".
+#
+# length() is right for every type the package accepts, POSIXlt included: R
+# gives it a length method that counts times, not list components.
 .emoji_col <- function(data, col, arg = "text") {
-  data[[.emoji_col_name(data, {{ col }}, arg = arg)]]
+  nm <- .emoji_col_name(data, {{ col }}, arg = arg)
+  .emoji_check_len(data[[nm]], nm, nrow(data), arg)
+}
+
+# The one-value-per-row check, taking an already-resolved name so a caller
+# that has one does not pay for resolving it again. .emoji_col_name() runs
+# dplyr::select(), which costs about a millisecond -- invisible next to
+# detection on a real corpus, but the whole cost of a verb called once per
+# group in a loop over a split data frame.
+.emoji_check_len <- function(v, nm, n_row, arg) {
+  if (length(v) != n_row) {
+    stop(sprintf(
+      paste0("`%s` must have one value per row, but `%s` has %d for %d ",
+             "row%s -- a matrix column holds one element per cell."),
+      arg, nm, length(v), n_row, if (n_row == 1L) "" else "s"
+    ), call. = FALSE)
+  }
+  v
 }
 
 # The text column as a character vector -- the form nearly every verb wants.
+#
+# as.character() is what lets a factor column work, and it is harmless on a
+# numeric, Date or logical one (no emoji, so every answer is NA). On a *list*
+# column it is not harmless: it deparses, so a column holding
+# `list(c("a", "<U+1F600>"))` was read as the source text `c("a",
+# "<U+1F600>")`, the emoji inside that was counted, and the row came back with
+# a real-looking sentiment the user's data never contained. A data-frame column
+# deparses the same way.
+#
+# The length check catches the other shape: a matrix column has one element per
+# cell, not per row, so a two-column matrix gave `emoji_sentiment()` and
+# `emoji_tokens()` an internal tibble error naming a variable from this
+# package's own source, while `emoji_frequency()` silently counted every cell.
+# Refuse a "bytes"-encoded character vector -------------------------------
+# A string declared with Encoding() == "bytes" is a bag of bytes R will not
+# interpret as characters: nchar(type = "chars"), gsub(), tolower() and
+# substr() all stop with "bytes encoding is not supported by this function".
+# Emoji detection is built out of exactly those, so nine of ten verbs already
+# failed on such a column -- but they failed with R's own message, which names
+# no argument, no column and no remedy, and emoji_sanitize(policy = "keep")
+# did not fail at all. Catching it in the resolver makes one clear message
+# serve every verb.
+#
+# Refusing rather than coercing is the point: a string is usually marked
+# "bytes" precisely because it is *not* valid UTF-8, so enc2utf8() cannot
+# repair it and would quietly substitute replacement characters. Only the
+# caller knows what encoding the bytes really are.
+.emoji_check_encoding <- function(v, nm, arg) {
+  if (!is.character(v)) return(invisible(v))
+  bad <- Encoding(v) == "bytes"
+  if (any(bad)) {
+    stop(sprintf(
+      paste0("`%s` reads column `%s`, whose strings carry \"bytes\" encoding ",
+             "(%d of %d). Finding emoji means reading characters, and R will ",
+             "not read a \"bytes\" string as characters at all. Convert it ",
+             "with iconv() from whatever encoding those bytes really are -- ",
+             "enc2utf8() cannot, because it does not know."),
+      arg, nm, sum(bad), length(v)
+    ), call. = FALSE)
+  }
+  invisible(v)
+}
+
 .emoji_text_col <- function(data, text, arg = "text") {
-  as.character(.emoji_col(data, {{ text }}, arg = arg))
+  nm <- .emoji_col_name(data, {{ text }}, arg = arg)
+  # Before .emoji_col()'s length check, because a data-frame column's length()
+  # is its column count -- so the length message would fire first and say
+  # nothing about the real problem.
+  v <- data[[nm]]
+  if (!is.atomic(v)) {
+    stop(sprintf(
+      paste0("`%s` must be a column of text, but `%s` is a %s column. ",
+             "Coercing one to character would deparse it rather than read ",
+             "it, so the emoji found would be in the code, not in your data."),
+      arg, nm, class(v)[1L]
+    ), call. = FALSE)
+  }
+  v <- as.character(.emoji_check_len(v, nm, nrow(data), arg))
+  .emoji_check_encoding(v, nm, arg)
+  v
 }
 
 # Output shape for the row-preserving verbs -------------------------------
@@ -637,6 +869,17 @@ emoji_emotion_dims <- function() {
   if (!is.character(x) || length(x) != 1L || is.na(x)) {
     stop(sprintf("`%s` must be a single string.", arg), call. = FALSE)
   }
+  # same reason as .emoji_check_encoding(): every string argument ends up
+  # inside gsub() or paste()d next to text that does, and a "bytes" string
+  # poisons both with R's own message rather than one naming this argument
+  if (Encoding(x) == "bytes") {
+    stop(sprintf(
+      paste0("`%s` carries \"bytes\" encoding, which R will not read as ",
+             "characters. Convert it with iconv() from whatever encoding ",
+             "those bytes really are."),
+      arg
+    ), call. = FALSE)
+  }
   invisible(x)
 }
 
@@ -644,6 +887,38 @@ emoji_emotion_dims <- function() {
 # as FALSE, so an unchecked flag turns a typo into a different, silently wrong
 # answer instead of an error -- the same failure mode as an unvalidated `n` or
 # a `wrap` template with no placeholder.
+# match.arg() that names the argument -------------------------------------
+# match.arg() reports its own formal, so every one of the package's enum
+# arguments answered a typo with "'arg' should be one of ..." or "'arg' must
+# be of length 1" -- naming a variable the caller never wrote and cannot see.
+# emoji_turnover() was given a hand-rolled check for exactly this reason, and
+# the fix was never grepped across the other fifteen call sites; this is that
+# check, once, so a new enum argument has one obvious line to use.
+#
+# Behaviour is match.arg()'s: a value identical to the whole choice vector
+# means "no value supplied" and takes the first, exact matches win, and
+# unambiguous prefixes still resolve (pmatch()), so `by = "mon"` keeps
+# working. Only the message changes.
+.emoji_match_arg <- function(x, choices, arg) {
+  if (identical(x, choices)) {
+    return(choices[[1L]])
+  }
+  quoted <- paste(sprintf('"%s"', choices), collapse = ", ")
+  if (!is.character(x) || length(x) != 1L || is.na(x)) {
+    stop(sprintf(
+      "`%s` must be a single string, one of %s.%s", arg, quoted,
+      if (is.character(x) && length(x) > 1L)
+        sprintf(" You gave %d.", length(x)) else ""
+    ), call. = FALSE)
+  }
+  i <- pmatch(x, choices)
+  if (is.na(i)) {
+    stop(sprintf("`%s` has no option \"%s\". Choose from %s.",
+                 arg, x, quoted), call. = FALSE)
+  }
+  choices[[i]]
+}
+
 .emoji_check_flag <- function(x, arg) {
   if (!is.logical(x) || length(x) != 1L || is.na(x)) {
     stop(sprintf("`%s` must be TRUE or FALSE.", arg), call. = FALSE)

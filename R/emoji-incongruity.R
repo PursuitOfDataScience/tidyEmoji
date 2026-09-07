@@ -57,9 +57,9 @@
 
 .emoji_incongruity_impl <- function(data, text, text_score, method, scale,
                                     where, threshold) {
-  method <- match.arg(method, c("difference", "sign_flip"))
-  scale <- match.arg(scale, c("none", "rank", "zscore"))
-  where <- match.arg(where, c("all", "final"))
+  method <- .emoji_match_arg(method, c("difference", "sign_flip"), "method")
+  scale <- .emoji_match_arg(scale, c("none", "rank", "zscore"), "scale")
+  where <- .emoji_match_arg(where, c("all", "final"), "where")
   if (!is.numeric(threshold) || length(threshold) != 1L || is.na(threshold)) {
     stop("`threshold` must be a single number.", call. = FALSE)
   }
@@ -71,6 +71,29 @@
     stop("`text_score` must be a numeric column of text sentiment scores. ",
          "tidyEmoji does not score text: produce it with tidytext, ",
          "sentimentr, vader or a model of your choice.", call. = FALSE)
+  }
+  # An infinite score is not a measurement, and left alone one of them
+  # destroys the whole column rather than its own row. `scale = "zscore"`
+  # takes sd() of the column, which is NaN once any value is infinite; the
+  # degenerate branch then subtracts an infinite mean, so every row comes back
+  # Inf or NaN. Measured on 100 rows with a single `Inf`: 0 of the 60 scored
+  # rows had a finite gap. Treating a non-finite score as missing keeps the
+  # damage on its own row -- which is what NaN already did, since na.rm = TRUE
+  # drops it -- and matches how the package treats an unreadable date.
+  nonfinite <- !is.na(ts) & !is.finite(ts)
+  if (any(nonfinite)) {
+    ts <- as.numeric(ts)
+    ts[nonfinite] <- NA_real_
+    warning(sprintf(
+      paste0("%d value%s in `text_score` %s not finite and %s treated as ",
+             "missing, so %s row%s scored. Infinite scores otherwise make ",
+             "every row's result infinite under `scale = \"zscore\"`."),
+      sum(nonfinite), if (sum(nonfinite) == 1L) "" else "s",
+      if (sum(nonfinite) == 1L) "is" else "are",
+      if (sum(nonfinite) == 1L) "is" else "are",
+      if (sum(nonfinite) == 1L) "that" else "those",
+      if (sum(nonfinite) == 1L) " is not" else "s are not"
+    ), call. = FALSE)
   }
 
   score <- emoji_sentiment_map()
@@ -91,8 +114,27 @@
     sum(!is.na(score[key_lookup[g]]))
   }, integer(1))
 
-  es_s <- .emoji_apply_scale(es, scale)
-  ts_s <- .emoji_apply_scale(ts, scale)
+  # Both sides are scaled over the rows the gap is actually defined on -- the
+  # ones carrying an emoji score *and* a text score. Scaling each over its own
+  # non-missing set put the two percentiles (or z-scores) on different
+  # populations: `text_score` is normally present on every row, while the emoji
+  # score is missing wherever a row has no scorable emoji, so the emoji-free
+  # rows -- which contribute nothing to the result, their own gap being NA --
+  # silently moved the answer for the rows that do.
+  #
+  # Measured on 100 rows whose emoji sentiment equals their text score exactly,
+  # so the true gap is 0 throughout: adding 100 emoji-free rows with higher
+  # text scores moved the mean gap to +0.50 on the rank scale and +0.92 on the
+  # z-score scale, and made `.emoji_incongruent` flag 54 of the 100 as
+  # mismatched. `scale = "none"` was never affected, which is why the defect
+  # survived the tests that used it.
+  both <- !is.na(es) & !is.na(ts)
+  es_s <- rep(NA_real_, length(es))
+  ts_s <- rep(NA_real_, length(es))
+  if (any(both)) {
+    es_s[both] <- .emoji_apply_scale(es[both], scale)
+    ts_s[both] <- .emoji_apply_scale(ts[both], scale)
+  }
   gap <- es_s - ts_s
   flip <- !is.na(es) & !is.na(ts) & sign(es) != 0 & sign(ts) != 0 &
     sign(es) != sign(ts)
@@ -135,6 +177,14 @@
 #' raw numbers, which is only meaningful if your text score already lives on
 #' the emoji lexicon's -1 to 1 scale.
 #'
+#' `"rank"` and `"zscore"` are computed over the rows the comparison is defined
+#' on -- those carrying both an emoji score and a `text_score` -- not over the
+#' whole corpus. A percentile only means something relative to a population,
+#' and the population the gap lives in is the scored subset, so rows with no
+#' scorable emoji cannot move the answer for the rows that have one. Subsetting
+#' the data to the scored rows before calling therefore gives the same numbers
+#' as calling on everything.
+#'
 #' @details
 #' `.emoji_incongruity` is `emoji - text` after scaling, so it is positive when
 #' the emoji is the more positive of the two. `"sign_flip"` is the categorical
@@ -143,7 +193,9 @@
 #'
 #' A row with no scorable emoji gets `NA`, never `0`: a neutral emoji and no
 #' emoji at all are different states, and collapsing them silently biases every
-#' downstream model. The same applies to a missing `text_score`.
+#' downstream model. The same applies to a missing `text_score`, and to an
+#' infinite one -- a scorer that overflows is reported and treated as missing
+#' rather than left to turn every other row's z-score into `Inf`.
 #'
 #' With `where = "final"` only the run of emoji that ends the text is scored:
 #' both the illocutionary-force account of emoji and the P600 evidence on
@@ -165,7 +217,10 @@
 #' @param method `"difference"` (default) for the continuous gap, or
 #'   `"sign_flip"` for the categorical polarity-flip feature.
 #' @param scale How to make the two scores comparable: `"rank"`, `"zscore"` or
-#'   `"none"`. Required -- there is no sensible default.
+#'   `"none"`. Required -- there is no sensible default. `"rank"` and
+#'   `"zscore"` are computed over the rows carrying both an emoji score and a
+#'   `text_score`, not over the whole corpus, so rows with no scorable emoji
+#'   cannot shift the answer for the rows that have one.
 #' @param where `"all"` (default) scores every emoji in the row; `"final"`
 #'   scores only the trailing run of emoji that ends the text.
 #' @param threshold For `method = "difference"`, the absolute gap at or above
@@ -174,6 +229,12 @@
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
 #'   `.emoji_n_scored`, `.emoji_sentiment`, `.emoji_incongruity`,
 #'   `.emoji_polarity_flip` and `.emoji_incongruent`.
+#'
+#'   `.emoji_n_scored` distinguishes the two ways the answer can be missing,
+#'   as it does in [emoji_sentiment()]: `0` means the row had emoji that the
+#'   lexicon could not score, `NA` that it had no emoji to score. The four
+#'   derived columns are `NA` in both cases, and also wherever `text_score`
+#'   itself is missing or not finite.
 #' @references An emoji centric approach to sarcasm detection in online
 #'   discourse. *Scientific Reports* (2025). The influence of emoji meaning
 #'   multipleness on perceived online review helpfulness. *Journal of Business

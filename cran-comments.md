@@ -31,7 +31,8 @@ detailed in NEWS.md. The ones a user could notice:
   arrow". The grapheme repair now also rejoins a pair whose union is itself a
   catalogued emoji, and grows a lone match outwards when its sequence has no
   second match to merge with. Exact detection of the reference table goes from
-  80.1% to 95.8% and the number of spellings that lose a joiner from 793 to 2.
+  63.2% to 95.8% (3189 of 5042 spellings, against 4830) and the number of
+  spellings that lose a joiner from 1643 to 2.
   Counts change only for corpora holding one of the affected spellings: the
   bundled 2000-tweet corpus used in the vignette has 38 rows containing a
   joiner and its counts are unchanged, and `README.md` re-renders byte for
@@ -85,10 +86,31 @@ newer than R 3.5, but `dplyr` and `tidyr` -- both hard dependencies -- declare
 fact be installed. The previous value produced an opaque dependency-resolution
 error on R 3.5 to 4.0 rather than a clear message about the R version.
 
+Three package floors are also newly declared, each for a specific argument the
+package would otherwise fail on. None adds a dependency; all three name a
+version from 2021-2023, no newer than the existing `dplyr (>= 1.1.0)`.
+
+* `lifecycle (>= 1.0.3)` -- `deprecate_warn(env=, user_env=)`. These arguments
+  do not exist in lifecycle 1.0.0. Every grouped-input warning in the package
+  goes through one helper that passes them, so on an older lifecycle a dozen
+  verbs would fail with "unused argument".
+* `tidyr (>= 1.3.0)` -- `separate_longer_delim()`, used in the vignette in
+  place of the superseded `separate_rows()`.
+* `readr (>= 2.0.0)` in Suggests -- `read_csv(show_col_types=)`, absent in
+  readr 1.4.0. Used only by one test, which now also gates on the version
+  rather than on mere presence.
+
+The introduction vignette no longer requires any Suggests package to build.
+It read its example corpus with `readr::read_csv()` and drew its charts with
+\pkg{ggplot2}, \pkg{forcats} and \pkg{stringr} unconditionally, so
+`R CMD build` failed outright on a library tree without them. The corpus is now
+read with `utils::read.csv()`, and the nine plotting chunks are gated on a
+`requireNamespace()` flag, so the vignette builds with or without them.
+
 
 ## Test environments
 
-* Local: R 4.4.1 and R 4.6.0 on Linux
+* Local: R 4.1.0 (the declared minimum), R 4.4.1 and R 4.6.0 on Linux
 * GitHub Actions:
   - ubuntu-latest: R-release, R-devel, R-oldrel-1
   - macOS-latest: R-release
@@ -106,18 +128,32 @@ NOTEs, and all four are artefacts of this host rather than the package: no
 substantive checks all pass there: installation, examples, the `testthat`
 suite, vignette re-building and the PDF manual.
 
-On R 4.6.0 (the newest release available locally), `R CMD check` reports
-`Status: OK` -- no errors, warnings or notes -- with the test suite passing in
-full and one test skipping cleanly because 'readr', a Suggests package, is not
-installed on that library tree.
+On R 4.6.0 (the newest release available locally), the same check reports
+`Status: 2 NOTEs` -- the URL below and the missing `tidy` -- with everything
+else OK, including vignette re-building and the PDF manual. That tree has
+neither 'readr' nor 'forcats' installed, so it doubles as the check that the
+package and its vignette build without their Suggests packages;
+`_R_CHECK_FORCE_SUGGESTS_=false` is needed there, since a complete check
+requires them by default.
 
-On the local Linux machine (R 4.4.1), `R CMD check --as-cran` additionally
-reports one WARNING and two NOTEs that are artefacts of that host rather than
-the package: `'qpdf' is needed for checks on size reduction of PDFs`,
-`unable to verify current time`, and `Skipping checking HTML validation: no
-command 'tidy' found`. All three are missing-tool/clock conditions absent on
-the CRAN check farm. The substantive checks pass there: installation,
-examples, `testthat` tests, vignette re-building, and the PDF manual.
+On R 4.1.0, the declared minimum, the `testthat` suite passed in full when
+last run there; that tree has `readr` 1.4.0, so the test gated on
+`readr (>= 2.0.0)` skips. The figure is from that run and the suite has grown
+since, so it is stated as history rather than as a current measurement.
+
+The skip inventory itself is current and was re-measured for this submission
+on R 4.4.1. Run as CRAN runs it, eight tests skip, all eight
+`skip_on_cran()` and all eight maintenance checks rather than checks of
+package behaviour: the declared R minimum against an installable tree,
+regenerating the bundled crosswalks from `data-raw/`, a `select()`-avoidance
+check on the whole catalogue, `emoji_dfm()` at its widest, an examples audit
+of the lexicon registry, re-rendering `README.Rmd` to confirm the output
+`README.md` shows is current, and two that read this file and check its own
+claims. Checking a built tarball skips three
+more, because they read sources a tarball does not carry -- `README.Rmd`, the
+`R/` tree, and the vignette's corpus -- each of which asserts against the
+installed package instead when the source is absent. Nothing skips for want of
+a Suggests package on a complete tree.
 
 The bundled datasets contain emoji glyphs and are therefore marked UTF-8, and
 a plain `R CMD check` (without `--as-cran`, which suppresses it) does report
@@ -136,24 +172,35 @@ The reference manual builds as PDF. Help pages refer to emoji by code point
 no unmapped characters to typeset.
 
 `?emoji_sentiment_lexicon` links to <https://hdl.handle.net/11356/1048>, the
-canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. All 12 URLs in
-the package were checked, both with `urlchecker::url_check()` and by
-`R CMD check --as-cran` with remote checks enabled; 11 pass and this one is
-reported on our machine only. R's own wording is
-`Status: Error ... (Status without verification: OK)`, and the precise cause
-follows.
+canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. Every URL in
+the package was checked by `R CMD check --as-cran` with remote checks enabled,
+and this is the only one reported -- on our machine only. The precise cause follows.
 
-The handle itself is healthy: it returns `302` to
-`https://www.clarin.si/repository/xmlui/handle/11356/1048`. It is that redirect
-target whose certificate chain fails to verify, not `hdl.handle.net`. The chain
-`clarin.si` <- `GEANT TLS RSA 1` (Hellenic Academic and Research Institutions
-CA) ends at an intermediate, and `openssl s_client` reports
-`Verify return code: 20 (unable to get local issuer certificate)` because this
-host is CentOS 8 carrying `ca-certificates-2020.2.41` and has no current HARICA
-root. The site itself is up: `curlGetHeaders(url, verify = FALSE)` returns
-`200`. A checking host with an up-to-date root store verifies it normally, so
-we do not expect a note; it is recorded so the figure is reproducible rather
-than asserted.
+The documented URL itself is healthy, and this is the part that matters: it
+returns `HTTP/2 302` with
+`location: https://www.clarin.si/repository/xmlui/handle/11356/1048`. What
+`R CMD check` cannot reach is that redirect target -- a third-party CLARIN.SI
+host -- not `hdl.handle.net`, and not anything the package controls.
+
+Why the target fails has changed between our own check runs, which is itself
+the point. It first failed verification: the chain `clarin.si` <-
+`GEANT TLS RSA 1` (HARICA) ends at an intermediate, and `openssl s_client`
+reported `Verify return code: 20 (unable to get local issuer certificate)`
+because this host is CentOS 8 carrying `ca-certificates-2020.2.41` with no
+current HARICA root; R's wording then was
+`Status: Error ... (Status without verification: OK)`. On the most recent run
+the host does not answer at all: DNS resolves `www.clarin.si` to
+`95.87.154.205`, but a TCP connect times out after 40s, with or without TLS
+verification, while other European academic hosts (`aclanthology.org`,
+`doi.org`) respond normally from the same machine in the same session.
+
+So we make no claim about the target's current availability -- it is not ours
+to make. The claim is narrower and checkable: the URL the package documents
+resolves and redirects correctly, and the note describes a third-party host
+reached only by following that redirect. A checking host that can reach
+CLARIN.SI reports nothing. We have kept the canonical handle rather than
+substituting a mirror, because it is the citable identifier the data is
+published under.
 
 ## Bundled data and licence
 
@@ -170,8 +217,9 @@ DESCRIPTION:
 
 ## Downstream dependencies
 
-There are no reverse dependencies. Verified against a live CRAN index of 24,739
-packages with `tools::package_dependencies("tidyEmoji", db = available.packages(),
+There are no reverse dependencies. Verified against a live CRAN index
+(24,748 packages when last re-checked) with
+`tools::package_dependencies("tidyEmoji", db = available.packages(),
 reverse = TRUE, which = c("Depends", "Imports", "LinkingTo", "Suggests",
 "Enhances"))`, which returns none. The same index confirms the currently
 published version is 0.3.0.

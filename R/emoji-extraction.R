@@ -40,7 +40,12 @@ emoji_extract_nest <- function(data, text) {
 #'
 #' @inheritParams emoji_summary
 #' @return A tibble with columns `.row_number`, `.emoji_unicode` and
-#'   `.emoji_count`.
+#'   `.emoji_count`. The columns of `data` are not carried, so a grouping is
+#'   not either -- join back on `.row_number` to recover them.
+#'   [emoji_extract_nest()] keeps your rows, and your grouping, instead.
+#' @seealso [emoji_extract_nest()] for the same emoji as a list-column that
+#'   keeps your rows, and [emoji_tokens()] for one row per occurrence with
+#'   metadata attached; [emoji_frequency()] for corpus-level counts.
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600\U0001f600", "none", "\U0001f44b"))
 #' emoji_extract_unnest(df, text)
@@ -71,6 +76,8 @@ emoji_extract_unnest <- function(data, text) {
 #' @inheritParams emoji_summary
 #' @return A tibble with the original columns plus `.emoji`, `.emoji_name`,
 #'   `.emoji_category` and `.emoji_sentiment`. Rows without emoji are dropped.
+#'   Your columns are kept, so a grouped input stays grouped, as it does
+#'   through [emoji_extract_nest()].
 #' @seealso [emoji_frequency()] for corpus-level counts and [emoji_sentiment()]
 #'   for per-row sentiment.
 #' @examples
@@ -78,8 +85,16 @@ emoji_extract_unnest <- function(data, text) {
 #' emoji_tokens(df, text)
 #' @export
 emoji_tokens <- function(data, text) {
+  # Resolve the column *before* coercing. This verb used to call
+  # .emoji_as_tibble() first, and tibble::as_tibble() happily converts a bare
+  # list or a character matrix -- so the `is.data.frame(data)` guard every
+  # other verb enforces never saw the original object, and
+  # emoji_tokens(list(text = ...)) silently succeeded where the rest of the
+  # package errors. NULL, a number, a function and an environment reached
+  # dplyr's or R's own internals instead of the package's message.
+  glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   data <- .emoji_as_tibble(data)
-  data$.emoji <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  data$.emoji <- glyphs
   out <- tidyr::unnest(data, ".emoji")
   # unnesting an empty list-column yields vctrs_unspecified, not character, so
   # a zero-row result had a differently typed .emoji than a populated one

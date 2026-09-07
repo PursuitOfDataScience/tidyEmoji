@@ -14,16 +14,35 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{time}{Unquoted column of dates or date-times (\code{Date}, \code{POSIXct}, or
 character in \code{"YYYY-MM-DD"} form). A date-time is bucketed by the calendar
 day it \emph{displays} as in its own timezone, not by its UTC day: an emoji
 posted at 23:30 New York time belongs to that day, not to the next one.
-Character values that cannot be read as a date warn and are dropped.}
+
+"Its own timezone" means the column's \code{tzone} attribute. A \code{POSIXct}
+created without one -- which is what \code{as.POSIXct("2024-01-01 23:30")} and
+most CSV readers give you -- has no timezone of its own, so R displays it
+in the session's, and the buckets follow. The same column then gives hour
+23 on one machine and hour 4 on another. Tag the column
+(\code{as.POSIXct(x, tz = "UTC")}, or \code{lubridate::force_tz()}) if the result
+has to be reproducible; a \code{Date} column is immune either way.
+
+A character column must lead with a four-digit year: \code{"2024-01-01"} or
+\code{"2024/01/01"}, with one- or two-digit month and day, and any trailing
+time ignored. Values that do not warn and are dropped -- but a column in
+which \emph{nothing} reads as a date is an error rather than a column of \code{NA},
+since there would be no time axis left. Note that \code{"01/02/2024"} is in the
+second group: convert a column written that way with \code{as.Date()} and its
+own \code{format} first.}
 }
 \value{
 A tibble with one row per emoji, most frequent first: \code{emoji},

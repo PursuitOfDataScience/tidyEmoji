@@ -14,10 +14,14 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Lexicon to use. Either a string naming a bundled lexicon
 (\code{"emotag1200"}, the default), the name of a registered lexicon (see
@@ -38,8 +42,16 @@ emotion columns -- \code{.emoji_anger}, \code{.emoji_anticipation},
 \code{.emoji_surprise}, \code{.emoji_trust} -- plus \code{.emoji_n} and
 \code{.emoji_n_scored}, one row per input row. With \code{long = TRUE}, one row per
 input row \emph{per emotion}, carrying \code{.emoji_emotion} and \code{.emoji_score}
-instead of the eight columns. Rows without emoji, or whose emoji are
-absent from the lexicon, receive \code{NA} scores.
+in place of the eight columns \strong{and of the two counts} -- the long form
+returns neither \code{.emoji_n} nor \code{.emoji_n_scored}. Rows without emoji, or
+whose emoji are absent from the lexicon, receive \code{NA} scores.
+
+\code{.emoji_n_scored} is what tells those two apart, as in
+\code{\link[=emoji_sentiment]{emoji_sentiment()}}: \code{0} means the row had emoji the lexicon could not
+score, \code{NA} that it had no emoji to score. Since the long form omits it,
+read the counts from a \code{long = FALSE} call on the same data (the rows are
+in the same order) when the distinction matters -- on a 150-glyph lexicon
+it usually does.
 }
 \description{
 \code{emoji_emotion()} scores each row's emoji across the eight Plutchik emotions

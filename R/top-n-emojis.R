@@ -47,7 +47,9 @@ emoji_frequency <- function(data, text) {
 #' @param duplicated If `TRUE`, emoji with several names occupy several rows.
 #'   Default `FALSE`.
 #' @param duplicated_unicode `r lifecycle::badge("deprecated")` Use `duplicated`
-#'   instead.
+#'   instead. Accepts only the values it ever meant -- `TRUE`, `FALSE`,
+#'   `"yes"` or `"no"` -- and errors on anything else rather than reading it as
+#'   `FALSE`, which is what `"TRUE"` and `1` used to get.
 #' @return A tibble with columns `emoji_name`, `unicode`, `emoji_category` and
 #'   `n`, sorted by descending `n` with ties broken by the glyph so the order is
 #'   deterministic -- the same rule [emoji_frequency()] uses. When a tie
@@ -71,6 +73,23 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
     lifecycle::deprecate_warn(
       "0.2.0", "top_n_emojis(duplicated_unicode)", "top_n_emojis(duplicated)"
     )
+    # `isTRUE(x) || identical(x, "yes")` collapses everything it does not
+    # recognise to FALSE, so `duplicated_unicode = "TRUE"` and `= 1` -- both
+    # plausible for an argument that once took a string -- silently returned
+    # the *opposite* of what was asked, and NA and character(0) passed
+    # unnoticed. The current `duplicated` rejects all of them; the deprecated
+    # spelling has to reject them too, or migrating to it is a downgrade.
+    # TRUE, FALSE, "yes" and "no" are the values this argument ever meant.
+    legacy <- list(TRUE, FALSE, "yes", "no")
+    if (!any(vapply(legacy, identical, logical(1), y = duplicated_unicode))) {
+      stop(sprintf(
+        paste0("`duplicated_unicode` takes TRUE, FALSE, \"yes\" or \"no\", ",
+               "not %s. It is deprecated in any case -- use ",
+               "`duplicated = TRUE` or `duplicated = FALSE`."),
+        paste0(class(duplicated_unicode)[1L], " of length ",
+               length(duplicated_unicode))
+      ), call. = FALSE)
+    }
     duplicated <- isTRUE(duplicated_unicode) ||
       identical(duplicated_unicode, "yes")
   }

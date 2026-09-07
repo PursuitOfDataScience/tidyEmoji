@@ -26,6 +26,12 @@ emoji_ambiguity_table <- function() {
     # 0 * log(0) is taken as 0, its limit.
     ent <- -rowSums(ifelse(is.na(p) | p <= 0, 0, p * log(p)))
     ent[!ok] <- NA_real_
+    # Unanimous annotators give -sum(1 * log(1)) = -0, which compares equal to
+    # zero and prints as "0" but formats as "-0.000" under sprintf() -- the
+    # commonest way a table reaches a paper. 166 of the 969 rows were affected.
+    # Adding zero maps -0 to +0 under IEEE 754 and leaves everything else,
+    # including NA, alone.
+    ent <- ent + 0
     gini <- 1 - rowSums(p^2)
     # score = (positive - negative) / n, and its binomial-style standard error
     # from the same counts: Var(X) = E[X^2] - E[X]^2 with X in {-1, 0, 1}.
@@ -94,6 +100,33 @@ emoji_ambiguity_measures <- function() {
 #' `rank` is always computed over the whole lexicon (1 = most ambiguous), so a
 #' rank keeps its meaning when `x` selects a handful of glyphs.
 #'
+#' **Read `n_annotations` before you read the ranking.** The lexicon's
+#' annotation counts are wildly uneven -- the median glyph has 18, and 69% have
+#' fewer than 50 -- and the first three measures are shape statistics that do
+#' not care how many annotations produced the shape. A glyph seen by three
+#' annotators who split one-one-one scores the maximum entropy of `log(3)` on
+#' that evidence alone, which is why five of the rows tied at `rank = 1` have
+#' 3, 3, 3, 9 and 15 annotations, and why 11 of the top 20 have fewer than 50.
+#'
+#' Three of those five are not emoji at all. The lexicon was built from 2015
+#' tweets and 233 of its 969 rows are characters absent from the reference
+#' table -- box-drawing characters, dingbats, enclosed letters -- so the head
+#' of the ranking can show a glyph such as `U+250C` that no corpus this
+#' package analyses will ever yield. They carry 6% of the lexicon's
+#' annotations and 86% of them have fewer than 50, so the `n_annotations`
+#' filter recommended here removes 200 of the 233 as a side effect. See the
+#' *Detection limitations* section of [emoji_sentiment_lexicon] for what the
+#' rest of them are.
+#'
+#' The bias is at the *top* of the ranking specifically, not across it: a
+#' thinly annotated glyph is usually unanimous, so entropy is positively
+#' correlated with the annotation count overall (Spearman 0.56). What three
+#' annotators can do that thousands cannot is hit the exact maximum. So filter
+#' on `n_annotations` before interpreting the head of the table, as the
+#' introduction vignette does. `"ci_width"` is the measure that accounts for
+#' thin evidence by construction -- it is a Wald interval, so it scales as
+#' `1 / sqrt(n)` at a given spread -- rather than ignoring it.
+#'
 #' @param x Optional character vector of emoji glyphs to report on. The default,
 #'   `NULL`, returns every emoji in the lexicon, most ambiguous first. Glyphs
 #'   absent from the lexicon come back with `NA` statistics.
@@ -116,11 +149,17 @@ emoji_ambiguity_measures <- function() {
 #'   `se = TRUE` for the uncertainty around a score.
 #' @examples
 #' head(emoji_ambiguity())
+#'
+#' # the head of that table is glyphs a handful of annotators disagreed about;
+#' # filter on n_annotations before reading it as a finding
+#' amb <- emoji_ambiguity()
+#' head(amb[amb$n_annotations >= 500, ])
+#'
 #' emoji_ambiguity(c("\U0001f602", "\U0001f643"))
 #' head(emoji_ambiguity(measure = "ci_width"))
 #' @export
 emoji_ambiguity <- function(x = NULL, measure = "entropy") {
-  measure <- match.arg(measure, emoji_ambiguity_measures())
+  measure <- .emoji_match_arg(measure, emoji_ambiguity_measures(), "measure")
   tbl <- emoji_ambiguity_table()
   amb <- tbl[[measure]]
   out <- tibble::tibble(
@@ -188,7 +227,7 @@ emoji_ambiguity <- function(x = NULL, measure = "entropy") {
 #' emoji_risk(df, text)
 #' @export
 emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
-  measure <- match.arg(measure, emoji_ambiguity_measures())
+  measure <- .emoji_match_arg(measure, emoji_ambiguity_measures(), "measure")
   tbl <- emoji_ambiguity_table()
   if (is.null(threshold)) {
     threshold <- unname(stats::quantile(tbl[[measure]], 0.75, na.rm = TRUE))
@@ -260,7 +299,7 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
 #' @export
 emoji_flag_ambiguous <- function(data, text, top_n = 10,
                                  measure = "entropy") {
-  measure <- match.arg(measure, emoji_ambiguity_measures())
+  measure <- .emoji_match_arg(measure, emoji_ambiguity_measures(), "measure")
   if (!is.null(top_n) && !.emoji_is_count(top_n, finite = FALSE)) {
     stop("`top_n` must be a single non-negative whole number, ",
          "or NULL for all.", call. = FALSE)

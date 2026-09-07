@@ -14,14 +14,20 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
 A tibble with columns \code{.row_number}, \code{.emoji_unicode} and
-\code{.emoji_count}.
+\code{.emoji_count}. The columns of \code{data} are not carried, so a grouping is
+not either -- join back on \code{.row_number} to recover them.
+\code{\link[=emoji_extract_nest]{emoji_extract_nest()}} keeps your rows, and your grouping, instead.
 }
 \description{
 \code{emoji_extract_unnest()} returns one row per (row, emoji) pair with a count,
@@ -31,4 +37,9 @@ the entry in \code{data}.
 \examples{
 df <- data.frame(text = c("hi \U0001f600\U0001f600", "none", "\U0001f44b"))
 emoji_extract_unnest(df, text)
+}
+\seealso{
+\code{\link[=emoji_extract_nest]{emoji_extract_nest()}} for the same emoji as a list-column that
+keeps your rows, and \code{\link[=emoji_tokens]{emoji_tokens()}} for one row per occurrence with
+metadata attached; \code{\link[=emoji_frequency]{emoji_frequency()}} for corpus-level counts.
 }

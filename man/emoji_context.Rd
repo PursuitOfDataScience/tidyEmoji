@@ -20,10 +20,14 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{window}{Size of the context window on each side, in tokens
 (\code{unit = "word"}) or characters (\code{unit = "char"}). Default \code{5}.}
@@ -39,7 +43,8 @@ columns \code{.row_number} (position of the entry in \code{data}), \code{.positi
 character position at which the emoji starts), \code{.emoji},
 \code{.emoji_context_left}, \code{.emoji_context_right} and \code{.emoji_context} (the two
 sides joined by a space -- the co-text without the glyph). Rows with no
-emoji contribute nothing.
+emoji contribute nothing. The columns of \code{data} are not carried, so a
+grouping is not either -- join back on \code{.row_number} to recover them.
 }
 \description{
 \code{emoji_context()} returns one row per emoji occurrence with a window of the

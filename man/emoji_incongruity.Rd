@@ -22,10 +22,14 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{text_score}{Unquoted numeric column holding the text's own sentiment.}
 
@@ -33,7 +37,10 @@ are emoji only when they carry \code{U+FE0F}.}
 \code{"sign_flip"} for the categorical polarity-flip feature.}
 
 \item{scale}{How to make the two scores comparable: \code{"rank"}, \code{"zscore"} or
-\code{"none"}. Required -- there is no sensible default.}
+\code{"none"}. Required -- there is no sensible default. \code{"rank"} and
+\code{"zscore"} are computed over the rows carrying both an emoji score and a
+\code{text_score}, not over the whole corpus, so rows with no scorable emoji
+cannot shift the answer for the rows that have one.}
 
 \item{where}{\code{"all"} (default) scores every emoji in the row; \code{"final"}
 scores only the trailing run of emoji that ends the text.}
@@ -46,6 +53,12 @@ the rank scale.}
 \code{data}, as a tibble, with added columns \code{.emoji_n},
 \code{.emoji_n_scored}, \code{.emoji_sentiment}, \code{.emoji_incongruity},
 \code{.emoji_polarity_flip} and \code{.emoji_incongruent}.
+
+\code{.emoji_n_scored} distinguishes the two ways the answer can be missing,
+as it does in \code{\link[=emoji_sentiment]{emoji_sentiment()}}: \code{0} means the row had emoji that the
+lexicon could not score, \code{NA} that it had no emoji to score. The four
+derived columns are \code{NA} in both cases, and also wherever \code{text_score}
+itself is missing or not finite.
 }
 \description{
 \code{emoji_incongruity()} measures the signed gap between the sentiment a row's
@@ -61,7 +74,9 @@ where the sign means something.
 
 A row with no scorable emoji gets \code{NA}, never \code{0}: a neutral emoji and no
 emoji at all are different states, and collapsing them silently biases every
-downstream model. The same applies to a missing \code{text_score}.
+downstream model. The same applies to a missing \code{text_score}, and to an
+infinite one -- a scorer that overflows is reported and treated as missing
+rather than left to turn every other row's z-score into \code{Inf}.
 
 With \code{where = "final"} only the run of emoji that ends the text is scored:
 both the illocutionary-force account of emoji and the P600 evidence on
@@ -93,6 +108,14 @@ default: you have to say how the two sides were made comparable.
 cross-method comparison; \code{"zscore"} standardises both; \code{"none"} compares the
 raw numbers, which is only meaningful if your text score already lives on
 the emoji lexicon's -1 to 1 scale.
+
+\code{"rank"} and \code{"zscore"} are computed over the rows the comparison is defined
+on -- those carrying both an emoji score and a \code{text_score} -- not over the
+whole corpus. A percentile only means something relative to a population,
+and the population the gap lives in is the scored subset, so rows with no
+scorable emoji cannot move the answer for the rows that have one. Subsetting
+the data to the scored rows before calling therefore gives the same numbers
+as calling on everything.
 }
 
 \examples{

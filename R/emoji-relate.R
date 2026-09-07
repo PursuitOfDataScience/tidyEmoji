@@ -37,12 +37,19 @@
 #' @inheritParams emoji_summary
 #' @param doc_id Optional unquoted column identifying documents. Rows sharing
 #'   a value are treated as one document. Default: each row is a document.
+#'
+#'   The result has a row per pair, so it grows with the *square* of the
+#'   distinct emoji in a document: a day or a conversation is cheap, and
+#'   pooling a whole corpus under one id is not. 800 distinct emoji in one
+#'   document is 319,600 pairs and a few seconds; 3790 would be 7.2 million.
 #' @param directed If `TRUE`, pairs are ordered by first appearance: a
 #'   document where the tears-of-joy emoji appears before the heart-eyes emoji
 #'   counts towards (tears-of-joy, heart-eyes), not the reverse. Default
 #'   `FALSE` (unordered pairs, with `item1` sorted before `item2`).
 #' @param sort If `TRUE` (default), sort by descending `n` (ties broken by
-#'   `item1`, `item2` so the order is deterministic).
+#'   `item1`, `item2` so the order is deterministic). `FALSE` sorts by `item1`
+#'   then `item2` instead -- still a fixed order, computed in the C locale, not
+#'   the order the pairs happened to be counted in.
 #' @return A tibble with columns `item1`, `item2` and `n`. Empty (but typed)
 #'   when no document contains two distinct emoji.
 #' @seealso [emoji_cooccurrence()] for the same counts with an optional
@@ -95,10 +102,18 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 
 #' Emoji co-occurrence counts, with an optional diagonal
 #'
-#' `emoji_cooccurrence()` is [emoji_pairs()] under another name, with one
-#' addition: `diagonal = TRUE` also returns the `item1 == item2` rows, whose
-#' `n` is the number of documents containing that emoji (the diagonal of the
+#' `emoji_cooccurrence()` is [emoji_pairs()] under the name the matrix form
+#' goes by, with one argument added and one taken away.
+#'
+#' Added: `diagonal = TRUE` also returns the `item1 == item2` rows, whose `n`
+#' is the number of documents containing that emoji (the diagonal of the
 #' co-occurrence matrix, i.e. its document frequency).
+#'
+#' Taken away: there is no `directed` here. A co-occurrence matrix is
+#' symmetric, so an ordered pair has no meaning on it and the diagonal this
+#' verb exists to add would not either. Use [emoji_pairs()] when you want
+#' `directed = TRUE`; the off-diagonal rows the two verbs return are otherwise
+#' identical.
 #'
 #' @inheritParams emoji_pairs
 #' @param diagonal If `TRUE`, include one `item1 == item2` row per emoji with
@@ -156,7 +171,10 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
 #' @return A tibble with columns `.row_number` (position of the entry in
 #'   `data`), `.position` (where the n-gram starts within the row's emoji
 #'   sequence) and `.emoji_ngram`. Rows with fewer than `n` emoji contribute
-#'   nothing.
+#'   nothing. The columns of `data` are not carried, so a grouping is not
+#'   either -- join back on `.row_number` to recover them. Unlike the
+#'   corpus-wide verbs this one does not pool your rows, so there is no
+#'   per-group answer being silently turned into a global one.
 #' @seealso [emoji_pairs()] for order-free co-occurrence;
 #'   [emoji_extract_unnest()] for the underlying one-emoji-per-row form.
 #' @examples

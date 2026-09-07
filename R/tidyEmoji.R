@@ -4,17 +4,32 @@
 #'
 #' @section Output and naming contract:
 #' Every verb follows `verb(data, text, ...)`, takes the text column unquoted,
-#' and returns a tibble. Columns *added to your data* carry a dotted
-#' `.emoji_*` prefix (`.emoji`, `.emoji_name`, `.emoji_category`,
-#' `.emoji_sentiment`, `.emoji_n`, ...) so they will not collide with your own
-#' columns; *new summary tibbles* (e.g. [emoji_frequency()]) use bare names.
-#' The dotted prefix is **reserved**: a verb overwrites any column of its own
+#' and returns a tibble. Output column names come in three shapes, and which
+#' one you get tells you what the column is:
+#'
+#' * **`.emoji_*`** -- a measurement of your text, added to your data
+#'   (`.emoji`, `.emoji_name`, `.emoji_category`, `.emoji_sentiment`,
+#'   `.emoji_n`, ...). Dotted so it will not collide with your own columns.
+#' * **`.row_number`, `.position`, `.period`, `.period_prev`,
+#'   `.period_label`** -- structural indices saying *where* a row came from
+#'   rather than what was measured: the position of the entry in `data`
+#'   ([emoji_extract_unnest()], [emoji_context()], [emoji_ngrams()],
+#'   [emoji_dfm()]), the character offset of an occurrence, or the time bucket
+#'   ([emoji_trend()], [emoji_turnover()], [emoji_seasonality()]). Dotted for
+#'   the same reason, and reserved on the same terms. That is the whole list.
+#' * **bare names** -- the columns of a *new* summary tibble, which is not your
+#'   data with something added ([emoji_frequency()]'s `emoji`, `name`, `n`;
+#'   [emoji_ambiguity()]'s `ambiguity`, `rank`). [emoji_dfm()] is the one verb
+#'   whose column names are data: one per emoji, named with the glyph itself.
+#'
+#' Every dotted name is **reserved**: a verb overwrites any column of its own
 #' output name that is already there, without warning. That is what makes
 #' verbs chainable and re-runnable -- `emoji_sentiment()` then
 #' `emoji_position()` both write `.emoji_n`, and both mean the same thing --
-#' but
-#' it also means a column of your own called `.emoji_n` will be replaced.
-#' Rename it first if you need to keep it.
+#' but it also means a column of your own called `.emoji_n` will be replaced,
+#' and that includes the text column itself if you named it `.emoji_n`. Rename
+#' it first if you need to keep it.
+#'
 #' `group` always refers to the Unicode top-level category (the term used by
 #' the underlying `emoji::emojis` table). Every glyph-to-metadata join is
 #' normalised through a codepoint key that strips the `U+FE0F` variation
@@ -28,12 +43,22 @@
 #'
 #' There is one systematic exclusion, and it is worth knowing before you read
 #' a count. Some code points are emoji only in their *emoji-presentation* form,
-#' that is only when followed by the variation selector `U+FE0F`. The
+#' that is only when the variation selector `U+FE0F` is present. The
 #' best-known is the heart: `U+2764 U+FE0F` is detected, the bare `U+2764` is
 #' not, and several keyboards emit the bare form. Across the reference
 #' catalogue 1252 emoji carry `U+FE0F`, and 216 of those become undetectable
 #' if it is dropped -- in the bundled sentiment lexicon, 57 of the scorable
-#' glyphs.
+#' glyphs. Counted the other way round, 212 of the catalogue's 5042 rows are
+#' spellings that are themselves undetectable; the two figures measure
+#' different things and both are right.
+#'
+#' The selector does not always go at the end. For 200 of those 212 it does,
+#' so appending `U+FE0F` is what makes them detectable. The exceptions are the
+#' 12 keycap sequences -- `#`, `*` and `0` to `9` followed by the enclosing
+#' keycap mark `U+20E3` -- where the selector belongs *between* the two:
+#' `U+0031 U+FE0F U+20E3` is detected and `U+0031 U+20E3 U+FE0F` is not.
+#' Inserting `U+FE0F` after the first code point is the rule that repairs all
+#' 212.
 #'
 #' The default does not match the bare forms, and that is deliberate rather
 #' than an oversight: the same set contains `U+00A9`, `U+00AE` and `U+2122`, so

@@ -117,7 +117,8 @@
 #'   character position at which the emoji starts), `.emoji`,
 #'   `.emoji_context_left`, `.emoji_context_right` and `.emoji_context` (the two
 #'   sides joined by a space -- the co-text without the glyph). Rows with no
-#'   emoji contribute nothing.
+#'   emoji contribute nothing. The columns of `data` are not carried, so a
+#'   grouping is not either -- join back on `.row_number` to recover them.
 #' @seealso [emoji_collocations()] for the corpus-level view;
 #'   [emoji_position()] for where emoji sit in a text.
 #' @examples
@@ -128,7 +129,7 @@
 #' @export
 emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
                           keep_text = FALSE) {
-  unit <- match.arg(unit)
+  unit <- .emoji_match_arg(unit, c("word", "char"), "unit")
   .emoji_check_flag(keep_text, "keep_text")
   if (!.emoji_is_count(window)) {
     stop("`window` must be a single finite whole number >= 0.", call. = FALSE)
@@ -217,7 +218,7 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #' @export
 emoji_collocations <- function(data, text, window = 5, min_n = 3,
                                measure = c("pmi", "count")) {
-  measure <- match.arg(measure)
+  measure <- .emoji_match_arg(measure, c("pmi", "count"), "measure")
   if (!.emoji_is_count(min_n, finite = FALSE)) {
     stop("`min_n` must be a single non-negative whole number.", call. = FALSE)
   }

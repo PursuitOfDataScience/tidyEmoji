@@ -64,6 +64,25 @@
 #' keyboard emits and text normally holds -- **the round trip returns the
 #' original text byte for byte, 100% of the time**.
 #'
+#' **That row of the table assumes the default `wrap`.** Restoring the text
+#' means [text_to_emoji()] can find the token, and it reads exactly
+#' `:shortcode:` -- a colon, the alias, a colon. So `wrap` is part of the
+#' reversibility contract, not a cosmetic choice:
+#'
+#' * `wrap = ":{x}:"` (the default) restores the original text exactly.
+#' * A `wrap` that decorates the token -- `"[:{x}:]"`, `":{x}:!"` -- brings the
+#'   emoji back but leaves the decoration behind, so the emoji is restored and
+#'   the text is not.
+#' * A `wrap` with no `:token:` at all -- `"{x}"`, `"<{x}>"`, `"@{x}@"`,
+#'   `":{x}"` -- restores nothing: the shortcode stays in the text as an
+#'   ordinary word. This is the case to watch, because it fails silently.
+#' * `wrap = "::{x}::"` is worse than either: the inner `:grinning:` matches,
+#'   so the emoji comes back wrapped in the leftover colons (`:<U+1F600>:`) and
+#'   a further round trip keeps adding to them.
+#'
+#' Change `wrap` for readability by all means, but not on a column you intend
+#' to restore.
+#'
 #' Unicode also lists shorter spellings of the same emoji, with the `U+FE0F`
 #' presentation selectors omitted. Feed one of those in and the round trip
 #' returns the *canonical* spelling instead: `U+270C` comes back as
@@ -97,7 +116,7 @@
 #' @export
 emoji_sanitize <- function(data, text, policy = "keep",
                            placeholder = "[emoji]", wrap = ":{x}:") {
-  policy <- match.arg(policy, .emoji_sanitize_policies())
+  policy <- .emoji_match_arg(policy, .emoji_sanitize_policies(), "policy")
   # resolve the column even for "keep", so a typo is an error under every
   # policy rather than only under the ones that rewrite
   col_name <- .emoji_col_name(data, {{ text }})

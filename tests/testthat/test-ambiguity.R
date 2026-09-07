@@ -37,7 +37,9 @@ test_that("each measure is a different, in-range statistic", {
   expect_equal(neu$ambiguity, neu$p_neu)
   ci <- emoji_ambiguity(measure = "ci_width")
   expect_true(all(ci$ambiguity >= 0, na.rm = TRUE))
-  expect_error(emoji_ambiguity(measure = "nonsense"), "should be one of")
+  # the message names `measure`, not match.arg()'s own 'arg' (round 84)
+  expect_error(emoji_ambiguity(measure = "nonsense"),
+               '`measure` has no option "nonsense"')
 })
 
 test_that("emoji_ambiguity(x) keeps the caller's glyphs and order", {

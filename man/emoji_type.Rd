@@ -14,20 +14,37 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
 \code{data}, as a tibble, with an added \code{.emoji_type} column. Unlike
-\code{\link[=emoji_categorize]{emoji_categorize()}}, no rows are dropped: a row with no emoji gets \code{NA}.
+\code{\link[=emoji_categorize]{emoji_categorize()}}, no rows are dropped: a row with no emoji gets \code{NA},
+as does a row whose emoji cannot be typed -- see Details.
 }
 \description{
 \code{emoji_type()} adds \code{.emoji_type}, the distinct functional types present in
 each row (see \code{\link[=as_emoji_type]{as_emoji_type()}}), separated by \code{|} when a row spans more than
 one. The face-versus-object contrast it exposes is the key variable in the
 consumer-behaviour literature on emoji in reviews and marketing copy.
+}
+\details{
+\code{.emoji_type} is \code{NA} for two different reasons, and this column cannot
+tell you which: a row with no emoji at all, and a row whose every emoji is
+one the recode cannot type. The second is rare but not impossible -- the
+recode maps the ten Unicode groups the catalogue currently uses, so a glyph
+in a group added to Unicode after your \pkg{emoji} package was built has no
+type -- and it is the same conflation \code{\link[=emoji_categorize]{emoji_categorize()}} describes for
+\code{.emoji_category}. \code{\link[=emoji_faceness]{emoji_faceness()}} separates them: \code{.emoji_n_typed} is
+\code{NA} when the row had no emoji and \code{0} when it had emoji that could not be
+typed. \code{\link[=emoji_provenance]{emoji_provenance()}} reports which catalogue you are matching
+against.
 }
 \examples{
 df <- data.frame(text = c("yum \U0001f355 \U0001f600", "\U0001f44d", "none"))

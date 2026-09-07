@@ -21,8 +21,22 @@ Derived from the \code{emojis} table of the \pkg{emoji} package; rebuilt by
 emoji_unicode_crosswalk
 }
 \description{
-A table with one row per emoji \emph{name}: each emoji glyph appears once for every
-GitHub-style name it is known by, so a single unicode can occur on several
-rows (for example the grinning face is both "grinning" and "grinning_face").
+A table with one row per (name, glyph) \emph{pair}, not one row per name and not
+one row per glyph. 5761 rows cover 4698 distinct names and 4853 distinct
+glyphs, because the mapping is many-to-many in both directions:
+}
+\details{
+\itemize{
+\item a glyph appears once for every GitHub-style name it is known by (the
+grinning face is both "grinning" and "grinning_face"), and
+\item a name appears once for every \emph{spelling} of the emoji it names -- 973 do,
+because the qualified and unqualified forms of an emoji are separate rows
+that share one alias (\code{A_button_blood_type_} names both
+\verb{U+1F170 U+FE0F} and the bare \verb{U+1F170}).
+}
+
+So a join by \code{emoji_name} duplicates rows for those 973 names. Join on \code{key}
+-- which collapses the spellings -- or \code{dplyr::distinct()} the columns you
+need first.
 }
 \keyword{datasets}

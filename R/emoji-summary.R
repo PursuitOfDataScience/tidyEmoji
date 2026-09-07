@@ -10,10 +10,14 @@
 #'   as [dplyr::mutate()] and [dplyr::filter()] do. The verbs that pool across
 #'   rows -- the counts, the co-occurrence edge lists, the time series -- warn
 #'   that they ignore the grouping and return one corpus-wide answer.
-#' @param text The text column to scan, supplied unquoted. What counts as an
-#'   emoji is the same in every verb; see the *Detection* section of
-#'   [tidyEmoji] for the one case that surprises people, code points that
-#'   are emoji only when they carry `U+FE0F`.
+#' @param text The text column to scan, supplied unquoted. Any atomic column
+#'   is accepted and read as character, so a `factor` works and a numeric,
+#'   `Date` or logical one simply contains no emoji. A list column -- or a
+#'   data-frame column -- is refused rather than coerced, because coercing one
+#'   deparses it and the emoji found would be in the code rather than in your
+#'   data. What counts as an emoji is the same in every verb; see the
+#'   *Detection* section of [tidyEmoji] for the one case that surprises
+#'   people, code points that are emoji only when they carry `U+FE0F`.
 #'
 #' @return A one-row tibble with columns \code{n_with_emoji} (entries containing at
 #'   least one emoji) and \code{n_total} (all entries).
@@ -45,6 +49,9 @@ emoji_summary <- function(data, text) {
 #' @return A tibble containing only the rows with at least one emoji, with
 #'   every original column kept. A grouped input stays grouped, as it would
 #'   through [dplyr::filter()].
+#' @seealso [emoji_summary()] for the counts this filter is derived from;
+#'   [emoji_ratio()] to find the rows that are *only* emoji;
+#'   [emoji_extract_unnest()] and [emoji_tokens()] for the emoji themselves.
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600", "no emoji", "bye \U0001f44b"))
 #' emoji_filter(df, text)

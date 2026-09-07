@@ -25,7 +25,7 @@ Small vector-level helpers for ad-hoc use. They do not take a data frame.
 \details{
 \itemize{
 \item \code{as_emoji_name(x)} maps emoji glyphs to their Unicode names.
-\item \code{as_emoji_shortcode(x)} maps emoji glyphs to their first shortcode.
+\item \code{as_emoji_shortcode(x)} maps emoji glyphs to a shortcode.
 \item \code{as_emoji(x)} maps names/shortcodes to the emoji glyph (emojize).
 }
 
@@ -51,6 +51,26 @@ decorated one (\code{umbrella}, \code{snowman}, \code{calendar}, \code{sunglasse
 shortcode through \code{\link[=text_to_emoji]{text_to_emoji()}}, or the full Unicode name (\code{"dog face"})
 to \code{as_emoji()}, if you need one namespace specifically.
 }
+\section{Which shortcode you get}{
+
+\code{as_emoji_shortcode()} returns one shortcode \emph{per emoji}, not per spelling:
+the first alias of the emoji's fully-qualified (RGI) form. That is what
+makes it agree with \code{\link[=emoji_to_text]{emoji_to_text()}} and survive a round trip, but it is
+not always the first alias of the glyph you passed in. 344 codepoint keys
+have a different first alias on each of their two spellings, so for 175 of
+the catalogue's 5042 rows the two answers differ:
+\code{as_emoji_shortcode("\\u2764")} is \code{"heart"}, the qualified heart's alias,
+where the bare \code{U+2764} row's own first alias is \code{"red_heart"}.
+
+\code{\link[=emoji_search]{emoji_search()}} reports the other one -- the matched row's own alias, since
+a search result is a row -- so the two verbs can disagree on the same glyph.
+Both resolve back to the same emoji through \code{\link[=text_to_emoji]{text_to_emoji()}}, which reads
+every alias, so where both answer the disagreement is cosmetic. Where they
+differ in substance is the 189 rows that have no alias: \code{\link[=emoji_search]{emoji_search()}}
+reports \code{NA} for those, while \code{as_emoji_shortcode()} still answers for all
+189, having borrowed the alias of the glyph's other spelling.
+}
+
 \examples{
 as_emoji_name(c("\U0001f600", "\u2764\ufe0f"))
 as_emoji_shortcode(c("\U0001f600", "\u2764\ufe0f"))

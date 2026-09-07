@@ -65,7 +65,8 @@ test_that("emoji_sanitize keeps the column name and validates its arguments", {
   out <- emoji_sanitize(df, body, policy = "strip")
   expect_named(out, c("id", "body"))
   expect_equal(out$body, c("hi", "plain"))
-  expect_error(emoji_sanitize(df, body, policy = "delete"), "should be one of")
+  expect_error(emoji_sanitize(df, body, policy = "delete"),
+               '`policy` has no option "delete"')
   expect_error(emoji_sanitize(df, body, policy = "placeholder",
                               placeholder = c("a", "b")), "single string")
   expect_error(emoji_sanitize(df, nope, policy = "keep"), "nope")

@@ -14,6 +14,11 @@
 #'   shortcode, written as a template with `{x}` standing for the shortcode.
 #'   Default `":{x}:"`. Must contain `{x}`, or every emoji would be replaced by
 #'   the same literal string. Ignored for `format = "name"`.
+#'
+#'   Only the default is reversible by [text_to_emoji()], which looks for
+#'   exactly `:shortcode:`; a `wrap` that does not produce that token leaves
+#'   the shortcode in the text as an ordinary word, silently. See
+#'   [emoji_sanitize()] for the cases.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`, and emoji with no known name are left
 #'   in place unchanged.
@@ -26,7 +31,7 @@
 #' @export
 emoji_to_text <- function(data, text, format = c("name", "shortcode"),
                           wrap = ":{x}:") {
-  format <- match.arg(format)
+  format <- .emoji_match_arg(format, c("name", "shortcode"), "format")
   if (format == "shortcode" &&
       (!is.character(wrap) || length(wrap) != 1L || is.na(wrap) ||
          !grepl("{x}", wrap, fixed = TRUE))) {
@@ -35,6 +40,12 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
     stop("`wrap` must be a single string containing `{x}`, the placeholder ",
          "for the shortcode.", call. = FALSE)
   }
+  # A "bytes"-encoded template is worse than a rejected one: paste()ing it
+  # into the rewritten text marks the *output* column "bytes" too, so the
+  # verb returns happily and the failure surfaces later, somewhere else, as
+  # R's "translating strings with \"bytes\" encoding is not allowed" from
+  # inside whatever the user does with the column next.
+  if (format == "shortcode") .emoji_check_string(wrap, "wrap")
   v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
@@ -96,9 +107,9 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #'
 #' `text_to_emoji()` returns a copy of `data` with its text column rewritten so
 #' that every `:shortcode:` token is replaced by the corresponding emoji glyph
-#' (the inverse of [emoji_to_text()] with `format = "shortcode"`, up to the
-#' presentation selector -- see Details). Shortcodes that do not match a known
-#' emoji are left unchanged.
+#' (the inverse of [emoji_to_text()] with `format = "shortcode"` *and its
+#' default* `wrap`, up to the presentation selector -- see Details).
+#' Shortcodes that do not match a known emoji are left unchanged.
 #'
 #' @details
 #' A shortcode token is a colon, one or more of `A-Z`, `a-z`, `0-9`, `_`, `+`
@@ -110,13 +121,24 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' **The round trip recovers the emoji, not necessarily the same bytes.** Like
 #' the vector helpers, both directions resolve through \code{emoji_key()},
 #' which ignores `U+FE0F`, so an unqualified glyph and its fully-qualified form
-#' share one shortcode and this verb emits the fully-qualified (RGI) form of
-#' the pair. Feeding the whole emoji catalogue through
-#' `emoji_to_text(format = "shortcode")` and back therefore returns an
-#' identical code-point key for every entry, and identical bytes for the 79%
-#' that were already fully qualified; the rest gain `U+FE0F`. A second round
-#' trip changes nothing, so the result is stable. Use \code{emoji_key()} rather
-#' than string equality when comparing before and after.
+#' share one shortcode and only one of the two spellings can come back.
+#' Feeding the whole emoji catalogue through
+#' `emoji_to_text(format = "shortcode")` and back returns an identical
+#' code-point key for all 5042 entries and identical bytes for 79% of them.
+#' The other 1040 differ **by `U+FE0F` alone, never by more**: they come back
+#' as the spelling this verb's shortcode table carries. A second round trip
+#' changes nothing, so the result is stable either way -- but compare with
+#' \code{emoji_key()}, never with string equality.
+#'
+#' Which 79% is *not* the same question as which were already fully qualified,
+#' and the two sets genuinely differ in both directions. The bare heart
+#' (`U+2764`) survives unchanged, because that unqualified spelling is the one
+#' `:heart:` maps to; the already-qualified man detective
+#' (`U+1F575 U+FE0F U+200D U+2642`) does not, because it comes back with a
+#' second selector on the gender sign. If your text holds the *canonical*
+#' spelling of each emoji -- what a keyboard emits -- the round trip is
+#' byte-exact for all 3790 of them; see [emoji_sanitize()], which tabulates
+#' both denominators.
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with the text column rewritten in place. `NA`
@@ -161,12 +183,30 @@ text_to_emoji <- function(data, text) {
 #' Small vector-level helpers for ad-hoc use. They do not take a data frame.
 #'
 #' * `as_emoji_name(x)` maps emoji glyphs to their Unicode names.
-#' * `as_emoji_shortcode(x)` maps emoji glyphs to their first shortcode.
+#' * `as_emoji_shortcode(x)` maps emoji glyphs to a shortcode.
 #' * `as_emoji(x)` maps names/shortcodes to the emoji glyph (emojize).
 #'
 #' All three resolve through \code{emoji_key()}, so qualified emoji (carrying
 #' `U+FE0F`) and unqualified forms resolve identically. Unmatched inputs return
 #' `NA`.
+#'
+#' @section Which shortcode you get:
+#' `as_emoji_shortcode()` returns one shortcode *per emoji*, not per spelling:
+#' the first alias of the emoji's fully-qualified (RGI) form. That is what
+#' makes it agree with [emoji_to_text()] and survive a round trip, but it is
+#' not always the first alias of the glyph you passed in. 344 codepoint keys
+#' have a different first alias on each of their two spellings, so for 175 of
+#' the catalogue's 5042 rows the two answers differ:
+#' `as_emoji_shortcode("\u2764")` is `"heart"`, the qualified heart's alias,
+#' where the bare `U+2764` row's own first alias is `"red_heart"`.
+#'
+#' [emoji_search()] reports the other one -- the matched row's own alias, since
+#' a search result is a row -- so the two verbs can disagree on the same glyph.
+#' Both resolve back to the same emoji through [text_to_emoji()], which reads
+#' every alias, so where both answer the disagreement is cosmetic. Where they
+#' differ in substance is the 189 rows that have no alias: [emoji_search()]
+#' reports `NA` for those, while `as_emoji_shortcode()` still answers for all
+#' 189, having borrowed the alias of the glyph's other spelling.
 #'
 #' @details
 #' `as_emoji()` accepts either namespace in the same argument, and 464 strings

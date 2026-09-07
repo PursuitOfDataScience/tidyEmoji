@@ -20,10 +20,14 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{policy}{One of \code{"keep"} (default), \code{"strip"}, \code{"name"},
 \code{"shortcode"} or \code{"placeholder"}.}
@@ -90,6 +94,26 @@ Measured against the whole reference table of \pkg{emoji} 16.0.0: for all
 3790 emoji in their canonical (fully qualified) spelling -- the spelling a
 keyboard emits and text normally holds -- \strong{the round trip returns the
 original text byte for byte, 100\% of the time}.
+
+\strong{That row of the table assumes the default \code{wrap}.} Restoring the text
+means \code{\link[=text_to_emoji]{text_to_emoji()}} can find the token, and it reads exactly
+\verb{:shortcode:} -- a colon, the alias, a colon. So \code{wrap} is part of the
+reversibility contract, not a cosmetic choice:
+\itemize{
+\item \code{wrap = ":{x}:"} (the default) restores the original text exactly.
+\item A \code{wrap} that decorates the token -- \code{"[:{x}:]"}, \code{":{x}:!"} -- brings the
+emoji back but leaves the decoration behind, so the emoji is restored and
+the text is not.
+\item A \code{wrap} with no \verb{:token:} at all -- \code{"{x}"}, \code{"<{x}>"}, \code{"@{x}@"},
+\code{":{x}"} -- restores nothing: the shortcode stays in the text as an
+ordinary word. This is the case to watch, because it fails silently.
+\item \code{wrap = "::{x}::"} is worse than either: the inner \verb{:grinning:} matches,
+so the emoji comes back wrapped in the leftover colons (\verb{:<U+1F600>:}) and
+a further round trip keeps adding to them.
+}
+
+Change \code{wrap} for readability by all means, but not on a column you intend
+to restore.
 
 Unicode also lists shorter spellings of the same emoji, with the \code{U+FE0F}
 presentation selectors omitted. Feed one of those in and the round trip

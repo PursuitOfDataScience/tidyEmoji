@@ -14,16 +14,27 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n},
 \code{.emoji_n_typed} (emoji whose type is known), \code{.emoji_n_face} and
 \code{.emoji_faceness} (\code{.emoji_n_face / .emoji_n_typed}). Rows with no emoji
 get \code{NA}.
+
+\code{.emoji_n_typed} distinguishes the two ways a share can be missing, as
+\code{.emoji_n_scored} does in \code{\link[=emoji_sentiment]{emoji_sentiment()}}: \code{0} means the row had
+emoji whose type the recode does not know, \code{NA} that it had no emoji at
+all. \code{.emoji_faceness} is \code{NA} in both cases -- a share of no typable
+emoji is not 0, it is unknown -- so read the count before the share. See
+\code{\link[=emoji_type]{emoji_type()}} for when a glyph can be untypable.
 }
 \description{
 \code{emoji_faceness()} reports the share of a row's emoji that are faces. Face

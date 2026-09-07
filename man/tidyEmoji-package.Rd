@@ -13,17 +13,33 @@ A tidy toolkit for working with the emoji in any text column, such as social-med
 \section{Output and naming contract}{
 
 Every verb follows \code{verb(data, text, ...)}, takes the text column unquoted,
-and returns a tibble. Columns \emph{added to your data} carry a dotted
-\verb{.emoji_*} prefix (\code{.emoji}, \code{.emoji_name}, \code{.emoji_category},
-\code{.emoji_sentiment}, \code{.emoji_n}, ...) so they will not collide with your own
-columns; \emph{new summary tibbles} (e.g. \code{\link[=emoji_frequency]{emoji_frequency()}}) use bare names.
-The dotted prefix is \strong{reserved}: a verb overwrites any column of its own
+and returns a tibble. Output column names come in three shapes, and which
+one you get tells you what the column is:
+\itemize{
+\item \strong{\verb{.emoji_*}} -- a measurement of your text, added to your data
+(\code{.emoji}, \code{.emoji_name}, \code{.emoji_category}, \code{.emoji_sentiment},
+\code{.emoji_n}, ...). Dotted so it will not collide with your own columns.
+\item \strong{\code{.row_number}, \code{.position}, \code{.period}, \code{.period_prev},
+\code{.period_label}} -- structural indices saying \emph{where} a row came from
+rather than what was measured: the position of the entry in \code{data}
+(\code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}}, \code{\link[=emoji_context]{emoji_context()}}, \code{\link[=emoji_ngrams]{emoji_ngrams()}},
+\code{\link[=emoji_dfm]{emoji_dfm()}}), the character offset of an occurrence, or the time bucket
+(\code{\link[=emoji_trend]{emoji_trend()}}, \code{\link[=emoji_turnover]{emoji_turnover()}}, \code{\link[=emoji_seasonality]{emoji_seasonality()}}). Dotted for
+the same reason, and reserved on the same terms. That is the whole list.
+\item \strong{bare names} -- the columns of a \emph{new} summary tibble, which is not your
+data with something added (\code{\link[=emoji_frequency]{emoji_frequency()}}'s \code{emoji}, \code{name}, \code{n};
+\code{\link[=emoji_ambiguity]{emoji_ambiguity()}}'s \code{ambiguity}, \code{rank}). \code{\link[=emoji_dfm]{emoji_dfm()}} is the one verb
+whose column names are data: one per emoji, named with the glyph itself.
+}
+
+Every dotted name is \strong{reserved}: a verb overwrites any column of its own
 output name that is already there, without warning. That is what makes
 verbs chainable and re-runnable -- \code{emoji_sentiment()} then
 \code{emoji_position()} both write \code{.emoji_n}, and both mean the same thing --
-but
-it also means a column of your own called \code{.emoji_n} will be replaced.
-Rename it first if you need to keep it.
+but it also means a column of your own called \code{.emoji_n} will be replaced,
+and that includes the text column itself if you named it \code{.emoji_n}. Rename
+it first if you need to keep it.
+
 \code{group} always refers to the Unicode top-level category (the term used by
 the underlying \code{emoji::emojis} table). Every glyph-to-metadata join is
 normalised through a codepoint key that strips the \code{U+FE0F} variation
@@ -39,12 +55,22 @@ every verb asks the same question, so counts agree across the package.
 
 There is one systematic exclusion, and it is worth knowing before you read
 a count. Some code points are emoji only in their \emph{emoji-presentation} form,
-that is only when followed by the variation selector \code{U+FE0F}. The
+that is only when the variation selector \code{U+FE0F} is present. The
 best-known is the heart: \verb{U+2764 U+FE0F} is detected, the bare \code{U+2764} is
 not, and several keyboards emit the bare form. Across the reference
 catalogue 1252 emoji carry \code{U+FE0F}, and 216 of those become undetectable
 if it is dropped -- in the bundled sentiment lexicon, 57 of the scorable
-glyphs.
+glyphs. Counted the other way round, 212 of the catalogue's 5042 rows are
+spellings that are themselves undetectable; the two figures measure
+different things and both are right.
+
+The selector does not always go at the end. For 200 of those 212 it does,
+so appending \code{U+FE0F} is what makes them detectable. The exceptions are the
+12 keycap sequences -- \verb{#}, \code{*} and \code{0} to \code{9} followed by the enclosing
+keycap mark \code{U+20E3} -- where the selector belongs \emph{between} the two:
+\verb{U+0031 U+FE0F U+20E3} is detected and \verb{U+0031 U+20E3 U+FE0F} is not.
+Inserting \code{U+FE0F} after the first code point is the rule that repairs all
+212.
 
 The default does not match the bare forms, and that is deliberate rather
 than an oversight: the same set contains \verb{U+00A9}, \verb{U+00AE} and \code{U+2122}, so

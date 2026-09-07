@@ -53,9 +53,42 @@ than "how much do readers disagree?".
 
 \code{rank} is always computed over the whole lexicon (1 = most ambiguous), so a
 rank keeps its meaning when \code{x} selects a handful of glyphs.
+
+\strong{Read \code{n_annotations} before you read the ranking.} The lexicon's
+annotation counts are wildly uneven -- the median glyph has 18, and 69\% have
+fewer than 50 -- and the first three measures are shape statistics that do
+not care how many annotations produced the shape. A glyph seen by three
+annotators who split one-one-one scores the maximum entropy of \code{log(3)} on
+that evidence alone, which is why five of the rows tied at \code{rank = 1} have
+3, 3, 3, 9 and 15 annotations, and why 11 of the top 20 have fewer than 50.
+
+Three of those five are not emoji at all. The lexicon was built from 2015
+tweets and 233 of its 969 rows are characters absent from the reference
+table -- box-drawing characters, dingbats, enclosed letters -- so the head
+of the ranking can show a glyph such as \verb{U+250C} that no corpus this
+package analyses will ever yield. They carry 6\% of the lexicon's
+annotations and 86\% of them have fewer than 50, so the \code{n_annotations}
+filter recommended here removes 200 of the 233 as a side effect. See the
+\emph{Detection limitations} section of \link{emoji_sentiment_lexicon} for what the
+rest of them are.
+
+The bias is at the \emph{top} of the ranking specifically, not across it: a
+thinly annotated glyph is usually unanimous, so entropy is positively
+correlated with the annotation count overall (Spearman 0.56). What three
+annotators can do that thousands cannot is hit the exact maximum. So filter
+on \code{n_annotations} before interpreting the head of the table, as the
+introduction vignette does. \code{"ci_width"} is the measure that accounts for
+thin evidence by construction -- it is a Wald interval, so it scales as
+\code{1 / sqrt(n)} at a given spread -- rather than ignoring it.
 }
 \examples{
 head(emoji_ambiguity())
+
+# the head of that table is glyphs a handful of annotators disagreed about;
+# filter on n_annotations before reading it as a finding
+amb <- emoji_ambiguity()
+head(amb[amb$n_annotations >= 500, ])
+
 emoji_ambiguity(c("\U0001f602", "\U0001f643"))
 head(emoji_ambiguity(measure = "ci_width"))
 }

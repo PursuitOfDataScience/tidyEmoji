@@ -8,14 +8,15 @@ emoji_provenance()
 }
 \value{
 A one-row tibble with columns \code{tidyEmoji}, \code{emoji_pkg},
-\code{unicode_emoji}, \code{n_emoji}, \code{sentiment_lexicon}, \code{emotion_lexicon} and \code{R}.
+\code{unicode_emoji}, \code{n_emoji} (rows of the reference table -- see Details),
+\code{sentiment_lexicon}, \code{emotion_lexicon} and \code{R}.
 }
 \description{
 \code{emoji_provenance()} reports every version an emoji result depends on:
 tidyEmoji itself, the \pkg{emoji} package supplying the reference table, the
-Unicode emoji version that table reflects, the size of the detectable emoji
-set, and the bundled lexicons. It is meant to be pasted into a methods
-section or stored beside a result.
+Unicode emoji version that table reflects, the size of that table, and the
+bundled lexicons. It is meant to be pasted into a methods section or stored
+beside a result.
 }
 \details{
 None of these are cosmetic. A glyph released after your \pkg{emoji} package
@@ -24,6 +25,18 @@ thousands of emoji that exist; and "we analysed emoji sentiment" without a
 lexicon name is not a reproducible statement. See \code{\link[=emoji_lexicons]{emoji_lexicons()}} for the
 lexicons in detail and \code{\link[=emoji_unicode_version]{emoji_unicode_version()}} for the Unicode version on
 its own.
+
+\code{n_emoji} counts \strong{rows of the reference table}, which are spellings, not
+distinct emoji. With \pkg{emoji} 16.0.0 it is 5042, and those 5042 rows
+carry only 3790 distinct code-point keys, because an emoji whose
+presentation can be selected appears both with and without \code{U+FE0F}. A
+methods section reporting "5042 emoji" therefore overstates the vocabulary
+by the 1252 duplicate spellings; \code{length(unique(emoji_reference()$key))} is
+the count of distinct emoji, and 212 of the 5042 spellings are not
+detectable in text as written at all (see \link{emoji_sentiment_lexicon} for
+why). No \emph{emoji} is lost to that: every one of the 3790 keys is reachable
+through at least one detectable spelling. The two lexicon strings count
+their tables' rows the same way.
 }
 \examples{
 emoji_provenance()

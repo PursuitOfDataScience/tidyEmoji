@@ -84,10 +84,26 @@ emoji_position <- function(data, text) {
 #' emoji per character and per whitespace-delimited token. Rows with no emoji
 #' get densities of 0; rows whose text is `NA` or empty get `NA`.
 #'
+#' @details
+#' "Character" here means *code point*, the unit [nchar()] counts, so a
+#' multi-code-point emoji inflates the denominator by all of its code points.
+#' The same visible text therefore gives different answers depending on how the
+#' emoji is built: `"hi <emoji>"` is four graphemes either way, but
+#' `.emoji_per_char` is 0.25 for a single-code-point smiley, 0.200 for a
+#' two-code-point flag and 0.100 for a seven-code-point ZWJ family. It is not
+#' exotic -- 115 of the 560 emoji-bearing rows in the corpus behind the
+#' introduction vignette contain a multi-code-point emoji.
+#'
+#' This is the same basis [emoji_ratio()] uses and states, and the opposite of
+#' the one [emoji_position()] uses: `.emoji_rel_position` counts each emoji as
+#' one position, because a proportion of the message has to. If you want a
+#' density that does not move with an emoji's internal length,
+#' `.emoji_per_token` is immune -- all three examples above give 0.5.
+#'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
-#'   `.emoji_per_char` (emoji per character of text) and `.emoji_per_token`
-#'   (emoji per whitespace-delimited token).
+#'   `.emoji_per_char` (emoji per character, i.e. per code point, of text) and
+#'   `.emoji_per_token` (emoji per whitespace-delimited token).
 #' @seealso [emoji_position()], [emoji_ratio()].
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600", "\U0001f600\U0001f600", "plain"))
@@ -139,7 +155,9 @@ emoji_density <- function(data, text) {
 #' @return `data`, as a tibble, with added columns `.emoji_ratio` (emoji
 #'   characters / all characters, 0 when there are no emoji) and
 #'   `.emoji_only` (`TRUE` when the text contains emoji and nothing else but
-#'   whitespace). `NA` text gets `NA` in both.
+#'   whitespace). `NA` text gets `NA` in both. Empty text (`""`) has no
+#'   characters to take a share of, so `.emoji_ratio` is `NA` there too, but
+#'   `.emoji_only` is `FALSE`: an empty string is not a row of emoji.
 #' @seealso [emoji_position()], [emoji_density()]; [emoji_filter()] to keep
 #'   emoji-bearing rows.
 #' @examples

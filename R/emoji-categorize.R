@@ -19,6 +19,10 @@
 #' @return `data`, as a tibble, filtered to the rows containing at least one
 #'   emoji, with an added `.emoji_category` column. That column is `NA` for a
 #'   row whose emoji are all absent from the reference table.
+#' @seealso [emoji_type()] for the smaller functional vocabulary recoded from
+#'   the same group and subgroup, and [emoji_faceness()] for the face share it
+#'   reduces to; [emoji_frequency()] for per-glyph counts carrying `group`;
+#'   [category_unicode_crosswalk] for the ten categories themselves.
 #' @examples
 #' df <- data.frame(text = c("smile \U0001f600",
 #'                           "flag \U0001f3c1\U0001f600",

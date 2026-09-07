@@ -17,10 +17,14 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 }
 \value{
 A tibble containing only the rows with at least one emoji, with
@@ -35,4 +39,9 @@ synonym retained for backward compatibility.
 \examples{
 df <- data.frame(text = c("hi \U0001f600", "no emoji", "bye \U0001f44b"))
 emoji_filter(df, text)
+}
+\seealso{
+\code{\link[=emoji_summary]{emoji_summary()}} for the counts this filter is derived from;
+\code{\link[=emoji_ratio]{emoji_ratio()}} to find the rows that are \emph{only} emoji;
+\code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}} and \code{\link[=emoji_tokens]{emoji_tokens()}} for the emoji themselves.
 }

@@ -81,9 +81,22 @@ as_emoji_type <- function(x) {
 #' one. The face-versus-object contrast it exposes is the key variable in the
 #' consumer-behaviour literature on emoji in reviews and marketing copy.
 #'
+#' @details
+#' `.emoji_type` is `NA` for two different reasons, and this column cannot
+#' tell you which: a row with no emoji at all, and a row whose every emoji is
+#' one the recode cannot type. The second is rare but not impossible -- the
+#' recode maps the ten Unicode groups the catalogue currently uses, so a glyph
+#' in a group added to Unicode after your \pkg{emoji} package was built has no
+#' type -- and it is the same conflation [emoji_categorize()] describes for
+#' `.emoji_category`. [emoji_faceness()] separates them: `.emoji_n_typed` is
+#' `NA` when the row had no emoji and `0` when it had emoji that could not be
+#' typed. [emoji_provenance()] reports which catalogue you are matching
+#' against.
+#'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with an added `.emoji_type` column. Unlike
-#'   [emoji_categorize()], no rows are dropped: a row with no emoji gets `NA`.
+#'   [emoji_categorize()], no rows are dropped: a row with no emoji gets `NA`,
+#'   as does a row whose emoji cannot be typed -- see Details.
 #' @seealso [as_emoji_type()], [emoji_faceness()], [emoji_categorize()].
 #' @examples
 #' df <- data.frame(text = c("yum \U0001f355 \U0001f600", "\U0001f44d", "none"))
@@ -120,6 +133,13 @@ emoji_type <- function(data, text) {
 #'   `.emoji_n_typed` (emoji whose type is known), `.emoji_n_face` and
 #'   `.emoji_faceness` (`.emoji_n_face / .emoji_n_typed`). Rows with no emoji
 #'   get `NA`.
+#'
+#'   `.emoji_n_typed` distinguishes the two ways a share can be missing, as
+#'   `.emoji_n_scored` does in [emoji_sentiment()]: `0` means the row had
+#'   emoji whose type the recode does not know, `NA` that it had no emoji at
+#'   all. `.emoji_faceness` is `NA` in both cases -- a share of no typable
+#'   emoji is not 0, it is unknown -- so read the count before the share. See
+#'   [emoji_type()] for when a glyph can be untypable.
 #' @seealso [emoji_type()], [as_emoji_type()].
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f355", "\U0001f600", "none"))

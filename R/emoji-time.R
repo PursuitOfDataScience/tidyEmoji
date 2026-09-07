@@ -1,10 +1,16 @@
 # Time: adoption, turnover, drift.
 #
 # Every substantive emoji study is longitudinal or comparative, and until now
-# the package had no time verb at all. Two of these are almost free: the
+# the package had no time verb at all. Two of these are almost free -- the
 # reference table already carries the Unicode version that introduced each
 # glyph, which is a ready-made time axis once it is paired with the release
-# dates.
+# dates below -- and those two are emoji_version_profile() and
+# emoji_adoption_lag(). "Almost free" means needing no new dataset, not needing
+# no timestamp: only emoji_version_profile() runs without a `time` column,
+# because emoji_adoption_lag() has to find each glyph's first appearance in the
+# corpus before it can compare that with the release date. The introduction
+# vignette read this comment the other way round and told readers two verbs
+# need no timestamp.
 
 # Coerce a user-supplied time column to Date, refusing anything ambiguous
 # rather than guessing.
@@ -22,15 +28,31 @@
   }
   if (is.factor(x)) x <- as.character(x)
   if (is.character(x)) {
-    d <- suppressWarnings(as.Date(x, format = "%Y-%m-%d"))
-    if (anyNA(d) && !all(is.na(x))) {
-      d2 <- suppressWarnings(as.Date(x, format = "%Y/%m/%d"))
-      d[is.na(d)] <- d2[is.na(d)]
+    # The year has to be matched as four digits before parsing, not left to
+    # as.Date(): its %Y accepts a one- or two-digit year, so "01/02/2024" was
+    # read as year 1, month 2, day 20 -- a date in the year 1, silently, for
+    # any column written dd/mm/yyyy or mm/dd/yyyy. That is most CSVs written
+    # outside ISO-land, and every time verb then bucketed on it. Requiring
+    # `YYYY` up front sends those values to the warn/error paths below instead,
+    # where they are reported. Month and day still take one or two digits, so
+    # "2024-1-1" keeps working, and a trailing time is still ignored as
+    # as.Date() always did.
+    iso <- !is.na(x) &
+      grepl("^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}", x)
+    d <- rep(as.Date(NA), length(x))
+    if (any(iso)) {
+      d[iso] <- suppressWarnings(
+        as.Date(gsub("/", "-", x[iso]), format = "%Y-%m-%d")
+      )
     }
     if (all(is.na(d)) && !all(is.na(x))) {
       stop(sprintf(
-        "`%s` must be a Date, a POSIXct, or a character column of dates in %s.",
-        arg, "\"YYYY-MM-DD\" form"
+        paste0("No value in `%s` could be read as a date, so there is no time ",
+               "axis to work with. Expected \"YYYY-MM-DD\" or ",
+               "\"YYYY/MM/DD\" -- note the four-digit year first; first ",
+               "value seen: %s. Convert the column with as.Date() and its ",
+               "own `format` if it is written another way."),
+        arg, encodeString(x[!is.na(x)][1L], quote = "\"")
       ), call. = FALSE)
     }
     # A value that was present but did not parse becomes NA, and every time
@@ -196,7 +218,22 @@ emoji_unicode_version <- function() {
 #'   character in `"YYYY-MM-DD"` form). A date-time is bucketed by the calendar
 #'   day it *displays* as in its own timezone, not by its UTC day: an emoji
 #'   posted at 23:30 New York time belongs to that day, not to the next one.
-#'   Character values that cannot be read as a date warn and are dropped.
+#'
+#'   "Its own timezone" means the column's `tzone` attribute. A `POSIXct`
+#'   created without one -- which is what `as.POSIXct("2024-01-01 23:30")` and
+#'   most CSV readers give you -- has no timezone of its own, so R displays it
+#'   in the session's, and the buckets follow. The same column then gives hour
+#'   23 on one machine and hour 4 on another. Tag the column
+#'   (`as.POSIXct(x, tz = "UTC")`, or `lubridate::force_tz()`) if the result
+#'   has to be reproducible; a `Date` column is immune either way.
+#'
+#'   A character column must lead with a four-digit year: `"2024-01-01"` or
+#'   `"2024/01/01"`, with one- or two-digit month and day, and any trailing
+#'   time ignored. Values that do not warn and are dropped -- but a column in
+#'   which *nothing* reads as a date is an error rather than a column of `NA`,
+#'   since there would be no time axis left. Note that `"01/02/2024"` is in the
+#'   second group: convert a column written that way with `as.Date()` and its
+#'   own `format` first.
 #' @param by Period length: `"day"`, `"week"` (starting Monday), `"month"`
 #'   (default), `"quarter"` or `"year"`.
 #' @param top_n Number of emoji to follow, ranked by `measure` over the whole
@@ -216,8 +253,8 @@ emoji_unicode_version <- function() {
 #' @export
 emoji_trend <- function(data, text, time, by = "month", top_n = 20,
                         measure = c("n", "share")) {
-  measure <- match.arg(measure)
-  by <- match.arg(by, .emoji_time_buckets())
+  measure <- .emoji_match_arg(measure, c("n", "share"), "measure")
+  by <- .emoji_match_arg(by, .emoji_time_buckets(), "by")
   if (!is.null(top_n) && !.emoji_is_count(top_n, finite = FALSE)) {
     stop("`top_n` must be a single non-negative whole number, ",
          "or NULL for all.", call. = FALSE)
@@ -296,7 +333,10 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
 #'
 #' @inheritParams emoji_trend
 #' @param measure Which statistics to return: any of `"jaccard"`, `"new"`,
-#'   `"lost"` and `"core"`. All four by default.
+#'   `"lost"` and `"core"`. All four by default. Abbreviations work
+#'   (`"jac"`), duplicates are ignored, and the columns come back in the order
+#'   above whatever order you ask in. A value that matches none of the four is
+#'   an error rather than being dropped.
 #' @return A tibble with one row per consecutive pair of periods: `.period`,
 #'   `.period_prev`, `n_types_prev`, `n_types`, and then the requested
 #'   `jaccard`, `n_new`, `n_lost` and `n_core` columns. Fewer than two periods
@@ -311,8 +351,27 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
 #' @export
 emoji_turnover <- function(data, text, time, by = "month",
                            measure = c("jaccard", "new", "lost", "core")) {
-  measure <- match.arg(measure, several.ok = TRUE)
-  by <- match.arg(by, .emoji_time_buckets())
+  # match.arg(several.ok = TRUE) returns the values it recognises and says
+  # nothing about the rest, so `measure = c("jaccard", "flip")` produced the
+  # jaccard column and swallowed the typo -- the absorbed-argument failure mode
+  # the 0.4.0 audit swept everywhere else. pmatch() keeps the partial matching
+  # match.arg() gave (`"jac"` still works) while reporting what was wrong, and
+  # names `measure` rather than match.arg()'s own `'arg'`.
+  choices <- c("jaccard", "new", "lost", "core")
+  if (!is.character(measure) || !length(measure) || anyNA(measure)) {
+    stop(sprintf("`measure` must be one or more of %s.",
+                 paste(sprintf('"%s"', choices), collapse = ", ")),
+         call. = FALSE)
+  }
+  idx <- pmatch(measure, choices, duplicates.ok = TRUE)
+  if (anyNA(idx)) {
+    stop(sprintf("`measure` has no option %s. Choose from %s.",
+                 paste(sprintf('"%s"', measure[is.na(idx)]), collapse = ", "),
+                 paste(sprintf('"%s"', choices), collapse = ", ")),
+         call. = FALSE)
+  }
+  measure <- unique(choices[idx])
+  by <- .emoji_match_arg(by, .emoji_time_buckets(), "by")
   .emoji_warn_grouped(data, "emoji_turnover", "0.4.0")
 
   period <- .emoji_time_bucket(
@@ -522,7 +581,7 @@ emoji_adoption_lag <- function(data, text, time) {
 #' @export
 emoji_seasonality <- function(data, text, time,
                               period = c("month", "weekday", "hour")) {
-  period <- match.arg(period)
+  period <- .emoji_match_arg(period, c("month", "weekday", "hour"), "period")
   .emoji_warn_grouped(data, "emoji_seasonality", "0.4.0")
   tv <- .emoji_col(data, {{ time }}, arg = "time")
   if (period == "hour") {

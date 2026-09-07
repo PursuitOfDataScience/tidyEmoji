@@ -14,7 +14,8 @@ against keywords, name and shortcodes.}
 A tibble with columns \code{emoji}, \code{name}, \code{shortcode}, \code{group} and
 \code{keyword} (the keywords of the emoji that contained the match, collapsed
 with \verb{, }). \code{keyword} is the empty string, not \code{NA}, when the query matched
-the name or a shortcode rather than a keyword.
+the name or a shortcode rather than a keyword. \code{shortcode} \emph{is} \code{NA} when
+the matched spelling has no alias; see Details.
 }
 \description{
 \code{emoji_search()} finds emoji whose Unicode keywords, name or shortcodes
@@ -23,13 +24,24 @@ of matches with the glyph, name, shortcode, category and the matching
 keywords, ready for further inspection or piping into other verbs.
 }
 \details{
-\code{shortcode} is the emoji's first alias. To turn it back into a glyph, pass it
-through \code{\link[=text_to_emoji]{text_to_emoji()}}, which reads a \verb{:token:} in the shortcode namespace
-and recovers every row exactly. \code{\link[=as_emoji]{as_emoji()}} resolves a bare string by
-Unicode name first, so for the handful of strings that name one emoji and
-alias another -- \code{dog}, \code{cat}, \code{cow}, \code{pig}, \code{tiger}, \code{mouse}, \code{rabbit},
-\code{horse}, \code{whale}, \code{kiss}, \code{sunglasses} -- it returns the emoji of that
-\emph{name} rather than the row you searched. See \code{\link[=as_emoji]{as_emoji()}} for why.
+\code{shortcode} is the \emph{matched row's} first alias, and it is \code{NA} when the
+matched spelling has none: 189 of the catalogue's 5042 rows carry no
+GitHub-style alias at all, so a search that hits one (7 of the 198 rows
+\code{emoji_search("face")} returns, for instance) has nothing to put in that
+column. Use the \code{emoji} column for those, or \code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}, which
+is keyed on the emoji rather than on the row and so can borrow the alias of
+the glyph's other spelling. For the same reason the two can disagree even
+when both answer -- see \code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}.
+
+Every non-\code{NA} \code{shortcode} is a token \code{\link[=text_to_emoji]{text_to_emoji()}} reads, and it
+recovers the matched row's emoji exactly. \code{\link[=as_emoji]{as_emoji()}} resolves a bare
+string by
+Unicode name first, so for the 17 strings that name one emoji and alias
+another it returns the emoji of that \emph{name} rather than the row you
+searched. They are \code{calendar}, \code{camel}, \code{cat}, \code{cow}, \code{dog}, \code{horse},
+\code{kiss}, \code{mouse}, \code{pig}, \code{rabbit}, \code{satellite}, \code{snowman}, \code{sunglasses},
+\code{tiger}, \code{train}, \code{umbrella} and \code{whale}; that is the complete set, not a
+sample of it. See \code{\link[=as_emoji]{as_emoji()}} for why.
 }
 \examples{
 emoji_search("happy")

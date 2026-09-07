@@ -60,8 +60,12 @@ emoji_lexicons <- function() {
 #'
 #' @param name Name to register the lexicon under.
 #' @param tbl A data frame. Must contain a glyph column named `by` (default
-#'   `"emoji"`) and at least one score column.
-#' @param by Name of the column holding the emoji glyph. Default `"emoji"`.
+#'   `"emoji"`) and at least one score column, and every score column present
+#'   must be numeric or logical -- a text column is rejected here rather than
+#'   returning `NA` for every score at first use. See [emoji_score()] for the
+#'   one-row-per-emoji requirement, which is checked when the lexicon is used.
+#' @param by Name of the column holding the emoji glyph, as a single string.
+#'   Default `"emoji"`.
 #' @return Invisibly, the registered lexicon (with an added `key` column).
 #' @seealso [emoji_lexicons()] to list lexicons; [emoji_score()] to use one.
 #' @examples
@@ -89,6 +93,8 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
     ), call. = FALSE)
   }
   if (!is.data.frame(tbl)) stop("`tbl` must be a data frame.", call. = FALSE)
+  # before the `%in%` below, for the same reason as in .emoji_lexicon_keys()
+  .emoji_check_string(by, "by")
   if (!by %in% names(tbl)) {
     stop(sprintf("`tbl` has no column `%s`.", by), call. = FALSE)
   }
@@ -102,6 +108,24 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
       paste0("`tbl` has no score column. Supply one named `score` or ",
              "`sentiment_score`, or emotion columns (%s)."),
       paste(emoji_emotion_dims(), collapse = ", ")
+    ), call. = FALSE)
+  }
+  # Same reasoning as the presence check above, applied to the type: a
+  # character score column registered happily and produced all-NA scores at
+  # first use, from inside emoji_score(). Check every candidate column, since
+  # which one gets used depends on `score` at scoring time.
+  cand <- intersect(c("sentiment_score", "score", emoji_emotion_dims()),
+                    names(tbl))
+  bad <- cand[!vapply(tbl[cand],
+                      function(v) is.numeric(v) || is.logical(v), logical(1))]
+  if (length(bad)) {
+    stop(sprintf(
+      paste0("`tbl`'s score column%s %s %s not numeric. A score has to be a ",
+             "number; as text it would report emoji as scored while every ",
+             "score came back `NA`."),
+      if (length(bad) > 1L) "s" else "",
+      paste(sprintf("`%s`", bad), collapse = ", "),
+      if (length(bad) > 1L) "are" else "is"
     ), call. = FALSE)
   }
   tbl <- as.data.frame(tbl)
@@ -129,8 +153,17 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #' @param lexicon Either a string naming a bundled or registered lexicon, or a
 #'   data frame. For data frames, `by` names the glyph column and `score` the
 #'   score column. Defaults to `"novak2015"`, matching [emoji_sentiment()].
-#' @param by Glyph column name when `lexicon` is a data frame. Default
-#'   `"emoji"`.
+#'
+#'   Two requirements on a data frame, both refused rather than worked around.
+#'   The score column must be numeric or logical: as text every score comes
+#'   back `NA` while the emoji still counts as scored, which contradicts
+#'   `.emoji_n_scored` below. And no two rows may give one emoji *different*
+#'   scores -- spellings differing only by a variation selector share a single
+#'   code-point key, so a table listing both `U+2764` and `U+2764 U+FE0F` has
+#'   one emoji twice. Identical scores are fine and collapse silently; when
+#'   they differ, the row order would be choosing the answer.
+#' @param by Glyph column name when `lexicon` is a data frame, as a single
+#'   string. Default `"emoji"`.
 #' @param score Score column name when `lexicon` is a data frame. If `NULL`,
 #'   `"sentiment_score"` then `"score"` are tried.
 #' @return `data`, as a tibble, with `.emoji_score` (per-row mean),
@@ -138,6 +171,17 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'   added. For the multi-dimensional `"emotag1200"` lexicon the score is the
 #'   mean over its eight emotion dimensions; use [emoji_emotion()] for the
 #'   per-emotion profile.
+#'
+#'   That averaging is specific to the bundled lexicon. A *registered* or
+#'   inline lexicon carrying emotion columns has no score column, so
+#'   `emoji_score()` cannot collapse it and says so: pass it to
+#'   [emoji_emotion()] instead, or name one dimension with
+#'   `score = "joy"` to score on that alone.
+#'
+#'   `.emoji_n_scored` distinguishes the two ways a score can be missing, as in
+#'   [emoji_sentiment()]: `0` means the row had emoji that the lexicon could not
+#'   score, `NA` that it had no emoji to score. `.emoji_n` counts every emoji
+#'   either way.
 #' @seealso [emoji_lexicons()], [register_emoji_lexicon()].
 #' @examples
 #' df <- data.frame(text = c("love \U0001f60d", "angry \U0001f621", "meh"))
@@ -151,7 +195,8 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
                         score = NULL) {
   if (is.data.frame(lexicon)) {
-    rec <- .emoji_lexicon_record(lexicon, by = by, score = score)
+    rec <- .emoji_lexicon_record(lexicon, by = by, score = score,
+                                 arg = "lexicon")
     score_map <- rec
   } else {
     lex <- .emoji_lexicon_lookup(lexicon)
@@ -162,7 +207,8 @@ emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
       m <- emoji_emotion_map()
       score_map <- rowMeans(m, na.rm = TRUE)
     } else {
-      rec <- .emoji_lexicon_record(lex$tbl, by = by, score = score)
+      rec <- .emoji_lexicon_record(lex$tbl, by = by, score = score,
+                                   arg = "lexicon")
       score_map <- rec
     }
   }

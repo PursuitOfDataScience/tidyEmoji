@@ -42,7 +42,8 @@
 #' @export
 emoji_dfm <- function(data, text, doc_id = NULL,
                       weighting = c("count", "binary", "tfidf")) {
-  weighting <- match.arg(weighting)
+  weighting <- .emoji_match_arg(weighting, c("count", "binary", "tfidf"),
+                               "weighting")
   if (.emoji_warn_grouped(
         data, "emoji_dfm", "0.3.0",
         details = "emoji_dfm() ignores groups. Use doc_id to define documents.")) {
@@ -59,7 +60,11 @@ emoji_dfm <- function(data, text, doc_id = NULL,
     docs <- lst
   } else {
     doc_col <- .emoji_col_name(data, !!q, arg = "doc_id")
-    ids <- data[[doc_col]]
+    # .emoji_col() rather than data[[doc_col]]: this was the one column read
+    # that skipped the shared helper, so a matrix `doc_id` reported one
+    # document per *cell* -- four documents for a two-row data frame, with the
+    # id column filled from rows that do not exist.
+    ids <- .emoji_col(data, !!q, arg = "doc_id")
     # documents come out in first-appearance order of the id: factor() would
     # sort the levels with the session's collation, making the row order of the
     # result locale-dependent

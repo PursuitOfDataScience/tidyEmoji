@@ -20,10 +20,14 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{n}{Number of emoji to return. Default \code{20}.}
 
@@ -31,7 +35,9 @@ are emoji only when they carry \code{U+FE0F}.}
 Default \code{FALSE}.}
 
 \item{duplicated_unicode}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{duplicated}
-instead.}
+instead. Accepts only the values it ever meant -- \code{TRUE}, \code{FALSE},
+\code{"yes"} or \code{"no"} -- and errors on anything else rather than reading it as
+\code{FALSE}, which is what \code{"TRUE"} and \code{1} used to get.}
 }
 \value{
 A tibble with columns \code{emoji_name}, \code{unicode}, \code{emoji_category} and

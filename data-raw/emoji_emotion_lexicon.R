@@ -14,8 +14,12 @@
 # the 8 Plutchik emotions (anger, anticipation, disgust, fear, joy, sadness,
 # surprise, trust) for the 150 most popular Twitter emoji. We keep the glyph and
 # all eight scores, drop the redundant hex code, and normalise the glyph through
-# the same codepoint key (stripping U+FE0F) used everywhere else in the package
-# so qualified text joins cleanly (see next_release.md §4.1).
+# the same codepoint key (stripping U+FE0F) used everywhere else in the package.
+# That is what lets qualified text join to an unqualified lexicon entry: the
+# lexicon stores the bare U+2764 heart, and without the key a user's
+# U+2764 U+FE0F would miss it. (This used to cite next_release.md §4.1, which
+# is a planning document rewritten each release -- §4.1 is now about skin-tone
+# modifiers, so the pointer had gone stale. The reason is stated here instead.)
 #
 #   source("data-raw/emoji_emotion_lexicon.R")
 # -----------------------------------------------------------------------------

@@ -14,17 +14,25 @@ as \code{\link[dplyr:mutate]{dplyr::mutate()}} and \code{\link[dplyr:filter]{dpl
 rows -- the counts, the co-occurrence edge lists, the time series -- warn
 that they ignore the grouping and return one corpus-wide answer.}
 
-\item{text}{The text column to scan, supplied unquoted. What counts as an
-emoji is the same in every verb; see the \emph{Detection} section of
-\link{tidyEmoji} for the one case that surprises people, code points that
-are emoji only when they carry \code{U+FE0F}.}
+\item{text}{The text column to scan, supplied unquoted. Any atomic column
+is accepted and read as character, so a \code{factor} works and a numeric,
+\code{Date} or logical one simply contains no emoji. A list column -- or a
+data-frame column -- is refused rather than coerced, because coercing one
+deparses it and the emoji found would be in the code rather than in your
+data. What counts as an emoji is the same in every verb; see the
+\emph{Detection} section of \link{tidyEmoji} for the one case that surprises
+people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Passed to \code{\link[=emoji_emotion]{emoji_emotion()}}.}
 }
 \value{
 \code{data}, as a tibble, with \code{.emoji_emotion} (the winning emotion, or
 \code{NA} when nothing was scorable) added, alongside the \code{.emoji_n} and
-\code{.emoji_n_scored} counts it inherits from \code{\link[=emoji_emotion]{emoji_emotion()}}.
+\code{.emoji_n_scored} counts it inherits from \code{\link[=emoji_emotion]{emoji_emotion()}}. The eight
+per-emotion columns are \emph{not} returned -- the label is the point -- unless
+they were already in \code{data}, which is what
+\code{emoji_emotion() |> emoji_emotion_label()} gives you: the profile and the
+label side by side.
 }
 \description{
 \code{emoji_emotion_label()} adds \code{.emoji_emotion}, the emotion with the highest
@@ -42,4 +50,9 @@ a tie, or a near-tie, is invisible in a single winning name, and
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))
 emoji_emotion_label(df, text)
+}
+\seealso{
+\code{\link[=emoji_emotion]{emoji_emotion()}} for the eight scores this collapses, and the
+coverage caveat that applies to both; \link{emoji_emotion_lexicon} for the
+underlying data; \code{\link[=emoji_sentiment]{emoji_sentiment()}} for valence instead of emotion.
 }

@@ -41,12 +41,12 @@ Depends:
     R (>= 4.1.0)
 Imports:
     dplyr (>= 1.1.0),
-    emoji,
-    lifecycle,
+    emoji (>= 16.0.0),
+    lifecycle (>= 1.0.3),
     rlang,
     stats,
     tibble,
-    tidyr,
+    tidyr (>= 1.3.0),
     utils
 Suggests:
     rmarkdown,
@@ -55,7 +55,7 @@ Suggests:
     commonmark,
     xml2,
     ggplot2,
-    readr,
+    readr (>= 2.0.0),
     forcats,
     stringr
 Config/testthat/edition: 3
