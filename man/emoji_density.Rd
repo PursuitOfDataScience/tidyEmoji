@@ -26,7 +26,9 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n},
 \code{.emoji_per_char} (emoji per character, i.e. per code point, of text) and
-\code{.emoji_per_token} (emoji per whitespace-delimited token).
+\code{.emoji_per_token} (emoji per whitespace-delimited token). A token is a
+maximal run of characters outside Unicode's \code{White_Space} property; see
+\code{\link[=emoji_ratio]{emoji_ratio()}} for the exact set, which does not vary with the locale.
 }
 \description{
 \code{emoji_density()} measures how emoji-heavy each text is: the number of

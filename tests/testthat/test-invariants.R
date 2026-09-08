@@ -436,20 +436,46 @@ test_that("the four sentiment code paths agree exactly", {
 
 test_that("emoji_context and emoji_density tokenise identically", {
   # ?emoji_context claims "the same definition emoji_density() uses"; these are
-  # separate implementations ([[:space:]] vs \\s, trimws or not), so the claim
-  # needs a test rather than a comment
-  density_tokens <- function(s) sum(nzchar(strsplit(trimws(s), "\\s+")[[1]]))
+  # separate implementations, so the claim needs a test rather than a comment.
+  #
+  # Round 104: this test used to reimplement the density side inline as
+  # sum(nzchar(strsplit(trimws(s), "\\s+"))). That is a *copy* of the
+  # implementation, not the implementation, and when both package sites moved
+  # to the explicit whitespace class the copy became the only thing still
+  # answering the old way -- so the test failed on correct code. Read the
+  # density count back out of the verb instead: one emoji appended, so
+  # .emoji_per_token is 1/tokens.
+  A <- "\U0001F600"
+  density_tokens <- function(s) {
+    d <- data.frame(text = paste(s, A), stringsAsFactors = FALSE)
+    pt <- emoji_density(d, text)$.emoji_per_token
+    if (is.na(pt) || pt == 0) NA_integer_ else as.integer(round(1 / pt))
+  }
   context_tokens <- function(s) length(tidyEmoji:::.emoji_words(s))
   cases <- c(
     "one two three",
-    paste0("one", "\u00A0", "two three"),   # no-break space: not whitespace
-    paste0("one", "\u2003", "two three"),   # em space: is whitespace
+    paste0("one", "\u00A0", "two three"),   # no-break space
+    paste0("one", "\u202F", "two three"),   # narrow no-break space
+    paste0("one", "\u2003", "two three"),   # em space
     paste0("one", "\u3000", "two three"),   # ideographic space
     paste0("one", "\u1680", "two three"),   # ogham space mark
-    paste0("one", "\u200B", "two three"),   # zero-width space: not whitespace
+    paste0("one", "\u0085", "two three"),   # next line
+    paste0("one", "\u200B", "two three"),   # zero-width space: NOT whitespace
     "one\ttwo", "one\ntwo", "  one two  ", "\u00A0", ""
   )
-  for (s in cases) expect_equal(context_tokens(s), density_tokens(s))
+  # the appended emoji is the +1
+  for (s in cases)
+    expect_equal(context_tokens(s) + 1L, density_tokens(s), info = s)
+
+  # and the split is over Unicode White_Space, not the C library's iswspace():
+  # every one of these separates two words, including the two no-break spaces
+  # that glibc rejects and the ones a C locale rejects wholesale
+  for (cp in c(0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x20, 0x85, 0xA0, 0x1680,
+               0x2000, 0x2005, 0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000))
+    expect_identical(context_tokens(paste0("a", intToUtf8(cp), "b")), 2L,
+                     info = sprintf("U+%04X", cp))
+  # U+200B is not White_Space, despite the name, so it joins rather than splits
+  expect_identical(context_tokens(paste0("a", intToUtf8(0x200B), "b")), 1L)
 })
 
 test_that("emoji_trend returns a complete period-by-emoji grid", {
@@ -1774,6 +1800,52 @@ test_that("the shortcode round trip preserves every emoji in the catalogue", {
   expect_identical(back2, back)
 })
 
+# Round 103: ?emoji_sanitize quotes the round-trip share as "across all 4853
+# catalogued spellings that is 79.5% byte-identical, and the remaining 20.5%
+# differ by U+FE0F alone -- never by more". All three numbers were correct and
+# none was pinned: the test above asserts only mean(back == emoji) > 0.75 over
+# a different denominator (all 5042 rows, not the 4853 that have an alias), so
+# the figure could have drifted several points either way without failing. It
+# is also the figure most easily "corrected" to a wrong value -- the same
+# measurement is 79% end-to-end and 75% over canonical spellings, and those are
+# three different denominators, not three estimates of one number. Pin it both
+# ways: derive it from the data, and require the rendered page to state it.
+test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
+  ref <- tidyEmoji:::emoji_reference()
+  has_alias <- !is.na(ref$shortcode) & nzchar(ref$shortcode)
+  g <- ref$emoji[has_alias]
+  # 4853 is the denominator the sentence names: the spellings that have an
+  # alias, i.e. all 5042 less the 189 with none
+  expect_identical(length(g), 4853L)
+  expect_identical(nrow(ref) - sum(!has_alias), 4853L)
+
+  sc <- emoji_to_text(data.frame(text = g, stringsAsFactors = FALSE), text,
+                      format = "shortcode")$text
+  back <- text_to_emoji(data.frame(text = sc, stringsAsFactors = FALSE),
+                        text)$text
+  same <- back == g
+  expect_identical(sum(same), 3859L)
+  expect_identical(round(100 * mean(same), 1), 79.5)
+  expect_identical(sum(!same), 994L)
+  expect_identical(round(100 * mean(!same), 1), 20.5)
+
+  # "never by more": every one of the 994 differs by U+FE0F and nothing else
+  strip_vs <- function(x) vapply(x, function(y) {
+    cp <- utf8ToInt(y)
+    paste(sprintf("%X", cp[cp != 0xFE0F]), collapse = " ")
+  }, character(1), USE.NAMES = FALSE)
+  expect_identical(strip_vs(back[!same]), strip_vs(g[!same]))
+  # and the fixture is not vacuous -- the two sides really are different bytes
+  expect_false(any(back[!same] == g[!same]))
+
+  # the page has to say so
+  txt <- rd_flat("emoji_sanitize")
+  skip_if(is.na(txt), "emoji_sanitize.Rd not available")
+  expect_true(grepl("all 4853 catalogued spellings", txt, fixed = TRUE))
+  expect_true(grepl("79.5% byte-identical", txt, fixed = TRUE))
+  expect_true(grepl("remaining 20.5%", txt, fixed = TRUE))
+})
+
 test_that("colliding names and shortcodes only ever share a code-point key", {
   ref <- tidyEmoji:::emoji_reference()
   d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
@@ -2497,16 +2569,23 @@ test_that(".emoji_fold folds ASCII deterministically and non-ASCII like tolower"
   expect_identical(f("smiling"), "smiling")
   expect_identical(f("+1"), "+1")
   # non-ASCII is still folded, so a query matching a catalogue name that
-  # carries a tilde or a typographic apostrophe keeps working
+  # carries a tilde or a typographic apostrophe keeps working. These come from
+  # the explicit Latin table rather than tolower(), so they hold in a C locale
+  # too -- see the LC_CTYPE test below.
   expect_identical(f("VICU\u00D1A"), "vicu\u00F1a")
   expect_identical(f("O\u2019CLOCK"), "o\u2019clock")
+  # an uncased non-ASCII character is left exactly as it is
+  expect_identical(f("\u2014\u2713\u266a"), "\u2014\u2713\u266a")
   # NA in, NA out
   expect_identical(f(NA_character_), NA_character_)
   expect_identical(f(character(0)), character(0))
 
-  # and over the whole catalogue it agrees with tolower() in this locale, so
-  # the switch is not a behaviour change for ASCII/Western sessions
+  # and over the whole catalogue it agrees with tolower(), so the table is not
+  # a new folding of its own. tolower() is only a fair reference in a UTF-8
+  # locale -- under LC_ALL=C it leaves every non-ASCII letter alone, which is
+  # the very gap the table closes -- so compare against it only there.
   e <- emoji::emojis
+  skip_if_not(isTRUE(l10n_info()$`UTF-8`), "tolower() folds no non-ASCII here")
   expect_identical(f(e$name), tolower(e$name))
   expect_identical(f(unlist(e$keywords)), tolower(unlist(e$keywords)))
   expect_identical(f(unlist(e$aliases)), tolower(unlist(e$aliases)))
@@ -2520,6 +2599,44 @@ test_that(".emoji_fold does not depend on LC_CTYPE", {
   skip_unless_dotless_i()
   expect_identical(there, here)
   expect_identical(there[1], "i")
+})
+
+test_that(".emoji_fold does not depend on the locale being UTF-8 either", {
+  # The Turkish rule above is only half of tolower()'s locale dependence: in a
+  # non-UTF-8 locale it leaves every non-ASCII letter untouched. That is not
+  # hypothetical for this package -- 24 catalogue names carry an uppercase
+  # accented letter -- so pin the fold against the answer written out by hand
+  # rather than against tolower(), which cannot produce it in a C locale.
+  f <- tidyEmoji:::.emoji_fold
+  cased <- c("\u00C5land", "Cura\u00E7ao", "C\u00F4te", "Barth\u00E9lemy",
+             "R\u00E9union", "S\u00E3o Tom\u00E9", "Pr\u00EDncipe",
+             "T\u00FCrkiye")
+  want <- c("\u00E5land", "cura\u00E7ao", "c\u00F4te", "barth\u00E9lemy",
+            "r\u00E9union", "s\u00E3o tom\u00E9", "pr\u00EDncipe",
+            "t\u00FCrkiye")
+  expect_identical(f(cased), want)
+  # every 1:1 pair in the table folds, whatever the locale is
+  up <- tidyEmoji:::.emoji_fold_upper
+  lo <- tidyEmoji:::.emoji_fold_lower
+  expect_identical(nchar(up), nchar(lo))
+  expect_identical(f(up), lo)
+  # and the table is a fold, not a permutation: no character is its own image
+  # and no lowercase target is itself an uppercase source
+  u <- strsplit(up, "")[[1]]
+  l <- strsplit(lo, "")[[1]]
+  expect_false(any(u == l))
+  expect_length(intersect(u, l), 0L)
+})
+
+test_that("emoji_search() is case-insensitive for accented names in any locale", {
+  # emoji_search("\u00e5land") found the flag in a UTF-8 session and nothing at
+  # all under LC_ALL=C, because the fold bottomed out in tolower().
+  hits <- emoji_search("\u00E5land")
+  expect_identical(nrow(hits), 1L)
+  expect_identical(hits$name, "flag: \u00C5land Islands")
+  expect_identical(emoji_search("\u00C5LAND")$name, hits$name)
+  expect_identical(emoji_search("cura\u00E7ao")$name, "flag: Cura\u00E7ao")
+  expect_identical(emoji_search("CURA\u00C7AO")$name, "flag: Cura\u00E7ao")
 })
 
 test_that("emoji_search() returns the same rows whatever LC_CTYPE is", {
@@ -4504,8 +4621,11 @@ test_that("README.md has not drifted from README.Rmd's prose", {
   rmd <- pkg_text_file("README.Rmd")
   md <- pkg_text_file("README.md")
   skip_if(is.na(rmd) || is.na(md), "README sources not available")
-  src <- readLines(rmd, warn = FALSE)
-  out <- readLines(md, warn = FALSE)
+  # encoding = "UTF-8": both files carry emoji, and without it a non-UTF-8
+  # session reads them as native and every later regex on the text errors with
+  # "input string N is invalid" rather than comparing anything.
+  src <- readLines(rmd, warn = FALSE, encoding = "UTF-8")
+  out <- readLines(md, warn = FALSE, encoding = "UTF-8")
 
   # drop chunk bodies and headers: their output is what rendering produces
   fence <- grepl("^```", src)
@@ -5619,7 +5739,9 @@ test_that("emoji_incongruity_profile's statistics are the row gaps aggregated", 
 })
 
 test_that("emoji_dfm holds up at its widest", {
-  skip_on_cran()
+  # Runs on CRAN: it is deterministic and about two seconds, and a table
+  # 3791 columns wide is exactly the shape most likely to behave differently
+  # on a flavour we cannot test here.
   ref <- tidyEmoji:::emoji_reference()
   canon <- ref$emoji[!duplicated(ref$key)]
   # one document containing every distinct emoji: the widest table possible
@@ -5717,7 +5839,10 @@ test_that("only one example touches the lexicon registry", {
   # demonstrates -- but nothing else may, or a help page's printed output
   # would depend on alphabetical luck. Today `register_emoji_lexicon` sorts
   # after every lexicon-using topic; this keeps that from mattering.
-  skip_on_cran()
+  #
+  # Runs on CRAN, deliberately: the hazard it guards against is created by
+  # R CMD check running every example in one session, so the place it most
+  # needs to hold is a CRAN flavour rather than this machine.
   cache <- tidyEmoji:::.tidyEmoji_cache
   saved <- cache$lexicons
   on.exit(assign("lexicons", saved, envir = cache), add = TRUE)
@@ -8130,4 +8255,239 @@ test_that("NEWS.md's orientation matches the section it describes", {
                         sect, fixed = TRUE)),
               info = paste("NEWS.md should say there are", words[[key]],
                            "bold entries"))
+})
+
+
+# Round 98: ?emoji_cooccurrence warns that the result "grows with the square
+# of the distinct emoji in a document", and quotes two figures: 800 distinct
+# emoji is 319,600 pairs, 3790 would be 7.2 million. That is a cost model a
+# user plans around, and nothing checked it. The arithmetic is checkable here;
+# the timing is not, but it was measured once for this release -- 800 distinct
+# glyphs in one document takes about three seconds, which is the "few seconds"
+# the page promises, and the growth is clean (0.09s, 0.24s, 0.81s, 3.03s for
+# 100, 200, 400, 800).
+
+test_that("one document yields exactly one row per pair of distinct emoji", {
+  E <- asNamespace("tidyEmoji")
+  ref <- E$emoji_reference()
+  # spellings canonicalise, so count keys rather than glyphs: 800 spellings
+  # are only 726 emoji, and it is the emoji the cost model is about
+  glyphs <- unique(ref$emoji[!duplicated(ref$key)])
+  glyphs <- glyphs[vapply(glyphs,
+                          function(x) length(E$emoji_glyph_list(x)[[1L]]) > 0L,
+                          logical(1))]
+  skip_if(length(glyphs) < 40L, "too few detectable glyphs in this build")
+  for (k in c(5L, 12L, 40L)) {
+    g <- glyphs[seq_len(k)]
+    expect_identical(length(unique(E$emoji_key(g))), k)
+    d <- data.frame(
+      doc = "all",
+      text = vapply(split(g, ceiling(seq_along(g) / 3)), paste,
+                    character(1), collapse = " "),
+      stringsAsFactors = FALSE)
+    out <- emoji_cooccurrence(d, text, doc_id = doc)
+    # every unordered pair once, and no self-pair unless asked for
+    expect_identical(nrow(out), as.integer(k * (k - 1L) / 2L),
+                     info = paste("k =", k))
+    expect_identical(anyDuplicated(out[, c("item1", "item2")]), 0L,
+                     info = paste("k =", k))
+    expect_false(any(out$item1 == out$item2), info = paste("k =", k))
+    # diagonal = TRUE adds exactly the k self-pairs
+    diag <- emoji_cooccurrence(d, text, doc_id = doc, diagonal = TRUE)
+    expect_identical(nrow(diag), as.integer(k * (k - 1L) / 2L + k),
+                     info = paste("k =", k))
+  }
+})
+
+test_that("the cost figures on ?emoji_cooccurrence are arithmetic", {
+  pairs <- function(n) n * (n - 1) / 2
+  # the two the page quotes
+  expect_identical(pairs(800), 319600)
+  expect_equal(round(pairs(3790) / 1e6, 1), 7.2)
+  # and 3790 is the catalogue's distinct-emoji count, not an invented ceiling
+  ref <- asNamespace("tidyEmoji")$emoji_reference()
+  expect_identical(length(unique(ref$key)), 3790L)
+  rd <- rd_flat("emoji_cooccurrence")
+  expect_match(rd, "319,600", fixed = TRUE)
+  expect_match(rd, "3790", fixed = TRUE)
+  expect_match(rd, "7.2 million", fixed = TRUE)
+})
+
+
+# Round 99: sweeping every number of two or more digits on a help page against
+# every number appearing anywhere in the suite left seventeen unaccounted for.
+# Most are code points, citation years or a handle (U+0031, 2016, 11356/1048).
+# Five were real claims about this package's data that nothing checked, and
+# all five are exact.
+
+test_that("the alias figures on ?emoji_search hold", {
+  # "189 of the catalogue's 5042 rows carry no GitHub-style alias at all, so a
+  # search that hits one (7 of the 198 rows emoji_search("face") returns, for
+  # instance) has nothing to put in that column"
+  ref <- asNamespace("tidyEmoji")$emoji_reference()
+  expect_identical(sum(is.na(ref$shortcode)), 189L)
+  expect_identical(nrow(ref), 5042L)
+  f <- emoji_search("face")
+  expect_identical(nrow(f), 198L)
+  expect_identical(sum(is.na(f$shortcode)), 7L)
+  rd <- rd_flat("emoji_search")
+  expect_match(rd, "189 of the catalogue's 5042 rows", fixed = TRUE)
+  expect_match(rd, "7 of the 198 rows", fixed = TRUE)
+})
+
+test_that("?emoji_density's figures describe the vignette corpus", {
+  # "115 of the 560 emoji-bearing rows in the corpus behind the introduction
+  # vignette contain a multi-code-point emoji" -- the sentence that stops a
+  # reader dismissing the code-point basis as a corner case
+  # the corpus is installed (inst/extdata), so this resolves inside
+  # R CMD check too, where ../../vignettes does not exist
+  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
+  skip_if_not(file.exists(path), "vignette corpus not available")
+  # the corpus is UTF-8; say so, or a non-UTF-8 session reads the emoji as
+  # native bytes and finds none of them
+  d <- utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8")
+  expect_true("full_text" %in% names(d))
+  lst <- asNamespace("tidyEmoji")$emoji_glyph_list(d$full_text)
+  bearing <- lengths(lst) > 0L
+  expect_identical(sum(bearing), 560L)
+  multi <- vapply(lst, function(g) {
+    if (!length(g)) return(FALSE)
+    any(vapply(g, function(x) length(utf8ToInt(x)) > 1L, logical(1)))
+  }, logical(1))
+  expect_identical(sum(multi), 115L)
+  # every row with a multi-code-point emoji is by definition emoji-bearing
+  expect_identical(sum(multi & bearing), sum(multi))
+  rd <- rd_flat("emoji_density")
+  expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
+})
+
+
+# Round 100: line coverage over the whole package is 99.23%, and reading the
+# fourteen uncovered expressions is more useful than the number. Thirteen are
+# defensive early-returns and the two unreachable lexicon fallbacks -- guards
+# for conditions no caller can produce, kept deliberately. One was genuinely
+# reachable and simply untested: emoji_trend()'s early return when the
+# top_n cut leaves no emoji to follow. `top_n = 0` is a legitimate request
+# and the answer has to be a *typed* zero-row tibble, not a bare one, or it
+# will not bind to the non-empty case.
+
+test_that("a top_n of zero returns a typed zero-row result", {
+  A <- "\U0001F600"
+  B <- "\U0001F602"
+  d <- data.frame(
+    text = c(paste("a", A), paste("b", B), paste("c", A)),
+    when = as.Date("2024-01-01") + c(0L, 40L, 80L),
+    stringsAsFactors = FALSE)
+
+  z <- emoji_trend(d, text, when, top_n = 0)
+  expect_identical(nrow(z), 0L)
+  expect_identical(names(z), c(".period", "emoji", "name", "n", "share"))
+  expect_s3_class(z$.period, "Date")
+  expect_type(z$emoji, "character")
+  expect_type(z$name, "character")
+  expect_type(z$n, "integer")
+  expect_type(z$share, "double")
+  # the types are the ones a populated call gives, so the two bind
+  nz <- emoji_trend(d, text, when, top_n = 1)
+  expect_gt(nrow(nz), 0L)
+  expect_identical(names(z), names(nz))
+  expect_identical(vapply(z, function(x) class(x)[1L], character(1)),
+                   vapply(nz, function(x) class(x)[1L], character(1)))
+  expect_identical(nrow(rbind(z, nz)), nrow(nz))
+
+  # the other verb with a top_n cut agrees
+  expect_identical(nrow(emoji_flag_ambiguous(d, text, top_n = 0)), 0L)
+  # and one emoji is followed when one is asked for
+  expect_identical(length(unique(nz$emoji)), 1L)
+})
+
+
+# Round 101: inst/CITATION is what a user pastes into a paper, and nothing
+# checked it. It renders three entries -- the package, and the two lexicon
+# papers whose data ships here -- and every field agrees with DESCRIPTION.
+# The paper details were checked against the live records once: the EmoTag
+# page range 8957-8967 matches the ACL Anthology, and the PLoS DOI resolves
+# to the right article. Those need a network; what follows does not.
+
+test_that("citation() renders and agrees with DESCRIPTION", {
+  ct <- utils::citation("tidyEmoji")
+  d <- utils::packageDescription("tidyEmoji")
+  expect_length(ct, 3L)
+  pkg <- ct[[1L]]
+
+  # the version in the citation is this package's version. The file falls back
+  # to a hardcoded string if `meta` is missing, so this is the assertion that
+  # notices when that fallback goes stale at the next release.
+  expect_identical(pkg$note, paste("R package version", d$Version))
+  expect_false(grepl("0\\.0\\.0", pkg$note))
+
+  # title is DESCRIPTION's, with the conventional package-name prefix
+  expect_identical(gsub("[{}]", "", pkg$title),
+                   paste0("tidyEmoji: ", gsub("\\s+", " ", d$Title)))
+  expect_identical(pkg$url, sub(",.*", "", d$URL))
+  expect_match(format(pkg$author), "Yu")
+
+  # the two data sources the package bundles are both cited, and the header
+  # says which verb obliges a reader to cite which
+  bibs <- vapply(ct, function(e) e$bibtype, character(1))
+  expect_setequal(bibs, c("Manual", "Article", "InProceedings"))
+  txt <- paste(vapply(ct, function(e) paste(format(e), collapse = " "),
+                      character(1)), collapse = " ")
+  expect_match(txt, "Kralj Novak", fixed = TRUE)
+  expect_match(txt, "EmoTag1200", fixed = TRUE)
+  expect_match(txt, "10.1371/journal.pone.0144296", fixed = TRUE)
+  expect_match(txt, "8957", fixed = TRUE)
+})
+
+
+# Round 102: some CRAN flavours are checked without Suggests packages
+# installed, and `_R_CHECK_FORCE_SUGGESTS_=false` exists for exactly that.
+# Trying to prove the package survives it by hiding the Suggests from the
+# library path does not work here -- the R system library carries `readr` and
+# `stringr`, and they cannot be masked -- so prove it by construction instead:
+# nothing that runs outside a vignette may reference a Suggests package at all.
+
+test_that("package code and examples depend only on Imports", {
+  desc <- utils::packageDescription("tidyEmoji")
+  sug <- trimws(gsub("\\s*\\(.*?\\)", "",
+                     strsplit(desc$Suggests, ",")[[1L]]))
+  sug <- sug[nzchar(sug)]
+  expect_gt(length(sug), 4L)
+
+  # the package's own code, read from the namespace so this works in a
+  # tarball check where R/ is gone
+  code <- pkg_code_text()
+  skip_if(!length(code), "package code not available")
+  for (s in sug) {
+    hits <- names(code)[vapply(code, function(x)
+      grepl(paste0("\\b", s, "::"), x) ||
+        grepl(paste0("library\\(", s, "\\)"), x) ||
+        grepl(paste0("require\\(", s, "\\)"), x), logical(1))]
+    expect_identical(hits, character(), info = s)
+  }
+
+  # and the examples, which R CMD check runs on those same flavours
+  db <- tools::Rd_db("tidyEmoji")
+  skip_if(!length(db), "help database not available")
+  offenders <- character()
+  for (nm in names(db)) {
+    f <- tempfile(fileext = ".R")
+    ok <- tryCatch({
+      tools::Rd2ex(db[[nm]], out = f)
+      TRUE
+    }, error = function(e) FALSE)
+    if (!ok || !file.exists(f) || !file.size(f)) next
+    ex <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    unlink(f)
+    # strip comments: a chunk may mention a Suggests to explain why it is
+    # *not* used, which is not a dependency
+    ex <- paste(sub("#.*$", "", strsplit(ex, "\n")[[1L]]), collapse = "\n")
+    for (s in sug) {
+      if (grepl(paste0("\\b", s, "::"), ex) ||
+            grepl(paste0("library\\(", s, "\\)"), ex)) {
+        offenders <- c(offenders, paste0(nm, " -> ", s))
+      }
+    }
+  }
+  expect_identical(offenders, character())
 })

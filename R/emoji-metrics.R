@@ -103,7 +103,9 @@ emoji_position <- function(data, text) {
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
 #'   `.emoji_per_char` (emoji per character, i.e. per code point, of text) and
-#'   `.emoji_per_token` (emoji per whitespace-delimited token).
+#'   `.emoji_per_token` (emoji per whitespace-delimited token). A token is a
+#'   maximal run of characters outside Unicode's `White_Space` property; see
+#'   [emoji_ratio()] for the exact set, which does not vary with the locale.
 #' @seealso [emoji_position()], [emoji_ratio()].
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600", "\U0001f600\U0001f600", "plain"))
@@ -114,7 +116,7 @@ emoji_density <- function(data, text) {
   n <- lengths(emoji_glyph_list(v))
   n_char <- nchar(v)
   # maximal runs of non-whitespace
-  n_token <- vapply(strsplit(trimws(v), "\\s+"), function(t) {
+  n_token <- vapply(strsplit(.emoji_trimws(v), .emoji_ws), function(t) {
     sum(nzchar(t))
   }, integer(1))
   n_token[is.na(v)] <- NA_integer_
@@ -155,7 +157,13 @@ emoji_density <- function(data, text) {
 #' @return `data`, as a tibble, with added columns `.emoji_ratio` (emoji
 #'   characters / all characters, 0 when there are no emoji) and
 #'   `.emoji_only` (`TRUE` when the text contains emoji and nothing else but
-#'   whitespace). `NA` text gets `NA` in both. Empty text (`""`) has no
+#'   whitespace). "Whitespace" is Unicode's `White_Space` property, written out
+#'   explicitly rather than left to the C library: it includes the no-break
+#'   spaces `U+00A0` and `U+202F` and the ideographic space `U+3000`, and
+#'   excludes the zero-width space `U+200B`, which despite its name Unicode
+#'   does not classify as whitespace. The same set is used everywhere the
+#'   package splits or trims text, and it does not vary with the locale.
+#'   `NA` text gets `NA` in both. Empty text (`""`) has no
 #'   characters to take a share of, so `.emoji_ratio` is `NA` there too, but
 #'   `.emoji_only` is `FALSE`: an empty string is not a row of emoji.
 #' @seealso [emoji_position()], [emoji_density()]; [emoji_filter()] to keep
@@ -187,7 +195,8 @@ emoji_ratio <- function(data, text) {
     if (is.null(m) || nrow(m) == 0L) return(s)
     paste0(.emoji_gaps(s, m), collapse = "")
   }, character(1))
-  only <- !was_na & emoji_chars > 0L & !nzchar(gsub("\\s", "", residual))
+  only <- !was_na & emoji_chars > 0L &
+    !nzchar(gsub(.emoji_ws1, "", residual))
   only[was_na] <- NA
 
   out <- .emoji_as_tibble(data)

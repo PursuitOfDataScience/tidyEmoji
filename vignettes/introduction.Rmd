@@ -96,10 +96,14 @@ is specific to any platform — any data frame with a text column will do.
 
 ```{r}
 # read.csv() rather than readr::read_csv(): readr is a Suggests package, and
-# reading one CSV does not need it
+# reading one CSV does not need it. system.file() rather than a bare path, so
+# this chunk works from the installed introduction.R as well as at build time
+# -- the corpus lives in inst/extdata and is installed with the package.
 ata_tweets <- tibble::as_tibble(
-  utils::read.csv("ata_tweets.csv", encoding = "UTF-8",
-                  stringsAsFactors = FALSE)
+  utils::read.csv(
+    system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
+    encoding = "UTF-8", stringsAsFactors = FALSE
+  )
 )
 ata_tweets
 ```

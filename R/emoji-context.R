@@ -20,7 +20,7 @@
 # Whitespace-delimited tokens of one string, empty strings dropped.
 .emoji_words <- function(s) {
   if (!nzchar(s)) return(character(0))
-  w <- strsplit(s, "[[:space:]]+")[[1L]]
+  w <- strsplit(s, .emoji_ws)[[1L]]
   w[nzchar(w)]
 }
 
@@ -32,8 +32,8 @@
     w <- if (side == "left") utils::tail(w, window) else utils::head(w, window)
     paste(w, collapse = " ")
   } else {
-    s <- if (side == "left") sub("[[:space:]]+$", "", s) else
-      sub("^[[:space:]]+", "", s)
+    s <- if (side == "left") sub(paste0(.emoji_ws, "$"), "", s) else
+      sub(paste0("^", .emoji_ws), "", s)
     n <- nchar(s)
     if (!n) return("")
     if (side == "left") {
@@ -163,7 +163,7 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
     .emoji = occ$.emoji,
     .emoji_context_left = left,
     .emoji_context_right = right,
-    .emoji_context = trimws(paste(left, right))
+    .emoji_context = .emoji_trimws(paste(left, right))
   )
   if (isTRUE(keep_text)) {
     txt <- .emoji_text_col(data, {{ text }})

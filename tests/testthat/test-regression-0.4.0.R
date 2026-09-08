@@ -989,7 +989,9 @@ test_that("real corpus text leaves no joiner orphaned", {
   # `show_col_types` arrived in readr 2.0.0; readr 1.4.0 errors with
   # "unused argument", so presence alone is not enough to run this
   skip_if_not_installed("readr", minimum_version = "2.0.0")
-  path <- testthat::test_path("..", "..", "vignettes", "ata_tweets.csv")
+  # the corpus is installed (inst/extdata), so this resolves inside
+  # R CMD check too, where ../../vignettes does not exist
+  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
   skip_if_not(file.exists(path), "vignette corpus not available")
   txt <- readr::read_csv(path, show_col_types = FALSE)$full_text
   expect_gt(sum(grepl("\u200D", txt, fixed = TRUE)), 0L)

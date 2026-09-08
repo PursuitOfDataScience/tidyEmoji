@@ -27,7 +27,13 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \code{data}, as a tibble, with added columns \code{.emoji_ratio} (emoji
 characters / all characters, 0 when there are no emoji) and
 \code{.emoji_only} (\code{TRUE} when the text contains emoji and nothing else but
-whitespace). \code{NA} text gets \code{NA} in both. Empty text (\code{""}) has no
+whitespace). "Whitespace" is Unicode's \code{White_Space} property, written out
+explicitly rather than left to the C library: it includes the no-break
+spaces \verb{U+00A0} and \verb{U+202F} and the ideographic space \code{U+3000}, and
+excludes the zero-width space \verb{U+200B}, which despite its name Unicode
+does not classify as whitespace. The same set is used everywhere the
+package splits or trims text, and it does not vary with the locale.
+\code{NA} text gets \code{NA} in both. Empty text (\code{""}) has no
 characters to take a share of, so \code{.emoji_ratio} is \code{NA} there too, but
 \code{.emoji_only} is \code{FALSE}: an empty string is not a row of emoji.
 }

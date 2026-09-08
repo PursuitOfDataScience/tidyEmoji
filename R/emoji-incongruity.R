@@ -45,7 +45,7 @@
     # text after the last glyph. Cutting them one at a time made a row ending
     # in a long emoji run quadratic, since each cut rescanned the string.
     gaps <- .emoji_gaps(s, m)
-    blank <- !nzchar(gsub("[[:space:]]", "", gaps))
+    blank <- !nzchar(gsub(.emoji_ws1, "", gaps))
     # nothing but whitespace may follow the last emoji
     if (!blank[nrow(m) + 1L]) return(character(0))
     # walk back over the trailing run of emoji separated only by whitespace

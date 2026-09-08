@@ -1976,8 +1976,9 @@ Two things had never been measured, only assumed.
 
 - **The tarball's contents, listed against the repo.** Round 1 caught `.claude`
   shipping by accident; nothing has verified the whole manifest since. It is
-  correct: `inst/WORDLIST` and `inst/doc/` ship, `vignettes/ata_tweets.csv`
-  ships because the vignette needs it, and everything build-ignored is
+  correct: `inst/WORDLIST` and `inst/doc/` ship, `inst/extdata/ata_tweets.csv`
+  ships and is installed so that the vignette and its tangled
+  `introduction.R` can both reach it, and everything build-ignored is
   genuinely development-only -- `cran-comments.md`, `next_release.md`,
   `data-raw/`, `_pkgdown.yml`, the `.github` workflows, the `.Rproj`.
   **`LICENSE.md` is excluded, and that is right**: `License: GPL (>= 3)` is a

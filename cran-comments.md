@@ -121,12 +121,21 @@ read with `utils::read.csv()`, and the nine plotting chunks are gated on a
 
 0 errors | 0 warnings | 0 notes
 
+That is not an assertion about our own machine. Every flavour of the GitHub
+Actions matrix reports `Status: OK` for the commit submitted here: macOS
+(R 4.6.1), Windows (R 4.6.1), and Ubuntu on R-release (4.6.1), R-devel and
+R-oldrel-1 (4.5.3). All five build the vignette and run the full `testthat`
+suite.
+
 Locally, a full `R CMD check --as-cran` with the remote incoming checks
 *enabled* (`_R_CHECK_CRAN_INCOMING_REMOTE_=true`) reports 1 WARNING and 3
 NOTEs, and all four are artefacts of this host rather than the package: no
-`qpdf`, no `tidy`, an unverifiable system clock, and the URL below. The
-substantive checks all pass there: installation, examples, the `testthat`
-suite, vignette re-building and the PDF manual.
+`qpdf`, no `tidy`, an unverifiable system clock, and the URL below. The five
+clean flavours above are the evidence for that reading, rather than our word
+for it -- none of the four reproduces anywhere the host is not ours. The
+substantive checks all pass locally too: installation, examples, the
+`testthat` suite, vignette re-building and the PDF manual (which the CI matrix
+does not build, so the local run is the one that covers it).
 
 On R 4.6.0 (the newest release available locally), the same check reports
 `Status: 2 NOTEs` -- the URL below and the missing `tidy` -- with everything
@@ -142,18 +151,25 @@ last run there; that tree has `readr` 1.4.0, so the test gated on
 since, so it is stated as history rather than as a current measurement.
 
 The skip inventory itself is current and was re-measured for this submission
-on R 4.4.1. Run as CRAN runs it, eight tests skip, all eight
-`skip_on_cran()` and all eight maintenance checks rather than checks of
-package behaviour: the declared R minimum against an installable tree,
-regenerating the bundled crosswalks from `data-raw/`, a `select()`-avoidance
-check on the whole catalogue, `emoji_dfm()` at its widest, an examples audit
-of the lexicon registry, re-rendering `README.Rmd` to confirm the output
-`README.md` shows is current, and two that read this file and check its own
-claims. Checking a built tarball skips three
-more, because they read sources a tarball does not carry -- `README.Rmd`, the
-`R/` tree, and the vignette's corpus -- each of which asserts against the
-installed package instead when the source is absent. Nothing skips for want of
-a Suggests package on a complete tree.
+on R 4.4.1. Run as CRAN runs it, six tests skip, all six `skip_on_cran()`,
+and each for a reason that is not "this might fail": the declared R minimum
+against an installable tree and a `select()`-avoidance benchmark, both of
+which read the checking machine rather than the package -- one inspects the
+installed dependencies' own R floors, the other compares two wall-clock
+timings, and neither is a fair question to ask a CRAN flavour -- plus four
+that read files a tarball does not carry (`data-raw/` for regenerating the
+crosswalks, `README.Rmd` for re-rendering it, and this file twice, for its
+own claims). Checking a built tarball skips two more for the same reason,
+`README.Rmd` and the `R/` tree, each of which asserts against the installed
+package instead when the source is absent. Nothing skips for want of a
+Suggests package on a complete tree.
+
+Two checks that used to be skipped now run everywhere, having had no reason
+beyond caution: `emoji_dfm()` at its widest, which builds a 3791-column table
+and is the shape most likely to behave differently on a platform we cannot
+test here, and an audit that no example except `?register_emoji_lexicon`
+registers a lexicon -- a hazard created by `R CMD check` running every example
+in one session, so a CRAN flavour is exactly where it needs to hold.
 
 The bundled datasets contain emoji glyphs and are therefore marked UTF-8, and
 a plain `R CMD check` (without `--as-cran`, which suppresses it) does report
