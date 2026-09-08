@@ -136,9 +136,9 @@ maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
-or in a test that was passing for the wrong reason. There are sixty-six
-of them, and reading just those leads gives the release without the
-verification detail. Not all sixty-six changed observable behaviour:
+or in a test that was passing for the wrong reason. There are seventy of
+them, and reading just those leads gives the release without the
+verification detail. Not all seventy changed observable behaviour:
 several record a test that could not have failed, or a figure the
 documentation quoted incorrectly, which are worth the same prominence
 because both meant something was unverified.
@@ -760,7 +760,7 @@ because both meant something was unverified.
   introduction article, the issue tracker, the CRAN page and the three
   badges all return `200`, and only `doi.org` and the CRAN page redirect
   (both to their expected canonical targets). The `t.co` links the URL
-  sweep turns up are rows of `vignettes/ata_tweets.csv`, not
+  sweep turns up are rows of `inst/extdata/ata_tweets.csv`, not
   documentation, and are not fetched.
 
 - Added the offline half as a test, since the network half cannot run on
@@ -951,6 +951,194 @@ because both meant something was unverified.
   stores a computed `key` column. Verified the whole guard by making
   `emoji_reference()` memoise a table one row shorter than the one it
   returns; the new test fails.
+
+- The submission notes now cite cross-platform evidence instead of
+  asserting it. `cran-comments.md` said “0 errors \| 0 warnings \| 0
+  notes” and then explained that the local 1 WARNING and 3 NOTEs are
+  artefacts of this host. Every flavour of the GitHub Actions matrix now
+  reports `Status: OK` for the submitted commit – macOS and Windows on R
+  4.6.1, Ubuntu on R-release, R-devel and R-oldrel-1 – and all five
+  re-build the vignette and run the full suite. None of the four local
+  findings reproduces anywhere the host is not ours, which is the
+  evidence for that reading rather than our word for it. The note also
+  records what CI does *not* cover: it passes `--no-manual`, so the PDF
+  manual is checked only locally. Each of those claims was read out of
+  the run logs rather than inferred.
+
+- Confirmed the package survives a check without its Suggests, which
+  some CRAN flavours run. Hiding the Suggests from the library path
+  turned out not to prove anything here – the R system library carries
+  `readr` and `stringr` and they cannot be masked – so the property is
+  established by construction instead, and it holds: **neither the
+  package’s own code nor a single example references a Suggests
+  package**. Both are now asserted, reading the namespace and the help
+  database so the check works in a tarball too.
+
+- Every Suggests use in the vignette is properly conditional. Two chunks
+  look ungated and are not: the setup chunk uses `knitr`, which is the
+  `VignetteBuilder` and therefore always present, and its
+  [`library(ggplot2)`](https://ggplot2.tidyverse.org) sits inside
+  `if (has_plot_pkgs)`. The six plotting chunks that use `forcats` and
+  `stringr` all carry `eval = has_plot_pkgs`. One apparent third case
+  was a comment explaining why
+  [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)
+  is *not* used – worth noting because a naive scan counts that as a
+  dependency.
+
+- Verified `inst/CITATION`, which nothing had checked and which is what
+  a user pastes into a paper. It renders three entries – the package and
+  the two lexicon papers whose data ships here – and every field agrees
+  with `DESCRIPTION`: version, URL, author, and the title, which differs
+  only by the conventional package-name prefix. The paper details hold
+  against the live records too: the EmoTag page range 8957-8967 matches
+  the ACL Anthology exactly, and the PLoS DOI resolves to the right
+  article.
+
+- The offline half is now a test, including one assertion aimed at a
+  specific trap: the file falls back to a hardcoded version string when
+  `meta` is unavailable, so the test requires the rendered version to
+  equal `DESCRIPTION`’s. At the next release that fallback goes stale,
+  and this is what will say so.
+
+- Measured line coverage for the first time: **99.23%** across `R/`,
+  with fourteen expressions uncovered. Reading them was more useful than
+  the number. Thirteen are defensive early-returns and the two
+  unreachable lexicon fallbacks – `if (!nrow(m)) return(s)` in the gap
+  slicer, the non-data-frame guard in the lexicon resolver, the
+  non-character guard in the encoding check, and so on. Every one guards
+  a condition no caller can produce, and they are kept: an internal
+  helper that is safe only because of what its callers happen to do is a
+  helper waiting to be reused wrongly.
+
+- One uncovered line was genuinely reachable and simply untested:
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)’s
+  early return when the `top_n` cut leaves no emoji to follow.
+  `top_n = 0` is a legitimate request, and the answer is correct – a
+  *typed* zero-row tibble whose five columns have the classes a
+  populated call gives, so the two bind. That is now asserted, together
+  with `emoji_flag_ambiguous(top_n = 0)`.
+
+- Confirmed the generated files are not stale, which nothing had checked
+  since this loop began editing roxygen blocks: regenerating `man/` and
+  `NAMESPACE` from the current sources produces no diff, and
+  `RoxygenNote` matches the roxygen2 that would do it.
+
+- **This release’s prose broke the package’s spell check, and nothing
+  said so.** `inst/WORDLIST` and `Language: en-GB` exist because the
+  maintainer runs `spelling::spell_check_package()`; against the commit
+  this loop started from it reported **zero** flagged words. Against the
+  current tree it reported **53** – every one introduced by the
+  documentation and release notes written here. None is a misspelling:
+  they are package names (`readr`, `tidyr`, `forcats`, `pandoc`), R
+  vocabulary (`formals`, `AST`, `tidyselect`, `memoise`), domain terms
+  (`keycap`, `dingbats`, `faceness`, which is already an exported
+  concept) and hyphenation artefacts (`mis` from “mis-described”). Only
+  four reach a help page. All 53 are now in `inst/WORDLIST`, which is
+  back to reporting zero.
+
+- The word list keeps the ordering it had. `spelling::update_wordlist()`
+  re-sorts case-sensitively, which would have rewritten the whole file
+  and buried 53 real additions in an 86-line diff; restoring the
+  original case-insensitive order makes the change exactly 53 added
+  lines and nothing removed.
+
+- Corrected two references left stale by moving the vignette corpus to
+  `inst/extdata/` last round – one of them in `NEWS.md`, which ships.
+  Re-read the whole tarball manifest afterwards rather than assuming the
+  move was self-contained: the root carries only `DESCRIPTION`,
+  `NAMESPACE`, `NEWS.md` and `README.md`, and `inst/` carries
+  `CITATION`, `WORDLIST`, the three vignette artefacts and the corpus.
+
+- Re-examined why the remaining tests skip on CRAN, having just found
+  that one long-standing skip was hiding a real defect. Four of the
+  eight were not gated on an unshipped file, so their skip was a choice;
+  timing them showed cost was not the reason either – 4.7s between them,
+  out of 123s. Two have a real reason and keep it: the
+  declared-R-minimum check reads the *installed dependencies’* own R
+  floors, and the
+  [`select()`](https://dplyr.tidyverse.org/reference/select.html)-avoidance
+  check compares two wall-clock timings. Both interrogate the checking
+  machine rather than the package, and neither is a fair question to ask
+  a CRAN flavour.
+
+- The other two had no reason beyond caution and now run everywhere:
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  at its widest, which builds a 3791-column table and is precisely the
+  shape most likely to behave differently on a platform that cannot be
+  tested here, and the audit that no example except
+  [`?register_emoji_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  registers a lexicon – a hazard created by `R CMD check` running every
+  example in one session, so a CRAN flavour is where it most needs to
+  hold. Twelve more assertions now run on all thirteen CRAN flavours,
+  and the tarball check’s skips fall from ten to eight.
+
+- **The vignette’s code, as R ships it to users, could not be run.** R
+  installs the tangled `introduction.R` precisely so a reader can
+  execute the vignette, and
+  [`browseVignettes()`](https://rdrr.io/r/utils/browseVignettes.html)
+  offers it. It read its corpus as `read.csv("ata_tweets.csv")`, a bare
+  relative path that resolves while the vignette is being built in
+  `vignettes/` and nowhere afterwards: the corpus shipped in the tarball
+  but was never installed, so the script failed on line 28 with “cannot
+  open the connection”. The corpus now lives in `inst/extdata/` and both
+  the vignette and the shipped script reach it with
+  [`system.file()`](https://rdrr.io/r/base/system.file.html). The
+  tarball grew by 3.4 KB, because the file moved rather than being
+  duplicated; the installed package grows by the file’s 150 KB, which is
+  the cost of the script working.
+
+- Two tests stop skipping as a result. They were gated on the corpus
+  being reachable, which inside `R CMD check` it never was – tests run
+  from `.Rcheck/tests/`, where `../../vignettes` does not exist. Now
+  that the corpus is installed they run everywhere, including on CRAN,
+  and the tarball check’s skip count falls from twelve to ten.
+
+- Swept every number of two or more digits on a help page against every
+  number appearing anywhere in the test suite. Seventeen were
+  unaccounted for; twelve are code points, citation years or the CLARIN
+  handle. The other five were real claims about this package’s data that
+  nothing checked, and all five are exact:
+  [`?emoji_search`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)’s
+  “189 of the catalogue’s 5042 rows carry no GitHub-style alias” and “7
+  of the 198 rows `emoji_search("face")` returns”, and
+  [`?emoji_density`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)’s
+  “115 of the 560 emoji-bearing rows in the corpus behind the
+  introduction vignette contain a multi-code-point emoji”. All five are
+  now derived in tests rather than asserted in prose – the last of the
+  documented figures to be unpinned.
+
+- Measured how the verbs scale, which no test could show: every fixture
+  in the suite is a handful of rows, so an accidentally quadratic verb
+  would be invisible. All nineteen are linear – at 1k, 4k and 16k rows
+  the 16-fold input gives 16-fold time across the board, the slowest
+  being
+  [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+  at 6.7s for 16k rows.
+
+- Verified the one cost model the documentation actually states.
+  [`?emoji_cooccurrence`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_cooccurrence.md)
+  warns that the result “grows with the square of the distinct emoji in
+  a document” and quotes 319,600 pairs for 800 and 7.2 million for 3790.
+  Both are exact, 3790 really is the catalogue’s distinct-emoji count
+  rather than an invented ceiling, and the measured timings are
+  quadratic and land where the page says – 0.09s, 0.24s, 0.81s and 3.03s
+  for 100, 200, 400 and 800, so 800 is the promised “few seconds”. The
+  arithmetic and the one-row-per-pair property are now tests; the timing
+  cannot be, so it is recorded here.
+
+- A related detail the measurement turned up, in the model’s favour:
+  cost depends on distinct *emoji*, not on occurrences. 4000 rows pooled
+  into two documents is faster than 4000 one-row documents, because a
+  document holding 6000 glyphs drawn from a 10-emoji vocabulary still
+  has only 45 pairs. 800 distinct *spellings* likewise collapse to 726
+  emoji and 263,175 pairs – exactly `C(726, 2)`, which is the model
+  confirming itself.
+
+- The deployed pkgdown site was checked against this release rather than
+  assumed current: its home, reference index, introduction article and
+  news pages all serve, the index links all 50 topics (51 help pages
+  less the package doc, which pkgdown excludes by design), and the
+  reference pages carry the wording added in this release.
 
 - Verified the pkgdown reference index, since a new exported verb that
   nobody adds to `_pkgdown.yml` breaks
@@ -2303,6 +2491,69 @@ because both meant something was unverified.
   group-to-type recode was checked and was never affected – its
   subgroups are already lower-case and none of the literals it matches
   contains an `i`.
+
+- **Case-insensitive search missed accented names outside a UTF-8
+  locale.** The fold above settled `A-Z` with
+  [`chartr()`](https://rdrr.io/r/base/chartr.html) and left the rest to
+  [`tolower()`](https://rdrr.io/r/base/chartr.html), on the reasoning
+  that [`tolower()`](https://rdrr.io/r/base/chartr.html) “still folds
+  non-ASCII”. It does – but only where the locale is UTF-8. Under
+  `LC_ALL=C` [`tolower()`](https://rdrr.io/r/base/chartr.html) returns
+  every non-ASCII letter untouched, and 24 catalogue names carry an
+  uppercase accented letter: the Åland Islands, Curaçao, Côte d’Ivoire,
+  Réunion, São Tomé & Príncipe, St. Barthélemy, Türkiye and the
+  seventeen Japanese button glyphs, whose names are quoted with
+  typographic quotation marks. So `emoji_search("åland")` found the flag
+  in a UTF-8 session and **0 rows** in a C one, and no error said why.
+  The fold is now driven from an explicit table throughout: `A-Z` plus
+  the 200 cased Latin letters of the Latin-1 Supplement and Latin
+  Extended-A/-B, folded with
+  [`chartr()`](https://rdrr.io/r/base/chartr.html), which is a plain
+  code-point substitution and so is subject to neither the Turkish rule
+  nor the locale’s character set.
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) still runs
+  afterwards for anything the table does not name. Only 1:1 pairs are
+  listed – an uppercase code point whose lowercase form is a single,
+  different code point – which is what keeps the result byte-identical
+  to [`tolower()`](https://rdrr.io/r/base/chartr.html) in a UTF-8 locale
+  rather than a new folding of its own; it was re-verified against
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) over all 5042 names,
+  10701 keywords and 5761 aliases, and the C locale merely catches up.
+  The invariant test that claimed the fold does not depend on `LC_CTYPE`
+  only ever exercised the Turkish half, so it passed throughout; it is
+  now joined by one that pins the accented answers by hand, because
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) cannot produce them
+  in the locale where it matters.
+
+- **“Nothing but whitespace” meant different things in different
+  sessions.** The same defect as the fold above, in a second place.
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)’s
+  `.emoji_only` is documented as “the text contains emoji and nothing
+  else but whitespace”, and the test for it, the token split behind
+  `.emoji_per_token`,
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)’s
+  word split and `emoji_incongruity(where = "final")`’s “only whitespace
+  may follow the last glyph” all asked that question with `\s` or
+  `[[:space:]]`. Both resolve through the C library’s `iswspace()`,
+  which depends on the locale *and* on the platform. So an emoji
+  followed by an ideographic space (`U+3000`) was emoji-only in a UTF-8
+  session and not emoji-only under `LC_ALL=C` – and CRAN checks on
+  flavours whose `iswspace()` need not agree with glibc’s. All six sites
+  now use one explicit character class: Unicode’s `White_Space`
+  property, written out. That also settles an inconsistency glibc had
+  left behind, since `U+00A0` and `U+202F` – the two no-break spaces –
+  were the only `White_Space` characters it rejected, so `U+3000`
+  counted and `U+00A0` did not; both count now. `U+200B` remains
+  excluded, because despite the name Unicode does not give the
+  zero-width space `White_Space`. The bundled corpus has one row
+  containing `U+00A0` and no value in it changes, so no figure quoted
+  anywhere moves. The test asserting that
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  and
+  [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  “tokenise identically” had reimplemented the density side inline, so
+  it compared the package against a stale copy of itself and failed on
+  the corrected code; it now reads the count back out of the verb.
 
 - [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
   and

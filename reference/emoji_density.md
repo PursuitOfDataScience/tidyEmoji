@@ -42,7 +42,10 @@ emoji_density(data, text)
 
 `data`, as a tibble, with added columns `.emoji_n`, `.emoji_per_char`
 (emoji per character, i.e. per code point, of text) and
-`.emoji_per_token` (emoji per whitespace-delimited token).
+`.emoji_per_token` (emoji per whitespace-delimited token). A token is a
+maximal run of characters outside Unicode's `White_Space` property; see
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+for the exact set, which does not vary with the locale.
 
 ## Details
 

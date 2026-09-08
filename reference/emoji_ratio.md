@@ -43,7 +43,13 @@ emoji_ratio(data, text)
 
 `data`, as a tibble, with added columns `.emoji_ratio` (emoji characters
 / all characters, 0 when there are no emoji) and `.emoji_only` (`TRUE`
-when the text contains emoji and nothing else but whitespace). `NA` text
+when the text contains emoji and nothing else but whitespace).
+"Whitespace" is Unicode's `White_Space` property, written out explicitly
+rather than left to the C library: it includes the no-break spaces
+`U+00A0` and `U+202F` and the ideographic space `U+3000`, and excludes
+the zero-width space `U+200B`, which despite its name Unicode does not
+classify as whitespace. The same set is used everywhere the package
+splits or trims text, and it does not vary with the locale. `NA` text
 gets `NA` in both. Empty text (`""`) has no characters to take a share
 of, so `.emoji_ratio` is `NA` there too, but `.emoji_only` is `FALSE`:
 an empty string is not a row of emoji.

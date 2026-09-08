@@ -77,7 +77,9 @@ people, code points that are emoji only when they carry <code>U+FE0F</code>.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>data</code>, as a tibble, with added columns <code>.emoji_n</code>,
 <code>.emoji_per_char</code> (emoji per character, i.e. per code point, of text) and
-<code>.emoji_per_token</code> (emoji per whitespace-delimited token).</p>
+<code>.emoji_per_token</code> (emoji per whitespace-delimited token). A token is a
+maximal run of characters outside Unicode's <code>White_Space</code> property; see
+<code><a href="emoji_ratio.html">emoji_ratio()</a></code> for the exact set, which does not vary with the locale.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

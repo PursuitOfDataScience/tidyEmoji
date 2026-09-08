@@ -252,10 +252,14 @@ but nothing below is specific to any platform — any data frame with a
 text column will do.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># read.csv() rather than readr::read_csv(): readr is a Suggests package, and</span></span>
-<span><span class="co"># reading one CSV does not need it</span></span>
+<span><span class="co"># reading one CSV does not need it. system.file() rather than a bare path, so</span></span>
+<span><span class="co"># this chunk works from the installed introduction.R as well as at build time</span></span>
+<span><span class="co"># -- the corpus lives in inst/extdata and is installed with the package.</span></span>
 <span><span class="va">ata_tweets</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span></span>
-<span>  <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"ata_tweets.csv"</span>, encoding <span class="op">=</span> <span class="st">"UTF-8"</span>,</span>
-<span>                  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ata_tweets.csv"</span>, package <span class="op">=</span> <span class="st">"tidyEmoji"</span><span class="op">)</span>,</span>
+<span>    encoding <span class="op">=</span> <span class="st">"UTF-8"</span>, stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">ata_tweets</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2,000 × 1</span></span></span>
