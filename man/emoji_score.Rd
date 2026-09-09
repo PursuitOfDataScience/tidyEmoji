@@ -43,11 +43,21 @@ string. Default \code{"emoji"}.}
 \code{"sentiment_score"} then \code{"score"} are tried.}
 }
 \value{
-\code{data}, as a tibble, with \code{.emoji_score} (per-row mean),
-\code{.emoji_n_scored} (emoji found in the lexicon) and \code{.emoji_n} (total emoji)
-added. For the multi-dimensional \code{"emotag1200"} lexicon the score is the
-mean over its eight emotion dimensions; use \code{\link[=emoji_emotion]{emoji_emotion()}} for the
-per-emotion profile.
+\code{data}, as a tibble, with \code{.emoji_n} (total emoji),
+\code{.emoji_n_scored} (emoji found in the lexicon) and \code{.emoji_score}
+(per-row mean) added, in that order -- the same order
+\code{\link[=emoji_sentiment]{emoji_sentiment()}}, \code{\link[=emoji_emotion]{emoji_emotion()}}, \code{\link[=emoji_risk]{emoji_risk()}},
+\code{\link[=emoji_incongruity]{emoji_incongruity()}} and \code{\link[=emoji_faceness]{emoji_faceness()}} use.
+
+For the multi-dimensional \code{"emotag1200"} lexicon the score is the mean
+over its eight emotion dimensions; use \code{\link[=emoji_emotion]{emoji_emotion()}} for the
+per-emotion profile. \strong{Note the scale changes with the lexicon.}
+\code{"novak2015"} is a signed valence on \verb{[-1, 1]}, where the sign is the
+direction of sentiment. The \code{"emotag1200"} mean is an \emph{intensity} on
+\verb{[0, 1]}: its eight dimensions are each non-negative and four of them
+(anger, disgust, fear, sadness) are negatively valenced, so a maximally
+angry emoji and a maximally joyful one score alike and neither is
+negative. The two are not comparable and must not be pooled.
 
 That averaging is specific to the bundled lexicon. A \emph{registered} or
 inline lexicon carrying emotion columns has no score column, so

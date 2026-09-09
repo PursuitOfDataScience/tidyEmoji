@@ -47,5 +47,27 @@ message("emoji_sentiment_lexicon: ", nrow(emoji_sentiment_lexicon), " emoji")
 stopifnot(all(c("emoji", "sentiment_score", "sentiment_label") %in%
               names(emoji_sentiment_lexicon)))
 
+# The two invariants the package relies on and never checked. The emotion
+# script asserts both of its analogues; this one asserted only that three
+# columns exist.
+#
+# 1. The class counts have to add up to `occurrences`. emoji_ambiguity_table()
+#    recomputes n as negative + neutral + positive while the lexicon carries
+#    `occurrences`, so if they ever disagreed emoji_sentiment() and
+#    emoji_ambiguity() would report different evidence for the same glyph.
+stopifnot(all(emoji_sentiment_lexicon$occurrences ==
+              emoji_sentiment_lexicon$negative +
+              emoji_sentiment_lexicon$neutral +
+              emoji_sentiment_lexicon$positive))
+
+# 2. No two rows may canonicalise to one code-point key. emoji_sentiment_map()
+#    and emoji_ambiguity_table() both resolve duplicates first-wins, silently,
+#    so a duplicate would make the score depend on row order -- exactly what
+#    .emoji_lexicon_record() refuses to accept from a *user's* table.
+local({
+  k <- tidyEmoji:::emoji_key(emoji_sentiment_lexicon$emoji)
+  stopifnot(!anyDuplicated(k[!is.na(k)]))
+})
+
 save(emoji_sentiment_lexicon,
      file = "data/emoji_sentiment_lexicon.rda", compress = "xz")

@@ -139,7 +139,12 @@ test_that("the aggregate shares are shares", {
   vp <- emoji_version_profile(df, text)
   expect_equal(sum(vp$share_tokens), 1)
   se <- emoji_seasonality(df, text, when)
-  expect_equal(sum(se$share), 1)
+  # share is NA for a cycle level the data never reaches -- a structural zero
+  # is not a measured zero -- so the shares sum to 1 over the observed levels
+  expect_equal(sum(se$share, na.rm = TRUE), 1)
+  expect_true(all(is.na(se$share) == (se$n_texts == 0L)))
+  # not vacuous: this fixture really does leave some levels unobserved
+  expect_gt(sum(is.na(se$share)), 0L)
   expect_equal(sum(se$n_texts), nrow(df))
 })
 
@@ -269,6 +274,7 @@ test_that("a repaired glyph is one emoji to every counting verb", {
 # ---------------------------------------------------------------------------
 
 test_that("no ordered output depends on LC_COLLATE", {
+  skip_if_catalogue_moved()
   A <- laugh
   B <- heart_eyes
   C <- party
@@ -800,6 +806,7 @@ test_that("the releases table has two internally consistent series", {
 })
 
 test_that("the catalogue's versions all resolve, and only via the emoji series", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   rel <- emoji_unicode_releases()
   labels <- unique(tidyEmoji:::.emoji_version_label(ref$version))
@@ -1141,6 +1148,7 @@ test_that("emoji_search matches on each of its three fields", {
 })
 
 test_that("emoji_search returns the documented columns and is case-blind", {
+  skip_if_catalogue_moved()
   out <- emoji_search("grin")
   expect_identical(names(out),
                    c("emoji", "name", "shortcode", "group", "keyword"))
@@ -1308,6 +1316,7 @@ test_that("emoji_score() with the emotion lexicon averages the eight dims", {
 })
 
 test_that("emoji_sentiment() accepts a data frame and a registered lexicon", {
+  local_clean_registry()
   df <- data.frame(text = c(paste("hi", laugh), "plain"))
   lex <- data.frame(emoji = c(laugh, heart_eyes), score = c(0.5, -0.5))
   expect_equal(emoji_sentiment(df, text, lexicon = lex)$.emoji_sentiment,
@@ -1389,6 +1398,7 @@ test_that("emoji_incongruity_profile returns a typed zero-row tibble", {
 # ---------------------------------------------------------------------------
 
 test_that("the lexicon surface rejects what it cannot use", {
+  local_clean_registry()
   df <- data.frame(text = paste("hi", laugh))
   expect_error(emoji_score(df, text, lexicon = "no-such-lexicon"),
                "Unknown lexicon")
@@ -1426,6 +1436,7 @@ test_that("the lexicon surface rejects what it cannot use", {
 })
 
 test_that("a registered lexicon resolves through its stored key column", {
+  local_clean_registry()
   # .emoji_lexicon_keys falls back to the `key` column when the glyph column
   # is named something else -- the path register_emoji_lexicon() sets up
   lex <- data.frame(glyph = c(laugh, heart_eyes), score = c(1, -1))
@@ -1479,6 +1490,7 @@ test_that("cooccurrence honours sort = FALSE with the diagonal included", {
 })
 
 test_that("se = TRUE is NA for a row whose emoji carry no annotation counts", {
+  local_clean_registry()
   pleading <- "\U0001F97A"   # post-2015, so no counts behind it
   out <- emoji_sentiment(data.frame(text = paste("x", pleading)), text,
                          se = TRUE)
@@ -1776,6 +1788,7 @@ test_that("the trailing-emoji run is unchanged by the shared gap helper", {
 # ---------------------------------------------------------------------------
 
 test_that("the shortcode round trip preserves every emoji in the catalogue", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
   sc <- emoji_to_text(d, text, format = "shortcode")$text
@@ -1811,6 +1824,7 @@ test_that("the shortcode round trip preserves every emoji in the catalogue", {
 # three different denominators, not three estimates of one number. Pin it both
 # ways: derive it from the data, and require the rendered page to state it.
 test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   has_alias <- !is.na(ref$shortcode) & nzchar(ref$shortcode)
   g <- ref$emoji[has_alias]
@@ -2017,6 +2031,7 @@ test_that("as_emoji() resolves an undelimited string by Unicode name first", {
 })
 
 test_that("every shortcode and name in the catalogue emojizes to the right emoji", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
 
   # names: all 5042, exactly
@@ -2650,6 +2665,196 @@ test_that("emoji_search() returns the same rows whatever LC_CTYPE is", {
   }
 })
 
+# ---------------------------------------------------------------------------
+# Round 105: LC_TIME, the fourth reproducibility axis after collation, ctype
+# and the timezone. The time verbs are safe today by construction rather than
+# by test -- every format() call uses a numeric conversion (%Y %m %d %u %H),
+# the weekday labels are a hardcoded English vector, and month.abb is a base
+# *constant* that is English whatever the locale. Nothing stops a later edit
+# reaching for format(d, "%b") or weekdays(), both of which would make a
+# documented label come out as "mars" or "M\u00e4rz". So pin it two ways: the
+# outputs must not move under a foreign LC_TIME, and the banned calls must not
+# appear in the sources.
+# ---------------------------------------------------------------------------
+
+with_time <- function(loc, code) {
+  old <- Sys.getlocale("LC_TIME")
+  ok <- suppressWarnings(Sys.setlocale("LC_TIME", loc))
+  if (!nzchar(ok)) {
+    return(structure(list(), class = "time_unavailable"))
+  }
+  on.exit(Sys.setlocale("LC_TIME", old), add = TRUE)
+  force(code)
+}
+
+# As with the dotless i: a locale that can be set but leaves the month names in
+# English proves nothing, so gate on the observable change.
+skip_unless_foreign_month_names <- function(loc = "fr_FR.utf8") {
+  probe <- with_time(loc, format(as.Date("2024-03-04"), "%B"))
+  skip_if(inherits(probe, "time_unavailable"), paste(loc, "cannot be set"))
+  skip_if(identical(probe, "March"),
+          paste0("this platform's LC_TIME does not localise month names"))
+  invisible(TRUE)
+}
+
+test_that("the time verbs give the same answer whatever LC_TIME is", {
+  A <- "\U0001F600"; B <- "\U0001F602"
+  d <- data.frame(
+    text = rep(c(paste("hi", A), paste("yo", B), "plain"), length.out = 30),
+    when = seq(as.Date("2024-01-01"), by = "11 days", length.out = 30),
+    stringsAsFactors = FALSE
+  )
+  d$ts <- as.POSIXct(paste(d$when, "13:45:00"), tz = "UTC")
+  d$chr <- format(d$when, "%Y-%m-%d")
+  run <- function() {
+    out <- list(
+      month   = emoji_seasonality(d, text, when, period = "month"),
+      weekday = emoji_seasonality(d, text, when, period = "weekday"),
+      hour    = emoji_seasonality(d, text, ts, period = "hour"),
+      adopt   = emoji_adoption_lag(d, text, when),
+      turn    = emoji_turnover(d, text, when, by = "month"),
+      chr     = emoji_trend(d, text, chr, by = "month", top_n = NULL)
+    )
+    # namespaced: "month" is both a seasonality period and a trend `by`, and
+    # an unprefixed key silently overwrote the seasonality entry
+    for (b in c("day", "week", "month", "quarter", "year")) {
+      out[[paste0("trend_", b)]] <- emoji_trend(d, text, when, by = b,
+                                                top_n = NULL)
+    }
+    out
+  }
+  here <- run()
+  there <- with_time("fr_FR.utf8", run())
+  skip_unless_foreign_month_names()
+  expect_identical(there, here)
+  # not vacuous: the labels really are the English ones, and the fixture
+  # really does span several months and weekdays
+  expect_identical(here$month$.period_label, month.abb)
+  expect_identical(here$weekday$.period_label,
+                   c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
+  expect_gt(length(unique(here$trend_day$.period)), 1L)
+  expect_length(here, 11L)
+})
+
+# Round 106: eleven lexicons were still registered when the suite finished,
+# because register_emoji_lexicon() has no public counterpart and each test
+# simply left its entry behind. That makes the suite's answers depend on file
+# order (test-emotion.R sorts before test-invariants.R) and on line order
+# within a file. Checking the registry at the end cannot guard it -- whichever
+# test ran last would be the only one that noticed -- so guard the source:
+# every test that registers must also restore.
+# Round 106: two invariants the bundled sentiment lexicon has to satisfy, and
+# that nothing asserted anywhere -- data-raw/ checked only that three columns
+# exist, and data-raw/ does not ship, so it would not have run on a check even
+# if it had. Both are silent failures: neither would raise, both would just
+# make two verbs disagree.
+# Round 106: seven session caches, three of them keyed to the reference table
+# (`reference` itself, `ref_keys` derived from it, and `type` recoded from its
+# groups), with no invalidation anywhere -- each slot guarded only on
+# is.null(). `ref_keys` is the one that matters, because the ZWJ repair tests
+# membership in it, so a stale derived cache would change *detection* rather
+# than only metadata. emoji_reference() now drops the derived slots whenever
+# it rebuilds, and names them in one place.
+test_that("rebuilding the reference drops everything derived from it", {
+  E <- asNamespace("tidyEmoji")
+  cache <- E$.tidyEmoji_cache
+  real <- E$emoji_reference()
+  on.exit(assign("reference", real, envir = cache), add = TRUE)
+
+  # warm every derived slot, then force a rebuild
+  n_keys <- length(E$.emoji_ref_keys())
+  expect_gt(n_keys, 3000L)
+  assign("reference", NULL, envir = cache)
+  invisible(E$emoji_reference())
+
+  # the derived slots were cleared by the rebuild, not left pointing at the
+  # previous table
+  for (slot in E$.emoji_derived_cache_slots()) {
+    expect_null(cache[[slot]], info = slot)
+  }
+  # and they recompute to the same answer
+  expect_identical(length(E$.emoji_ref_keys()), n_keys)
+
+  # the slot list is not empty, or the loop above asserts nothing
+  expect_gt(length(E$.emoji_derived_cache_slots()), 1L)
+  expect_true(all(E$.emoji_derived_cache_slots() %in%
+                  c("ref_keys", "type")))
+})
+
+test_that("the bundled sentiment lexicon satisfies what the verbs assume", {
+  lex <- emoji_sentiment_lexicon
+  # emoji_ambiguity_table() recomputes n from the three class counts while
+  # emoji_sentiment() reads `occurrences`; they must be the same number
+  expect_identical(as.numeric(lex$occurrences),
+                   as.numeric(lex$negative + lex$neutral + lex$positive))
+  # emoji_sentiment_map() and emoji_ambiguity_table() both resolve a duplicate
+  # key first-wins and silently, so a duplicate would make the score depend on
+  # row order -- which is exactly what a *user's* table is refused for
+  k <- tidyEmoji:::emoji_key(lex$emoji)
+  expect_identical(sum(duplicated(k[!is.na(k)])), 0L)
+  # the emotion lexicon carries a stored key column; same requirement
+  ke <- tidyEmoji:::emoji_key(emoji_emotion_lexicon$emoji)
+  expect_identical(sum(duplicated(ke[!is.na(ke)])), 0L)
+  # not vacuous
+  expect_gt(nrow(lex), 900L)
+  expect_true(all(lex$occurrences > 0))
+})
+
+test_that("every test that registers a lexicon also restores the registry", {
+  files <- list.files(testthat::test_path(), pattern = "^test-.*[.]R$",
+                      full.names = TRUE)
+  skip_if(length(files) == 0L, "test sources not available")
+  offenders <- character()
+  for (f in files) {
+    src <- readLines(f, warn = FALSE, encoding = "UTF-8")
+    starts <- grep("^test_that\\(", src)
+    for (k in seq_along(starts)) {
+      i <- starts[[k]]
+      j <- if (k < length(starts)) starts[[k + 1L]] - 1L else length(src)
+      # code only: a comment mentioning the function is not a registration,
+      # and the comment above this very test would otherwise be attributed to
+      # whichever test_that() precedes it
+      body <- src[i:j]
+      body <- body[!grepl("^\\s*#", body)]
+      if (!any(grepl("register_emoji_lexicon(", body, fixed = TRUE))) next
+      if (any(grepl("local_clean_registry()", body, fixed = TRUE))) next
+      if (any(grepl("with_clean_registry(", body, fixed = TRUE))) next
+      offenders <- c(offenders, paste0(basename(f), ":", i))
+    }
+  }
+  expect_identical(offenders, character(0))
+  # not inert: the scan really did find the test files and the registering
+  # tests in them
+  expect_gt(length(files), 5L)
+  n_reg <- sum(vapply(files, function(f) {
+    l <- readLines(f, warn = FALSE, encoding = "UTF-8")
+    sum(grepl("register_emoji_lexicon(", l[!grepl("^\\s*#", l)], fixed = TRUE))
+  }, integer(1)))
+  expect_gt(n_reg, 10L)
+})
+
+test_that("no source reaches for a locale-dependent date name", {
+  code <- pkg_code_text()
+  # %a %A %b %B are the localised weekday/month conversions; weekdays() and
+  # months() are their base-R wrappers. Everything the package needs is
+  # available as a numeric conversion instead.
+  # one assertion per pattern, naming the offenders, rather than one per
+  # function: 150 functions x 6 patterns is 900 expectations for a scan that
+  # has a single answer
+  banned <- c("%a", "%A", "%b", "%B", "weekdays(", "months(")
+  offenders <- function(pat) {
+    names(code)[vapply(code, function(x) grepl(pat, x, fixed = TRUE),
+                       logical(1))]
+  }
+  for (b in banned) expect_identical(offenders(b), character(0), info = b)
+
+  # and the guard is not inert: it runs over real sources, and the numeric
+  # conversions it permits are genuinely in use
+  expect_gt(length(code), 50L)
+  expect_gt(length(offenders("%u")), 0L)
+  expect_gt(length(offenders("%Y")), 0L)
+})
+
 test_that("emoji_collocations() unifies case the same way in every locale", {
   A <- "\U0001F602"
   d <- data.frame(
@@ -2843,6 +3048,7 @@ test_that("emoji_adoption_lag() counts calendar days, not 365-day years", {
 # ---------------------------------------------------------------------------
 
 test_that("the lexicon sizes the documentation states are the data's", {
+  skip_if_catalogue_moved()
   # ?emoji_sentiment_lexicon and ?emoji_emotion_lexicon
   expect_identical(nrow(emoji_sentiment_lexicon), 969L)
   expect_identical(nrow(emoji_emotion_lexicon), 150L)
@@ -2858,6 +3064,7 @@ test_that("the lexicon sizes the documentation states are the data's", {
 })
 
 test_that("the documented coverage figures are the ones the data gives", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   keys <- unique(ref$key)
   sl_keys <- tidyEmoji:::emoji_key(emoji_sentiment_lexicon$emoji)
@@ -2951,6 +3158,7 @@ test_that("the sentiment lexicon's documented formula and ranges hold", {
 })
 
 test_that("the coverage figures printed in the help pages are the data's", {
+  skip_if_catalogue_moved()
   # The round-45 defect went the other way from the tests above: those assert
   # the data has the properties the docs claim, which catches the data
   # drifting. This one builds each figure *from the data* and requires it to
@@ -3179,6 +3387,7 @@ test_that("no deprecation tells the user to report a bug against tidyEmoji", {
 })
 
 test_that("a deprecation warns once per session, not once per call", {
+  skip_if_catalogue_moved()
   skip_if_not_installed("lifecycle")
   A <- "\U0001F602"
   d <- data.frame(id = 1:3,
@@ -3214,6 +3423,7 @@ test_that("a deprecation warns once per session, not once per call", {
 # gave 11 of them, punctuated as if that were the set.
 
 test_that("the name/shortcode overlap is 464, and 17 of them disagree", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   both <- intersect(unique(ref$name), unique(ref$shortcode))
   expect_identical(length(both), 464L)
@@ -3240,6 +3450,7 @@ test_that("the name/shortcode overlap is 464, and 17 of them disagree", {
 })
 
 test_that("the documented round-trip byte share is the catalogue's", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
   round_trip <- text_to_emoji(
@@ -3408,6 +3619,7 @@ test_that("emoji_pairs(sort = FALSE) is ordered, just not by n", {
 })
 
 test_that("as_emoji_shortcode() is keyed on the emoji, emoji_search() on the row", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
 
   # 344 keys carry a different first alias on each of their two spellings, and
@@ -3488,6 +3700,7 @@ test_that("as_emoji_shortcode() is keyed on the emoji, emoji_search() on the row
 # why every existing test passed.
 
 test_that("rows with no scorable emoji cannot move the scaled gap", {
+  skip_if_catalogue_moved()
   # 100 rows whose emoji sentiment IS their text score, so the true gap is 0
   # for every one of them under any scale
   lex <- emoji_sentiment_lexicon
@@ -3816,6 +4029,7 @@ test_that("the trailing-run walk-back matches a direct search", {
 })
 
 test_that("emoji_emotion(long = TRUE) returns what its @return says", {
+  skip_if_catalogue_moved()
   A <- "\U0001F600"
   d <- data.frame(text = c(paste("a", A), "plain"), id = 1:2,
                   stringsAsFactors = FALSE)
@@ -3850,6 +4064,7 @@ test_that("emoji_emotion(long = TRUE) returns what its @return says", {
 # so pin both, and pin that they are not equal.
 
 test_that("the documented undetectable-spelling figures are the data's", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   detected <- lengths(tidyEmoji:::emoji_glyph_list(ref$emoji))
 
@@ -3889,6 +4104,7 @@ test_that("the documented undetectable-spelling figures are the data's", {
 })
 
 test_that("the keycap selector goes in the middle, not at the end", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   detected <- lengths(tidyEmoji:::emoji_glyph_list(ref$emoji))
   undetectable <- ref$emoji[detected == 0L]
@@ -3935,6 +4151,7 @@ test_that("the keycap selector goes in the middle, not at the end", {
 })
 
 test_that("detection of a catalogued glyph does not depend on its context", {
+  skip_if_catalogue_moved()
   # Everything in the package rests on .emoji_locations() returning the same
   # spans for a glyph whether it stands alone or sits in a sentence. Tested
   # only on bare glyphs until now.
@@ -4009,6 +4226,7 @@ test_that("entropy is never negative zero", {
 })
 
 test_that("the annotation-count caveat ?emoji_ambiguity states is the data's", {
+  skip_if_catalogue_moved()
   a <- emoji_ambiguity()
   # the figures the details paragraph quotes
   expect_identical(stats::median(a$n_annotations), 18L)
@@ -4164,6 +4382,7 @@ test_that("the vignette names every export, and reaches for nothing superseded",
 })
 
 test_that("emoji_unicode_crosswalk's row unit is a (name, glyph) pair", {
+  skip_if_catalogue_moved()
   # ?emoji_unicode_crosswalk and the vignette both said "one row per emoji
   # name". It is neither one row per name nor one per glyph: the mapping is
   # many-to-many both ways, so a join by emoji_name silently duplicates.
@@ -4478,6 +4697,7 @@ test_that("every cross-row aggregator warns once, and names itself", {
 # starts from, not what the three rules together start from.
 
 test_that("the staged detection figures are the ones the rules give", {
+  skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   G <- ref$emoji
   Z <- "\u200D"
@@ -4550,6 +4770,7 @@ test_that("the staged detection figures are the ones the rules give", {
 })
 
 test_that("every alias resolves, including the 751 only the fallback knows", {
+  skip_if_catalogue_moved()
   # NEWS: "751 of the 4698 aliases resolve solely through as_emoji()'s
   # fallback to emoji::emoji_name", because the reference table keeps only an
   # emoji's first alias as its shortcode.
@@ -4787,6 +5008,7 @@ test_that("emoji_cooccurrence differs from emoji_pairs exactly as documented", {
 })
 
 test_that("every enum and flag combination the verbs accept works", {
+  skip_if_catalogue_moved()
   A <- "\U0001F600"; H <- "\U0001F60D"; F1 <- "\U0001F525"
   d <- data.frame(
     text = c(paste("hi", A, H), "plain", paste(F1, "hot", A), paste("wow", H),
@@ -4997,6 +5219,7 @@ test_that("the verbs compose in the chains a user would actually write", {
 # end, since `score` names a single column and they want the mean.
 
 test_that("a registered lexicon reaches every consumer that documents it", {
+  local_clean_registry()
   A <- "\U0001F600"; H <- "\U0001F60D"
   d <- data.frame(text = c(paste("a", A), "plain", paste("b", H)),
                   stringsAsFactors = FALSE)
@@ -5288,6 +5511,7 @@ test_that("the type and length checks report in the informative order", {
 # returns the ones it recognises without a word about the rest.
 
 test_that("emoji_turnover() rejects a measure it does not know", {
+  local_clean_registry()
   A <- "\U0001F600"; H <- "\U0001F60D"
   d <- data.frame(text = c(paste("a", A), paste("b", H)),
                   when = as.Date("2024-01-01") + c(0, 40),
@@ -5339,6 +5563,7 @@ test_that("emoji_turnover() rejects a measure it does not know", {
 # was added for.
 
 test_that("a lexicon error names the argument the caller typed", {
+  local_clean_registry()
   A <- "\U0001F600"
   d <- data.frame(text = paste("a", A), stringsAsFactors = FALSE)
   dims <- c("anger", "anticipation", "disgust", "fear", "joy", "sadness",
@@ -5739,6 +5964,7 @@ test_that("emoji_incongruity_profile's statistics are the row gaps aggregated", 
 })
 
 test_that("emoji_dfm holds up at its widest", {
+  skip_if_catalogue_moved()
   # Runs on CRAN: it is deterministic and about two seconds, and a table
   # 3791 columns wide is exactly the shape most likely to behave differently
   # on a flavour we cannot test here.
@@ -5872,6 +6098,12 @@ test_that("only one example touches the lexicon registry", {
   expect_identical(mutators, "register_emoji_lexicon.Rd")
 
   # and in a clean registry the bundled table is exactly the two lexicons
+  # Every registering test now restores the registry on exit
+  # (local_clean_registry), so this no longer has to wipe it to get a clean
+  # view -- and wiping was itself the problem: the assign() sat outside the
+  # enclosing on.exit() restore, so it discarded every registration made
+  # earlier in the file and made the result depend on line order.
+  local_clean_registry()
   assign("lexicons", NULL, envir = cache)
   lx <- emoji_lexicons()
   expect_identical(lx$name, c("novak2015", "emotag1200"))
@@ -6392,6 +6624,7 @@ test_that("emoji_to_text() never returns a bytes-encoded column", {
 })
 
 test_that("the other encodings the guard must not touch still work", {
+  skip_if_catalogue_moved()
   A <- "\U0001F600"
   # latin1-marked and unknown-marked text are readable and must pass through
   lat <- "caf\xe9 text"
@@ -6416,6 +6649,7 @@ test_that("the other encodings the guard must not touch still work", {
 # most likely to drift away from the data it describes.
 
 test_that("the ambiguity ranking's non-emoji rows are exactly as documented", {
+  skip_if_catalogue_moved()
   E <- asNamespace("tidyEmoji")
   amb <- emoji_ambiguity()
   expect_identical(nrow(amb), 969L)
@@ -6446,6 +6680,7 @@ test_that("the ambiguity ranking's non-emoji rows are exactly as documented", {
 })
 
 test_that("emoji_ambiguity()'s Rd states those figures", {
+  skip_if_catalogue_moved()
   rd <- rd_flat("emoji_ambiguity")
   expect_true(grepl("233 of its 969 rows", rd, fixed = TRUE))
   expect_true(grepl("6%", rd, fixed = TRUE))
@@ -6455,6 +6690,8 @@ test_that("emoji_ambiguity()'s Rd states those figures", {
 })
 
 test_that("the lexicon coverage figures in emoji_sentiment_lexicon's Rd hold", {
+  local_clean_registry()
+  skip_if_catalogue_moved()
   # 736 / 233 / 3790 are quoted in prose; derive each from the data
   E <- asNamespace("tidyEmoji")
   lex <- tidyEmoji::emoji_sentiment_lexicon
@@ -6484,6 +6721,7 @@ test_that("the lexicon coverage figures in emoji_sentiment_lexicon's Rd hold", {
 # it did not have.
 
 test_that("a non-numeric score column is refused, not silently NA", {
+  local_clean_registry()
   A <- "\U0001F600"
   B <- "\U0001F622"
   for (col in list(character = c("1", "-1"),
@@ -6546,6 +6784,7 @@ test_that("two lexicon rows for one emoji must agree on the score", {
 })
 
 test_that("`by` must name a single column", {
+  local_clean_registry()
   A <- "\U0001F600"
   tbl <- data.frame(emoji = A, other = 1L, score = 1)
   d <- tibble::tibble(text = paste("a", A))
@@ -6587,6 +6826,7 @@ test_that("the bundled lexicon paths are unaffected by the new guards", {
 # single name must be the *first* of the expanded ones.
 
 test_that("top_n_emojis()'s two naming branches agree", {
+  skip_if_catalogue_moved()
   # deterministic and about two seconds, so it runs on CRAN: the branches
   # join against the installed emoji package's catalogue, and a build whose
   # aliases differ from this one is exactly what would break the agreement
@@ -6733,6 +6973,7 @@ test_that("a char window never quotes a neighbouring emoji's own bytes", {
 # The assertion was right; the fixture had no teeth.
 
 test_that("emoji_turnover() tells `new` from `lost`", {
+  skip_if_catalogue_moved()
   laugh <- "\U0001F602"
   heart_eyes <- "\U0001F60D"
   party <- "\U0001F389"
@@ -6787,6 +7028,7 @@ test_that("emoji_turnover() tells `new` from `lost`", {
 # says which quantity it is, and these pin both.
 
 test_that("emoji_provenance()$n_emoji is the reference table's row count", {
+  skip_if_catalogue_moved()
   E <- asNamespace("tidyEmoji")
   ref <- E$emoji_reference()
   p <- emoji_provenance()
@@ -6804,6 +7046,7 @@ test_that("emoji_provenance()$n_emoji is the reference table's row count", {
 })
 
 test_that("no emoji is lost to an undetectable spelling", {
+  skip_if_catalogue_moved()
   # The claim that makes n_emoji's overstatement harmless rather than a bug:
   # 212 spellings are undetectable, but every distinct emoji is reachable
   # through at least one spelling that is not.
@@ -6821,6 +7064,7 @@ test_that("no emoji is lost to an undetectable spelling", {
 })
 
 test_that("emoji_provenance()'s Rd names the quantity n_emoji counts", {
+  skip_if_catalogue_moved()
   rd <- rd_flat("emoji_provenance")
   expect_true(grepl("spellings, not", rd, fixed = TRUE))
   expect_true(grepl("3790", rd, fixed = TRUE))
@@ -7313,6 +7557,7 @@ test_that("the score map and the se map cover exactly the same emoji", {
 })
 
 test_that("the entropy/annotation-count correlation is as documented", {
+  skip_if_catalogue_moved()
   # ?emoji_ambiguity: "entropy is positively correlated with the annotation
   # count overall (Spearman 0.56)" -- the sentence that stops a reader
   # concluding the low-n bias runs through the whole ranking
@@ -7484,6 +7729,7 @@ test_that("every verb with a count column documents its two values", {
 
 
 test_that("rd_flat() collapses the line wrapping rd_text() preserves", {
+  skip_if_catalogue_moved()
   # The trap this helper exists for: Rd prose is wrapped, so a sentence that
   # reads as one line in the roxygen source arrives here with a newline in the
   # middle, and a fixed = TRUE match for it fails -- reporting a documentation
@@ -7513,11 +7759,12 @@ test_that("rd_flat() collapses the line wrapping rd_text() preserves", {
 # dozens of unrelated-looking failures with no statement of the cause, plus
 # four help pages silently naming a version the user does not have.
 
-# The emoji release every documented figure in this package was derived from.
-# Changing this is not enough on its own: the figures have to be re-derived.
-doc_emoji_version <- function() "16.0.0"
-
 test_that("the documented figures still match the installed emoji release", {
+  # NOT skip_if_catalogue_moved() -- this is the one test whose whole job is
+  # to fail when the catalogue moves. skip_on_cran() instead: loud for the
+  # maintainer and in CI, where re-deriving the figures is possible, and
+  # silent on the checking machine, where it is not.
+  skip_on_cran()
   have <- as.character(utils::packageVersion("emoji"))
   want <- doc_emoji_version()
   # A deliberately loud, self-explaining failure. If it is the only thing
@@ -7579,6 +7826,7 @@ test_that("the declared emoji floor is the release the figures came from", {
 })
 
 test_that("emoji_provenance() reports the release the figures assume", {
+  skip_if_catalogue_moved()
   # the runtime counterpart: a reader who wonders which catalogue produced a
   # number has one call that answers it, and it agrees with the constant
   p <- emoji_provenance()
@@ -7613,7 +7861,11 @@ test_that("every documented URL is well formed", {
     urls <- c(urls, sub("^\\\\(?:url|href)\\{(.*)\\}$", "\\1", m))
   }
   desc <- utils::packageDescription("tidyEmoji")
-  urls <- c(urls, unlist(strsplit(paste(desc$URL, desc$BugReports), "[, ]+")))
+  # split on whitespace too, not just commas: a DESCRIPTION URL field listing
+  # more than one address wraps onto a continuation line, and
+  # packageDescription() hands it back with the newline still in it
+  urls <- c(urls, unlist(strsplit(paste(desc$URL, desc$BugReports),
+                                  "[,[:space:]]+")))
   urls <- unique(urls[nzchar(urls)])
   expect_gt(length(urls), 4L)
   for (u in urls) {
@@ -8191,6 +8443,7 @@ test_that("a cached accessor answers the same first time as later", {
 })
 
 test_that("re-registering a lexicon name replaces it, coherently", {
+  local_clean_registry()
   A <- "\U0001F600"
   B <- "\U0001F602"
   d <- tibble::tibble(text = c(paste("a", A), paste("b", B)))
@@ -8229,6 +8482,7 @@ test_that("re-registering a lexicon name replaces it, coherently", {
 # the same way.
 
 test_that("NEWS.md's orientation matches the section it describes", {
+  skip_if_catalogue_moved()
   f <- system.file("NEWS.md", package = "tidyEmoji")
   skip_if(!nzchar(f) || !file.exists(f), "NEWS.md not installed")
   l <- readLines(f, warn = FALSE, encoding = "UTF-8")
@@ -8245,9 +8499,17 @@ test_that("NEWS.md's orientation matches the section it describes", {
   n_bold <- sum(grepl("^\\* \\*\\*", sect))
   expect_gt(n_bold, 0L)
   words <- c("sixty-one", "sixty-two", "sixty-three", "sixty-four",
-             "sixty-five", "sixty-six", "sixty-seven", "sixty-eight",
-             "sixty-nine", "seventy")
-  names(words) <- as.character(61:70)
+               "sixty-five", "sixty-six", "sixty-seven", "sixty-eight",
+               "sixty-nine", "seventy", "seventy-one", "seventy-two",
+               "seventy-three", "seventy-four", "seventy-five",
+               "seventy-six", "seventy-seven", "seventy-eight",
+               "seventy-nine", "eighty", "eighty-one", "eighty-two",
+               "eighty-three", "eighty-four", "eighty-five", "eighty-six",
+               "eighty-seven", "eighty-eight", "eighty-nine", "ninety",
+               "ninety-one", "ninety-two", "ninety-three", "ninety-four",
+               "ninety-five", "ninety-six", "ninety-seven", "ninety-eight",
+               "ninety-nine", "one hundred")
+  names(words) <- as.character(61:100)
   key <- as.character(n_bold)
   skip_if(!key %in% names(words),
           paste("no spelled form recorded for", n_bold, "-- update this test"))
@@ -8300,6 +8562,7 @@ test_that("one document yields exactly one row per pair of distinct emoji", {
 })
 
 test_that("the cost figures on ?emoji_cooccurrence are arithmetic", {
+  skip_if_catalogue_moved()
   pairs <- function(n) n * (n - 1) / 2
   # the two the page quotes
   expect_identical(pairs(800), 319600)
@@ -8321,6 +8584,7 @@ test_that("the cost figures on ?emoji_cooccurrence are arithmetic", {
 # all five are exact.
 
 test_that("the alias figures on ?emoji_search hold", {
+  skip_if_catalogue_moved()
   # "189 of the catalogue's 5042 rows carry no GitHub-style alias at all, so a
   # search that hits one (7 of the 198 rows emoji_search("face") returns, for
   # instance) has nothing to put in that column"

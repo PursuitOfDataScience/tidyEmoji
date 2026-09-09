@@ -198,12 +198,28 @@ emoji_unicode_version <- function() {
 
 #' Emoji frequency over time
 #'
-#' `emoji_trend()` counts emoji per time period and returns the long, complete
-#' table that plots directly: one row per (period, emoji), including the
-#' periods in which an emoji is absent, so a trend line does not silently skip
-#' its zeros.
+#' `emoji_trend()` counts emoji per time period and returns the long table
+#' that plots directly: one row per (period, emoji) over the periods it
+#' returns, including the ones in which a given emoji is absent, so a trend
+#' line does not silently skip its zeros.
 #'
 #' @details
+#' **Which periods appear.** The grid is complete over the *observed* periods,
+#' and "observed" means a period holding at least one emoji. A period whose
+#' rows carry no emoji at all does not appear, and neither does a gap in the
+#' calendar: `emoji_trend()` never invents a period. So the zeros it fills in
+#' are the ones *within* the periods it returns, not a continuous time axis.
+#' Pass the result through [tidyr::complete()] against a calendar sequence if
+#' you need the empty periods too.
+#'
+#' The three time verbs answer this differently, on purpose, and it is worth
+#' knowing which you are getting before joining two of them on `.period`:
+#'
+#' * [emoji_trend()] -- periods containing at least one emoji.
+#' * [emoji_turnover()] -- every period containing at least one dated row,
+#'   including emoji-free ones, which report `n_types = 0`.
+#' * [emoji_seasonality()] -- every level of the cycle unconditionally, whether
+#'   or not the data reaches it.
 #' `share` is the emoji's count divided by all emoji tokens in the same period,
 #' which is what makes periods with different volumes comparable. `top_n`
 #' selects the emoji to follow, ranked over the whole corpus by `measure`, and
@@ -229,7 +245,7 @@ emoji_unicode_version <- function() {
 #'
 #'   A character column must lead with a four-digit year: `"2024-01-01"` or
 #'   `"2024/01/01"`, with one- or two-digit month and day, and any trailing
-#'   time ignored. Values that do not warn and are dropped -- but a column in
+#'   time ignored. Values that do not parse warn and are dropped -- but a column in
 #'   which *nothing* reads as a date is an error rather than a column of `NA`,
 #'   since there would be no time axis left. Note that `"01/02/2024"` is in the
 #'   second group: convert a column written that way with `as.Date()` and its
@@ -619,7 +635,15 @@ emoji_seasonality <- function(data, text, time,
     n_with_emoji = n_with,
     n_emoji = n_emoji,
     emoji_per_text = ifelse(n_texts == 0L, NA_real_, n_emoji / n_texts),
+    # NA, not 0, for a level with no observations at all. A structural zero
+    # and a measured zero are different answers, and `share` said "measured,
+    # and zero" for the same February where `emoji_per_text` said
+    # "unmeasured" -- two columns of one row disagreeing about whether there
+    # was data. It matters for the stated use: every level is returned so a
+    # bar chart has no invisible gaps, and a zero-height bar for "no data"
+    # is precisely the gap that was meant to be visible. n_texts is the
+    # discriminator.
     share = if (total == 0L) rep(NA_real_, length(levels_i)) else
-      n_emoji / total
+      ifelse(n_texts == 0L, NA_real_, n_emoji / total)
   )
 }

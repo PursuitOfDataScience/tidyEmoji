@@ -121,6 +121,13 @@ emoji_sanitize <- function(data, text, policy = "keep",
   # policy rather than only under the ones that rewrite
   col_name <- .emoji_col_name(data, {{ text }})
   if (policy == "keep") {
+    # ...and read it, discarding the result. Resolving the *name* caught a
+    # typo but none of the content checks, so "keep" was the one policy that
+    # accepted a "bytes"-encoded column, a list or data-frame column, and a
+    # matrix column with one value per cell -- returning a clean-looking
+    # tibble where every other policy refuses. A guard that one policy skips
+    # is a guard the caller cannot rely on.
+    .emoji_text_col(data, {{ text }})
     return(.emoji_as_tibble(data))
   }
   if (policy %in% c("name", "shortcode")) {
@@ -209,7 +216,11 @@ emoji_token_cost <- function(data, text, tokenizer = NULL) {
       stop("`tokenizer` must return one token count, or one token vector, ",
            "per element of its input.", call. = FALSE)
     }
-    est <- as.integer(tk)
+    # ceiling(), matching the heuristic branch above. as.integer() truncates,
+    # so a tokeniser answering 2.6 was recorded as 2 -- the same silent
+    # truncation .emoji_is_count() exists to refuse for a user's argument,
+    # applied to a user's function's output.
+    est <- as.integer(ceiling(tk))
     est[!nzchar(joined)] <- 0L
   }
 

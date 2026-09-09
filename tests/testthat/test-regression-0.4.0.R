@@ -522,6 +522,7 @@ test_that("the two forms are one item once detected", {
 # ---------------------------------------------------------------------------
 
 test_that("registering under a bundled lexicon's name is refused", {
+  local_clean_registry()
   tbl <- data.frame(emoji = c(laugh, rage), score = c(99, -99))
   for (nm in c("novak2015", "emoji_sentiment_lexicon", "sentiment",
                "emotag1200", "emoji_emotion_lexicon", "emotion")) {
@@ -534,6 +535,7 @@ test_that("registering under a bundled lexicon's name is refused", {
 })
 
 test_that("a lexicon with no score column is refused at registration", {
+  local_clean_registry()
   expect_error(register_emoji_lexicon("no-score", data.frame(emoji = laugh)),
                "no score column")
   # an emotion-shaped lexicon has no `score` column and must still register
@@ -545,6 +547,7 @@ test_that("a lexicon with no score column is refused at registration", {
 })
 
 test_that("emoji_lexicons() names stay unique and usable", {
+  local_clean_registry()
   tbl <- data.frame(emoji = c(laugh, rage), score = c(99, -99))
   register_emoji_lexicon("unique-name-check", tbl)
   lex <- emoji_lexicons()
@@ -555,6 +558,7 @@ test_that("emoji_lexicons() names stay unique and usable", {
 })
 
 test_that("register_emoji_lexicon rejects an NA name", {
+  local_clean_registry()
   tbl <- data.frame(emoji = laugh, score = 1)
   expect_error(register_emoji_lexicon(NA, tbl), "non-empty string")
   expect_error(register_emoji_lexicon(NA_character_, tbl), "non-empty string")
@@ -781,6 +785,7 @@ test_that("emoji_key has exactly one no-key sentinel", {
 })
 
 test_that("a lexicon row with no key is ignored rather than fatal", {
+  local_clean_registry()
   register_emoji_lexicon("stray-selector",
                          data.frame(emoji = c(laugh, "\uFE0F"),
                                     score = c(1, 9)))

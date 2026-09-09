@@ -166,11 +166,21 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'   string. Default `"emoji"`.
 #' @param score Score column name when `lexicon` is a data frame. If `NULL`,
 #'   `"sentiment_score"` then `"score"` are tried.
-#' @return `data`, as a tibble, with `.emoji_score` (per-row mean),
-#'   `.emoji_n_scored` (emoji found in the lexicon) and `.emoji_n` (total emoji)
-#'   added. For the multi-dimensional `"emotag1200"` lexicon the score is the
-#'   mean over its eight emotion dimensions; use [emoji_emotion()] for the
-#'   per-emotion profile.
+#' @return `data`, as a tibble, with `.emoji_n` (total emoji),
+#'   `.emoji_n_scored` (emoji found in the lexicon) and `.emoji_score`
+#'   (per-row mean) added, in that order -- the same order
+#'   [emoji_sentiment()], [emoji_emotion()], [emoji_risk()],
+#'   [emoji_incongruity()] and [emoji_faceness()] use.
+#'
+#'   For the multi-dimensional `"emotag1200"` lexicon the score is the mean
+#'   over its eight emotion dimensions; use [emoji_emotion()] for the
+#'   per-emotion profile. **Note the scale changes with the lexicon.**
+#'   `"novak2015"` is a signed valence on `[-1, 1]`, where the sign is the
+#'   direction of sentiment. The `"emotag1200"` mean is an *intensity* on
+#'   `[0, 1]`: its eight dimensions are each non-negative and four of them
+#'   (anger, disgust, fear, sadness) are negatively valenced, so a maximally
+#'   angry emoji and a maximally joyful one score alike and neither is
+#'   negative. The two are not comparable and must not be pooled.
 #'
 #'   That averaging is specific to the bundled lexicon. A *registered* or
 #'   inline lexicon carrying emotion columns has no score column, so
@@ -203,7 +213,12 @@ emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
     if (identical(lex$type, "sentiment")) {
       score_map <- emoji_sentiment_map()
     } else if (identical(lex$type, "emotion")) {
-      # mean of the 8 emotion scores as a single valence-ish number
+      # Mean of the 8 emotion scores. NOT a valence: EmoTag1200's dimensions
+      # are each in [0, 1] and four of them (anger, disgust, fear, sadness)
+      # are negatively valenced, so their mean is an intensity/arousal number
+      # that is always non-negative and puts a maximally angry emoji close to
+      # a maximally joyful one. Novak's score is a signed valence in [-1, 1].
+      # Both leave this verb as `.emoji_score`; the @return says so.
       m <- emoji_emotion_map()
       score_map <- rowMeans(m, na.rm = TRUE)
     } else {
@@ -230,8 +245,14 @@ emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
   }, integer(1))
 
   out <- .emoji_as_tibble(data)
-  out$.emoji_score <- means
-  out$.emoji_n_scored <- n_scored
+  # counts first, then the measurement -- the order emoji_sentiment(),
+  # emoji_emotion(), emoji_risk(), emoji_incongruity() and emoji_faceness()
+  # all use. emoji_score() is the generic those sit on top of and was the one
+  # verb that reversed it, so anyone selecting by position (tail(names(x), 3),
+  # x[, ncol(data) + 1:3]) got different columns from the generic and the
+  # specific verb.
   out$.emoji_n <- as.integer(lengths(lst))
+  out$.emoji_n_scored <- n_scored
+  out$.emoji_score <- means
   out
 }

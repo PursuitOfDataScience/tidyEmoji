@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are seventy of them, and
+test that was passing for the wrong reason. There are ninety of them, and
 reading just those leads gives the release without the verification detail.
-Not all seventy changed observable behaviour: several record a test that
+Not all ninety changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1874,6 +1874,170 @@ are worth the same prominence because both meant something was unverified.
   depend on `LC_CTYPE` only ever exercised the Turkish half, so it passed
   throughout; it is now joined by one that pins the accented answers by hand,
   because `tolower()` cannot produce them in the locale where it matters.
+* **A factor or numeric glyph column in a lexicon failed with R's message.**
+  `emoji_key()` never coerced, so a `by =` column that was a factor reached
+  `nzchar()` -- whose message is only "requires a character vector" -- and a
+  numeric one
+  reached `utf8ToInt()`. Neither named the argument, the column or the verb,
+  and the second is the likelier mistake: pointing `by =` at the wrong column.
+  `as_emoji_name()` and `emoji_ambiguity()` already coerced; the lexicon path
+  was the one that forgot.
+* **A code point that is not valid UTF-8 produced the literal key `"NA"`.**
+  `utf8ToInt()` answers `NA_integer_`, and `NA != 0xFE0F` is `NA`, so the
+  variation-selector filter kept it and `sprintf("%X", NA)` made the string
+  `"NA"` -- a real key that every undecodable value collided on, and that
+  consumers read as present rather than missing. It now returns `NA_character_`
+  like every other unkeyable input.
+* **A data-frame lexicon carrying a column named `type` was silently
+  ignored.** `emoji_sentiment()` tested `lex$type` before `is.data.frame(lex)`,
+  and the lookup returns a user's data frame unchanged -- so a lexicon with a
+  `type` column reading `"sentiment"` was discarded and the bundled Novak
+  scores used in its place, with no message. `$` partial-matches, so `types`,
+  `type_of` and `type_label` did it too. `emoji_score()` and `emoji_emotion()`
+  already branched in the safe order.
+* **`emoji_emotion()` accepted a lexicon that `emoji_score()` refuses.** The
+  duplicate-key check lived inside the sentiment path only, so a custom
+  emotion lexicon listing both `U+2764` and `U+2764 U+FE0F` with different
+  scores gave an answer that changed when the caller reordered their own
+  table. One table now gets one answer whichever verb reads it.
+* **`emoji_emotion_label()` returned `NA` when any one emotion was `NA`.**
+  `max.col()` answers `NA_integer_` for a row holding a missing value, so a
+  row that scored on seven emotions and was `NA` on the eighth came back
+  unlabelled even though its maximum was unambiguous.
+* **A long ZWJ chain could lose its tail.** `.emoji_extend_zwj()` wrote
+  `for (e in (b + 1L):min(...))` without establishing that the sequence counts
+  upwards. Rule 1 merges arbitrarily long chains, so a span longer than ten
+  code points is reachable, and there the loop ran *backwards* over spans
+  inside the current match and shrank it. A twelve-code-point kiss sequence
+  joined to a grinning face came back as ten, with the trailing glyph counted
+  nowhere.
+* **`.emoji_category` was ordered by first appearance.** So
+  `"Flags|Smileys & Emotion"` and `"Smileys & Emotion|Flags"` were two values
+  for one combination, and `count(.emoji_category)` split every multi-category
+  row across as many groups as the corpus had orderings -- which is what the
+  introduction vignette does, one chart of which was wrong for this reason.
+  Sorted into the crosswalk's fixed order now, as `emoji_type()` already was.
+* **`emoji_sanitize(policy = "keep")` skipped every content check.** It
+  resolved the column's *name*, so a typo was caught, but never read it: the
+  `"bytes"`-encoding refusal, the list-column refusal and the one-value-per-row
+  check all belonged to the other policies. A guard one policy skips is a
+  guard the caller cannot rely on.
+* **`emoji_sentiment(se = TRUE)` shrank the error when a glyph repeated.** The
+  standard error divided by the *occurrence* count, so one emoji pasted twice
+  reported the same uncertainty as two independent glyphs and
+  `strrep(emoji, 100)` claimed a tenfold reduction -- for a row carrying
+  exactly as many annotations as the single-glyph row. Repeating a glyph adds
+  no annotations. It is now weighted over distinct glyphs, which leaves the
+  answer for genuinely distinct emoji unchanged to the last digit. The test
+  that should have caught it asserted the property over a fixture of one glyph
+  twice, the single case where the property is false.
+* **`emoji_seasonality()` reported a structural zero as a measured zero.** A
+  cycle level the data never reaches had `emoji_per_text = NA` and `share = 0`
+  in the same row -- two columns disagreeing about whether there was data.
+  `share` is `NA` there now, `n_texts` remains the discriminator. Every level
+  is returned so a bar chart has no invisible gaps, and a zero-height bar for
+  "no data" was exactly the gap that was meant to be visible.
+* **`emoji_score()` returned its three columns in the reverse order of every
+  other scorer.** It is the generic `emoji_sentiment()`, `emoji_emotion()`,
+  `emoji_risk()`, `emoji_incongruity()` and `emoji_faceness()` sit on, and the
+  only one putting the measurement before the counts, so selecting by position
+  gave different columns from the generic and the specific verb. Now
+  `.emoji_n`, `.emoji_n_scored`, `.emoji_score`, like the rest.
+* **`emoji_token_cost()` truncated a fractional tokeniser result.** A
+  tokeniser answering 2.6 was recorded as 2. It rounds up, matching the
+  built-in heuristic.
+* **A `doc_id` list-column was deparsed instead of read.** `.emoji_col()` had
+  no atomic guard, so `emoji_dfm()` and `emoji_pairs()` grouped documents by
+  their deparsed R source and two different ids that deparse alike merged into
+  one. This is the same hazard the text column was given a guard for in this
+  release; the other three column arguments now share it.
+* **A future `emoji` release could have silently undone the version fix.**
+  `.emoji_fill_by_key()` parsed the upstream `version` with a bare
+  `as.numeric()`, while every consumer strips a leading `E` first -- `E17.0`
+  being the spelling Unicode's own data files use. Had a release carried it,
+  every entry would have been `NA`, the fill would have done nothing, and the 1252
+  rows without a version this release exists to repair would have come back,
+  with nothing failing.
+* **`?emoji_ambiguity` recommended `ci_width` as the remedy for thin
+  evidence, and it is not one.** It is a Wald interval, so it is exactly zero
+  wherever the spread is zero: 166 of the lexicon's 969 rows report
+  `ci_width = 0`, on annotation counts running from 1 to 68. Ranked ascending
+  it puts the thinnest unanimous glyphs first, as the most certain rows in the
+  table. The page now says so, and still points at `n_annotations`.
+* **`emoji_score(lexicon = "emotag1200")` returns an intensity, not a
+  valence.** EmoTag1200's eight dimensions are each on `[0, 1]` and four are
+  negatively valenced, so their mean is non-negative and puts a maximally
+  angry emoji near a maximally joyful one -- while `"novak2015"` is a signed
+  valence on `[-1, 1]`. Both arrive as `.emoji_score`. The `@return` now names
+  both scales and says they must not be pooled.
+* **`?emoji_trend` claimed a completeness it does not deliver.** The grid is
+  complete over the *observed* periods, and "observed" means periods holding
+  at least one emoji: a period whose rows carry no emoji, and any calendar
+  gap, is absent. The three time verbs answer this differently on purpose --
+  `emoji_turnover()` keeps emoji-free periods, `emoji_seasonality()` returns
+  every level unconditionally -- and that was documented nowhere, so joining
+  two of them on `.period` quietly lost rows. All three policies are now
+  stated together on `?emoji_trend`.
+* **The Detection section only ever said what detection misses.** It
+  quantifies that to four significant figures and said nothing about what it
+  falsely includes. Two things: an invalid regional-indicator pair such as
+  `U+1F1FD U+1F1FD` is one well-formed grapheme cluster and is counted as an
+  emoji with `name = NA`, and an orphan skin-tone modifier is counted as an
+  emoji *and named*, because the Component group is in the reference table.
+  Both are defensible as raw detection and misleading as a corpus statistic,
+  so both are now named, with `as_emoji_type() != "component"` given as the
+  filter.
+* **The missing lifecycle badge.** `?top_n_emojis` expands
+  `lifecycle::badge("deprecated")` into a reference to
+  `man/figures/lifecycle-deprecated.svg`, which was not in the package: the
+  HTML help page and the pkgdown reference rendered a broken image. The PDF
+  manual takes the `\ifelse` else-branch, which is why the PDF-focused checks
+  never caught it.
+* **The suite would have gone red on every CRAN flavour the day `emoji`
+  17.0.0 ships.** Roughly seventy catalogue figures are pinned deliberately,
+  because the pinning is what catches documentation drifting from data -- but
+  `emoji`'s version tracks the Unicode emoji version, `DESCRIPTION` sets no
+  upper bound, and Unicode Emoji 17.0 is already out. Those assertions are now
+  gated on the installed release matching the documented one, so the mismatch
+  is reported once, by one test, where the maintainer can act on it. Nothing
+  skips while `emoji` is 16.0.0.
+* The caches derived from the emoji reference table are now dropped whenever
+  that table is rebuilt. `ref_keys` and the type recode are computed *from*
+  `emoji_reference()`, each guarded only on `is.null()`, so nothing connected
+  the three: a rebuilt reference left the other two pointing at the previous
+  catalogue. `ref_keys` is the one that would have mattered, because the
+  zero-width-joiner repair tests membership in it, so a stale copy changes
+  detection rather than only metadata. One function now names the derived
+  slots, so a cache added later is invalidated by construction.
+* The bundled sentiment lexicon's two structural invariants are asserted, in
+  `data-raw/` and again over the shipped data so a check runs them:
+  `occurrences` equals the three class counts summed, and no two rows
+  canonicalise to one code-point key. `emoji_sentiment()` reads `occurrences`
+  while `emoji_ambiguity()` recomputes the sum, and both resolve a duplicate
+  key first-wins and silently, so either violation would have made two verbs
+  disagree about the same glyph without raising anything. Both hold today; the
+  emotion script already asserted its analogues.
+* `data-raw/` no longer keeps its own copy of the code-point key function. Two
+  verbatim copies had drifted from the real one -- neither had the guard that
+  keys a selector-only string to `NA` rather than `""` -- so the bundled `key`
+  columns were generated by a function that no longer matched the one used to
+  look them up. The crosswalks still rebuild byte-for-byte.
+* Tests that register a lexicon now restore the registry when they finish.
+  Eleven registrations were still live when the suite ended, which made
+  results depend on file order, and one test coped by wiping the registry
+  outright -- discarding every registration made before it and so depending on
+  line order too. A source guard now requires every registering test to
+  restore, which is order-independent in a way that inspecting the registry at
+  the end cannot be.
+* The two bundled lexicons' licences were named in the documentation and their
+  notices never shipped. `inst/LICENSE.note` now carries the MIT text and
+  copyright line for EmoTag1200, the CC BY-SA 4.0 URI for the Emoji Sentiment
+  Ranking, and the Creative Commons declaration that makes CC BY-SA 4.0
+  one-way compatible with the GNU GPL version 3.
+* CI runs weekly as well as on push, and the matrix gained a job on R 4.1.0,
+  the declared minimum, which no job previously exercised. `cran-comments.md`
+  reports its check result per environment rather than as one headline its own
+  next paragraph contradicted.
 * **"Nothing but whitespace" meant different things in different sessions.**
   The same defect as the fold above, in a second place. `emoji_ratio()`'s
   `.emoji_only` is documented as "the text contains emoji and nothing else but

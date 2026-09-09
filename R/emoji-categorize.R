@@ -1,3 +1,11 @@
+# The ten Unicode categories, in one fixed order, read from the bundled
+# crosswalk so the two cannot drift apart. This is emoji_type_levels()' role
+# for the category vocabulary: it is what stops `.emoji_category` depending on
+# the order the emoji happened to appear in.
+.emoji_category_levels <- function() {
+  category_unicode_crosswalk$category
+}
+
 #' Categorise each row by the emoji categories it contains
 #'
 #' `emoji_categorize()` keeps the rows of `data` that contain emoji and adds a
@@ -7,13 +15,25 @@
 #'
 #' @details
 #' A row is kept because it contains an emoji, not because that emoji could be
-#' categorised. If none of a row's emoji is in the reference table -- which
-#' happens for a zero-width-joiner sequence newer than your installed
-#' \pkg{emoji} package, since detection is grapheme-aware and does not require
-#' the sequence to be catalogued -- the row is kept with `.emoji_category` set
-#' to `NA`. Dropping it would silently shrink the corpus, and by exactly the
-#' rows a user whose Unicode coverage is behind most needs to see. Use
-#' [emoji_provenance()] to check which catalogue you are matching against.
+#' categorised. If none of a row's emoji is in the reference table the row is
+#' kept with `.emoji_category` set to `NA`. Dropping it would silently shrink
+#' the corpus, and by exactly the rows a user whose Unicode coverage is behind
+#' most needs to see.
+#'
+#' Three different things reach that `NA`, and only the first is a catalogue
+#' question:
+#'
+#' 1. A zero-width-joiner sequence **newer than your installed \pkg{emoji}
+#'    package**, since detection is grapheme-aware and does not require the
+#'    sequence to be catalogued. Use [emoji_provenance()] to check which
+#'    catalogue you are matching against; upgrading `emoji` fixes it.
+#' 2. An **invalid regional-indicator pair** such as `U+1F1FD U+1F1FD`. It is
+#'    a well-formed grapheme cluster and no catalogue will ever contain it, so
+#'    no upgrade helps.
+#' 3. A **non-RGI ZWJ join** -- components joined in a combination Unicode
+#'    does not recommend. These arrive as separate occurrences rather than one.
+#'
+#' See the Detection section of [tidyEmoji] for both false-positive cases.
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, filtered to the rows containing at least one
@@ -43,7 +63,15 @@ emoji_categorize <- function(data, text) {
     keys <- keys[!is.na(keys)]
     cc <- unique(cat_of[keys])
     cc <- cc[!is.na(cc)]
-    if (!length(cc)) NA_character_ else paste(cc, collapse = "|")
+    # Sorted into the crosswalk's fixed category order, not the order the
+    # emoji happen to appear in. First-appearance order made
+    # "Flags|Smileys & Emotion" and "Smileys & Emotion|Flags" two different
+    # values for one combination, so count(.emoji_category) split every
+    # multi-category row across as many groups as the corpus had orderings --
+    # which is exactly what the introduction vignette does. emoji_type()
+    # already sorts into emoji_type_levels() for the same reason.
+    if (!length(cc)) NA_character_ else
+      paste(cc[order(match(cc, .emoji_category_levels()))], collapse = "|")
   }, character(1))
 
   out <- .emoji_as_tibble(data)

@@ -89,6 +89,32 @@ ones, is read as exactly one emoji}, so \verb{U+2764 U+200D U+1F525} is "heart
 on fire" rather than "fire" even with its selectors stripped. The two
 exceptions are spellings in which no component at all is detectable, and
 both have a canonical form that is found.
+
+Everything above is about what detection \emph{misses}. It also admits two
+things that are well formed but not emoji, and both flow through every
+verb, so a corpus statistic can be inflated by them:
+\itemize{
+\item \strong{An invalid regional-indicator pair.} Any two regional indicators form
+one grapheme cluster, so \verb{U+1F1FD U+1F1FD} is read as a single emoji even
+though no country has that code. It appears in \code{\link[=emoji_frequency]{emoji_frequency()}} with
+\code{name = NA}, gets a column in \code{\link[=emoji_dfm]{emoji_dfm()}} and a node in
+\code{\link[=emoji_pairs]{emoji_pairs()}}. Only 262 of the pairs are real: \code{subgroup} is
+\code{"country-flag"} for 259 rows of the reference table and
+\code{"subdivision-flag"} for 3, so you can filter against that set --
+\code{\link[=emoji_frequency]{emoji_frequency()}} carries \code{group}, and \code{\link[=emoji_provenance]{emoji_provenance()}} reports
+which catalogue you have.
+\item \strong{An orphan skin-tone modifier or hair component.} A modifier applied to
+a base that cannot take one, as in \verb{U+1F600 U+1F3FB}, leaves the swatch
+standing alone -- and because the Component group is in the reference
+table it comes back \emph{named}, as "light skin tone" in group \code{"Component"},
+not as \code{NA}. \code{\link[=as_emoji_type]{as_emoji_type()}} labels these \code{"component"}, which is the
+way to find and drop them:
+\code{subset(emoji_frequency(df, text), as_emoji_type(emoji) != "component")}.
+}
+
+Both are defensible as raw detection and misleading as a corpus statistic,
+which is why they are named here rather than silently filtered: dropping
+them inside the verbs would make the emoji counts disagree with the text.
 }
 
 \section{Grouped data frames}{
@@ -109,6 +135,7 @@ one, is the way to get per-group results today.
 Useful links:
 \itemize{
   \item \url{https://pursuitofdatascience.github.io/tidyEmoji/}
+  \item \url{https://github.com/PursuitOfDataScience/tidyEmoji}
   \item Report bugs at \url{https://github.com/PursuitOfDataScience/tidyEmoji/issues}
 }
 

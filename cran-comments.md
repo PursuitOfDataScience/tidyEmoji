@@ -119,7 +119,12 @@ read with `utils::read.csv()`, and the nine plotting chunks are gated on a
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+On the five GitHub Actions flavours: 0 errors | 0 warnings | 0 notes.
+On our own machine: 0 errors | 1 warning | 3 notes, all four host artefacts,
+itemised below.
+
+Reported per environment rather than as one headline, because the two differ
+and the difference is entirely our host's missing tooling.
 
 That is not an assertion about our own machine. Every flavour of the GitHub
 Actions matrix reports `Status: OK` for the commit submitted here: macOS
@@ -151,7 +156,7 @@ last run there; that tree has `readr` 1.4.0, so the test gated on
 since, so it is stated as history rather than as a current measurement.
 
 The skip inventory itself is current and was re-measured for this submission
-on R 4.4.1. Run as CRAN runs it, six tests skip, all six `skip_on_cran()`,
+on R 4.4.1. Run as CRAN runs it, seven tests skip, all seven `skip_on_cran()`,
 and each for a reason that is not "this might fail": the declared R minimum
 against an installable tree and a `select()`-avoidance benchmark, both of
 which read the checking machine rather than the package -- one inspects the
@@ -159,7 +164,22 @@ installed dependencies' own R floors, the other compares two wall-clock
 timings, and neither is a fair question to ask a CRAN flavour -- plus four
 that read files a tarball does not carry (`data-raw/` for regenerating the
 crosswalks, `README.Rmd` for re-rendering it, and this file twice, for its
-own claims). Checking a built tarball skips two more for the same reason,
+own claims), plus one that asserts the installed `emoji` package is the exact
+release the documented catalogue figures were derived from.
+
+That last one deserves a note, because it is the reason this submission is
+robust to something outside our control. Roughly seventy figures in the help
+pages are counts taken from `emoji::emojis` -- 5042 catalogue rows, 3790
+distinct code-point keys, 212 undetectable spellings and so on -- and they are
+pinned in the suite deliberately, because the pinning is what catches
+documentation drifting away from the data. `emoji`'s version tracks the
+Unicode emoji version, and `DESCRIPTION` declares `emoji (>= 16.0.0)` with no
+upper bound, so the day a 17.0.0 catalogue ships every one of those figures
+moves at once. Rather than let that turn into dozens of unrelated-looking
+failures on every flavour, the count assertions are gated on the installed
+release matching the documented one, and the mismatch is reported once, by the
+single test above, where the maintainer will see it locally and in CI. On a
+checking machine the figures are simply no longer the subject. Checking a built tarball skips two more for the same reason,
 `README.Rmd` and the `R/` tree, each of which asserts against the installed
 package instead when the source is absent. Nothing skips for want of a
 Suggests package on a complete tree.

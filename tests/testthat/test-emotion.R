@@ -52,6 +52,7 @@ test_that("emoji_lexicons lists the two bundled lexicons", {
 })
 
 test_that("register_emoji_lexicon + emoji_score with a custom lexicon", {
+  local_clean_registry()
   own <- data.frame(emoji = c("\U0001f600", "\U0001f621"),
                     score = c(0.9, -0.8))
   register_emoji_lexicon("my_test_lex", own)
@@ -70,6 +71,7 @@ test_that("emoji_score accepts a data frame lexicon directly", {
 })
 
 test_that("emoji_emotion works with a registered custom emotion lexicon", {
+  local_clean_registry()
   own <- data.frame(emoji = c("\U0001f600", "\U0001f62d"),
                     joy = c(1, 0), sadness = c(0, 1))
   register_emoji_lexicon("test_emotions", own)
@@ -82,6 +84,7 @@ test_that("emoji_emotion works with a registered custom emotion lexicon", {
 })
 
 test_that("emoji_emotion handles a single-emotion custom lexicon", {
+  local_clean_registry()
   register_emoji_lexicon("test_joy_only",
                          data.frame(emoji = "\U0001f600", joy = 1))
   out <- emoji_emotion(data.frame(text = c("yay \U0001f600", "meh")), text,

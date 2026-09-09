@@ -86,3 +86,59 @@ pkg_code_text <- function() {
     paste(deparse(f, width.cutoff = 500L), collapse = "\n")
   }, character(1))
 }
+
+
+# The emoji release every catalogue figure in this package was derived from.
+# Defined here rather than in a test file so the gate below is available to
+# every file, and so `R CMD check` cannot reach a count assertion before the
+# helper exists.
+doc_emoji_version <- function() "16.0.0"
+
+# Roughly seventy figures in the documentation and in these tests are counts
+# taken from `emoji::emojis` -- 5042 rows, 3790 keys, 212 undetectable
+# spellings, and so on. They are pinned deliberately, because the pinning is
+# what catches doc-vs-data drift. But `DESCRIPTION` declares `emoji
+# (>= 16.0.0)` with no upper bound, and the emoji package's version tracks the
+# Unicode emoji version: the day 17.0.0 lands, every one of those figures
+# moves at once and this suite would go red on all 13 CRAN flavours
+# simultaneously, for a reason the maintainer did not cause and cannot
+# schedule. CRAN archives packages whose checks stay broken.
+#
+# So: loud everywhere the maintainer can act on it, silent where they cannot.
+# On the checking machine the figures are simply not the subject any more, and
+# the version-identity test below says so in one place instead of seventy.
+skip_if_catalogue_moved <- function() {
+  have <- as.character(utils::packageVersion("emoji"))
+  testthat::skip_if_not(
+    identical(have, doc_emoji_version()),
+    paste0("catalogue figures were derived from emoji ", doc_emoji_version(),
+           "; installed is ", have))
+  invisible(TRUE)
+}
+
+
+# Restore the lexicon registry when the CALLING frame exits.
+#
+# register_emoji_lexicon() writes into the package's session cache and there is
+# no public counterpart that removes an entry, so a test that registers leaves
+# the entry behind for every test that runs after it -- across files, since
+# test-emotion.R sorts before test-invariants.R. Measured before this helper
+# existed: eleven lexicons were still registered when the suite finished, and
+# one test coped by wiping the registry outright, which then hid every
+# registration made before it. That makes results depend on file order and on
+# line order within a file.
+#
+# with_clean_registry() (in test-invariants.R) wraps an expression; this wraps
+# a test. Call it as the first line of any test_that() that registers.
+#
+# The saved value and the cache environment are substituted into the exit
+# expression as values, so nothing has to resolve in the caller's frame, and
+# no withr dependency is needed -- `::` on an undeclared package is itself an
+# R CMD check WARNING.
+local_clean_registry <- function(env = parent.frame()) {
+  cache <- asNamespace("tidyEmoji")$.tidyEmoji_cache
+  expr <- substitute(base::assign("lexicons", SAVED, envir = CACHE),
+                     list(SAVED = cache$lexicons, CACHE = cache))
+  do.call(base::on.exit, list(expr, add = TRUE), envir = env)
+  invisible(TRUE)
+}

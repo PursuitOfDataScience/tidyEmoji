@@ -11,7 +11,6 @@
 ^pkgdown$
 ^data-raw$
 ^next_release\.md$
-^features\.md$
 ^\.git$
 ^\.gitignore$
 ^\.claude$

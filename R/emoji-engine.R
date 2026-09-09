@@ -40,15 +40,39 @@ emoji_reference <- function() {
     # different versions, so this only ever fills gaps.
     ref$version <- .emoji_fill_by_key(ref$version, ref$key)
     .tidyEmoji_cache$reference <- ref
+    # Whatever is derived from the reference is now stale by construction, so
+    # drop it here rather than leaving each consumer to notice. `ref_keys` is
+    # the one that matters: the ZWJ repair tests membership in it, so a stale
+    # copy changes *detection*, not just metadata. Owning the invalidation in
+    # the one function that writes `reference` is what keeps the three slots
+    # from drifting apart as more derived caches are added.
+    .emoji_drop_derived_caches()
   }
   .tidyEmoji_cache$reference
+}
+
+# The cache slots computed *from* `reference`, in one place. Anything added
+# later that derives from the reference table belongs in this vector.
+.emoji_derived_cache_slots <- function() c("ref_keys", "type")
+
+.emoji_drop_derived_caches <- function() {
+  for (slot in .emoji_derived_cache_slots()) {
+    .tidyEmoji_cache[[slot]] <- NULL
+  }
+  invisible(NULL)
 }
 
 # Fill NA entries of a per-glyph attribute from other rows sharing the same
 # codepoint key. Used for `version`, which the upstream table attaches to only
 # one spelling of a variation pair.
 .emoji_fill_by_key <- function(x, key) {
-  num <- suppressWarnings(as.numeric(x))
+  # .emoji_version_num(), not as.numeric(): every consumer strips a leading
+  # "E" first, because "E17.0" is the spelling Unicode's own emoji-data.txt
+  # uses. With a bare as.numeric() an upstream release carrying that spelling
+  # would make every entry NA, so `first` would be all-NA, `take` all-FALSE,
+  # and this fill would silently no-op -- putting back the 1252 rows with no
+  # version that it exists to remove.
+  num <- .emoji_version_num(x)
   if (!anyNA(num)) return(x)
   first <- vapply(
     split(num, key),
@@ -185,9 +209,21 @@ emoji_reference <- function() {
 # the qualified heart (U+2764 U+FE0F) matches the lexicon's unqualified
 # U+2764.
 emoji_key <- function(glyphs) {
+  # as.character() first, like as_emoji_name() and emoji_ambiguity() already
+  # do. Without it a factor glyph column reached nzchar() -- "'nzchar()'
+  # requires a character vector" -- and a numeric one reached utf8ToInt(),
+  # neither message naming the argument, the column or the verb. Both are
+  # reachable from a user lexicon through `by =`.
+  glyphs <- as.character(glyphs)
   vapply(glyphs, function(g) {
     if (is.na(g) || !nzchar(g)) return(NA_character_)
-    cp <- utf8ToInt(g)
+    # utf8ToInt() answers NA_integer_ for a string that is not valid UTF-8,
+    # and NA != 0xFE0F is NA, so the filter below kept it and sprintf("%X", NA)
+    # turned it into the literal key "NA" -- a real key that every undecodable
+    # value collided on, and that consumers read as present rather than
+    # missing.
+    cp <- suppressWarnings(utf8ToInt(g))
+    if (anyNA(cp)) return(NA_character_)
     cp <- cp[cp != 0xFE0F]
     # A string that was nothing but variation selectors leaves no code points,
     # and used to key on "" -- a second "there is no key here" value alongside
@@ -317,19 +353,33 @@ emoji_sentiment_map <- function() {
     hi <- if (k == n) nc else st[k + 1L] - 1L
     a <- st[k]
     b <- en[k]
+    # Both loops must only ever *grow* the span. `a:b` in R counts downwards
+    # when b < a, and rule 1 above merges arbitrarily long ZWJ chains, so a
+    # match longer than .emoji_max_cp is reachable: the forward sequence then
+    # ran backwards over spans strictly inside the current match and, because
+    # `best <- e` fires on every hit while descending, the shortest match won
+    # and `b` moved *left*. A 12-code-point kiss-sequence chain lost its
+    # trailing ZWJ + grinning face that way. The backward loop mirrored it.
+    # Compute the bound first and skip the loop when it does not extend.
     if (b < hi && cps[b + 1L] == .emoji_zwj) {
-      best <- b
-      for (e in (b + 1L):min(hi, a + .emoji_max_cp - 1L)) {
-        if (emoji_key(substring(s, a, e)) %in% keys) best <- e
+      hi_e <- min(hi, a + .emoji_max_cp - 1L)
+      if (hi_e >= b + 1L) {
+        best <- b
+        for (e in (b + 1L):hi_e) {
+          if (emoji_key(substring(s, a, e)) %in% keys) best <- e
+        }
+        b <- best
       }
-      b <- best
     }
     if (a > lo && cps[a - 1L] == .emoji_zwj) {
-      best <- a
-      for (p in (a - 1L):max(lo, b - .emoji_max_cp + 1L)) {
-        if (emoji_key(substring(s, p, b)) %in% keys) best <- p
+      lo_p <- max(lo, b - .emoji_max_cp + 1L)
+      if (lo_p <= a - 1L) {
+        best <- a
+        for (p in (a - 1L):lo_p) {
+          if (emoji_key(substring(s, p, b)) %in% keys) best <- p
+        }
+        a <- best
       }
-      a <- best
     }
     st[k] <- a
     en[k] <- b
@@ -522,6 +572,46 @@ emoji_emotion_dims <- function() {
 # used to say "`tbl`" to both, so a user who passed a data frame as `lexicon`
 # was told to fix an argument that function does not have. Same failure mode
 # the column resolver's `arg` was added for.
+# Two rows can legitimately share a code-point key -- a lexicon listing both
+# the unqualified and the U+FE0F-qualified spelling of one emoji canonicalises
+# to one key -- but only if they agree. When they disagree the lookup silently
+# takes whichever came first, so swapping two rows of the caller's own table
+# changes the answer. `values` is the score vector (the sentiment path) or the
+# matrix of emotion columns (the emotion path); both are checked the same way,
+# row against row, ignoring NA. Neither bundled lexicon has a duplicated key.
+.emoji_check_dup_keys <- function(keys, values, arg) {
+  keep <- !is.na(keys) & nzchar(keys)
+  kk <- keys[keep]
+  dk <- unique(kk[duplicated(kk)])
+  if (!length(dk)) return(invisible(NULL))
+  vv <- if (is.matrix(values)) values[keep, , drop = FALSE] else values[keep]
+  disagrees <- function(k) {
+    if (is.matrix(vv)) {
+      rows <- vv[kk == k, , drop = FALSE]
+      any(vapply(seq_len(ncol(rows)), function(j) {
+        v <- rows[, j]
+        length(unique(v[!is.na(v)])) > 1L
+      }, logical(1)))
+    } else {
+      v <- vv[kk == k]
+      length(unique(v[!is.na(v)])) > 1L
+    }
+  }
+  bad <- dk[vapply(dk, disagrees, logical(1))]
+  if (length(bad)) {
+    stop(sprintf(
+      paste0("`%s` gives %d emoji more than one score: %s. Spellings that ",
+             "differ only by a variation selector share one code-point key, ",
+             "so two such rows must agree. Reading either one is a choice ",
+             "the row order would be making, not you -- collapse them ",
+             "first (one row per emoji_key())."),
+      arg, length(bad),
+      paste(sprintf("`%s`", utils::head(bad, 3L)), collapse = ", ")
+    ), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 .emoji_lexicon_record <- function(tbl, by = "emoji", score = NULL,
                                   arg = "tbl") {
   if (!is.data.frame(tbl)) {
@@ -573,33 +663,7 @@ emoji_emotion_dims <- function() {
     ), call. = FALSE)
   }
   keep <- !is.na(keys) & keys != ""
-  # Two rows can legitimately share a key -- a lexicon listing both the
-  # unqualified and the U+FE0F-qualified spelling of one emoji canonicalises
-  # to one key -- but only if they agree. When they disagree the lookup below
-  # silently takes whichever came first, so swapping two rows of the caller's
-  # own table changes the answer. Neither bundled lexicon has a duplicated
-  # key at all.
-  dk <- unique(keys[keep][duplicated(keys[keep])])
-  if (length(dk)) {
-    sk <- s[keep]
-    kk <- keys[keep]
-    bad <- dk[vapply(dk, function(k) {
-      v <- sk[kk == k]
-      v <- v[!is.na(v)]
-      length(unique(v)) > 1L
-    }, logical(1))]
-    if (length(bad)) {
-      stop(sprintf(
-        paste0("`%s` gives %d emoji more than one score: %s. Spellings that ",
-               "differ only by a variation selector share one code-point key, ",
-               "so two such rows must agree. Reading either one is a choice ",
-               "the row order would be making, not you -- collapse them ",
-               "first (one row per emoji_key())."),
-        arg, length(bad),
-        paste(sprintf("`%s`", utils::head(bad, 3L)), collapse = ", ")
-      ), call. = FALSE)
-    }
-  }
+  .emoji_check_dup_keys(keys, s, arg)
   out <- stats::setNames(s, keys)
   out[keep]
 }
@@ -791,7 +855,23 @@ emoji_emotion_dims <- function() {
 # gives it a length method that counts times, not list components.
 .emoji_col <- function(data, col, arg = "text") {
   nm <- .emoji_col_name(data, {{ col }}, arg = arg)
-  .emoji_check_len(data[[nm]], nm, nrow(data), arg)
+  v <- data[[nm]]
+  # The same deparse hazard .emoji_text_col() guards, for the other three
+  # column arguments. `time` and `text_score` fall through to their own type
+  # checks, but `doc_id` had none: .emoji_id_split() calls match(), which
+  # coerces a list column with as.character() -- so documents were grouped by
+  # their deparsed R source and two different ids that deparse alike merged.
+  # POSIXlt is a list and a legitimate `time` column, so exempt it; length()
+  # on a POSIXlt counts times, which is what the row check below needs.
+  if (!is.atomic(v) && !inherits(v, "POSIXlt")) {
+    stop(sprintf(
+      paste0("`%s` must be an atomic column, but `%s` is a %s column. ",
+             "Coercing one to character would deparse it rather than read ",
+             "it, so the values used would be R source, not your data."),
+      arg, nm, class(v)[1L]
+    ), call. = FALSE)
+  }
+  .emoji_check_len(v, nm, nrow(data), arg)
 }
 
 # The one-value-per-row check, taking an already-resolved name so a caller

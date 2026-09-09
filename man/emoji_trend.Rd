@@ -45,7 +45,7 @@ has to be reproducible; a \code{Date} column is immune either way.
 
 A character column must lead with a four-digit year: \code{"2024-01-01"} or
 \code{"2024/01/01"}, with one- or two-digit month and day, and any trailing
-time ignored. Values that do not warn and are dropped -- but a column in
+time ignored. Values that do not parse warn and are dropped -- but a column in
 which \emph{nothing} reads as a date is an error rather than a column of \code{NA},
 since there would be no time axis left. Note that \code{"01/02/2024"} is in the
 second group: convert a column written that way with \code{as.Date()} and its
@@ -65,16 +65,33 @@ A tibble with columns \code{.period} (a \code{Date}, the start of the period),
 \code{emoji}, \code{name}, \code{n} and \code{share}.
 }
 \description{
-\code{emoji_trend()} counts emoji per time period and returns the long, complete
-table that plots directly: one row per (period, emoji), including the
-periods in which an emoji is absent, so a trend line does not silently skip
-its zeros.
+\code{emoji_trend()} counts emoji per time period and returns the long table
+that plots directly: one row per (period, emoji) over the periods it
+returns, including the ones in which a given emoji is absent, so a trend
+line does not silently skip its zeros.
 }
 \details{
+\strong{Which periods appear.} The grid is complete over the \emph{observed} periods,
+and "observed" means a period holding at least one emoji. A period whose
+rows carry no emoji at all does not appear, and neither does a gap in the
+calendar: \code{emoji_trend()} never invents a period. So the zeros it fills in
+are the ones \emph{within} the periods it returns, not a continuous time axis.
+Pass the result through \code{\link[tidyr:complete]{tidyr::complete()}} against a calendar sequence if
+you need the empty periods too.
+
+The three time verbs answer this differently, on purpose, and it is worth
+knowing which you are getting before joining two of them on \code{.period}:
+\itemize{
+\item \code{\link[=emoji_trend]{emoji_trend()}} -- periods containing at least one emoji.
+\item \code{\link[=emoji_turnover]{emoji_turnover()}} -- every period containing at least one dated row,
+including emoji-free ones, which report \code{n_types = 0}.
+\item \code{\link[=emoji_seasonality]{emoji_seasonality()}} -- every level of the cycle unconditionally, whether
+or not the data reaches it.
 \code{share} is the emoji's count divided by all emoji tokens in the same period,
 which is what makes periods with different volumes comparable. \code{top_n}
 selects the emoji to follow, ranked over the whole corpus by \code{measure}, and
 the selected set is the same in every period.
+}
 
 Rows whose time is missing or unparseable contribute nothing. Glyphs are
 canonicalised through the package's codepoint key, so qualified and

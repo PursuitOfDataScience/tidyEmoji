@@ -5,6 +5,12 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  # Weekly, so a dependency release breaking our checks surfaces here rather
+  # than in a CRAN email. The catalogue figures are pinned to one `emoji`
+  # release, and `emoji`'s version tracks the Unicode emoji version.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 name: R-CMD-check
 
@@ -25,6 +31,9 @@ jobs:
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
           - {os: ubuntu-latest,   r: 'oldrel-1'}
+          # DESCRIPTION declares R (>= 4.1.0); oldrel-1 is far above it, so
+          # without this job the declared floor was never actually exercised.
+          - {os: ubuntu-latest,   r: '4.1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

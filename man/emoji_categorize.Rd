@@ -36,13 +36,26 @@ more than one category.
 }
 \details{
 A row is kept because it contains an emoji, not because that emoji could be
-categorised. If none of a row's emoji is in the reference table -- which
-happens for a zero-width-joiner sequence newer than your installed
-\pkg{emoji} package, since detection is grapheme-aware and does not require
-the sequence to be catalogued -- the row is kept with \code{.emoji_category} set
-to \code{NA}. Dropping it would silently shrink the corpus, and by exactly the
-rows a user whose Unicode coverage is behind most needs to see. Use
-\code{\link[=emoji_provenance]{emoji_provenance()}} to check which catalogue you are matching against.
+categorised. If none of a row's emoji is in the reference table the row is
+kept with \code{.emoji_category} set to \code{NA}. Dropping it would silently shrink
+the corpus, and by exactly the rows a user whose Unicode coverage is behind
+most needs to see.
+
+Three different things reach that \code{NA}, and only the first is a catalogue
+question:
+\enumerate{
+\item A zero-width-joiner sequence \strong{newer than your installed \pkg{emoji}
+package}, since detection is grapheme-aware and does not require the
+sequence to be catalogued. Use \code{\link[=emoji_provenance]{emoji_provenance()}} to check which
+catalogue you are matching against; upgrading \code{emoji} fixes it.
+\item An \strong{invalid regional-indicator pair} such as \verb{U+1F1FD U+1F1FD}. It is
+a well-formed grapheme cluster and no catalogue will ever contain it, so
+no upgrade helps.
+\item A \strong{non-RGI ZWJ join} -- components joined in a combination Unicode
+does not recommend. These arrive as separate occurrences rather than one.
+}
+
+See the Detection section of \link{tidyEmoji} for both false-positive cases.
 }
 \examples{
 df <- data.frame(text = c("smile \U0001f600",

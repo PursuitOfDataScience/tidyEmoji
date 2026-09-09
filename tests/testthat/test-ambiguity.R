@@ -65,11 +65,27 @@ test_that("emoji_sentiment(se = TRUE) adds a non-negative standard error", {
   expect_true(".emoji_sentiment_se" %in% names(out))
   expect_gt(out$.emoji_sentiment_se[1], 0)
   expect_true(is.na(out$.emoji_sentiment_se[2]))
-  # averaging two glyphs shrinks the error below the worse of the two
+  # Averaging two DISTINCT glyphs shrinks the error below the worse of the
+  # two. The fixture used to be `heart_eyes` twice -- one glyph, not two --
+  # which is the single case where the property is false, and it passed only
+  # because the SE was divided by the occurrence count. Repeating a glyph adds
+  # no annotations, so it must not move the number at all.
   one <- emoji_sentiment(data.frame(text = heart_eyes), text, se = TRUE)
-  two <- emoji_sentiment(data.frame(text = paste0(heart_eyes, heart_eyes)),
+  two <- emoji_sentiment(data.frame(text = paste0(heart_eyes, rage)),
                          text, se = TRUE)
-  expect_lt(two$.emoji_sentiment_se, one$.emoji_sentiment_se)
+  other <- emoji_sentiment(data.frame(text = rage), text, se = TRUE)
+  expect_lt(two$.emoji_sentiment_se,
+            max(one$.emoji_sentiment_se, other$.emoji_sentiment_se))
+  # and the fixture is genuinely two different glyphs
+  expect_false(identical(heart_eyes, rage))
+
+  # a repeated glyph is the same evidence, so the same standard error
+  rep2 <- emoji_sentiment(data.frame(text = strrep(heart_eyes, 2)), text,
+                          se = TRUE)
+  rep100 <- emoji_sentiment(data.frame(text = strrep(heart_eyes, 100)), text,
+                            se = TRUE)
+  expect_equal(rep2$.emoji_sentiment_se, one$.emoji_sentiment_se)
+  expect_equal(rep100$.emoji_sentiment_se, one$.emoji_sentiment_se)
 })
 
 test_that("emoji_sentiment(se = TRUE) refuses a lexicon without counts", {

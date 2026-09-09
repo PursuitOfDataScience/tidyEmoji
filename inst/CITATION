@@ -3,6 +3,12 @@ if (!exists("meta") || is.null(meta)) {
 }
 ver <- meta$Version
 if (is.null(ver)) ver <- "0.4.0"
+# Derived, not hardcoded: CRAN stamps Date/Publication at publication, so an
+# installed copy cites the year it was actually published. A hardcoded year
+# goes stale silently the first time the release slips past New Year.
+yr <- meta$`Date/Publication`
+if (is.null(yr)) yr <- meta$Date
+yr <- if (!is.null(yr)) sub("-.*", "", yr) else format(Sys.Date(), "%Y")
 
 citHeader(paste(
   "To cite tidyEmoji in publications, cite the package.",
@@ -15,7 +21,7 @@ bibentry(
   bibtype  = "Manual",
   title    = "{tidyEmoji}: Discover, Count, Categorise, Score, Translate and Relate Emoji in Text",
   author   = person(given = "Youzhi", family = "Yu"),
-  year     = "2026",
+  year     = yr,
   note     = paste("R package version", ver),
   url      = "https://pursuitofdatascience.github.io/tidyEmoji/"
 )

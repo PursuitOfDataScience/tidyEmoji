@@ -68,7 +68,15 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
       ), call. = FALSE)
     }
     emap <- as.matrix(lex[, dims_avail, drop = FALSE])
-    rownames(emap) <- .emoji_lexicon_keys(lex, arg = "lexicon")
+    keys <- .emoji_lexicon_keys(lex, arg = "lexicon")
+    # The same duplicate-key refusal emoji_score()/emoji_sentiment() make via
+    # .emoji_lexicon_record(). Duplicate rownames are legal, and the lookup
+    # below silently takes the *first* match, so a lexicon listing both
+    # U+2764 and U+2764 U+FE0F with different scores gave an answer that
+    # changed when the caller reordered their own table. One table, one
+    # answer, whichever verb reads it.
+    .emoji_check_dup_keys(keys, emap, arg = "lexicon")
+    rownames(emap) <- keys
   } else if (identical(lex$type, "emotion")) {
     emap <- emoji_emotion_map()
   } else if (identical(lex$type, "sentiment")) {
@@ -171,8 +179,18 @@ emoji_emotion_label <- function(data, text, lexicon = "emotag1200") {
   cols <- intersect(paste0(".emoji_", emoji_emotion_dims()), names(em))
   dims <- sub("^\\.emoji_", "", cols)
   mat <- as.matrix(em[, cols, drop = FALSE])
-  # break ties in Plutchik order (first max wins via ties.method="first")
-  idx <- max.col(mat, ties.method = "first")
+  # break ties in Plutchik order (first max wins via ties.method="first").
+  # max.col() answers NA_integer_ for any row holding an NA -- ?max.col states
+  # its documented equivalence only "if m has no missing values" -- so a row
+  # that scored on seven emotions and was NA on the eighth came back unlabelled
+  # even though its maximum was unambiguous. Reachable from a custom lexicon
+  # with an NA in one column, and from colMeans(na.rm = TRUE) returning NaN
+  # when a column is NA for every glyph in the row. -Inf cannot win a maximum
+  # against any real score, and has_score below still gates the rows that are
+  # genuinely all-NA.
+  fin <- mat
+  fin[is.na(fin)] <- -Inf
+  idx <- max.col(fin, ties.method = "first")
   has_score <- rowSums(!is.na(mat)) > 0
   label <- dims[idx]
   label[!has_score] <- NA_character_

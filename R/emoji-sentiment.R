@@ -65,10 +65,16 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     score <- emoji_sentiment_map()
   } else {
     lex <- .emoji_lexicon_lookup(lexicon)
-    if (identical(lex$type, "sentiment")) {
-      score <- emoji_sentiment_map()
-    } else if (is.data.frame(lex)) {
+    # is.data.frame() FIRST. .emoji_lexicon_lookup() returns a user data frame
+    # unchanged, so `lex$type` then read the *caller's own column*: a lexicon
+    # carrying a column named `type` whose first value was "sentiment" was
+    # silently discarded and the bundled Novak scores used in its place. `$`
+    # partial-matches too, so `types`, `type_of` and `type_label` did it as
+    # well. emoji_score() and emoji_emotion() already branch in this order.
+    if (is.data.frame(lex)) {
       score <- .emoji_lexicon_record(lex, arg = "lexicon")
+    } else if (identical(lex$type, "sentiment")) {
+      score <- emoji_sentiment_map()
     } else if (identical(lex$type, "custom")) {
       score <- .emoji_lexicon_record(lex$tbl, arg = "lexicon")
     } else if (identical(lex$type, "emotion")) {
@@ -115,12 +121,37 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
   out$.emoji_sentiment <- means
   if (se) {
     se_map <- emoji_sentiment_se_map()
+    # Weighted by DISTINCT emoji, not by occurrence. `.emoji_sentiment` is the
+    # mean over occurrences, i.e. sum(w_i * s_i) with w_i = n_i / N, and the
+    # two occurrences of one glyph are the same estimate -- perfectly
+    # correlated, not independent -- so the variance of that mean is
+    # sum(w_i^2 * sigma_i^2) over distinct glyphs.
+    #
+    # Dividing by the occurrence count instead treated a repeat as fresh
+    # evidence: one glyph pasted k times reported sigma/sqrt(k), so
+    # strrep(emoji, 100) claimed a tenfold reduction in uncertainty for a row
+    # carrying exactly as many annotations as the single-glyph row. A user
+    # filtering on low SE was served emoji-spam first. Repeating a glyph adds
+    # no annotations.
+    #
+    # For distinct glyphs every w_i is 1/N and this reduces to
+    # sqrt(sum(sigma^2))/N -- the previous formula exactly -- so nothing that
+    # was right changes.
     out$.emoji_sentiment_se <- vapply(lst, function(g) {
       if (!length(g)) return(NA_real_)
-      s <- se_map[key_lookup[g]]
-      s <- s[!is.na(s)]
-      if (!length(s)) return(NA_real_)
-      sqrt(sum(s^2)) / length(s)
+      k <- key_lookup[g]
+      s <- se_map[k]
+      keep <- !is.na(s)
+      if (!any(keep)) return(NA_real_)
+      # weights over the scored occurrences, pooled per distinct key
+      kk <- k[keep]
+      ss <- s[keep]
+      # table() names sort, so align sigma the same way
+      uk <- sort(unique(kk))
+      n_i <- as.integer(table(kk))
+      sig <- ss[match(uk, kk)]
+      w <- n_i / sum(n_i)
+      sqrt(sum(w^2 * sig^2))
     }, numeric(1))
   }
   out

@@ -44,7 +44,7 @@ has to be reproducible; a \code{Date} column is immune either way.
 
 A character column must lead with a four-digit year: \code{"2024-01-01"} or
 \code{"2024/01/01"}, with one- or two-digit month and day, and any trailing
-time ignored. Values that do not warn and are dropped -- but a column in
+time ignored. Values that do not parse warn and are dropped -- but a column in
 which \emph{nothing} reads as a date is an error rather than a column of \code{NA},
 since there would be no time axis left. Note that \code{"01/02/2024"} is in the
 second group: convert a column written that way with \code{as.Date()} and its

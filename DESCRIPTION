@@ -30,7 +30,8 @@ Description: A tidy toolkit for working with the emoji in any text column, such
     <https://aclanthology.org/2020.emnlp-main.720/>, released under the MIT
     licence.
 License: GPL (>= 3)
-URL: https://pursuitofdatascience.github.io/tidyEmoji/
+URL: https://pursuitofdatascience.github.io/tidyEmoji/,
+    https://github.com/PursuitOfDataScience/tidyEmoji
 BugReports: https://github.com/PursuitOfDataScience/tidyEmoji/issues
 Encoding: UTF-8
 Language: en-GB

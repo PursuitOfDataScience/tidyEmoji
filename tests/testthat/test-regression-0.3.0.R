@@ -112,6 +112,7 @@ test_that("emoji_ngrams rejects a non-finite n cleanly", {
 # ---------------------------------------------------------------------------
 
 test_that("emoji_lexicons() omits the glyph column from `dimensions`", {
+  local_clean_registry()
   register_emoji_lexicon("reg_by_glyph",
                          data.frame(glyph = "\U0001F600", score = 0.7),
                          by = "glyph")

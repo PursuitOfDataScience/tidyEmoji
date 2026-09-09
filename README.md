@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/workflows/R-CMD-check/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
+[![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidyEmoji)](https://CRAN.R-project.org/package=tidyEmoji)
 [![Lifecycle:
@@ -266,13 +266,13 @@ my_lexicon <- data.frame(emoji = c("\U0001f600", "\U0001f621"),
                          score = c(1, -1))
 reviews %>% emoji_score(text, lexicon = my_lexicon)
 #> # A tibble: 5 × 4
-#>   text                    .emoji_score .emoji_n_scored .emoji_n
-#>   <chr>                          <dbl>           <int>    <int>
-#> 1 Best purchase ever 😀😍            1               1        2
-#> 2 It broke after a day 😡           -1               1        1
-#> 3 Does the job.                     NA              NA        0
-#> 4 Wearing my mask 😷😷              NA               0        2
-#> 5 Shipped fast 🏁😀                  1               1        2
+#>   text                    .emoji_n .emoji_n_scored .emoji_score
+#>   <chr>                      <int>           <int>        <dbl>
+#> 1 Best purchase ever 😀😍        2               1            1
+#> 2 It broke after a day 😡        1               1           -1
+#> 3 Does the job.                  0              NA           NA
+#> 4 Wearing my mask 😷😷           2               0           NA
+#> 5 Shipped fast 🏁😀              2               1            1
 ```
 
 ### Translate emoji to and from text
