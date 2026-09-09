@@ -69,7 +69,7 @@ emoji_lexicons()
 #> 3 mine       custom    <chr [1]>      2 user-registered                  NA     
 emoji_score(data.frame(text = "great \U0001f600"), text, lexicon = "mine")
 #> # A tibble: 1 × 4
-#>   text     .emoji_score .emoji_n_scored .emoji_n
-#>   <chr>           <dbl>           <int>    <int>
-#> 1 great 😀          0.9               1        1
+#>   text     .emoji_n .emoji_n_scored .emoji_score
+#>   <chr>       <int>           <int>        <dbl>
+#> 1 great 😀        1               1          0.9
 ```

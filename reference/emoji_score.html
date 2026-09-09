@@ -105,11 +105,20 @@ string. Default <code>"emoji"</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>data</code>, as a tibble, with <code>.emoji_score</code> (per-row mean),
-<code>.emoji_n_scored</code> (emoji found in the lexicon) and <code>.emoji_n</code> (total emoji)
-added. For the multi-dimensional <code>"emotag1200"</code> lexicon the score is the
-mean over its eight emotion dimensions; use <code><a href="emoji_emotion.html">emoji_emotion()</a></code> for the
-per-emotion profile.</p>
+    <p><code>data</code>, as a tibble, with <code>.emoji_n</code> (total emoji),
+<code>.emoji_n_scored</code> (emoji found in the lexicon) and <code>.emoji_score</code>
+(per-row mean) added, in that order – the same order
+<code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>, <code><a href="emoji_emotion.html">emoji_emotion()</a></code>, <code><a href="emoji_risk.html">emoji_risk()</a></code>,
+<code><a href="emoji_incongruity.html">emoji_incongruity()</a></code> and <code><a href="emoji_faceness.html">emoji_faceness()</a></code> use.</p>
+<p>For the multi-dimensional <code>"emotag1200"</code> lexicon the score is the mean
+over its eight emotion dimensions; use <code><a href="emoji_emotion.html">emoji_emotion()</a></code> for the
+per-emotion profile. <strong>Note the scale changes with the lexicon.</strong>
+<code>"novak2015"</code> is a signed valence on <code>[-1, 1]</code>, where the sign is the
+direction of sentiment. The <code>"emotag1200"</code> mean is an <em>intensity</em> on
+<code>[0, 1]</code>: its eight dimensions are each non-negative and four of them
+(anger, disgust, fear, sadness) are negatively valenced, so a maximally
+angry emoji and a maximally joyful one score alike and neither is
+negative. The two are not comparable and must not be pooled.</p>
 <p>That averaging is specific to the bundled lexicon. A <em>registered</em> or
 inline lexicon carrying emotion columns has no score column, so
 <code>emoji_score()</code> cannot collapse it and says so: pass it to
@@ -130,22 +139,22 @@ either way.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"love \U0001f60d"</span>, <span class="st">"angry \U0001f621"</span>, <span class="st">"meh"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">emoji_score</span><span class="op">(</span><span class="va">df</span>, <span class="va">text</span>, lexicon <span class="op">=</span> <span class="st">"novak2015"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   text     .emoji_score .emoji_n_scored .emoji_n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> love 😍         0.678               1        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> angry 😡       -<span style="color: #BB0000;">0.173</span>               1        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> meh            <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span>        0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   text     .emoji_n .emoji_n_scored .emoji_score</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> love 😍         1               1        0.678</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> angry 😡        1               1       -<span style="color: #BB0000;">0.173</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> meh             0              <span style="color: #BB0000;">NA</span>       <span style="color: #BB0000;">NA</span>    </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a bring-your-own lexicon</span></span></span>
 <span class="r-in"><span><span class="va">own</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>emoji <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\U0001f621"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                  score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.9</span>, <span class="op">-</span><span class="fl">0.8</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">emoji_score</span><span class="op">(</span><span class="va">df</span>, <span class="va">text</span>, lexicon <span class="op">=</span> <span class="va">own</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   text     .emoji_score .emoji_n_scored .emoji_n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> love 😍          <span style="color: #BB0000;">NA</span>                 0        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> angry 😡         -<span style="color: #BB0000;">0.8</span>               1        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> meh              <span style="color: #BB0000;">NA</span>                <span style="color: #BB0000;">NA</span>        0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   text     .emoji_n .emoji_n_scored .emoji_score</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> love 😍         1               0         <span style="color: #BB0000;">NA</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> angry 😡        1               1         -<span style="color: #BB0000;">0.8</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> meh             0              <span style="color: #BB0000;">NA</span>         <span style="color: #BB0000;">NA</span>  </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

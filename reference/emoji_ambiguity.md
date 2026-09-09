@@ -90,9 +90,22 @@ thinly annotated glyph is usually unanimous, so entropy is positively
 correlated with the annotation count overall (Spearman 0.56). What three
 annotators can do that thousands cannot is hit the exact maximum. So
 filter on `n_annotations` before interpreting the head of the table, as
-the introduction vignette does. `"ci_width"` is the measure that
-accounts for thin evidence by construction – it is a Wald interval, so
-it scales as `1 / sqrt(n)` at a given spread – rather than ignoring it.
+the introduction vignette does. That advice applies to `"ci_width"` too,
+and the reason is worth stating plainly, because the obvious reading of
+a confidence width is that it has already accounted for thin evidence:
+
+`"ci_width"` is a **Wald** interval, so it scales as `1 / sqrt(n)` only
+*at a given spread*, and it is exactly zero wherever the spread is zero.
+For a glyph whose annotators were unanimous the estimated variance is 0
+whatever `n` is, so the interval has zero width on one annotation just
+as on eight thousand. That is the textbook degeneracy of the Wald
+interval at a boundary proportion, not a property of the data: **166 of
+the lexicon's 969 rows report `ci_width = 0`, and their annotation
+counts run from 1 to 68.** So `ci_width` does not rescue a thin glyph –
+ranked ascending it puts the thinnest unanimous ones first, as the most
+certain rows in the table. `n_annotations` remains the column to filter
+on; `ci_width` separates well-known from poorly-known scores only among
+glyphs that are not unanimous.
 
 ## References
 

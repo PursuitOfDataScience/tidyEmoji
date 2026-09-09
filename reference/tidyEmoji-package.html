@@ -118,6 +118,27 @@ ones, is read as exactly one emoji</strong>, so <code>U+2764 U+200D U+1F525</cod
 on fire" rather than "fire" even with its selectors stripped. The two
 exceptions are spellings in which no component at all is detectable, and
 both have a canonical form that is found.</p>
+<p>Everything above is about what detection <em>misses</em>. It also admits two
+things that are well formed but not emoji, and both flow through every
+verb, so a corpus statistic can be inflated by them:</p><ul><li><p><strong>An invalid regional-indicator pair.</strong> Any two regional indicators form
+one grapheme cluster, so <code>U+1F1FD U+1F1FD</code> is read as a single emoji even
+though no country has that code. It appears in <code><a href="emoji_frequency.html">emoji_frequency()</a></code> with
+<code>name = NA</code>, gets a column in <code><a href="emoji_dfm.html">emoji_dfm()</a></code> and a node in
+<code><a href="emoji_pairs.html">emoji_pairs()</a></code>. Only 262 of the pairs are real: <code>subgroup</code> is
+<code>"country-flag"</code> for 259 rows of the reference table and
+<code>"subdivision-flag"</code> for 3, so you can filter against that set –
+<code><a href="emoji_frequency.html">emoji_frequency()</a></code> carries <code>group</code>, and <code><a href="emoji_provenance.html">emoji_provenance()</a></code> reports
+which catalogue you have.</p></li>
+<li><p><strong>An orphan skin-tone modifier or hair component.</strong> A modifier applied to
+a base that cannot take one, as in <code>U+1F600 U+1F3FB</code>, leaves the swatch
+standing alone – and because the Component group is in the reference
+table it comes back <em>named</em>, as "light skin tone" in group <code>"Component"</code>,
+not as <code>NA</code>. <code><a href="as_emoji_type.html">as_emoji_type()</a></code> labels these <code>"component"</code>, which is the
+way to find and drop them:
+<code>subset(emoji_frequency(df, text), as_emoji_type(emoji) != "component")</code>.</p></li>
+</ul><p>Both are defensible as raw detection and misleading as a corpus statistic,
+which is why they are named here rather than silently filtered: dropping
+them inside the verbs would make the emoji counts disagree with the text.</p>
     </div>
     <div class="section level2">
     <h2 id="grouped-data-frames">Grouped data frames<a class="anchor" aria-label="anchor" href="#grouped-data-frames"></a></h2>
@@ -137,6 +158,7 @@ one, is the way to get per-group results today.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Useful links:</p><ul><li><p><a href="https://pursuitofdatascience.github.io/tidyEmoji/">https://pursuitofdatascience.github.io/tidyEmoji/</a></p></li>
+<li><p><a href="https://github.com/PursuitOfDataScience/tidyEmoji" class="external-link">https://github.com/PursuitOfDataScience/tidyEmoji</a></p></li>
 <li><p>Report bugs at <a href="https://github.com/PursuitOfDataScience/tidyEmoji/issues" class="external-link">https://github.com/PursuitOfDataScience/tidyEmoji/issues</a></p></li>
 </ul></div>
     </div>

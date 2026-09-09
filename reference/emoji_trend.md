@@ -1,9 +1,9 @@
 # Emoji frequency over time
 
-`emoji_trend()` counts emoji per time period and returns the long,
-complete table that plots directly: one row per (period, emoji),
-including the periods in which an emoji is absent, so a trend line does
-not silently skip its zeros.
+`emoji_trend()` counts emoji per time period and returns the long table
+that plots directly: one row per (period, emoji) over the periods it
+returns, including the ones in which a given emoji is absent, so a trend
+line does not silently skip its zeros.
 
 ## Usage
 
@@ -65,12 +65,12 @@ emoji_trend(
 
   A character column must lead with a four-digit year: `"2024-01-01"` or
   `"2024/01/01"`, with one- or two-digit month and day, and any trailing
-  time ignored. Values that do not warn and are dropped – but a column
-  in which *nothing* reads as a date is an error rather than a column of
-  `NA`, since there would be no time axis left. Note that `"01/02/2024"`
-  is in the second group: convert a column written that way with
-  [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its own
-  `format` first.
+  time ignored. Values that do not parse warn and are dropped – but a
+  column in which *nothing* reads as a date is an error rather than a
+  column of `NA`, since there would be no time axis left. Note that
+  `"01/02/2024"` is in the second group: convert a column written that
+  way with [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its
+  own `format` first.
 
 - by:
 
@@ -94,10 +94,31 @@ A tibble with columns `.period` (a `Date`, the start of the period),
 
 ## Details
 
-`share` is the emoji's count divided by all emoji tokens in the same
-period, which is what makes periods with different volumes comparable.
-`top_n` selects the emoji to follow, ranked over the whole corpus by
-`measure`, and the selected set is the same in every period.
+**Which periods appear.** The grid is complete over the *observed*
+periods, and "observed" means a period holding at least one emoji. A
+period whose rows carry no emoji at all does not appear, and neither
+does a gap in the calendar: `emoji_trend()` never invents a period. So
+the zeros it fills in are the ones *within* the periods it returns, not
+a continuous time axis. Pass the result through
+[`tidyr::complete()`](https://tidyr.tidyverse.org/reference/complete.html)
+against a calendar sequence if you need the empty periods too.
+
+The three time verbs answer this differently, on purpose, and it is
+worth knowing which you are getting before joining two of them on
+`.period`:
+
+- `emoji_trend()` – periods containing at least one emoji.
+
+- [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  – every period containing at least one dated row, including emoji-free
+  ones, which report `n_types = 0`.
+
+- [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)
+  – every level of the cycle unconditionally, whether or not the data
+  reaches it. `share` is the emoji's count divided by all emoji tokens
+  in the same period, which is what makes periods with different volumes
+  comparable. `top_n` selects the emoji to follow, ranked over the whole
+  corpus by `measure`, and the selected set is the same in every period.
 
 Rows whose time is missing or unparseable contribute nothing. Glyphs are
 canonicalised through the package's codepoint key, so qualified and

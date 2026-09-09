@@ -911,11 +911,11 @@ codepoint-normalised key as everything else:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"great \U0001f600"</span>, <span class="st">"bad \U0001f621\U0001f637"</span>, <span class="st">"none"</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_score.html">emoji_score</a></span><span class="op">(</span><span class="va">text</span>, lexicon <span class="op">=</span> <span class="va">my_lexicon</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
-<span><span class="co">#&gt;   text     .emoji_score .emoji_n_scored .emoji_n</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great 😀         1                  1        1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> bad 😡😷        -<span style="color: #BB0000;">0.75</span>               2        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> none            <span style="color: #BB0000;">NA</span>                 <span style="color: #BB0000;">NA</span>        0</span></span></code></pre></div>
+<span><span class="co">#&gt;   text     .emoji_n .emoji_n_scored .emoji_score</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> great 😀        1               1         1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> bad 😡😷        2               2        -<span style="color: #BB0000;">0.75</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> none            0              <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
 <p><code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> stores a lexicon under a name
 for the session, so you can refer to it in <code><a href="../reference/emoji_score.html">emoji_score()</a></code> —
 or in <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>, if it carries emotion columns:</p>

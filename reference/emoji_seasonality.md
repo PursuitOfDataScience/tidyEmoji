@@ -57,12 +57,12 @@ emoji_seasonality(data, text, time, period = c("month", "weekday", "hour"))
 
   A character column must lead with a four-digit year: `"2024-01-01"` or
   `"2024/01/01"`, with one- or two-digit month and day, and any trailing
-  time ignored. Values that do not warn and are dropped – but a column
-  in which *nothing* reads as a date is an error rather than a column of
-  `NA`, since there would be no time axis left. Note that `"01/02/2024"`
-  is in the second group: convert a column written that way with
-  [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its own
-  `format` first.
+  time ignored. Values that do not parse warn and are dropped – but a
+  column in which *nothing* reads as a date is an error rather than a
+  column of `NA`, since there would be no time axis left. Note that
+  `"01/02/2024"` is in the second group: convert a column written that
+  way with [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its
+  own `format` first.
 
 - period:
 
@@ -100,15 +100,15 @@ emoji_seasonality(df, text, when)
 #>    .period .period_label n_texts n_with_emoji n_emoji emoji_per_text share
 #>      <int> <chr>           <int>        <int>   <int>          <dbl> <dbl>
 #>  1       1 Jan                 2            2       3            1.5     1
-#>  2       2 Feb                 0            0       0           NA       0
-#>  3       3 Mar                 0            0       0           NA       0
-#>  4       4 Apr                 0            0       0           NA       0
-#>  5       5 May                 0            0       0           NA       0
-#>  6       6 Jun                 0            0       0           NA       0
+#>  2       2 Feb                 0            0       0           NA      NA
+#>  3       3 Mar                 0            0       0           NA      NA
+#>  4       4 Apr                 0            0       0           NA      NA
+#>  5       5 May                 0            0       0           NA      NA
+#>  6       6 Jun                 0            0       0           NA      NA
 #>  7       7 Jul                 1            0       0            0       0
-#>  8       8 Aug                 0            0       0           NA       0
-#>  9       9 Sep                 0            0       0           NA       0
-#> 10      10 Oct                 0            0       0           NA       0
-#> 11      11 Nov                 0            0       0           NA       0
-#> 12      12 Dec                 0            0       0           NA       0
+#>  8       8 Aug                 0            0       0           NA      NA
+#>  9       9 Sep                 0            0       0           NA      NA
+#> 10      10 Oct                 0            0       0           NA      NA
+#> 11      11 Nov                 0            0       0           NA      NA
+#> 12      12 Dec                 0            0       0           NA      NA
 ```

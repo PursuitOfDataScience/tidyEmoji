@@ -63,12 +63,12 @@ emoji_turnover(
 
   A character column must lead with a four-digit year: `"2024-01-01"` or
   `"2024/01/01"`, with one- or two-digit month and day, and any trailing
-  time ignored. Values that do not warn and are dropped – but a column
-  in which *nothing* reads as a date is an error rather than a column of
-  `NA`, since there would be no time axis left. Note that `"01/02/2024"`
-  is in the second group: convert a column written that way with
-  [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its own
-  `format` first.
+  time ignored. Values that do not parse warn and are dropped – but a
+  column in which *nothing* reads as a date is an error rather than a
+  column of `NA`, since there would be no time axis left. Note that
+  `"01/02/2024"` is in the second group: convert a column written that
+  way with [`as.Date()`](https://rdrr.io/r/base/as.Date.html) and its
+  own `format` first.
 
 - by:
 

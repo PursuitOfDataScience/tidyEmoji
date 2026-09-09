@@ -85,13 +85,21 @@ row whose emoji are all absent from the reference table.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A row is kept because it contains an emoji, not because that emoji could be
-categorised. If none of a row's emoji is in the reference table – which
-happens for a zero-width-joiner sequence newer than your installed
-<span class="pkg">emoji</span> package, since detection is grapheme-aware and does not require
-the sequence to be catalogued – the row is kept with <code>.emoji_category</code> set
-to <code>NA</code>. Dropping it would silently shrink the corpus, and by exactly the
-rows a user whose Unicode coverage is behind most needs to see. Use
-<code><a href="emoji_provenance.html">emoji_provenance()</a></code> to check which catalogue you are matching against.</p>
+categorised. If none of a row's emoji is in the reference table the row is
+kept with <code>.emoji_category</code> set to <code>NA</code>. Dropping it would silently shrink
+the corpus, and by exactly the rows a user whose Unicode coverage is behind
+most needs to see.</p>
+<p>Three different things reach that <code>NA</code>, and only the first is a catalogue
+question:</p><ol><li><p>A zero-width-joiner sequence <strong>newer than your installed <span class="pkg">emoji</span>
+package</strong>, since detection is grapheme-aware and does not require the
+sequence to be catalogued. Use <code><a href="emoji_provenance.html">emoji_provenance()</a></code> to check which
+catalogue you are matching against; upgrading <code>emoji</code> fixes it.</p></li>
+<li><p>An <strong>invalid regional-indicator pair</strong> such as <code>U+1F1FD U+1F1FD</code>. It is
+a well-formed grapheme cluster and no catalogue will ever contain it, so
+no upgrade helps.</p></li>
+<li><p>A <strong>non-RGI ZWJ join</strong> – components joined in a combination Unicode
+does not recommend. These arrive as separate occurrences rather than one.</p></li>
+</ol><p>See the Detection section of <a href="tidyEmoji-package.html">tidyEmoji</a> for both false-positive cases.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

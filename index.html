@@ -256,13 +256,13 @@
 <span>                         score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_score.html">emoji_score</a></span><span class="op">(</span><span class="va">text</span>, lexicon <span class="op">=</span> <span class="va">my_lexicon</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 5 × 4</span></span>
-<span><span class="co">#&gt;   text                    .emoji_score .emoji_n_scored .emoji_n</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                          &lt;dbl&gt;           &lt;int&gt;    &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍            1               1        2</span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡           -1               1        1</span></span>
-<span><span class="co">#&gt; 3 Does the job.                     NA              NA        0</span></span>
-<span><span class="co">#&gt; 4 Wearing my mask 😷😷              NA               0        2</span></span>
-<span><span class="co">#&gt; 5 Shipped fast 🏁😀                  1               1        2</span></span></code></pre></div>
+<span><span class="co">#&gt;   text                    .emoji_n .emoji_n_scored .emoji_score</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;                      &lt;int&gt;           &lt;int&gt;        &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Best purchase ever 😀😍        2               1            1</span></span>
+<span><span class="co">#&gt; 2 It broke after a day 😡        1               1           -1</span></span>
+<span><span class="co">#&gt; 3 Does the job.                  0              NA           NA</span></span>
+<span><span class="co">#&gt; 4 Wearing my mask 😷😷           2               0           NA</span></span>
+<span><span class="co">#&gt; 5 Shipped fast 🏁😀              2               1            1</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="translate-emoji-to-and-from-text">Translate emoji to and from text<a class="anchor" aria-label="anchor" href="#translate-emoji-to-and-from-text"></a>

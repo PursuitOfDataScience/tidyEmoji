@@ -123,6 +123,40 @@ is "heart on fire" rather than "fire" even with its selectors stripped.
 The two exceptions are spellings in which no component at all is
 detectable, and both have a canonical form that is found.
 
+Everything above is about what detection *misses*. It also admits two
+things that are well formed but not emoji, and both flow through every
+verb, so a corpus statistic can be inflated by them:
+
+- **An invalid regional-indicator pair.** Any two regional indicators
+  form one grapheme cluster, so `U+1F1FD U+1F1FD` is read as a single
+  emoji even though no country has that code. It appears in
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  with `name = NA`, gets a column in
+  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
+  and a node in
+  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md).
+  Only 262 of the pairs are real: `subgroup` is `"country-flag"` for 259
+  rows of the reference table and `"subdivision-flag"` for 3, so you can
+  filter against that set –
+  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
+  carries `group`, and
+  [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  reports which catalogue you have.
+
+- **An orphan skin-tone modifier or hair component.** A modifier applied
+  to a base that cannot take one, as in `U+1F600 U+1F3FB`, leaves the
+  swatch standing alone – and because the Component group is in the
+  reference table it comes back *named*, as "light skin tone" in group
+  `"Component"`, not as `NA`.
+  [`as_emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.md)
+  labels these `"component"`, which is the way to find and drop them:
+  `subset(emoji_frequency(df, text), as_emoji_type(emoji) != "component")`.
+
+Both are defensible as raw detection and misleading as a corpus
+statistic, which is why they are named here rather than silently
+filtered: dropping them inside the verbs would make the emoji counts
+disagree with the text.
+
 ## Grouped data frames
 
 Grouping is respected where it can be, and reported where it cannot. The
@@ -150,6 +184,8 @@ the way to get per-group results today.
 Useful links:
 
 - <https://pursuitofdatascience.github.io/tidyEmoji/>
+
+- <https://github.com/PursuitOfDataScience/tidyEmoji>
 
 - Report bugs at
   <https://github.com/PursuitOfDataScience/tidyEmoji/issues>

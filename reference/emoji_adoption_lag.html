@@ -87,7 +87,7 @@ in the session's, and the buckets follow. The same column then gives hour
 has to be reproducible; a <code>Date</code> column is immune either way.</p>
 <p>A character column must lead with a four-digit year: <code>"2024-01-01"</code> or
 <code>"2024/01/01"</code>, with one- or two-digit month and day, and any trailing
-time ignored. Values that do not warn and are dropped – but a column in
+time ignored. Values that do not parse warn and are dropped – but a column in
 which <em>nothing</em> reads as a date is an error rather than a column of <code>NA</code>,
 since there would be no time axis left. Note that <code>"01/02/2024"</code> is in the
 second group: convert a column written that way with <code><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date()</a></code> and its

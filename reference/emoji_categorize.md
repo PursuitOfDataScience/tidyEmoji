@@ -48,15 +48,32 @@ whose emoji are all absent from the reference table.
 ## Details
 
 A row is kept because it contains an emoji, not because that emoji could
-be categorised. If none of a row's emoji is in the reference table –
-which happens for a zero-width-joiner sequence newer than your installed
-emoji package, since detection is grapheme-aware and does not require
-the sequence to be catalogued – the row is kept with `.emoji_category`
-set to `NA`. Dropping it would silently shrink the corpus, and by
-exactly the rows a user whose Unicode coverage is behind most needs to
-see. Use
-[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
-to check which catalogue you are matching against.
+be categorised. If none of a row's emoji is in the reference table the
+row is kept with `.emoji_category` set to `NA`. Dropping it would
+silently shrink the corpus, and by exactly the rows a user whose Unicode
+coverage is behind most needs to see.
+
+Three different things reach that `NA`, and only the first is a
+catalogue question:
+
+1.  A zero-width-joiner sequence **newer than your installed emoji
+    package**, since detection is grapheme-aware and does not require
+    the sequence to be catalogued. Use
+    [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+    to check which catalogue you are matching against; upgrading `emoji`
+    fixes it.
+
+2.  An **invalid regional-indicator pair** such as `U+1F1FD U+1F1FD`. It
+    is a well-formed grapheme cluster and no catalogue will ever contain
+    it, so no upgrade helps.
+
+3.  A **non-RGI ZWJ join** – components joined in a combination Unicode
+    does not recommend. These arrive as separate occurrences rather than
+    one.
+
+See the Detection section of
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+for both false-positive cases.
 
 ## See also
 

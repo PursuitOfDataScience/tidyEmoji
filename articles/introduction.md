@@ -839,11 +839,11 @@ my_lexicon <- data.frame(
 data.frame(text = c("great \U0001f600", "bad \U0001f621\U0001f637", "none")) %>%
   emoji_score(text, lexicon = my_lexicon)
 #> # A tibble: 3 × 4
-#>   text     .emoji_score .emoji_n_scored .emoji_n
-#>   <chr>           <dbl>           <int>    <int>
-#> 1 great 😀         1                  1        1
-#> 2 bad 😡😷        -0.75               2        2
-#> 3 none            NA                 NA        0
+#>   text     .emoji_n .emoji_n_scored .emoji_score
+#>   <chr>       <int>           <int>        <dbl>
+#> 1 great 😀        1               1         1   
+#> 2 bad 😡😷        2               2        -0.75
+#> 3 none            0              NA        NA
 ```
 
 [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)

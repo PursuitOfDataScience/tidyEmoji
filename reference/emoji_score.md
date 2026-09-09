@@ -71,12 +71,27 @@ emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
 
 ## Value
 
-`data`, as a tibble, with `.emoji_score` (per-row mean),
-`.emoji_n_scored` (emoji found in the lexicon) and `.emoji_n` (total
-emoji) added. For the multi-dimensional `"emotag1200"` lexicon the score
-is the mean over its eight emotion dimensions; use
+`data`, as a tibble, with `.emoji_n` (total emoji), `.emoji_n_scored`
+(emoji found in the lexicon) and `.emoji_score` (per-row mean) added, in
+that order – the same order
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md),
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md),
+[`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md),
+[`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)
+and
+[`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md)
+use.
+
+For the multi-dimensional `"emotag1200"` lexicon the score is the mean
+over its eight emotion dimensions; use
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
-for the per-emotion profile.
+for the per-emotion profile. **Note the scale changes with the
+lexicon.** `"novak2015"` is a signed valence on `[-1, 1]`, where the
+sign is the direction of sentiment. The `"emotag1200"` mean is an
+*intensity* on `[0, 1]`: its eight dimensions are each non-negative and
+four of them (anger, disgust, fear, sadness) are negatively valenced, so
+a maximally angry emoji and a maximally joyful one score alike and
+neither is negative. The two are not comparable and must not be pooled.
 
 That averaging is specific to the bundled lexicon. A *registered* or
 inline lexicon carrying emotion columns has no score column, so
@@ -102,20 +117,20 @@ it had no emoji to score. `.emoji_n` counts every emoji either way.
 df <- data.frame(text = c("love \U0001f60d", "angry \U0001f621", "meh"))
 emoji_score(df, text, lexicon = "novak2015")
 #> # A tibble: 3 × 4
-#>   text     .emoji_score .emoji_n_scored .emoji_n
-#>   <chr>           <dbl>           <int>    <int>
-#> 1 love 😍         0.678               1        1
-#> 2 angry 😡       -0.173               1        1
-#> 3 meh            NA                  NA        0
+#>   text     .emoji_n .emoji_n_scored .emoji_score
+#>   <chr>       <int>           <int>        <dbl>
+#> 1 love 😍         1               1        0.678
+#> 2 angry 😡        1               1       -0.173
+#> 3 meh             0              NA       NA    
 
 # a bring-your-own lexicon
 own <- data.frame(emoji = c("\U0001f600", "\U0001f621"),
                   score = c(0.9, -0.8))
 emoji_score(df, text, lexicon = own)
 #> # A tibble: 3 × 4
-#>   text     .emoji_score .emoji_n_scored .emoji_n
-#>   <chr>           <dbl>           <int>    <int>
-#> 1 love 😍          NA                 0        1
-#> 2 angry 😡         -0.8               1        1
-#> 3 meh              NA                NA        0
+#>   text     .emoji_n .emoji_n_scored .emoji_score
+#>   <chr>       <int>           <int>        <dbl>
+#> 1 love 😍         1               0         NA  
+#> 2 angry 😡        1               1         -0.8
+#> 3 meh             0              NA         NA  
 ```
