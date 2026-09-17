@@ -49,7 +49,10 @@ Default \code{FALSE}.}
 \value{
 A tibble with one row per emoji occurrence, in reading order, and
 columns \code{.row_number} (position of the entry in \code{data}), \code{.position} (the
-character position at which the emoji starts), \code{.emoji},
+code-point offset at which the emoji starts, the unit \code{\link[=substr]{substr()}} takes,
+so \code{substr(text, .position, .position + nchar(.emoji) - 1)} is the glyph;
+\code{\link[=emoji_ngrams]{emoji_ngrams()}}'s column of the same name counts emoji instead),
+\code{.emoji},
 \code{.emoji_context_left}, \code{.emoji_context_right} and \code{.emoji_context} (the two
 sides joined by a space -- the co-text without the glyph). Rows with no
 emoji contribute nothing. The columns of \code{data} are not carried, so a

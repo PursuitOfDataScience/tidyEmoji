@@ -137,3 +137,38 @@ test_that("a char window counts code points, so it can split a grapheme", {
                fixed = TRUE)
   expect_match(rd, "literal code-point count", fixed = TRUE)
 })
+
+test_that(".position means a code-point offset here and an emoji index there", {
+  # Same dotted name, two units. ?tidyEmoji's contract used to gloss all five
+  # structural indices in one breath, which was right for emoji_context() and
+  # wrong for emoji_ngrams().
+  A <- "\U0001F600"
+  B <- "\U0001F621"
+  fam <- "\U0001F468\u200D\U0001F469\u200D\U0001F467"
+  txt <- paste0("hello ", A, " world ", fam, " end ", B)
+  d <- data.frame(text = txt, stringsAsFactors = FALSE)
+
+  cx <- emoji_context(d, text)
+  expect_identical(nrow(cx), 3L)
+  # the documented round trip, for a one-code-point glyph and a five-point one
+  for (i in seq_len(nrow(cx))) {
+    p <- cx$.position[i]
+    expect_identical(substr(txt, p, p + nchar(cx$.emoji[i]) - 1L),
+                     cx$.emoji[i], info = i)
+  }
+  # so it is an offset into the text, not a count of emoji
+  expect_true(all(cx$.position > 3L))
+  expect_identical(cx$.position[1L], 7L)
+
+  ng <- emoji_ngrams(d, text)
+  expect_identical(nrow(ng), 2L)
+  expect_identical(ng$.position, 1:2)
+  # the two columns share a name and disagree, which is the whole point
+  expect_false(identical(sort(unique(cx$.position)), sort(unique(ng$.position))))
+
+  pkg <- rd_flat("tidyEmoji-package")
+  expect_match(pkg, "whose unit depends on the verb", fixed = TRUE)
+  expect_match(rd_flat("emoji_context"), "code-point offset at which the emoji",
+               fixed = TRUE)
+  expect_match(rd_flat("emoji_ngrams"), "within the row's emoji", fixed = TRUE)
+})

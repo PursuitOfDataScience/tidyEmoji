@@ -14,9 +14,17 @@
 #'   `.period_label`** -- structural indices saying *where* a row came from
 #'   rather than what was measured: the position of the entry in `data`
 #'   ([emoji_extract_unnest()], [emoji_context()], [emoji_ngrams()],
-#'   [emoji_dfm()]), the character offset of an occurrence, or the time bucket
+#'   [emoji_dfm()]), where in that entry something sits, or the time bucket
 #'   ([emoji_trend()], [emoji_turnover()], [emoji_seasonality()]). Dotted for
 #'   the same reason, and reserved on the same terms. That is the whole list.
+#'
+#'   `.position` is the one of the five whose unit depends on the verb, so it
+#'   is worth reading before you index with it. In [emoji_context()] it is a
+#'   **code-point offset into the text**, the unit [substr()] takes, so
+#'   `substr(text, .position, .position + nchar(.emoji) - 1)` returns the
+#'   glyph. In [emoji_ngrams()] it is the **index within the row's emoji
+#'   sequence**, so the first n-gram of a row is 1 whatever the text looks
+#'   like. Both pages say which, and the two are not interchangeable.
 #' * **bare names** -- the columns of a *new* summary tibble, which is not your
 #'   data with something added ([emoji_frequency()]'s `emoji`, `name`, `n`;
 #'   [emoji_ambiguity()]'s `ambiguity`, `rank`). [emoji_dfm()] is the one verb

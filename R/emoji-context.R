@@ -123,7 +123,10 @@
 #'   Default `FALSE`.
 #' @return A tibble with one row per emoji occurrence, in reading order, and
 #'   columns `.row_number` (position of the entry in `data`), `.position` (the
-#'   character position at which the emoji starts), `.emoji`,
+#'   code-point offset at which the emoji starts, the unit [substr()] takes,
+#'   so `substr(text, .position, .position + nchar(.emoji) - 1)` is the glyph;
+#'   [emoji_ngrams()]'s column of the same name counts emoji instead),
+#'   `.emoji`,
 #'   `.emoji_context_left`, `.emoji_context_right` and `.emoji_context` (the two
 #'   sides joined by a space -- the co-text without the glyph). Rows with no
 #'   emoji contribute nothing. The columns of `data` are not carried, so a

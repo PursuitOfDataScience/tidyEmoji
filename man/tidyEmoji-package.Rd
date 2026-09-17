@@ -23,9 +23,17 @@ one you get tells you what the column is:
 \code{.period_label}} -- structural indices saying \emph{where} a row came from
 rather than what was measured: the position of the entry in \code{data}
 (\code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}}, \code{\link[=emoji_context]{emoji_context()}}, \code{\link[=emoji_ngrams]{emoji_ngrams()}},
-\code{\link[=emoji_dfm]{emoji_dfm()}}), the character offset of an occurrence, or the time bucket
+\code{\link[=emoji_dfm]{emoji_dfm()}}), where in that entry something sits, or the time bucket
 (\code{\link[=emoji_trend]{emoji_trend()}}, \code{\link[=emoji_turnover]{emoji_turnover()}}, \code{\link[=emoji_seasonality]{emoji_seasonality()}}). Dotted for
 the same reason, and reserved on the same terms. That is the whole list.
+
+\code{.position} is the one of the five whose unit depends on the verb, so it
+is worth reading before you index with it. In \code{\link[=emoji_context]{emoji_context()}} it is a
+\strong{code-point offset into the text}, the unit \code{\link[=substr]{substr()}} takes, so
+\code{substr(text, .position, .position + nchar(.emoji) - 1)} returns the
+glyph. In \code{\link[=emoji_ngrams]{emoji_ngrams()}} it is the \strong{index within the row's emoji
+sequence}, so the first n-gram of a row is 1 whatever the text looks
+like. Both pages say which, and the two are not interchangeable.
 \item \strong{bare names} -- the columns of a \emph{new} summary tibble, which is not your
 data with something added (\code{\link[=emoji_frequency]{emoji_frequency()}}'s \code{emoji}, \code{name}, \code{n};
 \code{\link[=emoji_ambiguity]{emoji_ambiguity()}}'s \code{ambiguity}, \code{rank}). \code{\link[=emoji_dfm]{emoji_dfm()}} is the one verb
