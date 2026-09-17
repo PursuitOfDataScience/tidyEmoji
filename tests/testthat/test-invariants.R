@@ -7986,9 +7986,21 @@ test_that("cran-comments.md's own figures match the package", {
   words <- c("one", "two", "three", "four", "five", "six", "seven", "eight",
              "nine", "ten", "eleven", "twelve")
   expect_lte(n_soc, length(words))
-  expect_true(grepl(paste(words[n_soc], "tests skip"), txt, fixed = TRUE),
-              info = paste("cran-comments.md should say",
-                           words[n_soc], "tests skip"))
+  expect_true(grepl(paste(words[n_soc], "are `skip_on_cran()`"), txt,
+                    fixed = TRUE),
+              info = paste("cran-comments.md should say", words[n_soc],
+                           "are `skip_on_cran()`"))
+  # The total a CRAN run prints is larger than that, because some tests read
+  # a file the tarball does not carry and stand down. Those are not
+  # skip_on_cran() and cannot be counted from the sources, so the file names
+  # each of their messages instead and this holds it to the ones that exist.
+  standdown <- unique(unlist(regmatches(lines, gregexpr(
+    '"(README sources not available|package sources not available[^"]*|workflow not available)"',
+    lines))))
+  expect_gte(length(standdown), 3L)
+  for (m in standdown) {
+    expect_true(grepl(gsub('"', "", m), txt, fixed = TRUE), info = m)
+  }
 
   # the marked-UTF-8 breakdown, derived from the data it describes
   ns <- asNamespace("tidyEmoji")

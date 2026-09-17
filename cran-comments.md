@@ -173,8 +173,16 @@ and the test that re-renders the README now compares its output with runs of
 spaces collapsed.
 
 The skip inventory itself is current and was re-measured for this submission
-on R 4.4.1. Run as CRAN runs it, seven tests skip, all seven `skip_on_cran()`,
-and each for a reason that is not "this might fail": the declared R minimum
+on R 4.4.1. Run as CRAN runs it, ten tests skip: seven are `skip_on_cran()`,
+and three stand down because a tarball does not carry the file they read.
+Those three report `README sources not available`, `package sources not
+available; scanned the namespace instead` and `workflow not available` -- the
+second scans the installed namespace instead, and the third is coupled to
+`.github/`, which is build-ignored. None of the ten is a test that might
+fail.
+
+The `skip_on_cran()` seven skip for a reason that is not "this might fail"
+either: the declared R minimum
 against an installable tree and a `select()`-avoidance benchmark, both of
 which read the checking machine rather than the package -- one inspects the
 installed dependencies' own R floors, the other compares two wall-clock

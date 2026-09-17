@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are one hundred and seventeen of them, and
+test that was passing for the wrong reason. There are one hundred and eighteen of them, and
 reading just those leads gives the release without the verification detail.
-Not all one hundred and seventeen changed observable behaviour: several record a test that
+Not all one hundred and eighteen changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,15 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **`cran-comments.md` also undercounted its own skips.** It said "seven
+  tests skip, all seven `skip_on_cran()`", and a CRAN run prints ten: the
+  seven, plus three that stand down because a tarball does not carry the
+  file they read (`README.Rmd`, the package sources, and the build-ignored
+  `.github/`). A reviewer running the check would have seen the letter
+  contradicted by its own output. The test that couples the count only ever
+  counted `skip_on_cran()` call lines, which is why it never noticed, so it
+  now also requires the file to name each stand-down message that exists in
+  the suite.
 * **`cran-comments.md` said five CI flavours when the matrix defines six.**
   The workflow gained an `r: '4.1'` job precisely so the declared floor of
   R 4.1.0 is built against, `oldrel-1` sitting far above it, and the file a
