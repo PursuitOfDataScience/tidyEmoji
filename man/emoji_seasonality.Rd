@@ -52,6 +52,15 @@ A tibble with one row per level of the cycle: \code{.period} (integer:
 1-12, 1-7 with Monday first, or 0-23), \code{.period_label}, \code{n_texts},
 \code{n_with_emoji}, \code{n_emoji}, \code{emoji_per_text} and \code{share} (this level's share
 of all emoji tokens).
+
+\code{emoji_per_text} is \code{n_emoji / n_texts}, so the average is over \strong{every}
+text in the level and not only over the ones carrying an emoji. The
+distinction is large on a mixed corpus: four emoji spread over three
+texts, one of which carries all four, gives \code{1.33} here and would give
+\code{4} the other way. Both denominators are in the table, so divide by
+\code{n_with_emoji} yourself for the intensity among users of emoji, and read
+\code{emoji_per_text} as a rate over the whole level. It is \code{NA}, not \code{0},
+where the level holds no text at all.
 }
 \description{
 \code{emoji_seasonality()} aggregates emoji use by month of year, day of week or

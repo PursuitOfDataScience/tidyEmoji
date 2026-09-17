@@ -183,3 +183,49 @@ test_that("the time verbs accept character and POSIXct time columns", {
   expect_error(emoji_trend(data.frame(when = 1:2, text = c(grin, laugh)),
                            text, when), "Date")
 })
+
+test_that("emoji_per_text averages over every text, and share keeps its base", {
+  # Both are denominator questions the table itself cannot settle, since it
+  # hands you n_texts and n_with_emoji side by side.
+  A <- "\U0001F600"
+  B <- "\U0001F621"
+  # January: three texts, one of which carries all four emoji
+  d <- data.frame(
+    text = c(paste(A, A, A, A), "plain", "also plain"),
+    when = as.Date(c("2024-01-05", "2024-01-06", "2024-01-07")),
+    stringsAsFactors = FALSE)
+  jan <- emoji_seasonality(d, text, when)
+  jan <- jan[jan$.period == 1L, ]
+  expect_identical(jan$n_texts, 3L)
+  expect_identical(jan$n_with_emoji, 1L)
+  expect_identical(jan$n_emoji, 4L)
+  expect_equal(jan$emoji_per_text, 4 / 3)
+  expect_false(isTRUE(all.equal(jan$emoji_per_text, 4)))
+  # and a level with no text at all is NA rather than 0
+  feb <- emoji_seasonality(d, text, when)
+  feb <- feb[feb$.period == 2L, ]
+  expect_identical(feb$n_texts, 0L)
+  expect_true(is.na(feb$emoji_per_text))
+
+  # emoji_trend(share) divides by every emoji token in the period, so a
+  # top_n cut does not renormalise what survives it
+  d2 <- data.frame(
+    text = c(paste(A, A, A, B), paste(A, B)),
+    when = as.Date(c("2024-01-05", "2024-02-05")),
+    stringsAsFactors = FALSE)
+  full <- emoji_trend(d2, text, when, top_n = NULL)
+  expect_equal(tapply(full$share, full$.period, sum), c(1, 1),
+               ignore_attr = TRUE)
+  cut <- emoji_trend(d2, text, when, top_n = 1L)
+  expect_identical(cut$emoji, rep(A, 2L))
+  expect_equal(cut$share, c(3 / 4, 1 / 2))
+  # which is the same share the uncut call gives that glyph
+  keep <- full[full$emoji == A, ]
+  expect_equal(cut$share, keep$share[order(keep$.period)])
+
+  rd <- rd_flat("emoji_seasonality")
+  expect_match(rd, "over \\strong{every} text in the level", fixed = TRUE)
+  expect_match(rd, "gives \\code{1.33} here", fixed = TRUE)
+  expect_match(rd_flat("emoji_trend"),
+               "divided by all emoji tokens in the same period", fixed = TRUE)
+})

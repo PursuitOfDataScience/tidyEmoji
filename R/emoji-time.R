@@ -611,6 +611,15 @@ emoji_adoption_lag <- function(data, text, time) {
 #'   1-12, 1-7 with Monday first, or 0-23), `.period_label`, `n_texts`,
 #'   `n_with_emoji`, `n_emoji`, `emoji_per_text` and `share` (this level's share
 #'   of all emoji tokens).
+#'
+#'   `emoji_per_text` is `n_emoji / n_texts`, so the average is over **every**
+#'   text in the level and not only over the ones carrying an emoji. The
+#'   distinction is large on a mixed corpus: four emoji spread over three
+#'   texts, one of which carries all four, gives `1.33` here and would give
+#'   `4` the other way. Both denominators are in the table, so divide by
+#'   `n_with_emoji` yourself for the intensity among users of emoji, and read
+#'   `emoji_per_text` as a rate over the whole level. It is `NA`, not `0`,
+#'   where the level holds no text at all.
 #' @seealso [emoji_trend()] for the calendar-time view.
 #' @examples
 #' df <- data.frame(
