@@ -75,7 +75,10 @@ emoji_incongruity_profile(
 
   For `method = "difference"`, the absolute gap at or above which
   `.emoji_incongruent` is `TRUE`. Default `1`, a full polarity swing on
-  the rank scale.
+  the rank scale. `"sign_flip"` has no gap to cut, so supplying both
+  warns rather than letting half the call do nothing silently. A
+  threshold at or below `0` flags every scored row, `abs(gap)` never
+  being negative.
 
 - min_n:
 

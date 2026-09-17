@@ -109,7 +109,9 @@ scores only the trailing run of emoji that ends the text.</p></dd>
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
 <dd><p>For <code>method = "difference"</code>, the absolute gap at or above
 which <code>.emoji_incongruent</code> is <code>TRUE</code>. Default <code>1</code>, a full polarity swing on
-the rank scale.</p></dd>
+the rank scale. <code>"sign_flip"</code> has no gap to cut, so supplying both warns
+rather than letting half the call do nothing silently. A threshold at or
+below <code>0</code> flags every scored row, <code>abs(gap)</code> never being negative.</p></dd>
 
 </dl></div>
     <div class="section level2">

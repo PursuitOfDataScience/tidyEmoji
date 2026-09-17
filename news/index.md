@@ -137,11 +137,12 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and twelve of them, and reading just those leads gives the
-release without the verification detail. Not all one hundred and twelve
-changed observable behaviour: several record a test that could not have
-failed, or a figure the documentation quoted incorrectly, which are
-worth the same prominence because both meant something was unverified.
+hundred and thirteen of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and
+thirteen changed observable behaviour: several record a test that could
+not have failed, or a figure the documentation quoted incorrectly, which
+are worth the same prominence because both meant something was
+unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1627,22 @@ worth the same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **`threshold` did nothing under `method = "sign_flip"`, quietly.**
+  That method flags a polarity flip rather than measuring a gap, so
+  there is nothing for a threshold to cut, and a call giving both had
+  half of it absorbed without a word. It is the same shape the package
+  refuses elsewhere:
+  [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
+  errors on a `measure` value it cannot honour, and
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  on a `wrap` with no placeholder. Here the answer is right rather than
+  wrong, so the proportionate signal is a warning, and it fires only
+  when the caller actually typed the argument, after
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html) so an
+  abbreviated `method = "sign"` is caught too. All three verbs of the
+  family do it. The page also records that a threshold at or below `0`
+  flags every scored row, `abs(gap)` never being negative.
 
 - **Three verbs take a `top_n` and only one said how it cuts.**
   [`?top_n_emojis`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)
