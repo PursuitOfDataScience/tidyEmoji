@@ -2,12 +2,44 @@
 
 ## tidyEmoji 0.5.0
 
-Nothing user-visible yet. 0.4.0 reached CRAN on 2026-09-17; this section
-collects changes for the next release as they land.
+No new verbs and no behaviour changes: every verb returns exactly what
+it returned in 0.4.0. One of them returns it a great deal faster, and
+the rest of the release is documentation and the infrastructure that
+checks it.
 
 The bundled crosswalks track **Unicode emoji 16.0**, via `emoji` 16.0.0.
 Re-generating them from `data-raw/crosswalks.R` against that release
 reproduces the shipped data exactly, so the catalogue is current.
+
+### Improvements and fixes
+
+- **[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  was still quadratic in the emoji per row, and
+  [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+  inherited it.** 0.4.0 bounded the *tokenising* to the window, which
+  was half the cost. The other half is that
+  [`substr()`](https://rdrr.io/r/base/substr.html) on a multi-byte
+  string rescans from its first byte to reach a character offset, so
+  cutting one window still cost as much as the text before it; and on a
+  row whose masked text is all spaces – which is what a row of nothing
+  but emoji becomes – no bounded slice ever yields a token, so the
+  budget doubled up to the whole side for every occurrence. That is the
+  shape a chat or reaction corpus is full of, the same family of rows
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)’s
+  `.emoji_only` exists to find.
+
+  Each row now gets one index of its code points and token boundaries,
+  and every window is read off it. **3200 emoji in one row went from
+  7.1s to 0.11s**, and the verb is now flat in the emoji per row: the
+  same 3200 spread over 320 rows costs 0.11s too, where the two differed
+  by 26x before. A realistic mixed row is 2.9x faster and
+  `unit = "char"` 2.5x. A row holding a single emoji keeps the old path,
+  which is still the cheaper of the two there, so nothing regresses on a
+  corpus of short texts.
+
+  The output is unchanged, and checked to be: byte-identical on 13977
+  occurrences across eight `window`/`unit` combinations, punctuation,
+  no-break and ideographic spaces, ZWJ sequences and keycaps included.
 
 ### Verified, no change needed
 
@@ -314,20 +346,21 @@ unverified.
   once per occurrence however often it repeats in the window. No defect
   was found in either; both are now pinned.
 
-- Pinned the version cluster’s behaviour against a **future release**,
-  the one way this package can break without anything here changing.
+- Pinned the version cluster’s behaviour against a **future `emoji`
+  release**, the one way this package can break without anything here
+  changing.
   [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
   and
   [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
   read the introducing `version` out of the installed reference table
   and join it to a release-date table kept in tidyEmoji’s own source;
   the day Unicode 18 ships, that label will not be in the table.
-  `R CMD check` cannot reveal this, because it runs against today’s .
-  Injecting `18.0`, the data-file spelling `E18.0`, an absurd `99.9` and
-  a missing version now confirms all four degrade rather than fail: the
-  glyph keeps its row, its `release_date` and `lag_days` are `NA`
-  instead of invented, `share_tokens` still sums to 1, the other glyphs
-  are untouched, and
+  `R CMD check` cannot reveal this, because it runs against today’s
+  `emoji`. Injecting `18.0`, the data-file spelling `E18.0`, an absurd
+  `99.9` and a missing version now confirms all four degrade rather than
+  fail: the glyph keeps its row, its `release_date` and `lag_days` are
+  `NA` instead of invented, `share_tokens` still sums to 1, the other
+  glyphs are untouched, and
   [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)
   follows the new label. Also pinned the release table itself –
   `version` unique across both numbering series, `version_num` equal to
@@ -570,20 +603,20 @@ unverified.
   mis-described its own headline number.** `n_emoji` was documented as
   “the size of the detectable emoji set” but reports
   `nrow(emoji_reference())` – rows of the reference table, which are
-  *spellings*. With 16.0.0 that is 5042 rows carrying only 3790 distinct
-  code-point keys, because an emoji whose presentation can be selected
-  appears both with and without `U+FE0F`, and 212 of the 5042 are not
-  detectable in text as written. This is a function built to be pasted
-  into a methods section, so “5042 detectable emoji” is a number that
-  would have gone into papers overstating the vocabulary by 1252. The
-  value is unchanged – it is the table’s size, which is the right thing
-  for a provenance row to record – and the documentation now names the
-  quantity, points at `length(unique(emoji_reference()$key))` for the
-  count of distinct emoji, and notes that the lexicon strings count rows
-  the same way. Also established the fact that makes the overstatement
-  harmless rather than a defect: no emoji is lost to an undetectable
-  spelling, because every one of the 3790 keys is reachable through at
-  least one spelling that is detected.
+  *spellings*. With `emoji` 16.0.0 that is 5042 rows carrying only 3790
+  distinct code-point keys, because an emoji whose presentation can be
+  selected appears both with and without `U+FE0F`, and 212 of the 5042
+  are not detectable in text as written. This is a function built to be
+  pasted into a methods section, so “5042 detectable emoji” is a number
+  that would have gone into papers overstating the vocabulary by 1252.
+  The value is unchanged – it is the table’s size, which is the right
+  thing for a provenance row to record – and the documentation now names
+  the quantity, points at `length(unique(emoji_reference()$key))` for
+  the count of distinct emoji, and notes that the lexicon strings count
+  rows the same way. Also established the fact that makes the
+  overstatement harmless rather than a defect: no emoji is lost to an
+  undetectable spelling, because every one of the 3790 keys is reachable
+  through at least one spelling that is detected.
 
 - **[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
   could not tell type shares from token shares.** Found by extending
@@ -764,8 +797,8 @@ unverified.
   and a row whose every emoji the recode cannot type – and the page
   documented only the first. The recode maps the ten Unicode groups the
   catalogue currently uses and starts from `NA`, so a glyph in a group
-  added to Unicode after your package was built has no type. It is the
-  same conflation \[emoji_categorize()\] already describes for
+  added to Unicode after your `emoji` package was built has no type. It
+  is the same conflation \[emoji_categorize()\] already describes for
   `.emoji_category`, and the fix is the same: say both, and say how to
   tell them apart – \[emoji_faceness()\]’s `.emoji_n_typed` is `NA` when
   the row had no emoji and `0` when it had emoji that could not be
@@ -810,7 +843,7 @@ unverified.
   into a red test. The pass count is unchanged by the conversion, which
   is the point.
 
-- **The suite’s dependency on one release was undeclared and
+- **The suite’s dependency on one `emoji` release was undeclared and
   unexplained.** About seventy counts derived from the catalogue are
   pinned here – 5042 rows, 3790 distinct keys, 969 lexicon rows,
   736/233, 212 undetectable spellings, 1252 carrying `U+FE0F`, 216, 200
@@ -827,12 +860,12 @@ unverified.
 
 - Declared `emoji (>= 16.0.0)`, which had no version floor at all. The
   other floors in `DESCRIPTION` are keyed to *arguments* the code calls,
-  which is why was not among them – tidyEmoji reads its data, not its
-  functions. The reason it needs one is different and just as real:
-  every catalogue figure in the documentation describes a single
-  release, and an older has fewer rows, so those figures would simply be
-  wrong. The floor, the version the help pages name and the pinned
-  counts are now governed by one constant and asserted to agree.
+  which is why `emoji` was not among them – tidyEmoji reads its data,
+  not its functions. The reason it needs one is different and just as
+  real: every catalogue figure in the documentation describes a single
+  release, and an older `emoji` has fewer rows, so those figures would
+  simply be wrong. The floor, the version the help pages name and the
+  pinned counts are now governed by one constant and asserted to agree.
 
 - **`cran-comments.md` asserted something a reviewer could test and find
   false.** Its explanation of the one “possibly invalid URL” note said
@@ -884,11 +917,11 @@ unverified.
   `category_unicode_crosswalk$unicodes` 10, summing to the 6890 it
   quotes – and no other column in any bundled dataset carries a marked
   string, as it claims. Against a live CRAN index: still no reverse
-  dependencies, the published version is still 0.3.0, and is still
-  16.0.0, which confirms the version floor added above is satisfiable
-  and that the documented catalogue figures describe the release CRAN
-  currently ships. The package count was refreshed from 24,744 to
-  24,748.
+  dependencies, the published version is still 0.3.0, and `emoji` is
+  still 16.0.0, which confirms the version floor added above is
+  satisfiable and that the documented catalogue figures describe the
+  release CRAN currently ships. The package count was refreshed from
+  24,744 to 24,748.
 
 - Those figures are now derived in a test rather than asserted in prose,
   so they cannot drift again: the skip count, each component of the
@@ -1253,12 +1286,12 @@ unverified.
 
 - That check is deliberately *not* in the test suite. Adding it raised a
   second `R CMD check` WARNING – “‘::’ or ‘:::’ import not declared from
-  ‘pkgdown’” – and the only way to clear it is to declare in `Suggests`,
-  which would make every CRAN check machine install a heavy dependency
-  for a test that can never run there: `_pkgdown.yml` is build-ignored,
-  so the test would skip in the tarball every time. The site index is
-  verified here instead, and `build_site()` catches a regression on the
-  first run after one.
+  ‘pkgdown’” – and the only way to clear it is to declare `pkgdown` in
+  `Suggests`, which would make every CRAN check machine install a heavy
+  dependency for a test that can never run there: `_pkgdown.yml` is
+  build-ignored, so the test would skip in the tarball every time. The
+  site index is verified here instead, and `build_site()` catches a
+  regression on the first run after one.
 
 - The `cran-comments.md` skip-count assertion no longer hardcodes the
   number in two places. It counts the `skip_on_cran()` call sites and
@@ -1659,10 +1692,11 @@ unverified.
   packages, so `R CMD build` failed outright on a library tree lacking
   one.** It read its example corpus with
   [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)
-  and drew its charts with , and , all unconditionally – optional
-  dependencies used as if they were required. Verified by building on an
-  R 4.6.0 tree with neither ‘readr’ nor ‘forcats’:
-  `Error: Vignette re-building failed`. The corpus is now read with
+  and drew its charts with `ggplot2`, `forcats` and `stringr`, all
+  unconditionally – optional dependencies used as if they were required.
+  Verified by building on an R 4.6.0 tree with neither ‘readr’ nor
+  ‘forcats’: `Error: Vignette re-building failed`. The corpus is now
+  read with
   [`utils::read.csv()`](https://rdrr.io/r/utils/read.table.html) wrapped
   in
   [`tibble::as_tibble()`](https://tibble.tidyverse.org/reference/as_tibble.html)
@@ -1773,16 +1807,17 @@ unverified.
   unconditionally, while
   [`library(ggplot2)`](https://ggplot2.tidyverse.org) above it stays
   behind the [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html)
-  gate. Sourcing it on an installation without , and therefore fails
-  partway through, which is exactly the situation the gate was written
-  to survive. The vignette now says which half of the script runs on the
-  declared dependencies alone and what to install for the rest, and a
-  test holds that claim to the installed file. Nothing changed in the
-  code: the chunks stay ungated so the rendered vignette shows the
-  plotting code as a reader wants to read it, and dropping it from the
-  tangled script would take working code away from everyone who does
-  have the three packages. Verified separately that the script runs to
-  completion, with zero warnings, when they are present.
+  gate. Sourcing it on an installation without `ggplot2`, `forcats` and
+  `stringr` therefore fails partway through, which is exactly the
+  situation the gate was written to survive. The vignette now says which
+  half of the script runs on the declared dependencies alone and what to
+  install for the rest, and a test holds that claim to the installed
+  file. Nothing changed in the code: the chunks stay ungated so the
+  rendered vignette shows the plotting code as a reader wants to read
+  it, and dropping it from the tangled script would take working code
+  away from everyone who does have the three packages. Verified
+  separately that the script runs to completion, with zero warnings,
+  when they are present.
 
 - **The other four companion arguments are inert on the branches they do
   not belong to, and now say so.**
@@ -2164,14 +2199,14 @@ unverified.
   Every dataset’s `@source` names the `data-raw/` script that builds it
   and the vignette says they “are regenerated from the current Unicode
   emoji list by the scripts in `data-raw/`”, but nothing had ever re-run
-  them. All four reproduce their `.rda` byte-for-byte against 16.0.0:
-  `emoji_unicode_crosswalk` (5761 rows), `category_unicode_crosswalk`
-  (10), `emoji_sentiment_lexicon` (969) and `emoji_emotion_lexicon`
-  (150). The two crosswalks derive purely from
+  them. All four reproduce their `.rda` byte-for-byte against `emoji`
+  16.0.0: `emoji_unicode_crosswalk` (5761 rows),
+  `category_unicode_crosswalk` (10), `emoji_sentiment_lexicon` (969) and
+  `emoji_emotion_lexicon` (150). The two crosswalks derive purely from
   [`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html),
   so a `skip_on_cran()` test now rebuilds them and requires an exact
-  match – which will also flag the datasets as stale the next time ships
-  new glyphs.
+  match – which will also flag the datasets as stale the next time
+  `emoji` ships new glyphs.
 
 - `data-raw/emoji_emotion_lexicon.R` cited `next_release.md §4.1` for
   why the lexicon is keyed on a selector-stripped code point. That file
@@ -2865,13 +2900,13 @@ unverified.
   different reasons: the row has no emoji, or the row’s emoji are not in
   the reference table. The second case is real and grows with every
   Unicode release – detection is grapheme-aware, so a zero-width-joiner
-  sequence newer than your installed is found as one emoji but cannot be
-  categorised – and those rows vanished from the result. 0.2.1 fixed one
-  instance of this (a `U+FE0F`-qualified heart went missing) by
-  repairing that particular join; the conflation behind it survived. The
-  filter is now on “contains at least one emoji”, so such a row is kept
-  with `.emoji_category = NA`, and `nrow(emoji_categorize())` now always
-  equals `nrow(emoji_filter())`.
+  sequence newer than your installed `emoji` is found as one emoji but
+  cannot be categorised – and those rows vanished from the result. 0.2.1
+  fixed one instance of this (a `U+FE0F`-qualified heart went missing)
+  by repairing that particular join; the conflation behind it survived.
+  The filter is now on “contains at least one emoji”, so such a row is
+  kept with `.emoji_category = NA`, and `nrow(emoji_categorize())` now
+  always equals `nrow(emoji_filter())`.
 
 - **[`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md)
   treated the same row two ways.** A row holding emoji the ambiguity

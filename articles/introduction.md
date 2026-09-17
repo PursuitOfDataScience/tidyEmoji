@@ -81,8 +81,8 @@ script `knitr` tangles out of it, the one
 extracted code, so `introduction.R` calls
 [`ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html)
 unconditionally. Everything in it that uses tidyEmoji alone runs against
-the package’s declared dependencies; install , and if you want to run
-the whole file.
+the package’s declared dependencies; install `ggplot2`, `forcats` and
+`stringr` if you want to run the whole file.
 
 ## Example data
 
