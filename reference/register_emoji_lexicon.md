@@ -39,11 +39,20 @@ register_emoji_lexicon(name, tbl, by = "emoji")
 
 ## Value
 
-Invisibly, the registered lexicon (with an added `key` column).
+Invisibly, the registered lexicon, with a `key` column holding the
+code-point key of each glyph. A `key` column already in `tbl` is
+replaced rather than trusted: the registry looks a lexicon up by that
+column, so one holding anything else would resolve every row to nothing.
 
 ## Details
 
 Registration lasts for the session; it is not written to disk.
+Registering a name that is already taken replaces the table under it,
+without warning and without a way to get the old one back: there is no
+public counterpart that removes a registration, so re-registering is how
+a lexicon is changed.
+[`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+shows what is currently registered.
 
 ## See also
 

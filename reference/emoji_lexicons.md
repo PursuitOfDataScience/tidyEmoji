@@ -15,6 +15,16 @@ emoji_lexicons()
 A tibble with columns `name`, `type`, `dimensions`, `n`, `source`,
 `licence`.
 
+`n` is the lexicon's **row count**. For the two bundled ones that is
+also the number of emoji they score, 969 and 150, because each has one
+row per code-point key. A registered lexicon need not: two spellings of
+one emoji are two rows and score one glyph, and a row whose glyph yields
+no key at all (an empty string, an `NA`) is counted here and matched
+never. `length(unique(emoji_key(tbl$emoji)))` is the count of distinct
+emoji, the same distinction
+[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+draws for `n_emoji`.
+
 ## See also
 
 [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)

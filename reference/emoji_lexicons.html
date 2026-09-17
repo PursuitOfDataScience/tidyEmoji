@@ -53,6 +53,13 @@ emotion), dimensions, number of emoji, source and licence.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>name</code>, <code>type</code>, <code>dimensions</code>, <code>n</code>, <code>source</code>,
 <code>licence</code>.</p>
+<p><code>n</code> is the lexicon's <strong>row count</strong>. For the two bundled ones that is
+also the number of emoji they score, 969 and 150, because each has one
+row per code-point key. A registered lexicon need not: two spellings of
+one emoji are two rows and score one glyph, and a row whose glyph yields
+no key at all (an empty string, an <code>NA</code>) is counted here and matched
+never. <code>length(unique(emoji_key(tbl$emoji)))</code> is the count of distinct
+emoji, the same distinction <code><a href="emoji_provenance.html">emoji_provenance()</a></code> draws for <code>n_emoji</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

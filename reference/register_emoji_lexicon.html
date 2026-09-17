@@ -78,11 +78,18 @@ Default <code>"emoji"</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, the registered lexicon (with an added <code>key</code> column).</p>
+    <p>Invisibly, the registered lexicon, with a <code>key</code> column holding the
+code-point key of each glyph. A <code>key</code> column already in <code>tbl</code> is
+replaced rather than trusted: the registry looks a lexicon up by that
+column, so one holding anything else would resolve every row to nothing.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Registration lasts for the session; it is not written to disk.</p>
+    <p>Registration lasts for the session; it is not written to disk. Registering
+a name that is already taken replaces the table under it, without warning
+and without a way to get the old one back: there is no public counterpart
+that removes a registration, so re-registering is how a lexicon is
+changed. <code><a href="emoji_lexicons.html">emoji_lexicons()</a></code> shows what is currently registered.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

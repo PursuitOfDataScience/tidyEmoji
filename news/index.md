@@ -137,11 +137,11 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and one of them, and reading just those leads gives the release
-without the verification detail. Not all one hundred and one changed
-observable behaviour: several record a test that could not have failed,
-or a figure the documentation quoted incorrectly, which are worth the
-same prominence because both meant something was unverified.
+hundred and three of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and three
+changed observable behaviour: several record a test that could not have
+failed, or a figure the documentation quoted incorrectly, which are
+worth the same prominence because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1626,25 @@ same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **[`?emoji_lexicons`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
+  called `n` the “number of emoji”, and it is a row count.** For the two
+  bundled lexicons those coincide, 969 and 150, because each has one row
+  per code-point key, and the page now says so rather than leaving it to
+  luck. A registered lexicon need not: two spellings of one emoji are
+  two rows and score one glyph, and a row whose glyph yields no key at
+  all is counted here and matched never. It is the distinction
+  [`?emoji_provenance`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  already spells out for `n_emoji`, missing from the one other place the
+  package reports a lexicon’s size.
+
+- **[`?register_emoji_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
+  did not say that a repeat registration replaces.** It does, silently
+  and completely, and since there is no public counterpart that removes
+  a registration, re-registering is the only way to change a lexicon.
+  The page says that now, and that a `key` column already in the
+  caller’s table is replaced rather than trusted, the registry looking a
+  lexicon up by that column.
 
 - **`emoji_token_cost(tokenizer = )` took its answer on trust.** The
   function is the widest surface the verb has, and three wrong answers
