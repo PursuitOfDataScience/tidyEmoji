@@ -11,6 +11,12 @@ carried forward here in §1 and §9.*
 
 *This file is build-ignored and is not part of the package.*
 
+*Reconciled against the shipped 0.4.0 on 2026-09-17, the day it reached
+CRAN: §1.11’s polish pass had quietly discharged six items that §3,
+§3.1, §9 and §12 still listed as 0.5.0 work. Those tables now match the
+installed package. §1.1 to §1.10 are left as the audit record they were
+written as.*
+
 ------------------------------------------------------------------------
 
 ## Contents
@@ -174,7 +180,11 @@ re-running anything.
     orphan-modifier accounting blocks §4.1. Building the features on
     primitives being repaired in the same release is the worst available
     ordering, and §9’s own principle is that the maintenance patch
-    leads.
+    leads. **Reconciled 2026-09-17, after 0.4.0 reached CRAN:** the
+    pre-submission polish pass (§1.11) discharged the grapheme fix and
+    four of the cheap items, so **two blockers remain** (flags, orphan
+    modifiers) and 0.5.0’s correctness half is smaller than §1 makes it
+    look. §3.1 and §9 carry the corrected lists.
 4.  **Do not reimplement upstream.** tidyEmoji’s contribution is the
     *tidy verb*, the *denominator discipline* and the *corpus-level
     summary* – never the codepoint arithmetic.
@@ -527,6 +537,18 @@ pooled result for grouped input with no warning, so a user who groups by
 author, platform or date gets a corpus-wide answer that looks like a
 per-group one.
 
+> ⚠️ **Superseded by §1.11.** This round both under- and over-counted:
+> the real silent-pooler list was **seven**, and
+> [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+> was one of the five the 0.4.0 polish pass then guarded. Measured
+> against the shipped 0.4.0 on 2026-09-17, only
+> **[`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md)
+> and
+> [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)**
+> still pool silently. The `var` message below shipped in 0.4.0 too.
+> Read §1.11 for the corrected finding; the table above is kept as the
+> audit record.
+
 **Action:** add the existing guard to those three. It is a two-line
 change per verb using the helper the other seven already share, and it
 should land in 0.5.0 – not deferred to the 1.0 grouped-df work, because
@@ -816,11 +838,11 @@ confirmed.** Every row is reproducible from §12’s fixtures.
 | 1.2 | Orphan skin-tone modifiers counted as emoji, corrupting modified÷modifiable | 🔴 **defect** | 0.5.0 – blocks §4.1 |
 | 1.5 | Aggregators pool grouped data **silently** – the count was 7, not 3, and 2 of the 3 named were misdiagnosed | ✅ **fixed 0.4.0** (§1.11) | shipped |
 | 1.5 | Missing / ambiguous / misspelled column reported as internal `` `var` `` – package-wide, not four verbs | ✅ **fixed 0.4.0** (§1.11) | shipped |
-| 1.6 | `.emoji_*` is a reserved namespace; user columns overwritten, undocumented | 🟠 gap | 0.5.0 (one sentence) |
+| 1.6 | `.emoji_*` is a reserved namespace; user columns overwritten, undocumented | ✅ **fixed 0.4.0** ([`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)) | shipped |
 | 1.7 | Emotion lexicon covers **150 glyphs – 3.0% of RGI**; sentiment 19.2% | 🟠 honesty | 0.5.0 – `emoji_coverage()` |
 | 1.8 | [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md) and specific scorers return the same columns **reversed** | 🟠 cosmetic | 1.0.0 (API freeze) |
-| 1.9 | [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)’s five policies form an undocumented **loss ladder** | 🟠 docs | 0.5.0 |
-| 1.3 | Shortcode round-trip is **lossless** on tone, flags, ZWJ, keycaps, FE0F | ✅ confirmed | advertise it (§1.3) |
+| 1.9 | [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)’s five policies form an undocumented **loss ladder** | ✅ **fixed 0.4.0** ([`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)) | shipped |
+| 1.3 | Shortcode round-trip is **lossless** on tone, flags, ZWJ, keycaps, FE0F | ✅ confirmed; **pinned 0.4.0** | vignette still owed (§1.3) |
 | 1.4 | Collation invariance holds across 7 verbs; detection survives `LC_CTYPE=C` | ✅ confirmed | – |
 | 1.6 | Dotted-column naming: 0 violations / 12 verbs | ✅ confirmed | – |
 | 1.6 | `.emoji_n_scored` distinguishes *no emoji* from *unscoreable* exactly | ✅ confirmed | – |
@@ -4034,12 +4056,17 @@ independent work. The honest position:
 
 | Item | Why it cannot wait | Blocks |
 |----|----|----|
-| [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md) grapheme fix (§1.1) | reports a final family emoji at 0.333 | **§4.3** |
+| ~~[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md) grapheme fix (§1.1)~~ | ~~reports a final family emoji at 0.333~~ | ✅ shipped 0.4.0 |
 | Flag validation, 259+3 set (§1.2) | `🇽🇽` maps to a fabricated ISO code | **§4.2** |
 | Orphan-modifier accounting (§1.2) | corrupts the modified÷modifiable ratio | **§4.1** |
-| Grouped guard on 3 aggregators (§1.5) | silent cross-group pooling | – |
+| Grouped guard on 2 aggregators (§1.5) | silent cross-group pooling | – |
 | Rate/denominator audit (§4.8) | makes existing output CoDA-safe | – |
-| Round-trip tests (§1.3), `var` message (§1.5), `.emoji_*` reserved (§1.6) | cheap, and each defends a stated contract | – |
+| ~~Round-trip tests (§1.3), `var` message (§1.5), `.emoji_*` reserved (§1.6)~~ | ~~cheap, and each defends a stated contract~~ | ✅ shipped 0.4.0 |
+
+**Only one of the six now blocks a feature group’s prerequisite twice
+over:** flags and orphan modifiers are the whole remaining blocking set,
+since the 0.4.0 polish pass (§1.11) took the grapheme fix and the three
+cheap items with it.
 
 **Three of the six block a feature group.** That is the finding that
 should drive the release shape, and it points at a conclusion this
@@ -4063,11 +4090,11 @@ individual section says something different about scheduling, §3.1 wins
 
 | Kind | Items |
 |----|----|
-| *Correctness (§1)* | [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md) grapheme fix (§1.1); flag-set validation (§1.2); orphan-modifier accounting (§1.2); grouped guard on 3 aggregators (§1.5); `time`/`var` message (§1.5); `.emoji_*` reserved, documented (§1.6) |
+| *Correctness (§1)* | flag-set validation (§1.2); orphan-modifier accounting (§1.2); grouped guard on [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md) and [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md) (§1.5). **Four items left this row on 2026-09-17**, all shipped in 0.4.0’s polish pass: the [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md) grapheme fix (§1.1), the `time`/`var` message (§1.5), `.emoji_*` documented as reserved (§1.6), and the [`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md) policy ladder (§1.9) |
 | *Engine* | §4.5 grapheme engine (`engine =` on affected verbs) |
 | *Honesty* | §4.8 rate/denominator principle + audit; `emoji_coverage()` (§1.7) |
 | *Additions on verified data* | `emoji_keywords()`, `emoji_find()` (§4.6); `emoji_properties()`, `as_emoji_canonical()` (§4.4); **`presentation = "any"` (§4.7 – its own text says ship with §4.4)**; **`emoji_identical()` (§10.1 – S-sized, rides §4.4)** |
-| *Documentation* | round-trip tests + reversible-LLM vignette (§1.3); [`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md) policy ladder (§1.9); one real `text_score` recipe at `eval = FALSE` (§10.15); research-question index + `\concept{}` tags (§10.14) |
+| *Documentation* | reversible-LLM vignette (§1.3 – the round-trip tests themselves shipped in 0.4.0); one real `text_score` recipe at `eval = FALSE` (§10.15, the vignette still uses a crude word list); research-question index + `\concept{}` tags (§10.14 – 0 `\concept` tags in `man/` today) |
 | **New verbs** | **6** – `emoji_coverage()`, `emoji_keywords()`, `emoji_find()`, `emoji_properties()`, `as_emoji_canonical()`, `emoji_identical()` |
 
 **0.6.0 – Identity, place & access, plus the input-shape widening**
@@ -4715,39 +4742,40 @@ when.*
 | **Evidentiary surface** – `emoji_identical()` (§10.1) | ⏳ **0.5.0** (§3.1) | S-sized; rides §4.4’s properties work |
 | **Coverage honesty** – `emoji_coverage()` (§10.7, §1.7) | ⏳ **promoted to 0.5.0** | emotion lexicon covers 3% of RGI; users see only a quiet `NA` |
 | **Column-order alignment** [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)/specific scorers (§1.8) | ⏳ **1.0.0** | user-visible; ride the API freeze |
-| **[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md) grapheme fix** (§1.1) | ⏳ **0.5.0, blocking** | prerequisite for §4.3; ship with §4.5 |
+| **[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md) grapheme fix** (§1.1) | ✅ **shipped 0.4.0** | `4d77c37`; §4.3’s prerequisite is met, §4.5 no longer waits on it |
 | **Distinctiveness** – `emoji_distinctive()` (§10.8) | ⏳ | wave 3; serves §10.8, §10.9 and the marketing literature |
 | **Flag validation** – bundle the 259+3 valid set (§1.2) | ⏳ **0.5.0** | §4.2 is wrong without it |
 | **Orphan-modifier accounting** (§1.2) | ⏳ **0.5.0** | §4.1’s ratio is wrong without it |
 | **`presentation = "any"`** opt-in (§4.7) | ⏳ **0.5.0** (§3.1) | ships with §4.4; 270 lexicon rows currently unreachable |
 | **`register_emoji_types()`** (§10.11) | ⏳ | wave 3; one mechanism serves §2.4, §10.11, §10.12 |
-| **Round-trip regression tests** (§1.3) | ⏳ **0.5.0** | 7 cases; written and verified in §12.1 – ready to commit |
+| **Round-trip regression tests** (§1.3) | ✅ **shipped 0.4.0** | `tests/testthat/test-regression-0.4.0.R`; the vignette is the part still owed |
 | **Commit `test-regression-0.5.0.R`** (§12) | ⏳ **0.5.0** | Part A green now; Part B is the correctness spec |
 | **Reversible-LLM-preprocessing vignette** (§1.3) | ⏳ | highest-value undocumented capability found |
 | **Commit `data-raw/benchmark.R`** (§8) | ⏳ | baseline now measured; needs to be repeatable |
 | **`emoji_sample()`** stratified stimulus draw (§10.13) | ⏳ **0.6.0** (§3.1) | S-sized; serves §10.6, §10.10, §10.13 and our own fixtures |
 | **Locale-matrix CI job** (§1.4) | ⏳ | must vary only `LC_COLLATE` – see the trap in §1.4 |
-| **Grouped-input guard on 3 aggregators** (§1.5) | ⏳ **0.5.0** | [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md), [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md), [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md) pool silently |
-| **`time`/`var` error-message leak** (§1.5) | ⏳ **0.5.0** | XS; 4 time verbs name an internal argument |
-| **Document `.emoji_*` as reserved** (§1.6) | ⏳ | one sentence; user columns are silently overwritten |
+| **Grouped-input guard on 2 aggregators** (§1.5) | ⏳ **0.5.0** | [`emoji_categorize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.md) and [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md) pool silently; 0.4.0 guarded the other five, [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md) included |
+| **`time`/`var` error-message leak** (§1.5) | ✅ **shipped 0.4.0** | now “`time` is required: give the unquoted name of the column to use.” |
+| **Document `.emoji_*` as reserved** (§1.6) | ✅ **shipped 0.4.0** | [`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md): “Every dotted name is reserved” |
 | **Rate/denominator audit + stated principle** (§4.8) | ⏳ **0.5.0** | cheap; makes existing output CoDA-safe |
 | **Structural vs count zeros** – `zeros=`, `.emoji_available` (§4.8) | ⏳ **0.6.0** | fixes a silent inferential error in adoption curves |
 | **Research-question index + `\concept{}` tags** (§10.14) | ⏳ | fixes the discoverability pattern behind §10.3, §10.10, §10.14 |
-| **Policy reversibility table in [`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)** (§1.9) | ⏳ **0.5.0** | five options are a loss ladder, not parallel choices |
+| **Policy reversibility table in [`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)** (§1.9) | ✅ **shipped 0.4.0** | the help page now opens on the ladder |
 | **One real `text_score` recipe, `eval = FALSE`** (§10.15) | ⏳ **0.5.0** | §5’s composability promise is currently half-kept |
 | **Emoji scales** – `emoji_scale()` / `as_emoji_ordinal()` (§10.6) | ⏳ | wave 5+, build with §10.2’s tally work |
 | Documentation-only debts from §10.3 / §10.4 / §10.5 / §10.8 / §10.9 / §10.10 | ⏳ | help-page + vignette wording; no code. §10.10 is XS and unblocks a whole literature |
 | 1.0.0 – grouped-df guarantees, performance, API freeze | ⏳ | one full cycle with *no* new verbs |
 
-**Version numbering.** CRAN’s published version is **0.3.0, published
-2026-08-04** (verified against the CRAN package page on 2026-08-30). The
-repo is at 0.4.0, which is complete but **not yet submitted** – so 0.4.0
-is the next CRAN submission, and 0.5.0 (this document) is the next thing
-to build. Phase names in older documents refer to work packages, not
-package versions; note in particular that the “0.4.0” in commits from
-2026-07-01 is a *different*, abandoned 0.4.0 – `DESCRIPTION` briefly
-carried it for 22 minutes before `c85be8c` reverted it, and that work
-shipped as 0.3.0 instead.
+**Version numbering.** **0.4.0 was submitted and accepted on
+2026-09-17** (auto-check `Result: OK` on r-devel-linux-x86_64-debian-gcc
+and r-devel-windows-x86_64), so CRAN’s published version is now
+**0.4.0**, tagged `v0.4.0` with a GitHub release. The previous published
+version was 0.3.0 (2026-08-04). 0.5.0 (this document) is what gets built
+next, and nothing here is on CRAN’s clock any more. Phase names in older
+documents refer to work packages, not package versions; note in
+particular that the “0.4.0” in commits from 2026-07-01 is a *different*,
+abandoned 0.4.0 – `DESCRIPTION` briefly carried it for 22 minutes before
+`c85be8c` reverted it, and that work shipped as 0.3.0 instead.
 
 **The three audits, and the pattern in them.** Each release has found
 its own crop of defects in the code written just before it, and they
@@ -5709,27 +5737,49 @@ test_that("zero-row and all-NA input are handled, not errored (roadmap S1.5)", {
     expect_no_error(f(na, text))
   }
 })
+
+# Promoted from Part B on 2026-09-17: fixed by 0.4.0's polish pass (S1.11), so
+# these now defend a repair rather than specify one.
+
+test_that("S1.1: rel_position is grapheme-based, so a final emoji reports 1.0", {
+  d <- tibble::tibble(text = c(
+    "hi \U0001F600",                                   # 1 codepoint
+    "hi \U0001F1FA\U0001F1F8",                         # 2 codepoints, was 0.750
+    "hi \U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"  # 7, was 0.333
+  ))
+  expect_equal(emoji_position(d, text)$.emoji_rel_position, c(1, 1, 1))
+})
+
+test_that("S1.5: emoji_version_profile() warns on grouped input", {
+  d <- dplyr::group_by(
+    tibble::tibble(grp  = c("a", "a", "b", "b"),
+                   text = c("x \U0001F600", "y \U0001F602",
+                            "p \U0001F1FA\U0001F1F8", "q \U0001F1EF\U0001F1F5")),
+    grp)
+  expect_warning(emoji_version_profile(d, text), "ungrouped|group")
+})
+
+test_that("S1.5: time verbs name `time`, not the internal `var`, when it is missing", {
+  d <- tibble::tibble(text = "hi \U0001F600", when = Sys.Date())
+  expect_error(emoji_trend(d, text), "time")
+  expect_error(emoji_turnover(d, text), "time")
+})
 ```
 
 ### 12.2 Part B – the defects, written as the target behaviour
 
-*These **fail on the current tree**. They are the acceptance criteria
-for §3.1’s 0.5.0 correctness items, in the same order as §1.*
+*Re-run against the shipped 0.4.0 on 2026-09-17: **three of these now
+pass** and have moved up to Part A (the grapheme fix, the `time`
+message, and
+[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)’s
+grouped guard). What is left below still **fails on the current tree**,
+and is the acceptance criteria for §3.1’s 0.5.0 correctness items, in
+the same order as §1.*
 
 ``` r
 
 # TDD spec for the 0.5.0 correctness release. Each test names the roadmap
 # section that found the defect. Expect failures until that item lands.
-
-test_that("S1.1: rel_position is grapheme-based, so a final emoji reports 1.0", {
-  d <- tibble::tibble(text = c(
-    "hi \U0001F600",                                   # 1 codepoint  -> passes today
-    "hi \U0001F1FA\U0001F1F8",                         # 2 codepoints -> reports 0.750
-    "hi \U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"  # 7 -> reports 0.333
-  ))
-  r <- emoji_position(d, text)
-  expect_equal(r$.emoji_rel_position, c(1, 1, 1))
-})
 
 test_that("S1.2: an invalid regional-indicator pair is not given a country code", {
   d <- tibble::tibble(text = "a \U0001F1FD\U0001F1FD b")   # 'XX' -- not a country
@@ -5745,7 +5795,7 @@ test_that("S1.2: an orphan skin-tone modifier is accounted for, not counted as a
   expect_equal(r$.emoji_n_modified[1], 0L)
 })
 
-test_that("S1.5: the three unguarded aggregators warn on grouped input", {
+test_that("S1.5: the two unguarded aggregators warn on grouped input", {
   # NOTE: lifecycle warnings deduplicate per call site. Each expectation must
   # sit at its own call site, or run in a fresh process -- see the trap in S1.4.
   d <- dplyr::group_by(
@@ -5753,15 +5803,8 @@ test_that("S1.5: the three unguarded aggregators warn on grouped input", {
                    text = c("x \U0001F600", "y \U0001F602",
                             "p \U0001F1FA\U0001F1F8", "q \U0001F1EF\U0001F1F5")),
     grp)
-  expect_warning(emoji_categorize(d, text),      "ungrouped|group")
-  expect_warning(emoji_version_profile(d, text), "ungrouped|group")
-  expect_warning(emoji_ngrams(d, text),          "ungrouped|group")
-})
-
-test_that("S1.5: time verbs name `time`, not the internal `var`, when it is missing", {
-  d <- tibble::tibble(text = "hi \U0001F600", when = Sys.Date())
-  expect_error(emoji_trend(d, text), "time")
-  expect_error(emoji_turnover(d, text), "time")
+  expect_warning(emoji_categorize(d, text), "ungrouped|group")
+  expect_warning(emoji_ngrams(d, text),     "ungrouped|group")
 })
 
 test_that("S4.7: presentation = 'any' reaches text-presentation glyphs", {

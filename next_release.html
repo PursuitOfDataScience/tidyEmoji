@@ -30,13 +30,14 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="logo.svg" class="logo" alt=""><h1>tidyEmoji – Roadmap for 0.5.0</h1>
-      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/v0.4.0/next_release.md" class="external-link"><code>next_release.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/next_release.md" class="external-link"><code>next_release.md</code></a></small>
     </div>
 
 <div id="tidyemoji--roadmap-for-050" class="section level1">
 
 <p><em>Planning document, written after 0.4.0 landed. It replaces the 0.2.0-era roadmap of the same name, which had become an archaeological record: its maintenance audit (§4) is fully discharged, its phased plan (§9) is three releases out of date, and its ship reports (§12, §13) describe work that is now in <code>git log</code>. That document is preserved in the history – <code>git show f8989ef:next_release.md</code> – and its durable parts (the ledger, the design principles, the lesson from each audit) are carried forward here in §1 and §9.</em></p>
 <p><em>This file is build-ignored and is not part of the package.</em></p>
+<p><em>Reconciled against the shipped 0.4.0 on 2026-09-17, the day it reached CRAN: §1.11’s polish pass had quietly discharged six items that §3, §3.1, §9 and §12 still listed as 0.5.0 work. Those tables now match the installed package. §1.1 to §1.10 are left as the audit record they were written as.</em></p>
 <hr><div class="section level2">
 <h2 id="contents">Contents<a class="anchor" aria-label="anchor" href="#contents"></a></h2>
 <ul><li><a href="#how-to-read-this">How to read this</a></li>
@@ -140,7 +141,7 @@
 <li>
 <strong>Two findings flip a decision each.</strong> <code>keywords</code> and <code>aliases</code> are populated for all 5042 rows, so <strong>English keyword search needs no download helper</strong> – a new, cheap verb group (§4.6). And all eight <code>vendor_*</code> columns are empty (<code>TRUE = 0</code>), so <strong><code>emoji_vendor_support()</code> is dead</strong> on this data source and moves to §5.</li>
 <li>
-<strong>⚠️ The recommendation changed during this document’s own audit: make 0.5.0 a correctness release and move the identity/place/access theme to 0.6.0 (§3.1).</strong> Eight audit rounds (§1.1-§1.8) found four real defects, and <strong>three of them block a planned feature group</strong> – the grapheme fix blocks §4.3, flag validation blocks §4.2, orphan-modifier accounting blocks §4.1. Building the features on primitives being repaired in the same release is the worst available ordering, and §9’s own principle is that the maintenance patch leads.</li>
+<strong>⚠️ The recommendation changed during this document’s own audit: make 0.5.0 a correctness release and move the identity/place/access theme to 0.6.0 (§3.1).</strong> Eight audit rounds (§1.1-§1.8) found four real defects, and <strong>three of them block a planned feature group</strong> – the grapheme fix blocks §4.3, flag validation blocks §4.2, orphan-modifier accounting blocks §4.1. Building the features on primitives being repaired in the same release is the worst available ordering, and §9’s own principle is that the maintenance patch leads. <strong>Reconciled 2026-09-17, after 0.4.0 reached CRAN:</strong> the pre-submission polish pass (§1.11) discharged the grapheme fix and four of the cheap items, so <strong>two blockers remain</strong> (flags, orphan modifiers) and 0.5.0’s correctness half is smaller than §1 makes it look. §3.1 and §9 carry the corrected lists.</li>
 <li>
 <strong>Do not reimplement upstream.</strong> tidyEmoji’s contribution is the <em>tidy verb</em>, the <em>denominator discipline</em> and the <em>corpus-level summary</em> – never the codepoint arithmetic.</li>
 <li>
@@ -417,6 +418,9 @@
 </tr><tr><td><strong><code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code></strong></td>
 <td><strong>silent – pools groups</strong></td>
 </tr></tbody></table><p><strong>Seven of ten guarded, three missed.</strong> All three verifiably return the pooled result for grouped input with no warning, so a user who groups by author, platform or date gets a corpus-wide answer that looks like a per-group one.</p>
+<blockquote>
+<p>⚠️ <strong>Superseded by §1.11.</strong> This round both under- and over-counted: the real silent-pooler list was <strong>seven</strong>, and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> was one of the five the 0.4.0 polish pass then guarded. Measured against the shipped 0.4.0 on 2026-09-17, only <strong><code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code></strong> still pool silently. The <code>var</code> message below shipped in 0.4.0 too. Read §1.11 for the corrected finding; the table above is kept as the audit record.</p>
+</blockquote>
 <p><strong>Action:</strong> add the existing guard to those three. It is a two-line change per verb using the helper the other seven already share, and it should land in 0.5.0 – not deferred to the 1.0 grouped-df work, because a wrong number now is worse than an unimplemented feature later. Then rewrite §1’s gap sentence to name the two classes above, so the next reader does not have to re-derive which verbs the promise is even about.</p>
 <blockquote>
 <p><strong>⚠️ Second methodological trap, and it will bite §8’s test work.</strong> Do <strong>not</strong> check “does this verb warn?” for many verbs inside one R session. These are <code>lifecycle</code> warnings, which <strong>deduplicate per call site</strong>, so a loop that calls every verb from the same line reports only the first few as warning and the rest as silent. That produced three different, mutually inconsistent answers here before the method was fixed – including one run where <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code> appeared silent despite being correctly guarded. <code>options(lifecycle_verbosity = "always")</code> did <strong>not</strong> reliably suppress the dedup. <strong>The only method that gave stable results was one fresh R process per verb.</strong> Any regression test asserting these warnings must be written that way (or with <code><a href="https://testthat.r-lib.org/reference/expect_error.html" class="external-link">testthat::expect_warning()</a></code> at distinct call sites), or it will pass while the guard is broken.</p>
@@ -603,8 +607,8 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 </tr><tr><td>1.6</td>
 <td>
 <code>.emoji_*</code> is a reserved namespace; user columns overwritten, undocumented</td>
-<td>🟠 gap</td>
-<td>0.5.0 (one sentence)</td>
+<td>✅ <strong>fixed 0.4.0</strong> (<code><a href="reference/tidyEmoji-package.html">?tidyEmoji</a></code>)</td>
+<td>shipped</td>
 </tr><tr><td>1.7</td>
 <td>Emotion lexicon covers <strong>150 glyphs – 3.0% of RGI</strong>; sentiment 19.2%</td>
 <td>🟠 honesty</td>
@@ -620,12 +624,13 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 <td>
 <code><a href="reference/emoji_sanitize.html">emoji_sanitize()</a></code>’s five policies form an undocumented <strong>loss ladder</strong>
 </td>
-<td>🟠 docs</td>
-<td>0.5.0</td>
+<td>✅ <strong>fixed 0.4.0</strong> (<code><a href="reference/emoji_sanitize.html">?emoji_sanitize</a></code>)</td>
+<td>shipped</td>
 </tr><tr><td>1.3</td>
 <td>Shortcode round-trip is <strong>lossless</strong> on tone, flags, ZWJ, keycaps, FE0F</td>
-<td>✅ confirmed</td>
-<td>advertise it (§1.3)</td>
+<td>✅ confirmed; <strong>pinned 0.4.0</strong>
+</td>
+<td>vignette still owed (§1.3)</td>
 </tr><tr><td>1.4</td>
 <td>Collation invariance holds across 7 verbs; detection survives <code>LC_CTYPE=C</code>
 </td>
@@ -1503,10 +1508,9 @@ keywords  aliases</code></pre>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Item</th>
 <th>Why it cannot wait</th>
 <th>Blocks</th>
-</tr></thead><tbody><tr><td>
-<code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix (§1.1)</td>
-<td>reports a final family emoji at 0.333</td>
-<td><strong>§4.3</strong></td>
+</tr></thead><tbody><tr><td><del><code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix (§1.1)</del></td>
+<td><del>reports a final family emoji at 0.333</del></td>
+<td>✅ shipped 0.4.0</td>
 </tr><tr><td>Flag validation, 259+3 set (§1.2)</td>
 <td>
 <code>🇽🇽</code> maps to a fabricated ISO code</td>
@@ -1514,16 +1518,17 @@ keywords  aliases</code></pre>
 </tr><tr><td>Orphan-modifier accounting (§1.2)</td>
 <td>corrupts the modified÷modifiable ratio</td>
 <td><strong>§4.1</strong></td>
-</tr><tr><td>Grouped guard on 3 aggregators (§1.5)</td>
+</tr><tr><td>Grouped guard on 2 aggregators (§1.5)</td>
 <td>silent cross-group pooling</td>
 <td>–</td>
 </tr><tr><td>Rate/denominator audit (§4.8)</td>
 <td>makes existing output CoDA-safe</td>
 <td>–</td>
-</tr><tr><td>Round-trip tests (§1.3), <code>var</code> message (§1.5), <code>.emoji_*</code> reserved (§1.6)</td>
-<td>cheap, and each defends a stated contract</td>
-<td>–</td>
-</tr></tbody></table><p><strong>Three of the six block a feature group.</strong> That is the finding that should drive the release shape, and it points at a conclusion this document did not start with.</p>
+</tr><tr><td><del>Round-trip tests (§1.3), <code>var</code> message (§1.5), <code>.emoji_*</code> reserved (§1.6)</del></td>
+<td><del>cheap, and each defends a stated contract</del></td>
+<td>✅ shipped 0.4.0</td>
+</tr></tbody></table><p><strong>Only one of the six now blocks a feature group’s prerequisite twice over:</strong> flags and orphan modifiers are the whole remaining blocking set, since the 0.4.0 polish pass (§1.11) took the grapheme fix and the three cheap items with it.</p>
+<p><strong>Three of the six block a feature group.</strong> That is the finding that should drive the release shape, and it points at a conclusion this document did not start with.</p>
 <div class="section level3">
 <h3 id="id_31-recommendation--make-050-a-correctness-release-and-move-the-theme-to-060">3.1 Recommendation – make 0.5.0 a correctness release and move the theme to 0.6.0<a class="anchor" aria-label="anchor" href="#id_31-recommendation--make-050-a-correctness-release-and-move-the-theme-to-060"></a></h3>
 <p>The roadmap’s own §9 states the principle: <em>“the maintenance patch leads – it fixes correctness before we build on the engine.”</em> That is exactly what 0.2.1 did, and §9’s “three audits” note observes that every release has found defects in the code written just before it. <strong>The eight audit rounds in §1 found a fourth crop, and they found it <em>before</em> the features were written rather than after.</strong> Acting on that is cheaper than the alternative.</p>
@@ -1532,8 +1537,7 @@ keywords  aliases</code></pre>
 <table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Kind</th>
 <th>Items</th>
 </tr></thead><tbody><tr><td><em>Correctness (§1)</em></td>
-<td>
-<code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix (§1.1); flag-set validation (§1.2); orphan-modifier accounting (§1.2); grouped guard on 3 aggregators (§1.5); <code>time</code>/<code>var</code> message (§1.5); <code>.emoji_*</code> reserved, documented (§1.6)</td>
+<td>flag-set validation (§1.2); orphan-modifier accounting (§1.2); grouped guard on <code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> (§1.5). <strong>Four items left this row on 2026-09-17</strong>, all shipped in 0.4.0’s polish pass: the <code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix (§1.1), the <code>time</code>/<code>var</code> message (§1.5), <code>.emoji_*</code> documented as reserved (§1.6), and the <code><a href="reference/emoji_sanitize.html">?emoji_sanitize</a></code> policy ladder (§1.9)</td>
 </tr><tr><td><em>Engine</em></td>
 <td>§4.5 grapheme engine (<code>engine =</code> on affected verbs)</td>
 </tr><tr><td><em>Honesty</em></td>
@@ -1543,7 +1547,7 @@ keywords  aliases</code></pre>
 <code>emoji_keywords()</code>, <code>emoji_find()</code> (§4.6); <code>emoji_properties()</code>, <code>as_emoji_canonical()</code> (§4.4); <strong><code>presentation = "any"</code> (§4.7 – its own text says ship with §4.4)</strong>; <strong><code>emoji_identical()</code> (§10.1 – S-sized, rides §4.4)</strong>
 </td>
 </tr><tr><td><em>Documentation</em></td>
-<td>round-trip tests + reversible-LLM vignette (§1.3); <code><a href="reference/emoji_sanitize.html">?emoji_sanitize</a></code> policy ladder (§1.9); one real <code>text_score</code> recipe at <code>eval = FALSE</code> (§10.15); research-question index + <code>\concept{}</code> tags (§10.14)</td>
+<td>reversible-LLM vignette (§1.3 – the round-trip tests themselves shipped in 0.4.0); one real <code>text_score</code> recipe at <code>eval = FALSE</code> (§10.15, the vignette still uses a crude word list); research-question index + <code>\concept{}</code> tags (§10.14 – 0 <code>\concept</code> tags in <code>man/</code> today)</td>
 </tr><tr><td><strong>New verbs</strong></td>
 <td>
 <strong>6</strong> – <code>emoji_coverage()</code>, <code>emoji_keywords()</code>, <code>emoji_find()</code>, <code>emoji_properties()</code>, <code>as_emoji_canonical()</code>, <code>emoji_identical()</code>
@@ -1915,9 +1919,10 @@ keywords  aliases</code></pre>
 <td>user-visible; ride the API freeze</td>
 </tr><tr><td>
 <strong><code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix</strong> (§1.1)</td>
-<td>⏳ <strong>0.5.0, blocking</strong>
+<td>✅ <strong>shipped 0.4.0</strong>
 </td>
-<td>prerequisite for §4.3; ship with §4.5</td>
+<td>
+<code>4d77c37</code>; §4.3’s prerequisite is met, §4.5 no longer waits on it</td>
 </tr><tr><td>
 <strong>Distinctiveness</strong> – <code>emoji_distinctive()</code> (§10.8)</td>
 <td>⏳</td>
@@ -1942,9 +1947,10 @@ keywords  aliases</code></pre>
 <td>wave 3; one mechanism serves §2.4, §10.11, §10.12</td>
 </tr><tr><td>
 <strong>Round-trip regression tests</strong> (§1.3)</td>
-<td>⏳ <strong>0.5.0</strong>
+<td>✅ <strong>shipped 0.4.0</strong>
 </td>
-<td>7 cases; written and verified in §12.1 – ready to commit</td>
+<td>
+<code>tests/testthat/test-regression-0.4.0.R</code>; the vignette is the part still owed</td>
 </tr><tr><td>
 <strong>Commit <code>test-regression-0.5.0.R</code></strong> (§12)</td>
 <td>⏳ <strong>0.5.0</strong>
@@ -1967,20 +1973,22 @@ keywords  aliases</code></pre>
 <td>⏳</td>
 <td>must vary only <code>LC_COLLATE</code> – see the trap in §1.4</td>
 </tr><tr><td>
-<strong>Grouped-input guard on 3 aggregators</strong> (§1.5)</td>
+<strong>Grouped-input guard on 2 aggregators</strong> (§1.5)</td>
 <td>⏳ <strong>0.5.0</strong>
 </td>
 <td>
-<code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code>, <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code>, <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> pool silently</td>
+<code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> pool silently; 0.4.0 guarded the other five, <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> included</td>
 </tr><tr><td>
 <strong><code>time</code>/<code>var</code> error-message leak</strong> (§1.5)</td>
-<td>⏳ <strong>0.5.0</strong>
+<td>✅ <strong>shipped 0.4.0</strong>
 </td>
-<td>XS; 4 time verbs name an internal argument</td>
+<td>now “<code>time</code> is required: give the unquoted name of the column to use.”</td>
 </tr><tr><td>
 <strong>Document <code>.emoji_*</code> as reserved</strong> (§1.6)</td>
-<td>⏳</td>
-<td>one sentence; user columns are silently overwritten</td>
+<td>✅ <strong>shipped 0.4.0</strong>
+</td>
+<td>
+<code><a href="reference/tidyEmoji-package.html">?tidyEmoji</a></code>: “Every dotted name is reserved”</td>
 </tr><tr><td>
 <strong>Rate/denominator audit + stated principle</strong> (§4.8)</td>
 <td>⏳ <strong>0.5.0</strong>
@@ -1997,9 +2005,9 @@ keywords  aliases</code></pre>
 <td>fixes the discoverability pattern behind §10.3, §10.10, §10.14</td>
 </tr><tr><td>
 <strong>Policy reversibility table in <code><a href="reference/emoji_sanitize.html">?emoji_sanitize</a></code></strong> (§1.9)</td>
-<td>⏳ <strong>0.5.0</strong>
+<td>✅ <strong>shipped 0.4.0</strong>
 </td>
-<td>five options are a loss ladder, not parallel choices</td>
+<td>the help page now opens on the ladder</td>
 </tr><tr><td>
 <strong>One real <code>text_score</code> recipe, <code>eval = FALSE</code></strong> (§10.15)</td>
 <td>⏳ <strong>0.5.0</strong>
@@ -2015,7 +2023,7 @@ keywords  aliases</code></pre>
 </tr><tr><td>1.0.0 – grouped-df guarantees, performance, API freeze</td>
 <td>⏳</td>
 <td>one full cycle with <em>no</em> new verbs</td>
-</tr></tbody></table><p><strong>Version numbering.</strong> CRAN’s published version is <strong>0.3.0, published 2026-08-04</strong> (verified against the CRAN package page on 2026-08-30). The repo is at 0.4.0, which is complete but <strong>not yet submitted</strong> – so 0.4.0 is the next CRAN submission, and 0.5.0 (this document) is the next thing to build. Phase names in older documents refer to work packages, not package versions; note in particular that the “0.4.0” in commits from 2026-07-01 is a <em>different</em>, abandoned 0.4.0 – <code>DESCRIPTION</code> briefly carried it for 22 minutes before <code>c85be8c</code> reverted it, and that work shipped as 0.3.0 instead.</p>
+</tr></tbody></table><p><strong>Version numbering.</strong> <strong>0.4.0 was submitted and accepted on 2026-09-17</strong> (auto-check <code>Result: OK</code> on r-devel-linux-x86_64-debian-gcc and r-devel-windows-x86_64), so CRAN’s published version is now <strong>0.4.0</strong>, tagged <code>v0.4.0</code> with a GitHub release. The previous published version was 0.3.0 (2026-08-04). 0.5.0 (this document) is what gets built next, and nothing here is on CRAN’s clock any more. Phase names in older documents refer to work packages, not package versions; note in particular that the “0.4.0” in commits from 2026-07-01 is a <em>different</em>, abandoned 0.4.0 – <code>DESCRIPTION</code> briefly carried it for 22 minutes before <code>c85be8c</code> reverted it, and that work shipped as 0.3.0 instead.</p>
 <p><strong>The three audits, and the pattern in them.</strong> Each release has found its own crop of defects in the code written just before it, and they rhyme:</p>
 <ul><li>
 <strong>0.2.1</strong> – key-normalisation asymmetry: one join path was normalised, the others were not.</li>
@@ -2502,24 +2510,41 @@ keywords  aliases</code></pre>
 <span>    <span class="fu">expect_no_error</span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">z</span>, <span class="va">text</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="fu">expect_no_error</span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">na</span>, <span class="va">text</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Promoted from Part B on 2026-09-17: fixed by 0.4.0's polish pass (S1.11), so</span></span>
+<span><span class="co"># these now defend a repair rather than specify one.</span></span>
+<span></span>
+<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.1: rel_position is grapheme-based, so a final emoji reports 1.0"</span>, <span class="op">{</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"hi \U0001F600"</span>,                                   <span class="co"># 1 codepoint</span></span>
+<span>    <span class="st">"hi \U0001F1FA\U0001F1F8"</span>,                         <span class="co"># 2 codepoints, was 0.750</span></span>
+<span>    <span class="st">"hi \U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"</span>  <span class="co"># 7, was 0.333</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu">expect_equal</span><span class="op">(</span><span class="fu"><a href="reference/emoji_position.html">emoji_position</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span><span class="op">$</span><span class="va">.emoji_rel_position</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: emoji_version_profile() warns on grouped input"</span>, <span class="op">{</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span></span>
+<span>    <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>grp  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span><span class="op">)</span>,</span>
+<span>                   text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x \U0001F600"</span>, <span class="st">"y \U0001F602"</span>,</span>
+<span>                            <span class="st">"p \U0001F1FA\U0001F1F8"</span>, <span class="st">"q \U0001F1EF\U0001F1F5"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="va">grp</span><span class="op">)</span></span>
+<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_version_profile.html">emoji_version_profile</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: time verbs name `time`, not the internal `var`, when it is missing"</span>, <span class="op">{</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"hi \U0001F600"</span>, when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu">expect_error</span><span class="op">(</span><span class="fu"><a href="reference/emoji_trend.html">emoji_trend</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"time"</span><span class="op">)</span></span>
+<span>  <span class="fu">expect_error</span><span class="op">(</span><span class="fu"><a href="reference/emoji_turnover.html">emoji_turnover</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"time"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="id_122-part-b--the-defects-written-as-the-target-behaviour">12.2 Part B – the defects, written as the target behaviour<a class="anchor" aria-label="anchor" href="#id_122-part-b--the-defects-written-as-the-target-behaviour"></a></h3>
-<p><em>These <strong>fail on the current tree</strong>. They are the acceptance criteria for §3.1’s 0.5.0 correctness items, in the same order as §1.</em></p>
+<p><em>Re-run against the shipped 0.4.0 on 2026-09-17: <strong>three of these now pass</strong> and have moved up to Part A (the grapheme fix, the <code>time</code> message, and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code>’s grouped guard). What is left below still <strong>fails on the current tree</strong>, and is the acceptance criteria for §3.1’s 0.5.0 correctness items, in the same order as §1.</em></p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># TDD spec for the 0.5.0 correctness release. Each test names the roadmap</span></span>
 <span><span class="co"># section that found the defect. Expect failures until that item lands.</span></span>
-<span></span>
-<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.1: rel_position is grapheme-based, so a final emoji reports 1.0"</span>, <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="st">"hi \U0001F600"</span>,                                   <span class="co"># 1 codepoint  -&gt; passes today</span></span>
-<span>    <span class="st">"hi \U0001F1FA\U0001F1F8"</span>,                         <span class="co"># 2 codepoints -&gt; reports 0.750</span></span>
-<span>    <span class="st">"hi \U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"</span>  <span class="co"># 7 -&gt; reports 0.333</span></span>
-<span>  <span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/emoji_position.html">emoji_position</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_equal</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">.emoji_rel_position</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.2: an invalid regional-indicator pair is not given a country code"</span>, <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"a \U0001F1FD\U0001F1FD b"</span><span class="op">)</span>   <span class="co"># 'XX' -- not a country</span></span>
@@ -2535,7 +2560,7 @@ keywords  aliases</code></pre>
 <span>  <span class="fu">expect_equal</span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">.emoji_n_modified</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">0L</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: the three unguarded aggregators warn on grouped input"</span>, <span class="op">{</span></span>
+<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: the two unguarded aggregators warn on grouped input"</span>, <span class="op">{</span></span>
 <span>  <span class="co"># NOTE: lifecycle warnings deduplicate per call site. Each expectation must</span></span>
 <span>  <span class="co"># sit at its own call site, or run in a fresh process -- see the trap in S1.4.</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span></span>
@@ -2543,15 +2568,8 @@ keywords  aliases</code></pre>
 <span>                   text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x \U0001F600"</span>, <span class="st">"y \U0001F602"</span>,</span>
 <span>                            <span class="st">"p \U0001F1FA\U0001F1F8"</span>, <span class="st">"q \U0001F1EF\U0001F1F5"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    <span class="va">grp</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_categorize.html">emoji_categorize</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>,      <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_version_profile.html">emoji_version_profile</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_ngrams.html">emoji_ngrams</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>,          <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: time verbs name `time`, not the internal `var`, when it is missing"</span>, <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"hi \U0001F600"</span>, when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_error</span><span class="op">(</span><span class="fu"><a href="reference/emoji_trend.html">emoji_trend</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"time"</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_error</span><span class="op">(</span><span class="fu"><a href="reference/emoji_turnover.html">emoji_turnover</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"time"</span><span class="op">)</span></span>
+<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_categorize.html">emoji_categorize</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
+<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_ngrams.html">emoji_ngrams</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>,     <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S4.7: presentation = 'any' reaches text-presentation glyphs"</span>, <span class="op">{</span></span>
