@@ -137,8 +137,8 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and fifteen of them, and reading just those leads gives the
-release without the verification detail. Not all one hundred and fifteen
+hundred and sixteen of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and sixteen
 changed observable behaviour: several record a test that could not have
 failed, or a figure the documentation quoted incorrectly, which are
 worth the same prominence because both meant something was unverified.
@@ -1626,6 +1626,22 @@ worth the same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **Nothing guarded the figure references, and this package has already
+  shipped a broken one.** `man/figures/lifecycle-deprecated.svg` was
+  missing while
+  [`?top_n_emojis`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)
+  pointed at it, and no check caught it: a `\figure{}` sits inside the
+  html branch of an `\ifelse`, so the PDF manual takes the other branch
+  and never looks. The figure was restored earlier in this release and
+  then left unprotected. A test now reads every figure name out of the
+  installed help database and requires the file to exist and be
+  non-empty, in `man/figures` from the source tree or `help/figures`
+  from an installed package, which is where `R CMD check` reads them. It
+  also pins the two references that exist today, so a reference
+  vanishing is as visible as a file vanishing, and checks that the
+  README points at the logo by its repository path, which is what makes
+  it render on the CRAN package page.
 
 - **The vignette builds without its optional packages; the script
   `knitr` tangles out of it does not, and nothing said so.** A chunk’s
