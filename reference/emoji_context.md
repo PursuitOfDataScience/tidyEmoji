@@ -52,7 +52,19 @@ emoji_context(
 
 - unit:
 
-  `"word"` (default) or `"char"`.
+  `"word"` (default) or `"char"`. "Character" means *code point*, the
+  unit [`nchar()`](https://rdrr.io/r/base/nchar.html) and
+  [`substr()`](https://rdrr.io/r/base/substr.html) count and the one
+  [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+  and
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+  measure in. A character window can therefore begin or end part-way
+  through a grapheme cluster: where an `e` carries a combining acute
+  (`U+0065 U+0301`), `window = 1` returns the bare `U+0301`, a diacritic
+  with nothing to sit on. Emoji themselves are safe from this, being
+  masked out whole (see Details), and so is `unit = "word"`. If the
+  window is going to be read by a person rather than tokenised, ask for
+  words, or for a few more characters than you need.
 
 - keep_text:
 
@@ -76,8 +88,8 @@ neighbouring emoji never lands in a context window and character offsets
 stay exact. With `unit = "word"` a token is a maximal run of
 non-whitespace characters, the same definition
 [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
-uses; with `unit = "char"` the window is a literal character count after
-trimming the whitespace next to the emoji.
+uses; with `unit = "char"` the window is a literal code-point count
+after trimming the whitespace next to the emoji.
 
 Tokenisation stops there on purpose. If you need stemming, stopword
 removal or sentence splitting, pass the result to tokenizers or tidytext
