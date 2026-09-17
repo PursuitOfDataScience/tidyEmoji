@@ -162,6 +162,15 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'   code-point key, so a table listing both `U+2764` and `U+2764 U+FE0F` has
 #'   one emoji twice. Identical scores are fine and collapse silently; when
 #'   they differ, the row order would be choosing the answer.
+#'
+#'   A third value is neither refused nor used: an infinite score warns and
+#'   is treated as missing, so the emoji carrying it counts as unscored. It
+#'   is the same rule [emoji_incongruity()] applies to a non-finite
+#'   `text_score`, and the same one `NA` and `NaN` already got. Left alone,
+#'   one `Inf` makes every row that meets it infinite while
+#'   `.emoji_n_scored` still reports the row as scored. This applies to an
+#'   emotion lexicon's dimensions too, and those must be numeric for the
+#'   reason the score column must be.
 #' @param by Glyph column name when `lexicon` is a data frame, as a single
 #'   string. Default `"emoji"`.
 #' @param score Score column name when `lexicon` is a data frame. If `NULL`,

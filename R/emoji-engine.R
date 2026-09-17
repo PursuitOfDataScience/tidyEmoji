@@ -612,6 +612,62 @@ emoji_emotion_dims <- function() {
   invisible(NULL)
 }
 
+# A lexicon's value columns have to be numbers, and a non-finite one is not a
+# usable number.
+#
+# The type guard in .emoji_lexicon_record() below rests on one rule: a value
+# mean() cannot use must not be reported as scored. `Inf` slipped past it,
+# because it is numeric and it is not `NA`, so `.emoji_n_scored` counted the
+# emoji and `.emoji_score` came back `Inf`. `NaN` and `NA` in the same column
+# were already counted as unscored, so one column answered two ways for the
+# same kind of unusable value. The package had also taken the opposite
+# position elsewhere: a non-finite `text_score` warns and is treated as
+# missing (see emoji_incongruity()). Same rule here, applied where every
+# lexicon passes through, so the sentiment, emotion and registered paths
+# cannot disagree.
+.emoji_drop_nonfinite <- function(values, arg) {
+  if (!is.numeric(values)) return(values)
+  bad <- !is.na(values) & !is.finite(values)
+  n <- sum(bad)
+  if (!n) return(values)
+  values[bad] <- NA_real_
+  warning(sprintf(
+    paste0("%d score%s in `%s` %s not finite, so the emoji carrying %s ",
+           "count as unscored rather than as scored with an infinite value. ",
+           "Left alone, one of them makes every row it appears in infinite ",
+           "while `.emoji_n_scored` still reports the row as scored."),
+    n, if (n == 1L) "" else "s", arg,
+    if (n == 1L) "is" else "are", if (n == 1L) "it" else "them"
+  ), call. = FALSE)
+  values
+}
+
+# The same type check .emoji_lexicon_record() makes on a single score column,
+# for the several columns an emotion lexicon carries. Without it a character
+# or factor emotion column reached as.matrix() and failed later with R's own
+# "'x' must be numeric", naming neither the argument, the column nor the verb
+# -- exactly the failure mode the score-column guard exists to replace.
+.emoji_check_value_cols <- function(tbl, cols, arg) {
+  ok <- vapply(cols, function(cl) {
+    v <- tbl[[cl]]
+    is.numeric(v) || is.logical(v)
+  }, logical(1))
+  if (all(ok)) return(invisible(NULL))
+  bad <- cols[!ok]
+  stop(sprintf(
+    paste0("`%s` has %d emotion column%s that %s not numeric (%s), and a ",
+           "score has to be a number. Coercing here would report the emoji ",
+           "as scored while every score came back `NA`. Convert them first, ",
+           "and check what made them non-numeric -- a stray \"NA\" or a ",
+           "decimal comma turns a whole column into text."),
+    arg, length(bad), if (length(bad) == 1L) "" else "s",
+    if (length(bad) == 1L) "is" else "are",
+    paste(sprintf("`%s` is %s", bad,
+                  vapply(bad, function(cl) class(tbl[[cl]])[1L], character(1))),
+          collapse = ", ")
+  ), call. = FALSE)
+}
+
 .emoji_lexicon_record <- function(tbl, by = "emoji", score = NULL,
                                   arg = "tbl") {
   if (!is.data.frame(tbl)) {
@@ -662,6 +718,7 @@ emoji_emotion_dims <- function() {
       arg, score, class(s)[1L]
     ), call. = FALSE)
   }
+  s <- .emoji_drop_nonfinite(s, arg)
   keep <- !is.na(keys) & keys != ""
   .emoji_check_dup_keys(keys, s, arg)
   out <- stats::setNames(s, keys)

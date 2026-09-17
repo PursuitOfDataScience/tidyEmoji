@@ -67,7 +67,9 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
         "surprise, trust)."
       ), call. = FALSE)
     }
-    emap <- as.matrix(lex[, dims_avail, drop = FALSE])
+    .emoji_check_value_cols(lex, dims_avail, "lexicon")
+    emap <- .emoji_drop_nonfinite(as.matrix(lex[, dims_avail, drop = FALSE]),
+                                  "lexicon")
     keys <- .emoji_lexicon_keys(lex, arg = "lexicon")
     # The same duplicate-key refusal emoji_score()/emoji_sentiment() make via
     # .emoji_lexicon_record(). Duplicate rownames are legal, and the lookup
@@ -109,7 +111,15 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
     keys <- keys[!is.na(keys) & keys %in% valid_keys]
     if (!length(keys)) return(rep(NA_real_, length(dims)))
     sub <- emap[keys, , drop = FALSE]
-    colMeans(sub, na.rm = TRUE)
+    m <- colMeans(sub, na.rm = TRUE)
+    # colMeans(na.rm = TRUE) over a dimension that is missing for every emoji
+    # in the row is 0/0, so it returns NaN. Every other verb reports an
+    # unknown value as NA, and emoji_sentiment() returns NA_real_ for exactly
+    # this case, so a custom lexicon with a gap in one dimension should not be
+    # the one place a NaN reaches the user. (The bundled emotion lexicon has
+    # no missing cells, so this is reachable only through `lexicon = `.)
+    m[is.nan(m)] <- NA_real_
+    m
   }, numeric(length(dims)))
   # vapply returns a plain vector when there is a single emotion column
   row_means <- if (length(dims) == 1L) matrix(row_means, ncol = 1L) else t(row_means)

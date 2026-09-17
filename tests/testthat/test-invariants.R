@@ -8588,8 +8588,13 @@ test_that("NEWS.md's orientation matches the section it describes", {
                "eighty-seven", "eighty-eight", "eighty-nine", "ninety",
                "ninety-one", "ninety-two", "ninety-three", "ninety-four",
                "ninety-five", "ninety-six", "ninety-seven", "ninety-eight",
-               "ninety-nine", "one hundred")
-  names(words) <- as.character(61:100)
+               "ninety-nine", "one hundred", "one hundred and one",
+               "one hundred and two", "one hundred and three",
+               "one hundred and four", "one hundred and five",
+               "one hundred and six", "one hundred and seven",
+               "one hundred and eight", "one hundred and nine",
+               "one hundred and ten")
+  names(words) <- as.character(61:110)
   key <- as.character(n_bold)
   skip_if(!key %in% names(words),
           paste("no spelled form recorded for", n_bold, "-- update this test"))
@@ -8703,6 +8708,62 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_identical(sum(multi & bearing), sum(multi))
   rd <- rd_flat("emoji_density")
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
+})
+
+test_that("a lexicon's unusable values behave the same whichever kind they are", {
+  # Round 113: emoji_incongruity() treats a non-finite `text_score` as
+  # missing and says so, and .emoji_lexicon_record() refuses a non-numeric
+  # score column on the reasoning that a value mean() cannot use must not be
+  # reported as scored. Inf sat between the two: numeric, so the type guard
+  # passed, and not NA, so `.emoji_n_scored` counted it and the score came
+  # back Inf, while NaN and NA in the same column were already unscored.
+  A <- "\U0001F600"
+  B <- "\U0001F621"
+  d <- data.frame(text = c(paste("a", A), paste("b", B), paste("c", A, B)),
+                  stringsAsFactors = FALSE)
+  lex <- function(v) data.frame(emoji = c(A, B), score = v,
+                                stringsAsFactors = FALSE)
+
+  # all four unusable values now give the same answer
+  for (v in list(c(Inf, -1), c(-Inf, -1), c(NaN, -1), c(NA_real_, -1))) {
+    o <- suppressWarnings(emoji_score(d, text, lexicon = lex(v)))
+    expect_identical(o$.emoji_n_scored, c(0L, 1L, 1L))
+    expect_equal(o$.emoji_score, c(NA, -1, -1))
+    expect_false(any(is.nan(o$.emoji_score)))
+  }
+  # and the two non-finite ones say so, once, naming the argument
+  for (v in list(c(Inf, -1), c(-Inf, -1))) {
+    expect_warning(emoji_score(d, text, lexicon = lex(v)),
+                   "`lexicon`", fixed = TRUE)
+    expect_warning(emoji_sentiment(d, text, lexicon = lex(v)),
+                   "not finite", fixed = TRUE)
+  }
+  # a clean lexicon and the bundled one stay silent
+  expect_silent(emoji_score(d, text, lexicon = lex(c(1, -1))))
+  expect_silent(emoji_sentiment(d, text))
+
+  # the emotion path gets both guards: the type check the score column had,
+  # and the same non-finite rule
+  em <- function(joy) data.frame(emoji = c(A, B), anger = c(0, 1), joy = joy,
+                                 stringsAsFactors = FALSE)
+  expect_error(emoji_emotion(d, text, lexicon = em(c("1", "0"))),
+               "not numeric", fixed = TRUE)
+  expect_error(emoji_emotion(d, text, lexicon = em(factor(c("1", "0")))),
+               "`joy` is factor", fixed = TRUE)
+  expect_warning(emoji_emotion(d, text, lexicon = em(c(Inf, 0))),
+                 "not finite", fixed = TRUE)
+  # logical and integer dimensions are numbers and stay accepted
+  for (j in list(c(TRUE, FALSE), c(1L, 0L))) {
+    expect_silent(o <- emoji_emotion(d, text, lexicon = em(j)))
+    expect_equal(o$.emoji_joy, c(1, 0, 0.5))
+  }
+  # an all-missing dimension reports NA, not the 0/0 that colMeans gives
+  gap <- emoji_emotion(d, text, lexicon = em(c(NA_real_, 0)))
+  expect_true(is.na(gap$.emoji_joy[1L]))
+  expect_false(any(is.nan(gap$.emoji_joy)))
+  long <- emoji_emotion(d, text, lexicon = em(c(NA_real_, 0)), long = TRUE)
+  expect_false(any(is.nan(long$.emoji_score)))
+  expect_true(any(is.na(long$.emoji_score)))
 })
 
 test_that("duplicating the corpus leaves every rate alone, and scales the gap", {

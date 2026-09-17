@@ -34,7 +34,16 @@ back \code{NA} while the emoji still counts as scored, which contradicts
 scores -- spellings differing only by a variation selector share a single
 code-point key, so a table listing both \code{U+2764} and \verb{U+2764 U+FE0F} has
 one emoji twice. Identical scores are fine and collapse silently; when
-they differ, the row order would be choosing the answer.}
+they differ, the row order would be choosing the answer.
+
+A third value is neither refused nor used: an infinite score warns and
+is treated as missing, so the emoji carrying it counts as unscored. It
+is the same rule \code{\link[=emoji_incongruity]{emoji_incongruity()}} applies to a non-finite
+\code{text_score}, and the same one \code{NA} and \code{NaN} already got. Left alone,
+one \code{Inf} makes every row that meets it infinite while
+\code{.emoji_n_scored} still reports the row as scored. This applies to an
+emotion lexicon's dimensions too, and those must be numeric for the
+reason the score column must be.}
 
 \item{by}{Glyph column name when \code{lexicon} is a data frame, as a single
 string. Default \code{"emoji"}.}
