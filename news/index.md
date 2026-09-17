@@ -136,9 +136,9 @@ maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
-or in a test that was passing for the wrong reason. There are
-ninety-seven of them, and reading just those leads gives the release
-without the verification detail. Not all ninety-seven changed observable
+or in a test that was passing for the wrong reason. There are one
+hundred of them, and reading just those leads gives the release without
+the verification detail. Not all one hundred changed observable
 behaviour: several record a test that could not have failed, or a figure
 the documentation quoted incorrectly, which are worth the same
 prominence because both meant something was unverified.
@@ -1626,6 +1626,41 @@ prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **A user lexicon’s `Inf` was counted as a score.** The score column is
+  refused if it is not numeric, on the stated reasoning that a value
+  [`mean()`](https://rdrr.io/r/base/mean.html) cannot use must not be
+  reported as scored, and a non-finite `text_score` warns and is treated
+  as missing in
+  [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)
+  for the same reason. `Inf` fell between the two: numeric, so the type
+  guard passed, and not `NA`, so `.emoji_n_scored` counted the emoji and
+  `.emoji_score` came back `Inf`, while `NaN` and `NA` in the same
+  column were already counted as unscored. One column, two answers for
+  the same kind of unusable value. A non-finite score now warns and is
+  treated as missing wherever a lexicon is read, so
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md),
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md),
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  and a registered lexicon all agree.
+
+- **A custom emotion lexicon skipped the type check its sentiment
+  counterpart makes.** A character or factor emotion column reached
+  [`as.matrix()`](https://rdrr.io/r/base/matrix.html) and failed later
+  with R’s own `'x' must be numeric`, naming neither the argument, the
+  column nor the verb: the failure mode the score-column guard exists to
+  replace.
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+  now names the offending columns and their classes. Logical and integer
+  dimensions are numbers and stay accepted.
+
+- **An all-missing emotion dimension reported `NaN`, not `NA`.**
+  `colMeans(na.rm = TRUE)` over a dimension no emoji in the row has is
+  0/0, and the `NaN` reached the output column. Every other verb reports
+  an unknown value as `NA`, and
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  returns `NA_real_` for exactly this case. Only reachable through
+  `lexicon =`, since the bundled emotion lexicon has no missing cells.
 
 - **[`?emoji_incongruity`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)’s
   invariance claim reads as more than it holds.** The page says the two

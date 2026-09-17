@@ -90,7 +90,15 @@ back <code>NA</code> while the emoji still counts as scored, which contradicts
 scores – spellings differing only by a variation selector share a single
 code-point key, so a table listing both <code>U+2764</code> and <code>U+2764 U+FE0F</code> has
 one emoji twice. Identical scores are fine and collapse silently; when
-they differ, the row order would be choosing the answer.</p></dd>
+they differ, the row order would be choosing the answer.</p>
+<p>A third value is neither refused nor used: an infinite score warns and
+is treated as missing, so the emoji carrying it counts as unscored. It
+is the same rule <code><a href="emoji_incongruity.html">emoji_incongruity()</a></code> applies to a non-finite
+<code>text_score</code>, and the same one <code>NA</code> and <code>NaN</code> already got. Left alone,
+one <code>Inf</code> makes every row that meets it infinite while
+<code>.emoji_n_scored</code> still reports the row as scored. This applies to an
+emotion lexicon's dimensions too, and those must be numeric for the
+reason the score column must be.</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>

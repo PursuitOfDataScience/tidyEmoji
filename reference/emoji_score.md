@@ -59,6 +59,16 @@ emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
   fine and collapse silently; when they differ, the row order would be
   choosing the answer.
 
+  A third value is neither refused nor used: an infinite score warns and
+  is treated as missing, so the emoji carrying it counts as unscored. It
+  is the same rule
+  [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)
+  applies to a non-finite `text_score`, and the same one `NA` and `NaN`
+  already got. Left alone, one `Inf` makes every row that meets it
+  infinite while `.emoji_n_scored` still reports the row as scored. This
+  applies to an emotion lexicon's dimensions too, and those must be
+  numeric for the reason the score column must be.
+
 - by:
 
   Glyph column name when `lexicon` is a data frame, as a single string.
