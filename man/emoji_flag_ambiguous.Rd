@@ -24,7 +24,11 @@ data. What counts as an emoji is the same in every verb; see the
 people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{top_n}{Number of emoji to return, most ambiguous first. \code{NULL} returns
-all of them.}
+all of them.
+When a tie straddles the cut the glyph decides which emoji fall inside
+it, in the C locale, as in \code{\link[=top_n_emojis]{top_n_emojis()}}; a corpus with fewer emoji
+than this returns every one of them rather than padding, and \code{0} returns
+no rows at all.}
 
 \item{measure}{Ambiguity statistic to rank by; see \code{\link[=emoji_ambiguity]{emoji_ambiguity()}}.}
 }

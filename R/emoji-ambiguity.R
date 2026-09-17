@@ -304,6 +304,10 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
 #' @inheritParams emoji_summary
 #' @param top_n Number of emoji to return, most ambiguous first. `NULL` returns
 #'   all of them.
+#'   When a tie straddles the cut the glyph decides which emoji fall inside
+#'   it, in the C locale, as in [top_n_emojis()]; a corpus with fewer emoji
+#'   than this returns every one of them rather than padding, and `0` returns
+#'   no rows at all.
 #' @param measure Ambiguity statistic to rank by; see [emoji_ambiguity()].
 #' @return A tibble with columns `emoji`, `name`, `n` (occurrences in the
 #'   corpus), `n_annotations`, `ambiguity` and `rank` (the glyph's rank in the

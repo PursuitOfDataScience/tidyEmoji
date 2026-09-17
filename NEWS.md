@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are one hundred and eleven of them, and
+test that was passing for the wrong reason. There are one hundred and twelve of them, and
 reading just those leads gives the release without the verification detail.
-Not all one hundred and eleven changed observable behaviour: several record a test that
+Not all one hundred and twelve changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,14 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **Three verbs take a `top_n` and only one said how it cuts.**
+  `?top_n_emojis` records that a tie straddling position `n` is settled by
+  the glyph, and that a corpus with fewer emoji than `n` returns all of them
+  rather than padding. `emoji_trend()` and `emoji_flag_ambiguous()` do the
+  same thing and said neither, so a reader could not tell whether their cut
+  was arbitrary. Both now say it, and a test drives all three with four
+  glyphs tied on every key so that only the glyph order can decide, and
+  checks `top_n` above the available count and `top_n = 0` on each.
 * **`emoji_emotion_label()` labelled a row with no dominant emotion
   `"anger"`.** `max.col(ties.method = "first")` returns the first column when
   nothing wins, and the first of the eight in Plutchik order is anger, so a

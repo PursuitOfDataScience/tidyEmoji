@@ -8852,6 +8852,48 @@ test_that("the four time verbs agree that an undated row contributes nothing", {
   }
 })
 
+test_that("all three top_n arguments cut the same way", {
+  # ?top_n_emojis documented the tie-at-the-cut rule and the no-padding rule;
+  # emoji_trend() and emoji_flag_ambiguous() take the same argument, behave
+  # the same way, and said neither.
+  skip_if_catalogue_moved()
+  G <- c("\U0001F600", "\U0001F601", "\U0001F602", "\U0001F603")
+  d <- data.frame(text = paste(G, collapse = " "),
+                  when = as.Date("2024-01-05"), stringsAsFactors = FALSE)
+  # every glyph appears once, so the glyph order alone decides the cut
+  first_two <- sort(G, method = "radix")[1:2]
+  expect_identical(top_n_emojis(d, text, n = 2L)$unicode, first_two)
+  expect_identical(emoji_trend(d, text, when, top_n = 2L)$emoji, first_two)
+
+  # fewer emoji than asked for returns what there is, and 0 returns nothing
+  for (f in list(function(n) nrow(top_n_emojis(d, text, n = n)),
+                 function(n) nrow(emoji_trend(d, text, when, top_n = n)))) {
+    expect_identical(f(99L), 4L)
+    expect_identical(f(0L), 0L)
+  }
+
+  # emoji_flag_ambiguous ranks by ambiguity, then n, then the glyph. Build the
+  # fixture from *detectable* tied glyphs: the lexicon's most ambiguous rows
+  # include box-drawing characters that are not emoji in text at all, which is
+  # its own documented caveat and not a cut rule.
+  a <- emoji_ambiguity()
+  tied <- a$emoji[a$rank == 1L]
+  det <- tied[vapply(tied, function(g)
+    length(asNamespace("tidyEmoji")$emoji_glyph_list(g)[[1L]]) == 1L,
+    logical(1))]
+  expect_gte(length(det), 2L)
+  dd <- data.frame(text = paste(tied, collapse = " "), stringsAsFactors = FALSE)
+  expect_identical(emoji_flag_ambiguous(dd, text, top_n = 2L)$emoji,
+                   sort(det, method = "radix")[1:2])
+  expect_identical(nrow(emoji_flag_ambiguous(dd, text, top_n = 99L)),
+                   length(det))
+  expect_identical(nrow(emoji_flag_ambiguous(dd, text, top_n = 0L)), 0L)
+
+  for (tp in c("top_n_emojis", "emoji_trend", "emoji_flag_ambiguous")) {
+    expect_match(rd_flat(tp), "straddle", info = tp)
+  }
+})
+
 test_that("emoji_lexicons()'s n is a row count, and the registry replaces", {
   # ?emoji_lexicons called n the "number of emoji". For the two bundled
   # lexicons that is true, and the page now says why: one row per code-point

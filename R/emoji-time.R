@@ -256,6 +256,10 @@ emoji_unicode_version <- function() {
 #'   (default), `"quarter"` or `"year"`.
 #' @param top_n Number of emoji to follow, ranked by `measure` over the whole
 #'   corpus. `NULL` keeps every emoji. Default `20`.
+#'   When a tie straddles the cut the glyph decides which emoji fall inside
+#'   it, in the C locale, as in [top_n_emojis()]; a corpus with fewer emoji
+#'   than this returns every one of them rather than padding, and `0` returns
+#'   no rows at all.
 #' @param measure Statistic used to rank emoji for `top_n` and to order the rows
 #'   within a period: `"n"` (default) or `"share"`.
 #' @return A tibble with columns `.period` (a `Date`, the start of the period),

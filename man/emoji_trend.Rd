@@ -55,7 +55,11 @@ own \code{format} first.}
 (default), \code{"quarter"} or \code{"year"}.}
 
 \item{top_n}{Number of emoji to follow, ranked by \code{measure} over the whole
-corpus. \code{NULL} keeps every emoji. Default \code{20}.}
+corpus. \code{NULL} keeps every emoji. Default \code{20}.
+When a tie straddles the cut the glyph decides which emoji fall inside
+it, in the C locale, as in \code{\link[=top_n_emojis]{top_n_emojis()}}; a corpus with fewer emoji
+than this returns every one of them rather than padding, and \code{0} returns
+no rows at all.}
 
 \item{measure}{Statistic used to rank emoji for \code{top_n} and to order the rows
 within a period: \code{"n"} (default) or \code{"share"}.}
