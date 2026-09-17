@@ -2,8 +2,8 @@
 
 ## Overview
 
-Emoji are everywhere in modern text — social-media posts, product
-reviews, chat and support logs, survey free-text — and they carry
+Emoji are everywhere in modern text (social-media posts, product
+reviews, chat and support logs, survey free-text), and they carry
 information that plain words do not. Yet summarising emoji from a corpus
 is surprisingly awkward. Unicode does not interact cleanly with regular
 expressions, not every code point is an emoji, and a single visible
@@ -78,7 +78,7 @@ if (has_plot_pkgs) library(ggplot2)
 
 Throughout this vignette we use a sample of text collected in Atlanta,
 Georgia. The data happens to come from a social-media corpus, but
-nothing below is specific to any platform — any data frame with a text
+nothing below is specific to any platform: any data frame with a text
 column will do.
 
 ``` r
@@ -258,9 +258,9 @@ long, thin tail of more emoji-heavy entries.
 ### `emoji_tokens()`
 
 [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md)
-produces a “one row per emoji occurrence” table — the emoji analogue of
-a tidy-text token table. It keeps the original columns and adds the
-glyph (`.emoji`) together with its name (`.emoji_name`), category
+produces a “one row per emoji occurrence” table, the emoji analogue of a
+tidy-text token table. It keeps the original columns and adds the glyph
+(`.emoji`) together with its name (`.emoji_name`), category
 (`.emoji_category`) and sentiment score (`.emoji_sentiment`). This
 single call gives you everything needed for counting, joining and
 plotting.
@@ -290,8 +290,8 @@ ata_tweets %>%
 Modern emoji are frequently composed of several code points: a base
 emoji plus a skin-tone modifier, or several emoji joined by zero-width
 joiners. tidyEmoji detects emoji at the level of grapheme clusters, so
-these stay intact. The example below contains exactly two emoji — one
-family and one thumbs-up — and tidyEmoji counts them as such rather than
+these stay intact. The example below contains exactly two emoji (one
+family and one thumbs-up), and tidyEmoji counts them as such rather than
 splitting the family into four people or separating the thumb from its
 skin tone:
 
@@ -622,9 +622,9 @@ category.](introduction_files/figure-html/unnamed-chunk-20-1.png)
 
 The scores come from `emoji_sentiment_lexicon`, the *Emoji Sentiment
 Ranking* of Kralj Novak et al. (2015), computed from around 70,000
-tweets annotated in 13 European languages. You can work with it directly
-— for instance, to find the most positive and most negative reasonably
-common emoji:
+tweets annotated in 13 European languages. You can work with it
+directly, for instance to find the most positive and most negative
+reasonably common emoji:
 
 ``` r
 
@@ -825,8 +825,8 @@ emoji_lexicons()
 [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
 is the generic scorer underneath
 [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
-give it any data frame with an emoji column and a score column — say,
-scores tailored to your own domain — and it returns the per-row mean,
+give it any data frame with an emoji column and a score column (say,
+scores tailored to your own domain), and it returns the per-row mean,
 joined through the same codepoint-normalised key as everything else:
 
 ``` r
@@ -848,9 +848,9 @@ data.frame(text = c("great \U0001f600", "bad \U0001f621\U0001f637", "none")) %>%
 
 [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
 stores a lexicon under a name for the session, so you can refer to it in
-[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
-— or in
-[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md),
+[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md),
+or in
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
 if it carries emotion columns:
 
 ``` r
@@ -867,7 +867,7 @@ emoji_lexicons() %>% filter(name == "mine")
 
 Which emoji appear *together*?
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
-returns a tidy edge list — one row per pair of distinct emoji that
+returns a tidy edge list: one row per pair of distinct emoji that
 co-occur in the same entry, with the number of entries in which they do.
 The `item1`/`item2`/`n` shape matches `widyr::pairwise_count()` and
 feeds directly into graph tools such as igraph, tidygraph and ggraph:
@@ -1029,7 +1029,7 @@ text.](introduction_files/figure-html/unnamed-chunk-36-1.png)
 normalises the emoji count by text length (per character and per
 whitespace-delimited token), and
 [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-reports what share of the text’s characters belong to emoji — including
+reports what share of the text’s characters belong to emoji, including
 an `.emoji_only` flag for entries that are nothing but emoji (and
 whitespace):
 
@@ -1140,8 +1140,8 @@ For classification and regression work,
 [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
 turns the corpus into a document-by-emoji feature table: one row per
 entry (or per `doc_id`), one column per emoji, weighted by counts,
-binary presence or tf-idf. Every entry is kept — emoji-free rows are all
-zeros — so the table binds row-for-row to your outcome columns:
+binary presence or tf-idf. Every entry is kept (emoji-free rows are all
+zeros), so the table binds row-for-row to your outcome columns:
 
 ``` r
 
@@ -1416,18 +1416,17 @@ emoji_provenance() %>% glimpse()
 
 tidyEmoji ships four datasets, each documented with its own help page:
 
-- **`emoji_sentiment_lexicon`** — emoji sentiment scores from the Emoji
+- **`emoji_sentiment_lexicon`**: emoji sentiment scores from the Emoji
   Sentiment Ranking (see
   [`?emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)).
-- **`emoji_emotion_lexicon`** — emoji emotion scores from EmoTag1200
-  (see
+- **`emoji_emotion_lexicon`**: emoji emotion scores from EmoTag1200 (see
   [`?emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)).
-- **`emoji_unicode_crosswalk`** — one row per (name, glyph) pair,
-  mapping names / shortcodes to glyphs and categories. The mapping is
+- **`emoji_unicode_crosswalk`**: one row per (name, glyph) pair, mapping
+  names / shortcodes to glyphs and categories. The mapping is
   many-to-many both ways, so join on `key` rather than `emoji_name`
   unless you want the duplicates (see
   [`?emoji_unicode_crosswalk`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_crosswalk.md)).
-- **`category_unicode_crosswalk`** — one row per Unicode category,
+- **`category_unicode_crosswalk`**: one row per Unicode category,
   listing its emoji.
 
 These are regenerated from the current Unicode emoji list by the scripts

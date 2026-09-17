@@ -68,8 +68,8 @@ Chicago</span>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>Emoji are everywhere in modern text — social-media posts, product
-reviews, chat and support logs, survey free-text — and they carry
+<p>Emoji are everywhere in modern text (social-media posts, product
+reviews, chat and support logs, survey free-text), and they carry
 information that plain words do not. Yet summarising emoji from a corpus
 is surprisingly awkward. Unicode does not interact cleanly with regular
 expressions, not every code point is an emoji, and a single visible
@@ -248,7 +248,7 @@ answer. See <code><a href="../reference/tidyEmoji-package.html">?tidyEmoji</a></
 </h2>
 <p>Throughout this vignette we use a sample of text collected in
 Atlanta, Georgia. The data happens to come from a social-media corpus,
-but nothing below is specific to any platform — any data frame with a
+but nothing below is specific to any platform: any data frame with a
 text column will do.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># read.csv() rather than readr::read_csv(): readr is a Suggests package, and</span></span>
@@ -411,7 +411,7 @@ a long, thin tail of more emoji-heavy entries.</p>
 <code>emoji_tokens()</code><a class="anchor" aria-label="anchor" href="#emoji_tokens"></a>
 </h3>
 <p><code><a href="../reference/emoji_tokens.html">emoji_tokens()</a></code> produces a “one row per emoji occurrence”
-table — the emoji analogue of a tidy-text token table. It keeps the
+table, the emoji analogue of a tidy-text token table. It keeps the
 original columns and adds the glyph (<code>.emoji</code>) together with
 its name (<code>.emoji_name</code>), category
 (<code>.emoji_category</code>) and sentiment score
@@ -441,8 +441,8 @@ needed for counting, joining and plotting.</p>
 <p>Modern emoji are frequently composed of several code points: a base
 emoji plus a skin-tone modifier, or several emoji joined by zero-width
 joiners. tidyEmoji detects emoji at the level of grapheme clusters, so
-these stay intact. The example below contains exactly two emoji — one
-family and one thumbs-up — and tidyEmoji counts them as such rather than
+these stay intact. The example below contains exactly two emoji (one
+family and one thumbs-up), and tidyEmoji counts them as such rather than
 splitting the family into four people or separating the thumb from its
 skin tone:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -726,7 +726,7 @@ in a couple of lines:</p>
 <p>The scores come from <code>emoji_sentiment_lexicon</code>, the
 <em>Emoji Sentiment Ranking</em> of Kralj Novak et al. (2015), computed
 from around 70,000 tweets annotated in 13 European languages. You can
-work with it directly — for instance, to find the most positive and most
+work with it directly, for instance to find the most positive and most
 negative reasonably common emoji:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_sentiment_lexicon</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -899,8 +899,8 @@ have registered):</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> emotag1200 emotion   <span style="color: #949494;">&lt;chr [8]&gt;</span>    150 Shoeb &amp; de Melo (2020), EMNLP 2… MIT</span></span></code></pre></div>
 <p><code><a href="../reference/emoji_score.html">emoji_score()</a></code> is the generic scorer underneath
 <code><a href="../reference/emoji_sentiment.html">emoji_sentiment()</a></code>: give it any data frame with an emoji
-column and a score column — say, scores tailored to your own domain —
-and it returns the per-row mean, joined through the same
+column and a score column (say, scores tailored to your own domain), and
+it returns the per-row mean, joined through the same
 codepoint-normalised key as everything else:</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_lexicon</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -917,8 +917,8 @@ codepoint-normalised key as everything else:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> bad 😡😷        2               2        -<span style="color: #BB0000;">0.75</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> none            0              <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
 <p><code><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> stores a lexicon under a name
-for the session, so you can refer to it in <code><a href="../reference/emoji_score.html">emoji_score()</a></code> —
-or in <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>, if it carries emotion columns:</p>
+for the session, so you can refer to it in <code><a href="../reference/emoji_score.html">emoji_score()</a></code>,
+or in <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code> if it carries emotion columns:</p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/register_emoji_lexicon.html">register_emoji_lexicon</a></span><span class="op">(</span><span class="st">"mine"</span>, <span class="va">my_lexicon</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/emoji_lexicons.html">emoji_lexicons</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">name</span> <span class="op">==</span> <span class="st">"mine"</span><span class="op">)</span></span>
@@ -931,7 +931,7 @@ or in <code><a href="../reference/emoji_emotion.html">emoji_emotion()</a></code>
 <h2 id="relating-emoji-co-occurrence-and-sequences">Relating emoji: co-occurrence and sequences<a class="anchor" aria-label="anchor" href="#relating-emoji-co-occurrence-and-sequences"></a>
 </h2>
 <p>Which emoji appear <em>together</em>? <code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code>
-returns a tidy edge list — one row per pair of distinct emoji that
+returns a tidy edge list: one row per pair of distinct emoji that
 co-occur in the same entry, with the number of entries in which they do.
 The <code>item1</code>/<code>item2</code>/<code>n</code> shape matches
 <code>widyr::pairwise_count()</code> and feeds directly into graph tools
@@ -1063,7 +1063,7 @@ position and the mean relative position from 0 (start) to 1 (end):</p>
 <p><code><a href="../reference/emoji_density.html">emoji_density()</a></code> normalises the emoji count by text
 length (per character and per whitespace-delimited token), and
 <code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code> reports what share of the text’s characters
-belong to emoji — including an <code>.emoji_only</code> flag for entries
+belong to emoji, including an <code>.emoji_only</code> flag for entries
 that are nothing but emoji (and whitespace):</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -1156,8 +1156,8 @@ day-of-week and hour-of-day cycles.</p>
 <p>For classification and regression work, <code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code>
 turns the corpus into a document-by-emoji feature table: one row per
 entry (or per <code>doc_id</code>), one column per emoji, weighted by
-counts, binary presence or tf-idf. Every entry is kept — emoji-free rows
-are all zeros — so the table binds row-for-row to your outcome
+counts, binary presence or tf-idf. Every entry is kept (emoji-free rows
+are all zeros), so the table binds row-for-row to your outcome
 columns:</p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -1397,20 +1397,20 @@ puts the lot in one row you can paste into a methods section:</p>
 page:</p>
 <ul>
 <li>
-<strong><code>emoji_sentiment_lexicon</code></strong> — emoji
+<strong><code>emoji_sentiment_lexicon</code></strong>: emoji
 sentiment scores from the Emoji Sentiment Ranking (see
 <code><a href="../reference/emoji_sentiment_lexicon.html">?emoji_sentiment_lexicon</a></code>).</li>
 <li>
-<strong><code>emoji_emotion_lexicon</code></strong> — emoji emotion
+<strong><code>emoji_emotion_lexicon</code></strong>: emoji emotion
 scores from EmoTag1200 (see <code><a href="../reference/emoji_emotion_lexicon.html">?emoji_emotion_lexicon</a></code>).</li>
 <li>
-<strong><code>emoji_unicode_crosswalk</code></strong> — one row per
+<strong><code>emoji_unicode_crosswalk</code></strong>: one row per
 (name, glyph) pair, mapping names / shortcodes to glyphs and categories.
 The mapping is many-to-many both ways, so join on <code>key</code>
 rather than <code>emoji_name</code> unless you want the duplicates (see
 <code><a href="../reference/emoji_unicode_crosswalk.html">?emoji_unicode_crosswalk</a></code>).</li>
 <li>
-<strong><code>category_unicode_crosswalk</code></strong> — one row
+<strong><code>category_unicode_crosswalk</code></strong>: one row
 per Unicode category, listing its emoji.</li>
 </ul>
 <p>These are regenerated from the current Unicode emoji list by the

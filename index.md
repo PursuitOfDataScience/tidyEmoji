@@ -1,9 +1,9 @@
 # tidyEmoji
 
 tidyEmoji helps you **discover, count, categorise, sentiment-score,
-score emotions, translate and relate the emoji in any text column** —
-social-media posts, product reviews, chat logs, survey responses,
-support tickets — from summary counts through emotion profiles,
+score emotions, translate and relate the emoji in any text column**
+(social-media posts, product reviews, chat logs, survey responses,
+support tickets), from summary counts through emotion profiles,
 co-occurrence networks, structural metrics and model-ready feature
 tables, always as tidy data frames that drop straight into a tidyverse
 workflow.
@@ -88,7 +88,7 @@ reviews %>% top_n_emojis(text, n = 3)  # just the most frequent
 
 [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md)
 gives one tidy row per emoji occurrence, with its name, category and
-sentiment — ready to count, join or plot.
+sentiment, ready to count, join or plot.
 
 ``` r
 
@@ -165,8 +165,8 @@ reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
 
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
 returns a graph-ready edge list of the emoji that appear in the same
-entry (`widyr`-style `item1`/`item2`/`n` — pipe it into igraph,
-tidygraph or ggraph), and
+entry (`widyr`-style `item1`/`item2`/`n`; pipe it into igraph, tidygraph
+or ggraph), and
 [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
 captures consecutive sequences.
 
@@ -180,13 +180,13 @@ reviews %>% emoji_pairs(text)
 #> 2 😀    😍        1
 ```
 
-There are structural metrics too —
+There are structural metrics too:
 [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
 (emoji sit at the end of messages),
 [`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
 and
 [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-(emoji-only detection) — and
+(emoji-only detection). And
 [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
 builds a document-by-emoji count/binary/tf-idf table for modelling.
 
@@ -224,7 +224,7 @@ reviews %>% emoji_sentiment(text, se = TRUE)  # a score with a standard error
 [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
 returns one row per occurrence with the surrounding words, and
 [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
-turns those windows into a PMI-scored emoji-word table — corpus-derived
+turns those windows into a PMI-scored emoji-word table: corpus-derived
 senses, with no licence baggage and nothing stale. On the time axis,
 [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
 and
@@ -246,7 +246,7 @@ posts %>% emoji_adoption_lag(text, posted_at)
 
 ### Does the text agree with the emoji?
 
-Emoji–text sentiment mismatch is a sarcasm feature in NLP and the
+Emoji-text sentiment mismatch is a sarcasm feature in NLP and the
 (in)congruence variable in marketing research. tidyEmoji supplies the
 emoji half and the arithmetic; you bring the text score from tidytext,
 sentimentr or a model, and say how the two were made comparable.
@@ -282,7 +282,7 @@ lists what’s available,
 [`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
 adds your own, and
 [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
-scores a text column against any of them — always joining through a
+scores a text column against any of them, always joining through a
 codepoint-normalised key, so qualified and unqualified emoji forms both
 match.
 
@@ -362,5 +362,5 @@ emoji_search("happy")
 The [introductory
 vignette](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html)
 ([`vignette("introduction", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.md))
-walks through a full analysis of a real corpus — counting, categorising,
+walks through a full analysis of a real corpus: counting, categorising,
 sentiment- and emotion-scoring emoji, and plotting the results.

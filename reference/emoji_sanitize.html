@@ -118,13 +118,24 @@ comparison, and it means the policy argument can stay in the script even
 when the answer is "do nothing".</p></li>
 <li><p><code>"strip"</code> deletes the emoji. Because deleting a glyph can leave two spaces
 where there was one, <code>strip</code> also collapses runs of spaces and tabs and
-trims the ends – the only policy that touches anything but the emoji.</p></li>
+trims the ends – the only policy that touches anything but the emoji.
+It is also the only one that guarantees an emoji-free column: removing a
+span makes its two neighbours adjacent, and on malformed input those two
+can spell an emoji the original text did not contain (a bare <code>U+2603</code>
+beside an orphan <code>U+FE0F</code> becomes the qualified snowman), so <code>strip</code>
+repeats until there is nothing left to remove.</p></li>
 <li><p><code>"name"</code> and <code>"shortcode"</code> substitute the Unicode name
 ("grinning face") or the GitHub-style alias (":grinning:"), exactly as
-<code><a href="emoji_to_text.html">emoji_to_text()</a></code> does. <code>name</code> is also the accessibility answer: it is
+<code><a href="emoji_to_text.html">emoji_to_text()</a></code> does – including its rule that a glyph with no known
+name or alias is <strong>left in place unchanged</strong>. A ZWJ sequence too new for
+the installed catalogue is detected but cannot be named, so these two
+policies can return a column that still holds emoji. <code>"strip"</code> and
+<code>"placeholder"</code> cannot. <code>name</code> is also the accessibility answer: it is
 what a screen reader announces.</p></li>
 <li><p><code>"placeholder"</code> substitutes a fixed token, which keeps the <em>position</em> of
-an emoji as a feature while removing its identity.</p></li>
+an emoji as a feature while removing its identity. An empty
+<code>placeholder</code> is a deletion rather than a substitution, so it gets
+<code>"strip"</code>'s repeat pass (but not its whitespace tidying).</p></li>
 </ul><p>Replacements go exactly where the glyph was, with no padding, so a grinning
 face glued to the end of a word yields <code>"wordgrinning face"</code>. If your
 tokeniser needs whitespace around them, use <code>"placeholder"</code> with a padded

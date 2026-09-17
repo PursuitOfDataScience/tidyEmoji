@@ -80,16 +80,27 @@ The policies:
 - `"strip"` deletes the emoji. Because deleting a glyph can leave two
   spaces where there was one, `strip` also collapses runs of spaces and
   tabs and trims the ends – the only policy that touches anything but
-  the emoji.
+  the emoji. It is also the only one that guarantees an emoji-free
+  column: removing a span makes its two neighbours adjacent, and on
+  malformed input those two can spell an emoji the original text did not
+  contain (a bare `U+2603` beside an orphan `U+FE0F` becomes the
+  qualified snowman), so `strip` repeats until there is nothing left to
+  remove.
 
 - `"name"` and `"shortcode"` substitute the Unicode name ("grinning
   face") or the GitHub-style alias (":grinning:"), exactly as
   [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
-  does. `name` is also the accessibility answer: it is what a screen
+  does – including its rule that a glyph with no known name or alias is
+  **left in place unchanged**. A ZWJ sequence too new for the installed
+  catalogue is detected but cannot be named, so these two policies can
+  return a column that still holds emoji. `"strip"` and `"placeholder"`
+  cannot. `name` is also the accessibility answer: it is what a screen
   reader announces.
 
 - `"placeholder"` substitutes a fixed token, which keeps the *position*
-  of an emoji as a feature while removing its identity.
+  of an emoji as a feature while removing its identity. An empty
+  `placeholder` is a deletion rather than a substitution, so it gets
+  `"strip"`'s repeat pass (but not its whitespace tidying).
 
 Replacements go exactly where the glyph was, with no padding, so a
 grinning face glued to the end of a word yields `"wordgrinning face"`.

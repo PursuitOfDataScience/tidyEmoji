@@ -107,6 +107,13 @@ certain rows in the table. `n_annotations` remains the column to filter
 on; `ci_width` separates well-known from poorly-known scores only among
 glyphs that are not unanimous.
 
+The same degeneracy runs the other way at the top of the scale. A Wald
+width is not bounded by the range of the quantity it measures, so **4 of
+the 969 rows report a `ci_width` wider than 2** while the sentiment
+score itself can only run from -1 to 1. All four have 3 annotations.
+Read that as "this score is not known at all" rather than as a width,
+and filter on `n_annotations` as above.
+
 ## References
 
 Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L, Hecht B
