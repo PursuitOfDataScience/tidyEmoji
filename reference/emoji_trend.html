@@ -111,7 +111,11 @@ own <code>format</code> first.</p></dd>
 
 <dt id="arg-top-n">top_n<a class="anchor" aria-label="anchor" href="#arg-top-n"></a></dt>
 <dd><p>Number of emoji to follow, ranked by <code>measure</code> over the whole
-corpus. <code>NULL</code> keeps every emoji. Default <code>20</code>.</p></dd>
+corpus. <code>NULL</code> keeps every emoji. Default <code>20</code>.
+When a tie straddles the cut the glyph decides which emoji fall inside
+it, in the C locale, as in <code><a href="top_n_emojis.html">top_n_emojis()</a></code>; a corpus with fewer emoji
+than this returns every one of them rather than padding, and <code>0</code> returns
+no rows at all.</p></dd>
 
 
 <dt id="arg-measure">measure<a class="anchor" aria-label="anchor" href="#arg-measure"></a></dt>

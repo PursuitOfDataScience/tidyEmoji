@@ -42,7 +42,11 @@ emoji_flag_ambiguous(data, text, top_n = 10, measure = "entropy")
 - top_n:
 
   Number of emoji to return, most ambiguous first. `NULL` returns all of
-  them.
+  them. When a tie straddles the cut the glyph decides which emoji fall
+  inside it, in the C locale, as in
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md);
+  a corpus with fewer emoji than this returns every one of them rather
+  than padding, and `0` returns no rows at all.
 
 - measure:
 

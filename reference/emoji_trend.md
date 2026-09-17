@@ -80,7 +80,11 @@ emoji_trend(
 - top_n:
 
   Number of emoji to follow, ranked by `measure` over the whole corpus.
-  `NULL` keeps every emoji. Default `20`.
+  `NULL` keeps every emoji. Default `20`. When a tie straddles the cut
+  the glyph decides which emoji fall inside it, in the C locale, as in
+  [`top_n_emojis()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md);
+  a corpus with fewer emoji than this returns every one of them rather
+  than padding, and `0` returns no rows at all.
 
 - measure:
 
