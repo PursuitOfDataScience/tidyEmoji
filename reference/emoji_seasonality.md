@@ -83,6 +83,16 @@ chart has no invisible gaps. Labels are fixed English abbreviations
 rather than locale-dependent ones, so the output of a script does not
 change with the machine that runs it. Weeks start on Monday.
 
+Rows whose time is missing or unparseable contribute nothing, as in
+[`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md).
+That is worth knowing here in particular, because this table is complete
+whether or not the data is: every count in it is over the *dated* rows,
+so `sum(n_texts)` is the number of rows carrying a readable time rather
+than `nrow(data)`, and an emoji sitting in an undated row reaches
+neither `n_emoji` nor `share`.
+[`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+counts the corpus itself if that is what you want to compare against.
+
 ## See also
 
 [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)

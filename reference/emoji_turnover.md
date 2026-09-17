@@ -98,6 +98,10 @@ is about repertoire, not volume. `jaccard` is the size of the
 intersection over the size of the union, and is `NA` when both periods
 are empty.
 
+Rows whose time is missing or unparseable contribute nothing, as in
+[`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md),
+so a period appears here only if at least one *dated* row falls in it.
+
 ## See also
 
 [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md),

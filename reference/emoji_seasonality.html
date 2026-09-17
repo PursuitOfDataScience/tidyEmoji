@@ -112,6 +112,13 @@ of all emoji tokens).</p>
 chart has no invisible gaps. Labels are fixed English abbreviations rather
 than locale-dependent ones, so the output of a script does not change with
 the machine that runs it. Weeks start on Monday.</p>
+<p>Rows whose time is missing or unparseable contribute nothing, as in
+<code><a href="emoji_trend.html">emoji_trend()</a></code>. That is worth knowing here in particular, because this
+table is complete whether or not the data is: every count in it is over
+the <em>dated</em> rows, so <code>sum(n_texts)</code> is the number of rows carrying a
+readable time rather than <code>nrow(data)</code>, and an emoji sitting in an undated
+row reaches neither <code>n_emoji</code> nor <code>share</code>. <code><a href="emoji_summary.html">emoji_summary()</a></code> counts the
+corpus itself if that is what you want to compare against.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
