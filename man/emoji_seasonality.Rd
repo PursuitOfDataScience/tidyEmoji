@@ -63,6 +63,14 @@ Every level of the cycle is returned, including the empty ones, so a bar
 chart has no invisible gaps. Labels are fixed English abbreviations rather
 than locale-dependent ones, so the output of a script does not change with
 the machine that runs it. Weeks start on Monday.
+
+Rows whose time is missing or unparseable contribute nothing, as in
+\code{\link[=emoji_trend]{emoji_trend()}}. That is worth knowing here in particular, because this
+table is complete whether or not the data is: every count in it is over
+the \emph{dated} rows, so \code{sum(n_texts)} is the number of rows carrying a
+readable time rather than \code{nrow(data)}, and an emoji sitting in an undated
+row reaches neither \code{n_emoji} nor \code{share}. \code{\link[=emoji_summary]{emoji_summary()}} counts the
+corpus itself if that is what you want to compare against.
 }
 \examples{
 df <- data.frame(

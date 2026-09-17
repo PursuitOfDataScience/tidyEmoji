@@ -75,6 +75,10 @@ A period's vocabulary is its set of distinct canonicalised glyphs, so an
 emoji used a thousand times and one used once count the same -- turnover is
 about repertoire, not volume. \code{jaccard} is the size of the intersection over
 the size of the union, and is \code{NA} when both periods are empty.
+
+Rows whose time is missing or unparseable contribute nothing, as in
+\code{\link[=emoji_trend]{emoji_trend()}}, so a period appears here only if at least one \emph{dated} row
+falls in it.
 }
 \examples{
 df <- data.frame(

@@ -352,6 +352,10 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
 #' about repertoire, not volume. `jaccard` is the size of the intersection over
 #' the size of the union, and is `NA` when both periods are empty.
 #'
+#' Rows whose time is missing or unparseable contribute nothing, as in
+#' [emoji_trend()], so a period appears here only if at least one *dated* row
+#' falls in it.
+#'
 #' @inheritParams emoji_trend
 #' @param measure Which statistics to return: any of `"jaccard"`, `"new"`,
 #'   `"lost"` and `"core"`. All four by default. Abbreviations work
@@ -587,6 +591,14 @@ emoji_adoption_lag <- function(data, text, time) {
 #' chart has no invisible gaps. Labels are fixed English abbreviations rather
 #' than locale-dependent ones, so the output of a script does not change with
 #' the machine that runs it. Weeks start on Monday.
+#'
+#' Rows whose time is missing or unparseable contribute nothing, as in
+#' [emoji_trend()]. That is worth knowing here in particular, because this
+#' table is complete whether or not the data is: every count in it is over
+#' the *dated* rows, so `sum(n_texts)` is the number of rows carrying a
+#' readable time rather than `nrow(data)`, and an emoji sitting in an undated
+#' row reaches neither `n_emoji` nor `share`. [emoji_summary()] counts the
+#' corpus itself if that is what you want to compare against.
 #'
 #' @inheritParams emoji_trend
 #' @param period `"month"` (default), `"weekday"` or `"hour"`. `"hour"` needs a

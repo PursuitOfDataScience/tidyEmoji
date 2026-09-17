@@ -8710,6 +8710,56 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
 })
 
+test_that("the four time verbs agree that an undated row contributes nothing", {
+  # emoji_trend() and emoji_adoption_lag() said so; emoji_seasonality() and
+  # emoji_turnover() did not, and seasonality is where it bites, because it
+  # returns every level of the cycle whether the data reaches it or not, so
+  # the table looks complete while every count in it is over the dated rows.
+  A <- "\U0001F600"
+  d <- data.frame(
+    text = c(paste("a", A), paste("b", A), "plain", paste("d", A)),
+    when = as.Date(c("2024-01-05", NA, "2024-02-05", "2024-03-05")),
+    stringsAsFactors = FALSE)
+  dated <- !is.na(d$when)
+  has <- asNamespace("tidyEmoji")$emoji_has(d$text)
+  n_glyph <- lengths(asNamespace("tidyEmoji")$emoji_glyph_list(d$text))
+  expect_identical(sum(dated), 3L)
+  expect_identical(sum(has), 3L)
+
+  # seasonality: every count is over the dated rows, not over `data`
+  q <- emoji_seasonality(d, text, when)
+  expect_identical(sum(q$n_texts), sum(dated))
+  expect_false(sum(q$n_texts) == nrow(d))
+  expect_identical(sum(q$n_with_emoji), sum(dated & has))
+  expect_identical(sum(q$n_emoji), sum(n_glyph[dated]))
+  expect_false(sum(q$n_emoji) == sum(n_glyph))
+  expect_equal(sum(q$share, na.rm = TRUE), 1)
+
+  # trend counts the same tokens seasonality does
+  tr <- emoji_trend(d, text, when, top_n = NULL)
+  expect_identical(sum(tr$n), sum(n_glyph[dated]))
+
+  # turnover sees only periods holding a dated row
+  tu <- emoji_turnover(d, text, when, by = "month")
+  expect_true(all(!is.na(c(tu$.period, tu$.period_prev))))
+  expect_lte(nrow(tu), sum(dated) - 1L)
+
+  # adoption_lag likewise
+  al <- emoji_adoption_lag(d, text, when)
+  expect_identical(sum(al$n), sum(n_glyph[dated]))
+
+  # and emoji_summary() is the one that counts the corpus, which is what the
+  # seasonality page now points at
+  s <- emoji_summary(d, text)
+  expect_identical(s$n_total, nrow(d))
+  expect_identical(s$n_with_emoji, sum(has))
+
+  for (topic in c("emoji_seasonality", "emoji_turnover", "emoji_trend",
+                  "emoji_adoption_lag")) {
+    expect_match(rd_flat(topic), "missing or unparseable", info = topic)
+  }
+})
+
 test_that("emoji_lexicons()'s n is a row count, and the registry replaces", {
   # ?emoji_lexicons called n the "number of emoji". For the two bundled
   # lexicons that is true, and the page now says why: one row per code-point

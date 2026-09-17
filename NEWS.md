@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are one hundred and three of them, and
+test that was passing for the wrong reason. There are one hundred and four of them, and
 reading just those leads gives the release without the verification detail.
-Not all one hundred and three changed observable behaviour: several record a test that
+Not all one hundred and four changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,17 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **Two of the four time verbs never said an undated row is dropped.**
+  `emoji_trend()` and `emoji_adoption_lag()` both state it;
+  `emoji_seasonality()` and `emoji_turnover()` did not, and seasonality is
+  where the omission bites, because it returns every level of the cycle
+  whether the data reaches it or not. The table therefore looks complete
+  while every count in it is over the *dated* rows: on a four-row corpus
+  with one undated row, `sum(n_texts)` is 3 rather than 4, and an emoji
+  sitting in that row reaches neither `n_emoji` nor `share`. Both pages say
+  it now, seasonality with the consequence for its own columns and a pointer
+  to [emoji_summary()] for counting the corpus itself. A test holds all four
+  pages to the same sentence and checks the arithmetic behind it.
 * **`?emoji_lexicons` called `n` the "number of emoji", and it is a row
   count.** For the two bundled lexicons those coincide, 969 and 150, because
   each has one row per code-point key, and the page now says so rather than
