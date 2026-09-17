@@ -132,3 +132,46 @@ test_that("emoji_incongruity_profile filters by min_n", {
   expect_error(emoji_incongruity_profile(df, text, score, scale = "none",
                                          min_n = -1), "non-negative")
 })
+
+test_that("an inert threshold warns instead of doing nothing quietly", {
+  # method = "sign_flip" reads the polarity flip, not the size of the gap, so
+  # `threshold` has nothing to cut. Supplying both used to be silent, which is
+  # the absorbed-argument shape the package refuses elsewhere: emoji_turnover()
+  # errors on a `measure` it cannot honour, emoji_to_text() on a `wrap` with no
+  # placeholder. Here the answer is right rather than wrong, so it warns.
+  A <- "\U0001F600"
+  d <- data.frame(text = c(paste("great", A), paste("awful", A)),
+                  sc = c(0.9, -0.9), stringsAsFactors = FALSE)
+  verbs <- c("emoji_incongruity", "emoji_congruence",
+             "emoji_incongruity_profile")
+  for (v in verbs) {
+    f <- get(v, envir = asNamespace("tidyEmoji"))
+    expect_warning(
+      f(d, text, sc, scale = "none", method = "sign_flip", threshold = 2),
+      "ignored when", fixed = TRUE, info = v)
+    # an abbreviation is matched first, so it is caught too
+    expect_warning(
+      f(d, text, sc, scale = "none", method = "sign", threshold = 2),
+      "ignored when", fixed = TRUE, info = v)
+    # the default must stay silent under both methods, or every sign_flip call
+    # would warn
+    expect_silent(f(d, text, sc, scale = "none", method = "sign_flip"))
+    expect_silent(f(d, text, sc, scale = "none", threshold = 2))
+    expect_silent(f(d, text, sc, scale = "none"))
+  }
+  # and the warning changes nothing about the answer
+  quiet <- emoji_incongruity(d, text, sc, scale = "none", method = "sign_flip")
+  loud <- suppressWarnings(
+    emoji_incongruity(d, text, sc, scale = "none", method = "sign_flip",
+                      threshold = 1e6))
+  expect_identical(quiet$.emoji_incongruent, loud$.emoji_incongruent)
+
+  # a threshold at or below 0 flags every scored row, abs(gap) never being
+  # negative, which the page now says
+  for (th in c(0, -1)) {
+    o <- emoji_incongruity(d, text, sc, scale = "none", threshold = th)
+    expect_true(all(o$.emoji_incongruent), info = th)
+  }
+  expect_match(rd_flat("emoji_incongruity"), "flags every scored row",
+               fixed = TRUE)
+})

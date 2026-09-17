@@ -47,7 +47,9 @@ scores only the trailing run of emoji that ends the text.}
 
 \item{threshold}{For \code{method = "difference"}, the absolute gap at or above
 which \code{.emoji_incongruent} is \code{TRUE}. Default \code{1}, a full polarity swing on
-the rank scale.}
+the rank scale. \code{"sign_flip"} has no gap to cut, so supplying both warns
+rather than letting half the call do nothing silently. A threshold at or
+below \code{0} flags every scored row, \code{abs(gap)} never being negative.}
 }
 \value{
 \code{data}, as a tibble, with everything \code{\link[=emoji_incongruity]{emoji_incongruity()}} adds plus

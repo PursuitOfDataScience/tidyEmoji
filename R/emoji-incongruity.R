@@ -56,8 +56,24 @@
 }
 
 .emoji_incongruity_impl <- function(data, text, text_score, method, scale,
-                                    where, threshold) {
+                                    where, threshold,
+                                    threshold_supplied = FALSE) {
   method <- .emoji_match_arg(method, c("difference", "sign_flip"), "method")
+  # `threshold` has nothing to do under "sign_flip", which reads the polarity
+  # flip rather than the size of the gap, so a call giving both had half of it
+  # quietly do nothing. That is the absorbed-argument shape the package
+  # refuses elsewhere: emoji_turnover() errors on a `measure` value it cannot
+  # honour, and emoji_to_text() on a `wrap` with no placeholder. Here the
+  # answer is right rather than wrong, so the proportionate signal is a
+  # warning, and only when the caller actually typed the argument -- the
+  # default must stay silent under both methods. Checked after match.arg, so
+  # an abbreviation like "sign" is caught too.
+  if (isTRUE(threshold_supplied) && identical(method, "sign_flip")) {
+    warning("`threshold` is ignored when `method = \"sign_flip\"`, which ",
+            "flags a polarity flip rather than measuring a gap, so there is ",
+            "nothing for a threshold to cut. Drop one of the two.",
+            call. = FALSE)
+  }
   scale <- .emoji_match_arg(scale, c("none", "rank", "zscore"), "scale")
   where <- .emoji_match_arg(where, c("all", "final"), "where")
   if (!is.numeric(threshold) || length(threshold) != 1L || is.na(threshold)) {
@@ -239,7 +255,9 @@
 #'   scores only the trailing run of emoji that ends the text.
 #' @param threshold For `method = "difference"`, the absolute gap at or above
 #'   which `.emoji_incongruent` is `TRUE`. Default `1`, a full polarity swing on
-#'   the rank scale.
+#'   the rank scale. `"sign_flip"` has no gap to cut, so supplying both warns
+#'   rather than letting half the call do nothing silently. A threshold at or
+#'   below `0` flags every scored row, `abs(gap)` never being negative.
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
 #'   `.emoji_n_scored`, `.emoji_sentiment`, `.emoji_incongruity`,
 #'   `.emoji_polarity_flip` and `.emoji_incongruent`.
@@ -275,7 +293,8 @@ emoji_incongruity <- function(data, text, text_score,
          "already on the -1 to 1 emoji scale.", call. = FALSE)
   }
   .emoji_incongruity_impl(data, {{ text }}, {{ text_score }}, method = method,
-                          scale = scale, where = where, threshold = threshold)
+                          scale = scale, where = where, threshold = threshold,
+                          threshold_supplied = !missing(threshold))
 }
 
 
@@ -309,7 +328,8 @@ emoji_congruence <- function(data, text, text_score,
   }
   out <- .emoji_incongruity_impl(data, {{ text }}, {{ text_score }},
                                  method = method, scale = scale, where = where,
-                                 threshold = threshold)
+                                 threshold = threshold,
+                                 threshold_supplied = !missing(threshold))
   out$.emoji_congruent <- !out$.emoji_incongruent
   out
 }
@@ -365,7 +385,8 @@ emoji_incongruity_profile <- function(data, text, text_score,
   .emoji_warn_grouped(data, "emoji_incongruity_profile", "0.4.0")
   scored <- .emoji_incongruity_impl(data, {{ text }}, {{ text_score }},
                                     method = method, scale = scale,
-                                    where = where, threshold = threshold)
+                                    where = where, threshold = threshold,
+                                    threshold_supplied = !missing(threshold))
   lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
                 emoji_canonical)
   n_per_row <- lengths(lst)
