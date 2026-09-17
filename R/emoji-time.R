@@ -259,7 +259,10 @@ emoji_unicode_version <- function() {
 #' @param measure Statistic used to rank emoji for `top_n` and to order the rows
 #'   within a period: `"n"` (default) or `"share"`.
 #' @return A tibble with columns `.period` (a `Date`, the start of the period),
-#'   `emoji`, `name`, `n` and `share`.
+#'   `emoji`, `name`, `n` and `share`, sorted by `.period`, then by `measure`
+#'   descending, then by the glyph, so the order is fully determined. That
+#'   last key matters: within a period the zeros this verb fills in all tie on
+#'   both of the others.
 #' @seealso [emoji_turnover()] for vocabulary churn, [emoji_seasonality()] for
 #'   cyclical patterns.
 #' @examples
@@ -464,7 +467,9 @@ emoji_turnover <- function(data, text, time, by = "month",
 #' @inheritParams emoji_summary
 #' @return A tibble with one row per version, oldest first: `version`,
 #'   `version_num`, `release_date`, `n_types` (distinct emoji), `n_tokens`
-#'   (occurrences), `share_types` and `share_tokens`.
+#'   (occurrences), `share_types` and `share_tokens`. Emoji whose version the
+#'   reference table does not give are pooled into one last row with
+#'   `version = NA`, after every known version rather than before them.
 #' @seealso [emoji_adoption_lag()] for how quickly new emoji were picked up;
 #'   [emoji_unicode_releases()] for the date lookup.
 #' @examples
@@ -522,8 +527,9 @@ emoji_version_profile <- function(data, text) {
 #' Occurrences whose time is missing or unparseable are dropped.
 #'
 #' @inheritParams emoji_trend
-#' @return A tibble with one row per emoji, most frequent first: `emoji`,
-#'   `name`, `n`, `version`, `release_date`, `first_seen` and `lag_days`.
+#' @return A tibble with one row per emoji, most frequent first and ties
+#'   broken by the glyph so the order is fully determined: `emoji`, `name`,
+#'   `n`, `version`, `release_date`, `first_seen` and `lag_days`.
 #'   `lag_days` is `NA` when the release date of the version is unknown.
 #' @seealso [emoji_version_profile()], [emoji_unicode_releases()].
 #' @examples

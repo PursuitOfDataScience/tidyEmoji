@@ -62,7 +62,10 @@ within a period: \code{"n"} (default) or \code{"share"}.}
 }
 \value{
 A tibble with columns \code{.period} (a \code{Date}, the start of the period),
-\code{emoji}, \code{name}, \code{n} and \code{share}.
+\code{emoji}, \code{name}, \code{n} and \code{share}, sorted by \code{.period}, then by \code{measure}
+descending, then by the glyph, so the order is fully determined. That
+last key matters: within a period the zeros this verb fills in all tie on
+both of the others.
 }
 \description{
 \code{emoji_trend()} counts emoji per time period and returns the long table

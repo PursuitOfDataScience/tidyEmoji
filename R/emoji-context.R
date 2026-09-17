@@ -208,7 +208,10 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #'   always returned.
 #' @return A tibble with columns `emoji`, `word`, `n` (co-occurrences) and
 #'   `pmi`, shaped like `widyr::pairwise_count()` output so it drops into
-#'   existing tidytext workflows.
+#'   existing tidytext workflows. Rows are sorted by `measure` descending,
+#'   then by the other of the two descending, then by the glyph and the word,
+#'   so the order is fully determined. Ties in `pmi` are common: every pair
+#'   seen the same number of times with the same marginals scores alike.
 #' @seealso [emoji_context()] for the occurrence-level windows this aggregates.
 #' @examples
 #' df <- data.frame(text = c("cold coffee \U0001f622",

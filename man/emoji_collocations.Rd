@@ -40,7 +40,10 @@ always returned.}
 \value{
 A tibble with columns \code{emoji}, \code{word}, \code{n} (co-occurrences) and
 \code{pmi}, shaped like \code{widyr::pairwise_count()} output so it drops into
-existing tidytext workflows.
+existing tidytext workflows. Rows are sorted by \code{measure} descending,
+then by the other of the two descending, then by the glyph and the word,
+so the order is fully determined. Ties in \code{pmi} are common: every pair
+seen the same number of times with the same marginals scores alike.
 }
 \description{
 \code{emoji_collocations()} counts the words that appear near each emoji across a

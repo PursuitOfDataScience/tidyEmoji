@@ -46,6 +46,16 @@ deterministic -- the same rule \code{\link[=emoji_frequency]{emoji_frequency()}}
 straddles position \code{n} the glyph order decides which side of the cut each
 emoji falls on, and a corpus with fewer than \code{n} distinct emoji returns
 every one of them rather than padding to \code{n}.
+
+\code{duplicated = TRUE} leaves several rows sharing both \code{n} and \code{unicode},
+which that rule does not settle. Within one glyph the rows come out in
+\link{emoji_unicode_crosswalk}'s order for the glyph's codepoint key, and the
+first of them carries the same \code{emoji_name} that \code{duplicated = FALSE}
+reports. Because the join is on the key rather than on the spelling, a
+glyph collects the aliases of \emph{every} spelling of itself: the unqualified
+\verb{U+26F9 U+200D U+2640} is listed under \code{woman_bouncing_ball} and under
+the two aliases the fully-qualified spelling carries. That is what "every
+name an emoji is known by" means here.
 }
 \description{
 \code{top_n_emojis()} returns the \code{n} most frequent emoji. By default each emoji

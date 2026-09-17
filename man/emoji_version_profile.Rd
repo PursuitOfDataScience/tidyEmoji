@@ -26,7 +26,9 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \value{
 A tibble with one row per version, oldest first: \code{version},
 \code{version_num}, \code{release_date}, \code{n_types} (distinct emoji), \code{n_tokens}
-(occurrences), \code{share_types} and \code{share_tokens}.
+(occurrences), \code{share_types} and \code{share_tokens}. Emoji whose version the
+reference table does not give are pooled into one last row with
+\code{version = NA}, after every known version rather than before them.
 }
 \description{
 \code{emoji_version_profile()} breaks a corpus down by the Unicode emoji version

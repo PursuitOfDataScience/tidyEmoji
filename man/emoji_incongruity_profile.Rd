@@ -56,7 +56,10 @@ reported. Default \code{5}.}
 \value{
 A tibble with one row per emoji: \code{emoji}, \code{name}, \code{n} (scored
 occurrences), \code{mean_incongruity}, \code{sd_incongruity}, \code{n_flips} and
-\code{flip_rate}, sorted by descending \code{flip_rate}.
+\code{flip_rate}, sorted by descending \code{flip_rate}, then descending \code{n},
+then the glyph, so the order is fully determined. The first key ties
+readily: every glyph that never flips scores \code{0}, and one that always
+does scores \code{1}.
 }
 \description{
 \code{emoji_incongruity_profile()} aggregates \code{\link[=emoji_incongruity]{emoji_incongruity()}} by glyph: for

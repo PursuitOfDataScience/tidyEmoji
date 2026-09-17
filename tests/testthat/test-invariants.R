@@ -8705,6 +8705,91 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
 })
 
+test_that("every documented sort actually orders the output it describes", {
+  # Round 110, same lens as ?top_n_emojis: a @return that names a sort key
+  # but not enough of them, so the reader cannot predict the order the code
+  # in fact produces. Five pages were partial. Each is checked twice: the
+  # result is what an independent sort of the same keys gives, and it does
+  # not move when the input rows are permuted.
+  skip_if_catalogue_moved()
+  set.seed(11)
+  ref <- asNamespace("tidyEmoji")$emoji_reference()
+  G <- sample(ref$emoji[!is.na(ref$version)], 30L)
+  d <- data.frame(
+    text = c(paste("word", G), paste("other", G)),
+    sc = rep(c(0.5, -0.5), each = 30L),
+    when = rep(as.Date(c("2024-01-05", "2024-02-05")), each = 30L),
+    stringsAsFactors = FALSE
+  )
+  shuffled <- d[sample(nrow(d)), , drop = FALSE]
+  stable <- function(f) expect_equal(f(d), f(shuffled), ignore_attr = TRUE)
+
+  # emoji_collocations: measure desc, the other desc, then glyph and word
+  co <- emoji_collocations(d, text, min_n = 1L)
+  expect_identical(
+    co, co[order(-co$pmi, -co$n, co$emoji, co$word, method = "radix"), ])
+  cc <- emoji_collocations(d, text, min_n = 1L, measure = "count")
+  expect_identical(
+    cc, cc[order(-cc$n, -cc$pmi, cc$emoji, cc$word, method = "radix"), ])
+  stable(function(x) emoji_collocations(x, text, min_n = 1L))
+
+  # emoji_trend: period, then measure desc, then glyph
+  tr <- emoji_trend(d, text, when, top_n = NULL)
+  expect_identical(
+    tr, tr[order(tr$.period, -tr$n, tr$emoji, method = "radix"), ])
+  stable(function(x) emoji_trend(x, text, when, top_n = NULL))
+
+  # emoji_adoption_lag: n desc, then glyph
+  al <- emoji_adoption_lag(d, text, when)
+  expect_identical(al, al[order(-al$n, al$emoji, method = "radix"), ])
+  stable(function(x) emoji_adoption_lag(x, text, when))
+
+  # emoji_version_profile: oldest first, and the unknown-version row last
+  unk <- paste0("\U0001F600\u200d\U0001F525")   # detected, not catalogued
+  expect_false(asNamespace("tidyEmoji")$emoji_key(unk) %in% ref$key)
+  vp <- emoji_version_profile(
+    data.frame(text = c(G, unk, unk), stringsAsFactors = FALSE), text)
+  expect_true(is.na(vp$version[nrow(vp)]))
+  expect_identical(sum(is.na(vp$version)), 1L)
+  known <- vp$version_num[!is.na(vp$version_num)]
+  expect_false(is.unsorted(known))
+
+  # emoji_incongruity_profile: flip_rate desc, then n desc, then glyph. Its
+  # fixture has to be drawn from the sentiment lexicon, or every row is NA
+  # and there is no order to check.
+  scored <- ref$emoji[ref$key %in% names(asNamespace("tidyEmoji")$emoji_sentiment_map())]
+  S <- sample(scored, 30L)
+  ds <- data.frame(
+    text = c(paste("word", S), paste("other", S)),
+    sc = rep(c(0.5, -0.5), each = 30L),
+    stringsAsFactors = FALSE
+  )
+  # min_n = 1: the default of 5 wants five scored occurrences per glyph, and
+  # the order is what is under test, not the shortlist
+  ip <- emoji_incongruity_profile(ds, text, sc, scale = "none", min_n = 1L)
+  expect_gt(nrow(ip), 1L)
+  expect_identical(
+    ip, ip[order(-ip$flip_rate, -ip$n, ip$emoji, method = "radix"), ])
+  expect_equal(
+    ip,
+    emoji_incongruity_profile(ds[sample(nrow(ds)), , drop = FALSE], text, sc,
+                              scale = "none", min_n = 1L),
+    ignore_attr = TRUE)
+
+  # and each page says so
+  expect_match(rd_flat("emoji_collocations"),
+               "so the order is fully determined", fixed = TRUE)
+  expect_match(rd_flat("emoji_trend"),
+               "so the order is fully determined", fixed = TRUE)
+  expect_match(rd_flat("emoji_adoption_lag"),
+               "ties broken by the glyph so the order is fully determined",
+               fixed = TRUE)
+  expect_match(rd_flat("emoji_version_profile"),
+               "pooled into one last row", fixed = TRUE)
+  expect_match(rd_flat("emoji_incongruity_profile"),
+               "so the order is fully determined", fixed = TRUE)
+})
+
 test_that("the four documented figures no test had ever held to hold", {
   # Found by listing every number in the roxygen prose and grepping the suite
   # for it: 78 distinct figures, 8 mentioned nowhere in a test. Three of the

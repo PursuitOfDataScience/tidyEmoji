@@ -45,8 +45,9 @@ second group: convert a column written that way with \code{as.Date()} and its
 own \code{format} first.}
 }
 \value{
-A tibble with one row per emoji, most frequent first: \code{emoji},
-\code{name}, \code{n}, \code{version}, \code{release_date}, \code{first_seen} and \code{lag_days}.
+A tibble with one row per emoji, most frequent first and ties
+broken by the glyph so the order is fully determined: \code{emoji}, \code{name},
+\code{n}, \code{version}, \code{release_date}, \code{first_seen} and \code{lag_days}.
 \code{lag_days} is \code{NA} when the release date of the version is unknown.
 }
 \description{

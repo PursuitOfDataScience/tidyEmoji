@@ -110,8 +110,10 @@ read with `utils::read.csv()`, and the nine plotting chunks are gated on a
 
 ## Test environments
 
-* Local: R 4.1.0 (the declared minimum), R 4.4.1 and R 4.6.0 on Linux, the
-  full suite also run under `LC_ALL=C` (see the skip inventory below)
+* Local: R 4.1.0 (the declared minimum), R 4.4.1 and R 4.6.0 on Linux
+* Locale: `R CMD check --as-cran` was also run end to end under `LC_ALL=C`,
+  examples, vignette and tests included, with the same result (see the skip
+  inventory below for the three tests that stand down there, and why)
 * GitHub Actions:
   - ubuntu-latest: R-release, R-devel, R-oldrel-1
   - macOS-latest: R-release
