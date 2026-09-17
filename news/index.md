@@ -137,8 +137,8 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and five of them, and reading just those leads gives the release
-without the verification detail. Not all one hundred and five changed
+hundred and six of them, and reading just those leads gives the release
+without the verification detail. Not all one hundred and six changed
 observable behaviour: several record a test that could not have failed,
 or a figure the documentation quoted incorrectly, which are worth the
 same prominence because both meant something was unverified.
@@ -1626,6 +1626,20 @@ same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **The README comparison would have failed on the declared R minimum,
+  for a reason outside the package.** It re-renders `README.Rmd` and
+  compares every `#>` line byte for byte, normalising the three ASCII
+  markers `testthat` forces. Column *padding* was not normalised, and it
+  moves without the package moving: pillar pads to a glyph’s display
+  width, and `utf8` has changed its mind about the East-Asian-ambiguous
+  ones. `U+263A` is width 2 under `utf8` 1.2.1, which is what R 4.1.0
+  ships, and width 1 under 1.2.6. One column shifted by one space and
+  the whole comparison failed. Runs of spaces are now collapsed before
+  comparing, so every value, column name and row count still has to
+  match while the padding cannot decide it. Found by re-running the
+  suite on R 4.1.0, which is the only failure it produced: 14664 pass, 1
+  skip (the `readr (>= 2.0.0)` gate, that tree carrying 1.4.0).
 
 - **Nothing said which verbs merge two spellings of one emoji, and they
   do not all agree.** Fourteen verbs report a glyph. Six hand back the
