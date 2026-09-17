@@ -60,19 +60,22 @@ when the answer is "do nothing".
 \item \code{"strip"} deletes the emoji. Because deleting a glyph can leave two spaces
 where there was one, \code{strip} also collapses runs of spaces and tabs and
 trims the ends -- the only policy that touches anything but the emoji.
-It is also the only one that guarantees an emoji-free column: removing a
-span makes its two neighbours adjacent, and on malformed input those two
-can spell an emoji the original text did not contain (a bare \code{U+2603}
-beside an orphan \code{U+FE0F} becomes the qualified snowman), so \code{strip}
-repeats until there is nothing left to remove.
+Removing a span makes its two neighbours adjacent, and on malformed
+input those two can spell an emoji the original text did not contain (a
+bare \code{U+2603} beside an orphan \code{U+FE0F} becomes the qualified snowman),
+so \code{strip} repeats until there is nothing left to remove. It is the one
+policy whose result is emoji-free whatever you hand it.
 \item \code{"name"} and \code{"shortcode"} substitute the Unicode name
 ("grinning face") or the GitHub-style alias (":grinning:"), exactly as
 \code{\link[=emoji_to_text]{emoji_to_text()}} does -- including its rule that a glyph with no known
 name or alias is \strong{left in place unchanged}. A ZWJ sequence too new for
 the installed catalogue is detected but cannot be named, so these two
-policies can return a column that still holds emoji. \code{"strip"} and
-\code{"placeholder"} cannot. \code{name} is also the accessibility answer: it is
-what a screen reader announces.
+policies can return a column that still holds emoji. \code{"strip"} never
+does. Neither does \code{"placeholder"}, unless the token you supply is
+itself emoji-forming: one that \emph{is} an emoji survives by definition, and
+a lone combining character such as \code{U+FE0F} binds to whatever the
+removed glyph was standing next to. \code{name} is also the accessibility
+answer: it is what a screen reader announces.
 \item \code{"placeholder"} substitutes a fixed token, which keeps the \emph{position} of
 an emoji as a feature while removing its identity. An empty
 \code{placeholder} is a deletion rather than a substitution, so it gets

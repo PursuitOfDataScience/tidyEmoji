@@ -88,6 +88,30 @@ test_that("emoji_sanitize strip leaves no emoji, even a recombined one", {
                           policy = "placeholder", placeholder = "")$text
   expect_false(any(tidyEmoji:::emoji_has(empty)))
   expect_identical(empty[4L], "a  b")
+
+  # ?emoji_sanitize qualifies the placeholder guarantee, so pin both ways it
+  # fails: a token that is itself an emoji, and a lone combining character
+  # that binds to whatever the removed glyph stood next to. Neither is the
+  # package substituting something it chose.
+  self <- emoji_sanitize(data.frame(text = paste0("a", grin, "b"),
+                                    stringsAsFactors = FALSE),
+                         text, policy = "placeholder", placeholder = grin)$text
+  expect_identical(self, paste0("a", grin, "b"))
+  binds <- emoji_sanitize(data.frame(text = paste0(snow, grin, "x"),
+                                     stringsAsFactors = FALSE),
+                          text, policy = "placeholder",
+                          placeholder = "\uFE0F")$text
+  expect_identical(binds, paste0(snow, "\uFE0F", "x"))
+  expect_true(tidyEmoji:::emoji_has(binds))
+  # strip clears both, which is the asymmetry the page now states
+  for (bad in c(paste0("a", grin, "b"), paste0(snow, grin, "x"))) {
+    out <- emoji_sanitize(data.frame(text = bad, stringsAsFactors = FALSE),
+                          text, policy = "strip")$text
+    expect_false(tidyEmoji:::emoji_has(out))
+  }
+  expect_match(rd_flat("emoji_sanitize"),
+               "the one policy whose result is emoji-free whatever you hand it",
+               fixed = TRUE)
 })
 
 test_that("emoji_sanitize name/shortcode leave an unnameable glyph in place", {
