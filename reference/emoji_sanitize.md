@@ -58,11 +58,15 @@ emoji_sanitize(
 - placeholder:
 
   Replacement token for `policy = "placeholder"`. Default `"[emoji]"`.
+  Ignored, and not even validated, under the other four policies.
 
 - wrap:
 
   Template for `policy = "shortcode"`, with `{x}` standing for the
-  shortcode. Default `":{x}:"`.
+  shortcode. Default `":{x}:"`. Ignored under the other four policies,
+  as it is in
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  for `format = "name"`.
 
 ## Value
 
@@ -109,6 +113,17 @@ Replacements go exactly where the glyph was, with no padding, so a
 grinning face glued to the end of a word yields `"wordgrinning face"`.
 If your tokeniser needs whitespace around them, use `"placeholder"` with
 a padded placeholder such as `" [emoji] "`.
+
+`placeholder` and `wrap` belong to one policy each and are ignored by
+the rest, silently and without being validated. That is deliberate
+rather than an oversight: the point of this verb is that `policy` can be
+a variable, so a script sweeping all five with one `placeholder =` set
+would otherwise be warned at four fifths of its calls. Nothing is lost
+either way, since an ignored argument cannot change the answer. Contrast
+[`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)'s
+`threshold`, which *does* warn when `method = "sign_flip"` makes it
+inert: that one is a number the caller chose in order to change a
+result, not a companion belonging to a branch.
 
 ## Which policies can be undone
 

@@ -103,12 +103,14 @@ reason the score column must be.</p></dd>
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>
 <dd><p>Glyph column name when <code>lexicon</code> is a data frame, as a single
-string. Default <code>"emoji"</code>.</p></dd>
+string. Default <code>"emoji"</code>. Ignored when <code>lexicon</code> names a bundled or
+registered lexicon, which carries its own key.</p></dd>
 
 
 <dt id="arg-score">score<a class="anchor" aria-label="anchor" href="#arg-score"></a></dt>
 <dd><p>Score column name when <code>lexicon</code> is a data frame. If <code>NULL</code>,
-<code>"sentiment_score"</code> then <code>"score"</code> are tried.</p></dd>
+<code>"sentiment_score"</code> then <code>"score"</code> are tried. Ignored, like <code>by</code>, when
+<code>lexicon</code> is a name rather than a table.</p></dd>
 
 </dl></div>
     <div class="section level2">

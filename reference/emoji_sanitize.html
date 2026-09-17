@@ -98,12 +98,14 @@ people, code points that are emoji only when they carry <code>U+FE0F</code>.</p>
 
 <dt id="arg-placeholder">placeholder<a class="anchor" aria-label="anchor" href="#arg-placeholder"></a></dt>
 <dd><p>Replacement token for <code>policy = "placeholder"</code>. Default
-<code>"[emoji]"</code>.</p></dd>
+<code>"[emoji]"</code>. Ignored, and not even validated, under the other four
+policies.</p></dd>
 
 
 <dt id="arg-wrap">wrap<a class="anchor" aria-label="anchor" href="#arg-wrap"></a></dt>
 <dd><p>Template for <code>policy = "shortcode"</code>, with <code>{x}</code> standing for the
-shortcode. Default <code>":{x}:"</code>.</p></dd>
+shortcode. Default <code>":{x}:"</code>. Ignored under the other four policies, as
+it is in <code><a href="emoji_to_text.html">emoji_to_text()</a></code> for <code>format = "name"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -143,6 +145,15 @@ an emoji as a feature while removing its identity. An empty
 face glued to the end of a word yields <code>"wordgrinning face"</code>. If your
 tokeniser needs whitespace around them, use <code>"placeholder"</code> with a padded
 placeholder such as <code>" [emoji] "</code>.</p>
+<p><code>placeholder</code> and <code>wrap</code> belong to one policy each and are ignored by the
+rest, silently and without being validated. That is deliberate rather than
+an oversight: the point of this verb is that <code>policy</code> can be a variable,
+so a script sweeping all five with one <code>placeholder =</code> set would otherwise
+be warned at four fifths of its calls. Nothing is lost either way, since
+an ignored argument cannot change the answer. Contrast
+<code><a href="emoji_incongruity.html">emoji_incongruity()</a></code>'s <code>threshold</code>, which <em>does</em> warn when
+<code>method = "sign_flip"</code> makes it inert: that one is a number the caller
+chose in order to change a result, not a companion belonging to a branch.</p>
     </div>
     <div class="section level2">
     <h2 id="which-policies-can-be-undone">Which policies can be undone<a class="anchor" aria-label="anchor" href="#which-policies-can-be-undone"></a></h2>
