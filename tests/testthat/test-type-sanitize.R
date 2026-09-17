@@ -221,3 +221,46 @@ test_that("emoji_provenance reports one row of versions", {
   expect_true(grepl("novak2015", out$sentiment_lexicon))
   expect_true(grepl("emotag1200", out$emotion_lexicon))
 })
+
+test_that("a companion argument belonging to another branch is inert, quietly", {
+  # ?emoji_sanitize says placeholder and wrap are ignored by the policies they
+  # do not belong to, silently and unvalidated, because `policy` is meant to
+  # be a variable. Pin both halves: nothing is said, and nothing changes.
+  d <- data.frame(text = c(paste("great", grin), "plain"),
+                  stringsAsFactors = FALSE)
+  for (p in c("keep", "strip", "name")) {
+    expect_silent(
+      loud <- emoji_sanitize(d, text, policy = p, wrap = "<{x}>",
+                             placeholder = "ZZZ"))
+    expect_identical(loud, emoji_sanitize(d, text, policy = p), info = p)
+  }
+  expect_silent(sc <- emoji_sanitize(d, text, policy = "shortcode",
+                                     placeholder = "ZZZ"))
+  expect_identical(sc, emoji_sanitize(d, text, policy = "shortcode"))
+  expect_silent(ph <- emoji_sanitize(d, text, policy = "placeholder",
+                                     wrap = "<{x}>"))
+  expect_identical(ph, emoji_sanitize(d, text, policy = "placeholder"))
+  # an ignored `wrap` is not even validated, matching emoji_to_text()
+  expect_silent(emoji_sanitize(d, text, policy = "name", wrap = "no braces"))
+  expect_silent(emoji_to_text(d, text, format = "name", wrap = "no braces"))
+  # but it is validated by the policy that uses it
+  expect_error(emoji_sanitize(d, text, policy = "shortcode",
+                              wrap = "no braces"), "{x}", fixed = TRUE)
+
+  # emoji_score's `by` and `score` are inert for a lexicon named rather than
+  # supplied, and say so
+  for (nm in c("novak2015", "emotag1200")) {
+    expect_silent(o <- emoji_score(d, text, lexicon = nm, by = "nonsense",
+                                   score = "nonsense"))
+    expect_identical(o, emoji_score(d, text, lexicon = nm), info = nm)
+  }
+
+  # the one companion that cannot be ignored is refused instead
+  lex <- data.frame(emoji = grin, score = 0.5, stringsAsFactors = FALSE)
+  expect_error(emoji_sentiment(d, text, lexicon = lex, se = TRUE),
+               "annotation counts", fixed = TRUE)
+
+  expect_match(rd_flat("emoji_sanitize"), "Ignored under the other four",
+               fixed = TRUE)
+  expect_match(rd_flat("emoji_score"), "Ignored when", fixed = TRUE)
+})

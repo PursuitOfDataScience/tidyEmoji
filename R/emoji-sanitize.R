@@ -68,6 +68,16 @@
 #' tokeniser needs whitespace around them, use `"placeholder"` with a padded
 #' placeholder such as `" [emoji] "`.
 #'
+#' `placeholder` and `wrap` belong to one policy each and are ignored by the
+#' rest, silently and without being validated. That is deliberate rather than
+#' an oversight: the point of this verb is that `policy` can be a variable,
+#' so a script sweeping all five with one `placeholder =` set would otherwise
+#' be warned at four fifths of its calls. Nothing is lost either way, since
+#' an ignored argument cannot change the answer. Contrast
+#' [emoji_incongruity()]'s `threshold`, which *does* warn when
+#' `method = "sign_flip"` makes it inert: that one is a number the caller
+#' chose in order to change a result, not a companion belonging to a branch.
+#'
 #' @section Which policies can be undone:
 #' The five policies are not five parallel options: they are a ladder of
 #' information loss, and how far down it you step is invisible until you try to
@@ -126,9 +136,11 @@
 #' @param policy One of `"keep"` (default), `"strip"`, `"name"`,
 #'   `"shortcode"` or `"placeholder"`.
 #' @param placeholder Replacement token for `policy = "placeholder"`. Default
-#'   `"[emoji]"`.
+#'   `"[emoji]"`. Ignored, and not even validated, under the other four
+#'   policies.
 #' @param wrap Template for `policy = "shortcode"`, with `{x}` standing for the
-#'   shortcode. Default `":{x}:"`.
+#'   shortcode. Default `":{x}:"`. Ignored under the other four policies, as
+#'   it is in [emoji_to_text()] for `format = "name"`.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`.
 #' @seealso [emoji_token_cost()] for what the emoji are costing you;

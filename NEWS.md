@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are one hundred and thirteen of them, and
+test that was passing for the wrong reason. There are one hundred and fourteen of them, and
 reading just those leads gives the release without the verification detail.
-Not all one hundred and thirteen changed observable behaviour: several record a test that
+Not all one hundred and fourteen changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,21 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **The other four companion arguments are inert on the branches they do not
+  belong to, and now say so.** `emoji_sanitize()`'s `placeholder` and `wrap`
+  each serve one policy, and `emoji_score()`'s `by` and `score` only apply
+  when `lexicon` is a table rather than a name. All four were quietly ignored
+  elsewhere, changing nothing but leaving the reader to infer it. Each
+  `@param` now says which branch it belongs to *and* that it is ignored off
+  it, as `?emoji_to_text` already did for `wrap` under `format = "name"`.
+  They stay silent deliberately, and the page says why: `policy` and
+  `lexicon` are meant to be variables, so a script sweeping all five policies
+  with one `placeholder =` set would be warned at four fifths of its calls.
+  That is the line between these four and the `threshold` above, which is a
+  number the caller chose in order to move a result. `emoji_sentiment(se =)`
+  is the one companion that cannot be ignored, needing annotation counts only
+  the bundled lexicon carries, and it already errored. Tests pin all of it:
+  silent, and byte-identical to the call without the inert argument.
 * **`threshold` did nothing under `method = "sign_flip"`, quietly.** That
   method flags a polarity flip rather than measuring a gap, so there is
   nothing for a threshold to cut, and a call giving both had half of it

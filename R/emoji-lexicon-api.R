@@ -187,9 +187,11 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'   emotion lexicon's dimensions too, and those must be numeric for the
 #'   reason the score column must be.
 #' @param by Glyph column name when `lexicon` is a data frame, as a single
-#'   string. Default `"emoji"`.
+#'   string. Default `"emoji"`. Ignored when `lexicon` names a bundled or
+#'   registered lexicon, which carries its own key.
 #' @param score Score column name when `lexicon` is a data frame. If `NULL`,
-#'   `"sentiment_score"` then `"score"` are tried.
+#'   `"sentiment_score"` then `"score"` are tried. Ignored, like `by`, when
+#'   `lexicon` is a name rather than a table.
 #' @return `data`, as a tibble, with `.emoji_n` (total emoji),
 #'   `.emoji_n_scored` (emoji found in the lexicon) and `.emoji_score`
 #'   (per-row mean) added, in that order -- the same order

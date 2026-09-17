@@ -33,10 +33,12 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \code{"shortcode"} or \code{"placeholder"}.}
 
 \item{placeholder}{Replacement token for \code{policy = "placeholder"}. Default
-\code{"[emoji]"}.}
+\code{"[emoji]"}. Ignored, and not even validated, under the other four
+policies.}
 
 \item{wrap}{Template for \code{policy = "shortcode"}, with \code{{x}} standing for the
-shortcode. Default \code{":{x}:"}.}
+shortcode. Default \code{":{x}:"}. Ignored under the other four policies, as
+it is in \code{\link[=emoji_to_text]{emoji_to_text()}} for \code{format = "name"}.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same
@@ -86,6 +88,16 @@ Replacements go exactly where the glyph was, with no padding, so a grinning
 face glued to the end of a word yields \code{"wordgrinning face"}. If your
 tokeniser needs whitespace around them, use \code{"placeholder"} with a padded
 placeholder such as \code{" [emoji] "}.
+
+\code{placeholder} and \code{wrap} belong to one policy each and are ignored by the
+rest, silently and without being validated. That is deliberate rather than
+an oversight: the point of this verb is that \code{policy} can be a variable,
+so a script sweeping all five with one \verb{placeholder =} set would otherwise
+be warned at four fifths of its calls. Nothing is lost either way, since
+an ignored argument cannot change the answer. Contrast
+\code{\link[=emoji_incongruity]{emoji_incongruity()}}'s \code{threshold}, which \emph{does} warn when
+\code{method = "sign_flip"} makes it inert: that one is a number the caller
+chose in order to change a result, not a companion belonging to a branch.
 }
 \section{Which policies can be undone}{
 

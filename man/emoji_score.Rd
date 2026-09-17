@@ -46,10 +46,12 @@ emotion lexicon's dimensions too, and those must be numeric for the
 reason the score column must be.}
 
 \item{by}{Glyph column name when \code{lexicon} is a data frame, as a single
-string. Default \code{"emoji"}.}
+string. Default \code{"emoji"}. Ignored when \code{lexicon} names a bundled or
+registered lexicon, which carries its own key.}
 
 \item{score}{Score column name when \code{lexicon} is a data frame. If \code{NULL},
-\code{"sentiment_score"} then \code{"score"} are tried.}
+\code{"sentiment_score"} then \code{"score"} are tried. Ignored, like \code{by}, when
+\code{lexicon} is a name rather than a table.}
 }
 \value{
 \code{data}, as a tibble, with \code{.emoji_n} (total emoji),
