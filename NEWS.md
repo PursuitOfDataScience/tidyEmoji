@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are ninety-three of them, and
+test that was passing for the wrong reason. There are ninety-four of them, and
 reading just those leads gives the release without the verification detail.
-Not all ninety-three changed observable behaviour: several record a test that
+Not all ninety-four changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,24 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **Four tests and six warnings were a latent red on a non-UTF-8 checking
+  flavour.** Nothing had ever run the suite under `LC_ALL=C`: the earlier
+  locale sweeps compared verb *output*, which is locale-proof, and
+  `R CMD check` runs in whatever locale the machine has. Doing it gives 4
+  failures and 6 warnings, and not one of them is the package. R
+  transliterates a string it cannot represent natively on the way into a
+  symbol and on the way out of `deparse()`, so `rlang::sym("<glyph>")`
+  becomes the symbol `<U+0001F602>` and `as.character(list(c("a",
+  "<glyph>")))` deparses to the escape; three tests were measuring that
+  rather than anything here, including the README render, since pillar
+  prints an ASCII tibble there too. The three are now gated on
+  `l10n_info()$"UTF-8"` with the reason given, the two AST scans that
+  `parse()` every test file no longer report R's "unable to translate"
+  warning against whichever test is running, and the three marker characters
+  the README comparison needs are built with `intToUtf8()` instead of a
+  `\uXXXX` escape, which is what emitted those warnings at parse time before
+  any test had started. Under `LC_ALL=C` the suite is now 14074 pass, 0 fail,
+  0 warn, 3 skip.
 * **`?emoji_position` never documented the convention its own tests called
   documented.** A text that collapses to a single position, meaning one emoji
   and nothing else at all, cannot tell its start from its end, and

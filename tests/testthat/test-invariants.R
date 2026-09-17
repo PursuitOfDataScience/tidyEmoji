@@ -5382,10 +5382,16 @@ test_that("emoji_score() says where to go for an emotion-shaped lexicon", {
 test_that("a list or data-frame text column is refused, not deparsed", {
   A <- "\U0001F600"
   dl <- tibble::tibble(text = list(c("a", A), "b", list(A)))
-  # the deparse the old code scored: the glyph really is in there
-  expect_true(any(grepl(A, as.character(dl$text), fixed = TRUE)))
-  expect_gt(sum(lengths(tidyEmoji:::emoji_glyph_list(as.character(dl$text)))),
-            0L)
+  # the deparse the old code scored: the glyph really is in there. A non-UTF-8
+  # session deparses it as the escape "<U+0001F600>" instead, so assert
+  # whichever form this session produces; only the UTF-8 one is still
+  # detectable as an emoji, which is the half that has to be gated.
+  marker <- if (utf8_session()) A else "<U+0001F600>"
+  expect_true(any(grepl(marker, as.character(dl$text), fixed = TRUE)))
+  if (utf8_session()) {
+    expect_gt(
+      sum(lengths(tidyEmoji:::emoji_glyph_list(as.character(dl$text)))), 0L)
+  }
   # so the column has to be refused rather than coerced
   for (v in c("emoji_sentiment", "emoji_frequency", "emoji_tokens",
               "emoji_density", "emoji_summary", "emoji_type")) {
@@ -8060,6 +8066,10 @@ test_that("README.md's shown output is what the package now produces", {
   skip_if_not_installed("knitr")
   skip_if_not_installed("dplyr")
   skip_if(!rmarkdown::pandoc_available(), "pandoc not available")
+  # pillar prints a tibble differently in a non-UTF-8 session -- an ASCII
+  # header rule, and every glyph escaped to \U0001f600 -- so a fresh render
+  # there cannot match a README rendered in UTF-8, whatever the package does
+  skip_if_not_utf8("the README's emoji output")
 
   wd <- file.path(tempdir(), "tidyEmoji-readme")
   dir.create(file.path(wd, "man", "figures"), recursive = TRUE,
@@ -8086,7 +8096,13 @@ test_that("README.md's shown output is what the package now produces", {
   # rather than on the package, so normalise them. Everything that could
   # actually go stale -- row and column counts, column names, values -- is
   # compared byte for byte.
-  ascii_markers <- c("\u00d7" = "x", "\u2026" = "~", "\u2139" = "i")
+  # built with intToUtf8() rather than written as "\u00d7": a \uXXXX escape is
+  # resolved when the file is *parsed*, and in a non-UTF-8 session that emits
+  # three "unable to translate" warnings before any test runs, outside every
+  # test_that() block and so outside testthat's reporting. intToUtf8() makes
+  # the same UTF-8 strings at run time and says nothing.
+  ascii_markers <- stats::setNames(
+    c("x", "~", "i"), intToUtf8(c(0x00D7, 0x2026, 0x2139), multiple = TRUE))
   out_lines <- function(f) {
     l <- readLines(f, warn = FALSE, encoding = "UTF-8")
     l <- trimws(grep("^\\s*#>", l, value = TRUE))
@@ -8144,8 +8160,15 @@ test_that("no assertion in the suite compares something to itself", {
       }
     }
   }
+  # suppressWarnings: a \uXXXX escape anywhere in a test source makes parse()
+  # warn "unable to translate ... to native encoding" in a non-UTF-8 session.
+  # These two scans read the AST, never a string value, so transliteration
+  # cannot change their answer, and a warning raised here would be reported
+  # against whichever test happened to be running.
   for (f in files) {
-    for (e in parse(f, keep.source = FALSE)) walk(e, basename(f))
+    for (e in suppressWarnings(parse(f, keep.source = FALSE))) {
+      walk(e, basename(f))
+    }
   }
   expect_identical(offenders, character())
 })
@@ -8158,7 +8181,7 @@ test_that("every test_that block contains at least one expectation", {
   empty <- character()
   n_blocks <- 0L
   for (f in files) {
-    for (e in parse(f, keep.source = FALSE)) {
+    for (e in suppressWarnings(parse(f, keep.source = FALSE))) {
       if (!is.call(e) || !identical(as.character(e[[1L]])[1L], "test_that")) next
       n_blocks <- n_blocks + 1L
       txt <- paste(deparse(e), collapse = "\n")
@@ -8680,6 +8703,63 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_identical(sum(multi & bearing), sum(multi))
   rd <- rd_flat("emoji_density")
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
+})
+
+test_that("the four documented figures no test had ever held to hold", {
+  # Found by listing every number in the roxygen prose and grepping the suite
+  # for it: 78 distinct figures, 8 mentioned nowhere in a test. Three of the
+  # eight are soft (a paper's sample size, a prose "post-2018"); these are the
+  # checkable ones, pinned here with the sentence each comes from.
+  skip_if_catalogue_moved()
+  ref <- asNamespace("tidyEmoji")$emoji_reference()
+  e <- emoji::emojis
+
+  # ?tidyEmoji: "Only 262 of the pairs are real: `subgroup` is "country-flag"
+  # for 259 rows of the reference table and "subdivision-flag" for 3"
+  expect_identical(sum(e$subgroup == "country-flag"), 259L)
+  expect_identical(sum(e$subgroup == "subdivision-flag"), 3L)
+  expect_identical(
+    sum(e$subgroup %in% c("country-flag", "subdivision-flag")), 262L)
+  pkg <- rd_flat("tidyEmoji-package")
+  expect_match(pkg, "Only 262 of the pairs are real", fixed = TRUE)
+
+  # ?emoji_to_text: "returns an identical code-point key for all 5042 entries
+  # and identical bytes for 79% of them. The other 1040 differ by U+FE0F
+  # alone, never by more" and "A second round trip changes nothing".
+  expect_identical(nrow(ref), 5042L)
+  d <- data.frame(t = ref$emoji, stringsAsFactors = FALSE)
+  back <- text_to_emoji(emoji_to_text(d, t, format = "shortcode"), t)$t
+  ekey <- asNamespace("tidyEmoji")$emoji_key
+  expect_identical(ekey(back), ekey(ref$emoji))
+  differ <- back != ref$emoji
+  expect_identical(sum(differ), 1040L)
+  expect_equal(round(100 * mean(!differ)), 79)
+  drop_fe0f <- function(x) {
+    vapply(x, function(s) intToUtf8(setdiff(utf8ToInt(s), 0xFE0F)),
+           character(1), USE.NAMES = FALSE)
+  }
+  expect_identical(drop_fe0f(back[differ]), drop_fe0f(ref$emoji[differ]))
+  twice <- text_to_emoji(
+    emoji_to_text(data.frame(t = back, stringsAsFactors = FALSE), t,
+                  format = "shortcode"), t)$t
+  expect_identical(twice, back)
+
+  # ?emoji_unicode_crosswalk: "5761 rows cover 4698 distinct names and 4853
+  # distinct glyphs" and "a join by `emoji_name` duplicates rows for those 973
+  # names"
+  x <- emoji_unicode_crosswalk
+  expect_identical(nrow(x), 5761L)
+  expect_identical(length(unique(x$emoji_name)), 4698L)
+  expect_identical(length(unique(x$unicode)), 4853L)
+  expect_identical(sum(table(x$emoji_name) > 1L), 973L)
+  cw <- rd_flat("emoji_unicode_crosswalk")
+  expect_match(cw, "5761 rows cover 4698 distinct names and 4853", fixed = TRUE)
+
+  # ?emoji_unicode_version: the example in @return is the answer, not a
+  # remembered one from an older catalogue
+  expect_identical(emoji_unicode_version(), "16.0")
+  expect_match(rd_flat("emoji_unicode_version"),
+               "\\code{\"16.0\"} with \\pkg{emoji} 16.0.0", fixed = TRUE)
 })
 
 test_that("the vignette's 373-of-2000 figure and its zero-mean check hold", {

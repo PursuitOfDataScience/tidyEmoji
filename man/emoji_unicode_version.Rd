@@ -7,8 +7,10 @@
 emoji_unicode_version()
 }
 \value{
-A single string such as \code{"15.1"}, or \code{NA} if the reference table
-carries no usable version information.
+A single string, \code{"16.0"} with \pkg{emoji} 16.0.0, or \code{NA} if the
+reference table carries no usable version information. It reports the
+catalogue you have installed rather than anything about tidyEmoji, so it
+moves when you upgrade that package and not when you upgrade this one.
 }
 \description{
 \code{emoji_unicode_version()} reports the highest emoji version present in the

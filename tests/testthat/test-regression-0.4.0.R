@@ -1085,6 +1085,11 @@ test_that("the widened rule does not merge things that are not one emoji", {
 # ---------------------------------------------------------------------------
 
 test_that("a doc_id column named as an emoji is refused, not overwritten", {
+  # rlang::sym(glyph) cannot make that symbol in a non-UTF-8 session: R
+  # transliterates the name to the literal text "<U+0001F602>", so the column
+  # genuinely is not found and the verb is right to say so. Nothing here is
+  # reachable from a C locale, in a test or in a user's script.
+  skip_if_not_utf8("a glyph used as a column name")
   d <- stats::setNames(
     data.frame(c("x", "y"), c(laugh, rage), stringsAsFactors = FALSE),
     c(laugh, "text")

@@ -182,8 +182,10 @@ emoji_unicode_releases <- function() {
 #' \pkg{emoji} package is. Anything newer than this simply will not be
 #' recognised as an emoji.
 #'
-#' @return A single string such as `"15.1"`, or `NA` if the reference table
-#'   carries no usable version information.
+#' @return A single string, `"16.0"` with \pkg{emoji} 16.0.0, or `NA` if the
+#'   reference table carries no usable version information. It reports the
+#'   catalogue you have installed rather than anything about tidyEmoji, so it
+#'   moves when you upgrade that package and not when you upgrade this one.
 #' @seealso [emoji_provenance()] for the full provenance row;
 #'   [emoji_unicode_releases()] for release dates.
 #' @examples

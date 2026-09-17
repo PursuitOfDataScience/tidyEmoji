@@ -110,7 +110,8 @@ read with `utils::read.csv()`, and the nine plotting chunks are gated on a
 
 ## Test environments
 
-* Local: R 4.1.0 (the declared minimum), R 4.4.1 and R 4.6.0 on Linux
+* Local: R 4.1.0 (the declared minimum), R 4.4.1 and R 4.6.0 on Linux, the
+  full suite also run under `LC_ALL=C` (see the skip inventory below)
 * GitHub Actions:
   - ubuntu-latest: R-release, R-devel, R-oldrel-1
   - macOS-latest: R-release
@@ -166,6 +167,16 @@ that read files a tarball does not carry (`data-raw/` for regenerating the
 crosswalks, `README.Rmd` for re-rendering it, and this file twice, for its
 own claims), plus one that asserts the installed `emoji` package is the exact
 release the documented catalogue figures were derived from.
+
+Three further tests are skipped on a checking flavour whose locale is not
+UTF-8, and their skip message says why. R transliterates a string it cannot
+represent natively on the way into a symbol and on the way out of
+`deparse()`, so a glyph used as a column name, or recovered from a deparsed
+list column, arrives as the literal text `<U+0001F602>`; `pillar` also prints
+an ASCII tibble there, so a fresh render of `README.Rmd` cannot match the
+shipped `README.md`. All three are about R's own transliteration rather than
+about this package, and everything else passes unchanged: under `LC_ALL=C`
+the suite is 14074 pass, 0 failures and 0 warnings.
 
 That last one deserves a note, because it is the reason this submission is
 robust to something outside our control. Roughly seventy figures in the help

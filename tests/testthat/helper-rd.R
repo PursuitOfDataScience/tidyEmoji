@@ -88,6 +88,29 @@ pkg_code_text <- function() {
 }
 
 
+# Can this session carry an emoji through R's own name and deparse machinery?
+#
+# Three tests are about what happens to a glyph that has been through
+# as.name() or deparse(), and both of those transliterate in a non-UTF-8
+# session: `as.name("\U0001F602")` returns the symbol `<U+0001F602>` (with R's
+# own "unable to translate" warning) and `as.character(list(c("a", glyph)))`
+# deparses to `c("a", "<U+0001F600>")`. Neither is recoverable and neither is
+# anything this package does, so under LC_ALL=C those three tests were
+# measuring R's transliteration and failing. The rest of the suite is locale
+# independent and runs unconditionally -- verified by running all of it under
+# LC_ALL=C, which is also how these three were found.
+utf8_session <- function() {
+  isTRUE(l10n_info()[["UTF-8"]])
+}
+
+skip_if_not_utf8 <- function(what = "an emoji") {
+  testthat::skip_if_not(
+    utf8_session(),
+    paste0("session is not UTF-8, so ", what,
+           " cannot survive as.name() or deparse()"))
+  invisible(TRUE)
+}
+
 # The emoji release every catalogue figure in this package was derived from.
 # Defined here rather than in a test file so the gate below is available to
 # every file, and so `R CMD check` cannot reach a count assertion before the
