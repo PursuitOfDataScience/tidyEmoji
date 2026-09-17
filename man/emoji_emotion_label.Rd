@@ -37,15 +37,27 @@ label side by side.
 \description{
 \code{emoji_emotion_label()} adds \code{.emoji_emotion}, the emotion with the highest
 mean score among the row's emoji (using \code{\link[=emoji_emotion]{emoji_emotion()}}). Ties are broken
-in Plutchik order; rows with no scored emoji receive \code{NA}.
+in Plutchik order; a row with nothing scorable, or with no emotion ahead of
+the others, receives \code{NA}.
 }
 \details{
 Ties are broken in Plutchik order -- the order the eight emotions are listed
 in throughout the package (anger, anticipation, disgust, fear, joy, sadness,
 surprise, trust) -- so the winner is deterministic and does not depend on
-the row's position in the data. Read \code{.emoji_n_scored} alongside the label:
-a tie, or a near-tie, is invisible in a single winning name, and
-\code{\link[=emoji_emotion]{emoji_emotion()}} gives the full profile the label collapses.
+the row's position in the data. It happens: \strong{3 of the bundled lexicon's
+150 glyphs tie for their top emotion}, and because Plutchik order is
+alphabetical the tie-break quietly favours the early names. \verb{U+1F3A4}
+scores anticipation and joy at 0.39 and is labelled anticipation; \verb{U+1F619}
+scores joy and trust at 0.83 and is labelled joy. So read
+\code{.emoji_n_scored} alongside the label, and reach for \code{\link[=emoji_emotion]{emoji_emotion()}}
+when a near-tie would change your reading: a single winning name cannot
+show one.
+
+A row whose scored emotions are \emph{all} equal is the one case with no winner
+to break a tie between, and it gets \code{NA} rather than the first name in the
+order. An emoji scored zero on all eight is the obvious example. That
+needs a custom lexicon to reach, the bundled one having no such glyph, and
+\code{.emoji_n_scored} still separates it from a row with nothing to score.
 }
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))

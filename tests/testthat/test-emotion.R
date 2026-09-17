@@ -207,3 +207,64 @@ test_that("emoji_search is safe for regex metacharacters", {
   expect_no_error(emoji_search("("))
   expect_equal(nrow(emoji_search("a[b")), 0)
 })
+
+test_that("a row with no dominant emotion is NA, not the first Plutchik name", {
+  # max.col(ties.method = "first") returns column 1 when nothing wins, so a
+  # custom lexicon scoring an emoji the same across the board came back
+  # labelled "anger". Only reachable through `lexicon = `.
+  A <- "\U0001F600"
+  B <- "\U0001F621"
+  dims <- tidyEmoji:::emoji_emotion_dims()
+  flat <- function(v) {
+    d <- as.data.frame(c(list(emoji = A), stats::setNames(as.list(rep(v, 8L)), dims)),
+                       stringsAsFactors = FALSE)
+    d
+  }
+  d <- data.frame(text = paste("x", A), stringsAsFactors = FALSE)
+  for (v in c(0, 0.5, 1)) {
+    o <- emoji_emotion_label(d, text, lexicon = flat(v))
+    expect_true(is.na(o$.emoji_emotion), info = v)
+    # and it stays distinguishable from a row with nothing to score
+    expect_identical(o$.emoji_n_scored, 1L, info = v)
+  }
+  none <- emoji_emotion_label(data.frame(text = "plain", stringsAsFactors = FALSE),
+                              text, lexicon = flat(0))
+  expect_true(is.na(none$.emoji_emotion))
+  expect_true(is.na(none$.emoji_n_scored))
+
+  # a genuine winner is unaffected, and so is a two-way tie, which the
+  # documented Plutchik order still settles
+  one_up <- flat(0)
+  one_up$joy <- 1
+  expect_identical(
+    emoji_emotion_label(d, text, lexicon = one_up)$.emoji_emotion, "joy")
+  two_up <- flat(0)
+  two_up$joy <- 1
+  two_up$trust <- 1
+  expect_identical(
+    emoji_emotion_label(d, text, lexicon = two_up)$.emoji_emotion, "joy")
+  # a lexicon offering a single dimension is that dimension, not a tie
+  one_dim <- data.frame(emoji = A, joy = 0, stringsAsFactors = FALSE)
+  expect_identical(
+    emoji_emotion_label(d, text, lexicon = one_dim)$.emoji_emotion, "joy")
+
+  # the bundled lexicon reaches none of this, and its three real ties resolve
+  # in Plutchik order as the help page says
+  m <- tidyEmoji:::emoji_emotion_map()
+  expect_identical(sum(apply(m, 1L, function(r) all(r == 0))), 0L)
+  tied <- which(apply(m, 1L, function(r) sum(r == max(r)) > 1L))
+  expect_identical(length(tied), 3L)
+  ref <- tidyEmoji:::emoji_reference()
+  for (i in tied) {
+    r <- m[i, ]
+    winners <- names(r)[r == max(r)]
+    glyph <- ref$emoji[match(rownames(m)[i], ref$key)]
+    got <- emoji_emotion_label(
+      data.frame(text = glyph, stringsAsFactors = FALSE), text)$.emoji_emotion
+    expect_identical(got, dims[min(match(winners, dims))], info = glyph)
+  }
+  rd <- rd_flat("emoji_emotion_label")
+  expect_match(rd, "150 glyphs tie for their top emotion", fixed = TRUE)
+  expect_match(rd, "rather than the first name in the order", fixed = TRUE)
+  expect_match(rd, "no winner to break a tie between", fixed = TRUE)
+})

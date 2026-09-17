@@ -8601,8 +8601,15 @@ test_that("NEWS.md's orientation matches the section it describes", {
                "one hundred and four", "one hundred and five",
                "one hundred and six", "one hundred and seven",
                "one hundred and eight", "one hundred and nine",
-               "one hundred and ten")
-  names(words) <- as.character(61:110)
+               "one hundred and ten", "one hundred and eleven",
+               "one hundred and twelve", "one hundred and thirteen",
+               "one hundred and fourteen", "one hundred and fifteen",
+               "one hundred and sixteen", "one hundred and seventeen",
+               "one hundred and eighteen", "one hundred and nineteen",
+               "one hundred and twenty", "one hundred and twenty-one",
+               "one hundred and twenty-two", "one hundred and twenty-three",
+               "one hundred and twenty-four", "one hundred and twenty-five")
+  names(words) <- as.character(61:125)
   key <- as.character(n_bold)
   skip_if(!key %in% names(words),
           paste("no spelled form recorded for", n_bold, "-- update this test"))

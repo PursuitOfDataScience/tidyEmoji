@@ -157,7 +157,8 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #'
 #' `emoji_emotion_label()` adds `.emoji_emotion`, the emotion with the highest
 #' mean score among the row's emoji (using [emoji_emotion()]). Ties are broken
-#' in Plutchik order; rows with no scored emoji receive `NA`.
+#' in Plutchik order; a row with nothing scorable, or with no emotion ahead of
+#' the others, receives `NA`.
 #'
 #' @inheritParams emoji_summary
 #' @param lexicon Passed to [emoji_emotion()].
@@ -165,9 +166,20 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #' Ties are broken in Plutchik order -- the order the eight emotions are listed
 #' in throughout the package (anger, anticipation, disgust, fear, joy, sadness,
 #' surprise, trust) -- so the winner is deterministic and does not depend on
-#' the row's position in the data. Read `.emoji_n_scored` alongside the label:
-#' a tie, or a near-tie, is invisible in a single winning name, and
-#' [emoji_emotion()] gives the full profile the label collapses.
+#' the row's position in the data. It happens: **3 of the bundled lexicon's
+#' 150 glyphs tie for their top emotion**, and because Plutchik order is
+#' alphabetical the tie-break quietly favours the early names. `U+1F3A4`
+#' scores anticipation and joy at 0.39 and is labelled anticipation; `U+1F619`
+#' scores joy and trust at 0.83 and is labelled joy. So read
+#' `.emoji_n_scored` alongside the label, and reach for [emoji_emotion()]
+#' when a near-tie would change your reading: a single winning name cannot
+#' show one.
+#'
+#' A row whose scored emotions are *all* equal is the one case with no winner
+#' to break a tie between, and it gets `NA` rather than the first name in the
+#' order. An emoji scored zero on all eight is the obvious example. That
+#' needs a custom lexicon to reach, the bundled one having no such glyph, and
+#' `.emoji_n_scored` still separates it from a row with nothing to score.
 #'
 #' @return `data`, as a tibble, with `.emoji_emotion` (the winning emotion, or
 #'   `NA` when nothing was scorable) added, alongside the `.emoji_n` and
@@ -204,6 +216,27 @@ emoji_emotion_label <- function(data, text, lexicon = "emotag1200") {
   has_score <- rowSums(!is.na(mat)) > 0
   label <- dims[idx]
   label[!has_score] <- NA_character_
+  # A row whose scored dimensions are all *equal* has no dominant emotion,
+  # and max.col() cannot say so -- it returns the first column, so a custom
+  # lexicon scoring an emoji the same across the board (zero across the
+  # board, most obviously) came back labelled "anger", which is a claim the
+  # data does not make. NA is the honest answer, and it is unambiguous here
+  # because `.emoji_n_scored` stays at its count rather than becoming NA, so
+  # "scored, nothing won" is still distinguishable from "nothing to score".
+  # Two or more scored dimensions are needed for that to mean anything: a row
+  # that scored on exactly one *is* that one, with nothing to tie against.
+  # The bundled lexicon has no such glyph, so nothing changes for
+  # `lexicon = "emotag1200"`; this is reachable only through `lexicon = `.
+  flat <- if (nrow(mat)) {
+    vapply(seq_len(nrow(mat)), function(i) {
+      r <- mat[i, ]
+      r <- r[!is.na(r)]
+      length(r) > 1L && all(r == r[1L])
+    }, logical(1))
+  } else {
+    logical(0)
+  }
+  label[flat] <- NA_character_
   em$.emoji_emotion <- label
   # Drop only the per-emotion columns *this call* introduced. `data` may
   # already carry them -- emoji_emotion() then emoji_emotion_label() is the
