@@ -137,11 +137,12 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and sixteen of them, and reading just those leads gives the
-release without the verification detail. Not all one hundred and sixteen
-changed observable behaviour: several record a test that could not have
-failed, or a figure the documentation quoted incorrectly, which are
-worth the same prominence because both meant something was unverified.
+hundred and seventeen of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and
+seventeen changed observable behaviour: several record a test that could
+not have failed, or a figure the documentation quoted incorrectly, which
+are worth the same prominence because both meant something was
+unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1627,19 @@ worth the same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **`cran-comments.md` said five CI flavours when the matrix defines
+  six.** The workflow gained an `r: '4.1'` job precisely so the declared
+  floor of R 4.1.0 is built against, `oldrel-1` sitting far above it,
+  and the file a reviewer reads to learn what was tested went on saying
+  “five” in three places and listing the other five. It now says six,
+  names the 4.1 job (R 4.1.3 on that runner) and says why it is there. A
+  test couples the spelled-out count and every runner name to the
+  workflow itself, so the two cannot drift again; it reads a
+  build-ignored file, so it runs from the source tree and stands down
+  inside `R CMD check`. The stale claim inside the test that checks the
+  declared minimum is corrected too: it said CI cannot reach the floor,
+  which stopped being true when that job was added.
 
 - **Nothing guarded the figure references, and this package has already
   shipped a broken one.** `man/figures/lifecycle-deprecated.svg` was
