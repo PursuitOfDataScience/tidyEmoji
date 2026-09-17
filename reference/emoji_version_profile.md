@@ -43,7 +43,9 @@ emoji_version_profile(data, text)
 
 A tibble with one row per version, oldest first: `version`,
 `version_num`, `release_date`, `n_types` (distinct emoji), `n_tokens`
-(occurrences), `share_types` and `share_tokens`.
+(occurrences), `share_types` and `share_tokens`. Emoji whose version the
+reference table does not give are pooled into one last row with
+`version = NA`, after every known version rather than before them.
 
 ## Details
 

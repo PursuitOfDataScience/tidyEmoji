@@ -64,7 +64,10 @@ emoji_collocations(
 
 A tibble with columns `emoji`, `word`, `n` (co-occurrences) and `pmi`,
 shaped like `widyr::pairwise_count()` output so it drops into existing
-tidytext workflows.
+tidytext workflows. Rows are sorted by `measure` descending, then by the
+other of the two descending, then by the glyph and the word, so the
+order is fully determined. Ties in `pmi` are common: every pair seen the
+same number of times with the same marginals scores alike.
 
 ## Details
 

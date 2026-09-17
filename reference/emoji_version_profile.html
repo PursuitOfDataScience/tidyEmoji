@@ -80,7 +80,9 @@ people, code points that are emoji only when they carry <code>U+FE0F</code>.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with one row per version, oldest first: <code>version</code>,
 <code>version_num</code>, <code>release_date</code>, <code>n_types</code> (distinct emoji), <code>n_tokens</code>
-(occurrences), <code>share_types</code> and <code>share_tokens</code>.</p>
+(occurrences), <code>share_types</code> and <code>share_tokens</code>. Emoji whose version the
+reference table does not give are pooled into one last row with
+<code>version = NA</code>, after every known version rather than before them.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

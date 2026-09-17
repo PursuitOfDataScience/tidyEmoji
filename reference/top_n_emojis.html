@@ -103,6 +103,15 @@ deterministic – the same rule <code><a href="emoji_frequency.html">emoji_frequ
 straddles position <code>n</code> the glyph order decides which side of the cut each
 emoji falls on, and a corpus with fewer than <code>n</code> distinct emoji returns
 every one of them rather than padding to <code>n</code>.</p>
+<p><code>duplicated = TRUE</code> leaves several rows sharing both <code>n</code> and <code>unicode</code>,
+which that rule does not settle. Within one glyph the rows come out in
+<a href="emoji_unicode_crosswalk.html">emoji_unicode_crosswalk</a>'s order for the glyph's codepoint key, and the
+first of them carries the same <code>emoji_name</code> that <code>duplicated = FALSE</code>
+reports. Because the join is on the key rather than on the spelling, a
+glyph collects the aliases of <em>every</em> spelling of itself: the unqualified
+<code>U+26F9 U+200D U+2640</code> is listed under <code>woman_bouncing_ball</code> and under
+the two aliases the fully-qualified spelling carries. That is what "every
+name an emoji is known by" means here.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

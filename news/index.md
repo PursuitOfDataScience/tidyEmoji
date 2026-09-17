@@ -136,12 +136,12 @@ maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
-or in a test that was passing for the wrong reason. There are
-ninety-four of them, and reading just those leads gives the release
-without the verification detail. Not all ninety-four changed observable
-behaviour: several record a test that could not have failed, or a figure
-the documentation quoted incorrectly, which are worth the same
-prominence because both meant something was unverified.
+or in a test that was passing for the wrong reason. There are ninety-six
+of them, and reading just those leads gives the release without the
+verification detail. Not all ninety-six changed observable behaviour:
+several record a test that could not have failed, or a figure the
+documentation quoted incorrectly, which are worth the same prominence
+because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1626,47 @@ prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **Six help pages named a sort key but not enough of them to order the
+  output.** Every verb here sorts deterministically, and had been pinned
+  as doing so, but a reader following the `@return` could not predict
+  the result.
+  [`?top_n_emojis`](https://pursuitofdatascience.github.io/tidyEmoji/reference/top_n_emojis.md)
+  is the clearest case: it promises descending `n` with ties broken by
+  the glyph, “so the order is deterministic”, while `duplicated = TRUE`
+  leaves several rows sharing both. The answer, now written down and
+  pinned over 200 catalogue glyphs, is `emoji_unicode_crosswalk`’s order
+  for the glyph’s codepoint key, with the first row carrying the same
+  name `duplicated = FALSE` reports; the same paragraph records a
+  consequence of joining on the key rather than the spelling that the
+  page had never mentioned, namely that a glyph collects the aliases of
+  every spelling of itself, so the unqualified `U+26F9 U+200D U+2640` is
+  listed under `woman_bouncing_ball` and under the two aliases its
+  fully-qualified spelling carries. The other five:
+  [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+  sorts by `measure` descending, then the other of the two, then the
+  glyph and the word, where ties in `pmi` are the common case rather
+  than the exception;
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+  by period, then `measure`, then the glyph, which is what separates the
+  zeros it fills in;
+  [`emoji_incongruity_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity_profile.md)
+  by `flip_rate`, then `n`, then the glyph, where the first key is `0`
+  for every glyph that never flips;
+  [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
+  by `n` then the glyph; and
+  [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+  oldest first, with the emoji whose version the reference table cannot
+  give pooled into one last row rather than a first one. A test now
+  sorts each result independently by the documented keys and requires
+  the two to agree, and requires each to survive a permutation of the
+  input rows.
+
+- **`R CMD check --as-cran` now passes under `LC_ALL=C` as well.**
+  Examples, the vignette build and the full test suite all run there,
+  and the result is the usual host artefacts and nothing else. It had
+  never been tried, and the four test failures the previous entry
+  describes are what it found.
 
 - **Four tests and six warnings were a latent red on a non-UTF-8
   checking flavour.** Nothing had ever run the suite under `LC_ALL=C`:

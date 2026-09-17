@@ -71,6 +71,17 @@ uses. When a tie straddles position `n` the glyph order decides which
 side of the cut each emoji falls on, and a corpus with fewer than `n`
 distinct emoji returns every one of them rather than padding to `n`.
 
+`duplicated = TRUE` leaves several rows sharing both `n` and `unicode`,
+which that rule does not settle. Within one glyph the rows come out in
+[emoji_unicode_crosswalk](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_crosswalk.md)'s
+order for the glyph's codepoint key, and the first of them carries the
+same `emoji_name` that `duplicated = FALSE` reports. Because the join is
+on the key rather than on the spelling, a glyph collects the aliases of
+*every* spelling of itself: the unqualified `U+26F9 U+200D U+2640` is
+listed under `woman_bouncing_ball` and under the two aliases the
+fully-qualified spelling carries. That is what "every name an emoji is
+known by" means here.
+
 ## See also
 
 [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)

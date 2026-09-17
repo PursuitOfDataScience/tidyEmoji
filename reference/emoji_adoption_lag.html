@@ -96,8 +96,9 @@ own <code>format</code> first.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with one row per emoji, most frequent first: <code>emoji</code>,
-<code>name</code>, <code>n</code>, <code>version</code>, <code>release_date</code>, <code>first_seen</code> and <code>lag_days</code>.
+    <p>A tibble with one row per emoji, most frequent first and ties
+broken by the glyph so the order is fully determined: <code>emoji</code>, <code>name</code>,
+<code>n</code>, <code>version</code>, <code>release_date</code>, <code>first_seen</code> and <code>lag_days</code>.
 <code>lag_days</code> is <code>NA</code> when the release date of the version is unknown.</p>
     </div>
     <div class="section level2">

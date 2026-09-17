@@ -86,7 +86,10 @@ emoji_incongruity_profile(
 
 A tibble with one row per emoji: `emoji`, `name`, `n` (scored
 occurrences), `mean_incongruity`, `sd_incongruity`, `n_flips` and
-`flip_rate`, sorted by descending `flip_rate`.
+`flip_rate`, sorted by descending `flip_rate`, then descending `n`, then
+the glyph, so the order is fully determined. The first key ties readily:
+every glyph that never flips scores `0`, and one that always does scores
+`1`.
 
 ## Details
 

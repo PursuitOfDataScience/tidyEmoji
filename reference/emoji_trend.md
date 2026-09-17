@@ -90,7 +90,10 @@ emoji_trend(
 ## Value
 
 A tibble with columns `.period` (a `Date`, the start of the period),
-`emoji`, `name`, `n` and `share`.
+`emoji`, `name`, `n` and `share`, sorted by `.period`, then by `measure`
+descending, then by the glyph, so the order is fully determined. That
+last key matters: within a period the zeros this verb fills in all tie
+on both of the others.
 
 ## Details
 

@@ -66,9 +66,10 @@ emoji_adoption_lag(data, text, time)
 
 ## Value
 
-A tibble with one row per emoji, most frequent first: `emoji`, `name`,
-`n`, `version`, `release_date`, `first_seen` and `lag_days`. `lag_days`
-is `NA` when the release date of the version is unknown.
+A tibble with one row per emoji, most frequent first and ties broken by
+the glyph so the order is fully determined: `emoji`, `name`, `n`,
+`version`, `release_date`, `first_seen` and `lag_days`. `lag_days` is
+`NA` when the release date of the version is unknown.
 
 ## Details
 

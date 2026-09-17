@@ -103,7 +103,10 @@ always returned.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>emoji</code>, <code>word</code>, <code>n</code> (co-occurrences) and
 <code>pmi</code>, shaped like <code>widyr::pairwise_count()</code> output so it drops into
-existing tidytext workflows.</p>
+existing tidytext workflows. Rows are sorted by <code>measure</code> descending,
+then by the other of the two descending, then by the glyph and the word,
+so the order is fully determined. Ties in <code>pmi</code> are common: every pair
+seen the same number of times with the same marginals scores alike.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

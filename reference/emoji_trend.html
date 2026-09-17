@@ -122,7 +122,10 @@ within a period: <code>"n"</code> (default) or <code>"share"</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>.period</code> (a <code>Date</code>, the start of the period),
-<code>emoji</code>, <code>name</code>, <code>n</code> and <code>share</code>.</p>
+<code>emoji</code>, <code>name</code>, <code>n</code> and <code>share</code>, sorted by <code>.period</code>, then by <code>measure</code>
+descending, then by the glyph, so the order is fully determined. That
+last key matters: within a period the zeros this verb fills in all tie on
+both of the others.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
