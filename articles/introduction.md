@@ -74,6 +74,16 @@ has_plot_pkgs <- all(vapply(
 if (has_plot_pkgs) library(ggplot2)
 ```
 
+That gate covers building this vignette. It does *not* carry over to the
+script `knitr` tangles out of it, the one
+`edit(vignette("introduction", package = "tidyEmoji"))` opens: a chunk’s
+`eval` option is a build-time instruction and is not part of the
+extracted code, so `introduction.R` calls
+[`ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html)
+unconditionally. Everything in it that uses tidyEmoji alone runs against
+the package’s declared dependencies; install , and if you want to run
+the whole file.
+
 ## Example data
 
 Throughout this vignette we use a sample of text collected in Atlanta,

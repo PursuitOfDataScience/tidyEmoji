@@ -137,12 +137,11 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and fourteen of them, and reading just those leads gives the
-release without the verification detail. Not all one hundred and
-fourteen changed observable behaviour: several record a test that could
-not have failed, or a figure the documentation quoted incorrectly, which
-are worth the same prominence because both meant something was
-unverified.
+hundred and fifteen of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and fifteen
+changed observable behaviour: several record a test that could not have
+failed, or a figure the documentation quoted incorrectly, which are
+worth the same prominence because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1627,6 +1626,26 @@ unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **The vignette builds without its optional packages; the script
+  `knitr` tangles out of it does not, and nothing said so.** A chunk’s
+  `eval` option is a build-time instruction and does not survive into
+  the extracted code, so `inst/doc/introduction.R` – the file
+  `edit(vignette("introduction", package = "tidyEmoji"))` opens – calls
+  [`ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html)
+  unconditionally, while
+  [`library(ggplot2)`](https://ggplot2.tidyverse.org) above it stays
+  behind the [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html)
+  gate. Sourcing it on an installation without , and therefore fails
+  partway through, which is exactly the situation the gate was written
+  to survive. The vignette now says which half of the script runs on the
+  declared dependencies alone and what to install for the rest, and a
+  test holds that claim to the installed file. Nothing changed in the
+  code: the chunks stay ungated so the rendered vignette shows the
+  plotting code as a reader wants to read it, and dropping it from the
+  tangled script would take working code away from everyone who does
+  have the three packages. Verified separately that the script runs to
+  completion, with zero warnings, when they are present.
 
 - **The other four companion arguments are inert on the branches they do
   not belong to, and now say so.**

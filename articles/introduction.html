@@ -242,6 +242,14 @@ answer. See <code><a href="../reference/tidyEmoji-package.html">?tidyEmoji</a></
 <span>  <span class="va">requireNamespace</span>, <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">has_plot_pkgs</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
+<p>That gate covers building this vignette. It does <em>not</em> carry
+over to the script <code>knitr</code> tangles out of it, the one
+<code>edit(vignette("introduction", package = "tidyEmoji"))</code>
+opens: a chunk’s <code>eval</code> option is a build-time instruction
+and is not part of the extracted code, so <code>introduction.R</code>
+calls <code><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot()</a></code> unconditionally. Everything in it that uses
+tidyEmoji alone runs against the package’s declared dependencies;
+install , and if you want to run the whole file.</p>
 </div>
 <div class="section level2">
 <h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a>
