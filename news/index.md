@@ -137,11 +137,11 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and nine of them, and reading just those leads gives the release
-without the verification detail. Not all one hundred and nine changed
-observable behaviour: several record a test that could not have failed,
-or a figure the documentation quoted incorrectly, which are worth the
-same prominence because both meant something was unverified.
+hundred and eleven of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and eleven
+changed observable behaviour: several record a test that could not have
+failed, or a figure the documentation quoted incorrectly, which are
+worth the same prominence because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1626,29 @@ same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **[`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  labelled a row with no dominant emotion `"anger"`.**
+  `max.col(ties.method = "first")` returns the first column when nothing
+  wins, and the first of the eight in Plutchik order is anger, so a
+  custom lexicon scoring an emoji the same across all eight dimensions –
+  zero across the board, most obviously – came back asserting anger. The
+  row now gets `NA`, which `.emoji_n_scored` still distinguishes from a
+  row with nothing to score, since that count stays at its value rather
+  than becoming `NA` too. A genuine winner is untouched, and so is an
+  ordinary two-way tie, which the documented Plutchik order still
+  settles. Only reachable through `lexicon =`: none of the bundled
+  lexicon’s 150 glyphs scores flat across the eight.
+
+- **[`?emoji_emotion_label`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
+  said ties are broken in Plutchik order without saying it happens.** It
+  does: **3 of the bundled lexicon’s 150 glyphs tie for their top
+  emotion**, and because Plutchik order is alphabetical the tie-break
+  quietly favours the early names. `U+1F3A4` scores anticipation and joy
+  at 0.39 and is labelled anticipation; `U+1F619` scores joy and trust
+  at 0.83 and is labelled joy. The page now names both, so a reader
+  knows the rule is load-bearing rather than theoretical, and a test
+  holds all three ties to it.
 
 - **[`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)’s
   `emoji_per_text` had no definition, and the table hands you both

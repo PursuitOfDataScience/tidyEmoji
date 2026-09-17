@@ -3,8 +3,8 @@
 `emoji_emotion_label()` adds `.emoji_emotion`, the emotion with the
 highest mean score among the row's emoji (using
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)).
-Ties are broken in Plutchik order; rows with no scored emoji receive
-`NA`.
+Ties are broken in Plutchik order; a row with nothing scorable, or with
+no emotion ahead of the others, receives `NA`.
 
 ## Usage
 
@@ -61,11 +61,22 @@ the label side by side.
 Ties are broken in Plutchik order – the order the eight emotions are
 listed in throughout the package (anger, anticipation, disgust, fear,
 joy, sadness, surprise, trust) – so the winner is deterministic and does
-not depend on the row's position in the data. Read `.emoji_n_scored`
-alongside the label: a tie, or a near-tie, is invisible in a single
-winning name, and
+not depend on the row's position in the data. It happens: **3 of the
+bundled lexicon's 150 glyphs tie for their top emotion**, and because
+Plutchik order is alphabetical the tie-break quietly favours the early
+names. `U+1F3A4` scores anticipation and joy at 0.39 and is labelled
+anticipation; `U+1F619` scores joy and trust at 0.83 and is labelled
+joy. So read `.emoji_n_scored` alongside the label, and reach for
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
-gives the full profile the label collapses.
+when a near-tie would change your reading: a single winning name cannot
+show one.
+
+A row whose scored emotions are *all* equal is the one case with no
+winner to break a tie between, and it gets `NA` rather than the first
+name in the order. An emoji scored zero on all eight is the obvious
+example. That needs a custom lexicon to reach, the bundled one having no
+such glyph, and `.emoji_n_scored` still separates it from a row with
+nothing to score.
 
 ## See also
 
