@@ -8852,6 +8852,53 @@ test_that("the four time verbs agree that an undated row contributes nothing", {
   }
 })
 
+test_that("every figure an Rd references is actually shipped", {
+  # This package has already shipped an Rd pointing at a figure that was not
+  # there (man/figures/lifecycle-deprecated.svg, restored in 0.4.0), and the
+  # PDF manual cannot catch it: the \\figure{} sits inside the html branch of
+  # an \\ifelse, so a PDF-only check takes the other branch and never looks.
+  # Nothing guarded it afterwards. This does.
+  db <- rd_all()
+  skip_if(!length(db), "help database not available")
+  # split on the literal token rather than matching it, which keeps the
+  # backslashes out of a regex and out of this file's own escaping
+  extract <- function(txt) {
+    parts <- strsplit(txt, "\\figure{", fixed = TRUE)[[1L]]
+    if (length(parts) < 2L) return(character(0))
+    vapply(parts[-1L], function(p) sub("}.*$", "", p), character(1),
+           USE.NAMES = FALSE)
+  }
+  refs <- unique(unlist(lapply(db, extract), use.names = FALSE))
+  expect_gt(length(refs), 0L)
+
+  # figures live in man/figures in the source tree and help/figures once
+  # installed, which is where R CMD check reads them from
+  dir <- testthat::test_path("..", "..", "man", "figures")
+  if (!dir.exists(dir)) {
+    dir <- system.file("help", "figures", package = "tidyEmoji")
+  }
+  skip_if(!nzchar(dir) || !dir.exists(dir), "figures directory not available")
+  expect_identical(refs[!file.exists(file.path(dir, refs))], character(0))
+  # and each is a real file rather than an empty placeholder
+  expect_true(all(file.size(file.path(dir, refs)) > 0L))
+
+  # the two references that exist today, pinned so neither can vanish
+  # unnoticed either: the package logo and the deprecation badge
+  expect_setequal(refs, c("logo.png", "lifecycle-deprecated.svg"))
+  expect_match(rd_flat("top_n_emojis"), "lifecycle-deprecated.svg",
+               fixed = TRUE)
+  expect_match(rd_flat("tidyEmoji-package"), "logo.png", fixed = TRUE)
+
+  # the README points at the logo by its repository path, which is what makes
+  # it render on the CRAN package page, and that file is shipped
+  rmd <- pkg_text_file("README.Rmd")
+  if (!is.na(rmd)) {
+    src <- paste(readLines(rmd, warn = FALSE, encoding = "UTF-8"),
+                 collapse = " ")
+    expect_true(grepl("man/figures/logo.png", src, fixed = TRUE))
+  }
+})
+
 test_that("the tangled vignette script matches what the vignette says of it", {
   # A chunk's `eval` option is a build-time instruction and does not survive
   # into the script knitr tangles, so introduction.R calls ggplot()
