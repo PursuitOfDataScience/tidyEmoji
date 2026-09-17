@@ -39,12 +39,24 @@ shapes, and which one you get tells you what the column is:
   [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md),
   [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md),
   [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)),
-  the character offset of an occurrence, or the time bucket
+  where in that entry something sits, or the time bucket
   ([`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md),
   [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md),
   [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)).
   Dotted for the same reason, and reserved on the same terms. That is
   the whole list.
+
+  `.position` is the one of the five whose unit depends on the verb, so
+  it is worth reading before you index with it. In
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  it is a **code-point offset into the text**, the unit
+  [`substr()`](https://rdrr.io/r/base/substr.html) takes, so
+  `substr(text, .position, .position + nchar(.emoji) - 1)` returns the
+  glyph. In
+  [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
+  it is the **index within the row's emoji sequence**, so the first
+  n-gram of a row is 1 whatever the text looks like. Both pages say
+  which, and the two are not interchangeable.
 
 - **bare names** – the columns of a *new* summary tibble, which is not
   your data with something added

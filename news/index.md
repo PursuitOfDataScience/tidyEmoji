@@ -137,8 +137,8 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and seven of them, and reading just those leads gives the
-release without the verification detail. Not all one hundred and seven
+hundred and eight of them, and reading just those leads gives the
+release without the verification detail. Not all one hundred and eight
 changed observable behaviour: several record a test that could not have
 failed, or a figure the documentation quoted incorrectly, which are
 worth the same prominence because both meant something was unverified.
@@ -1626,6 +1626,27 @@ worth the same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **[`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)’s
+  contract glossed `.position` once, and it means two different
+  things.** The page lists five structural index names and describes
+  them together, `.position` among them as “the character offset of an
+  occurrence”. That is right for
+  [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md),
+  where it is a code-point offset into the text and
+  `substr(text, .position, .position + nchar(.emoji) - 1)` returns the
+  glyph. It is wrong for
+  [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md),
+  where `.position` is the index within the row’s emoji sequence, so the
+  first n-gram of a row is 1 whatever the text looks like. Both verb
+  pages were already right about their own column; the contract that a
+  reader meets first was not. It now singles `.position` out as the one
+  of the five whose unit depends on the verb, and
+  [`?emoji_context`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
+  names the unit and the round trip rather than saying “character
+  position”, which is the vagueness
+  [`?emoji_position`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+  had already avoided for `.emoji_first` and `.emoji_last`.
 
 - **`emoji_context(unit = "char")` can return half a grapheme, and did
   not say so.** “Character” there means code point, the unit

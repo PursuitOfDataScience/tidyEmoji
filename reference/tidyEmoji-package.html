@@ -58,9 +58,16 @@ one you get tells you what the column is:</p><ul><li><p><strong><code>.emoji_*</
 <code>.period_label</code></strong> – structural indices saying <em>where</em> a row came from
 rather than what was measured: the position of the entry in <code>data</code>
 (<code><a href="emoji_extract_unnest.html">emoji_extract_unnest()</a></code>, <code><a href="emoji_context.html">emoji_context()</a></code>, <code><a href="emoji_ngrams.html">emoji_ngrams()</a></code>,
-<code><a href="emoji_dfm.html">emoji_dfm()</a></code>), the character offset of an occurrence, or the time bucket
+<code><a href="emoji_dfm.html">emoji_dfm()</a></code>), where in that entry something sits, or the time bucket
 (<code><a href="emoji_trend.html">emoji_trend()</a></code>, <code><a href="emoji_turnover.html">emoji_turnover()</a></code>, <code><a href="emoji_seasonality.html">emoji_seasonality()</a></code>). Dotted for
-the same reason, and reserved on the same terms. That is the whole list.</p></li>
+the same reason, and reserved on the same terms. That is the whole list.</p>
+<p><code>.position</code> is the one of the five whose unit depends on the verb, so it
+is worth reading before you index with it. In <code><a href="emoji_context.html">emoji_context()</a></code> it is a
+<strong>code-point offset into the text</strong>, the unit <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr()</a></code> takes, so
+<code>substr(text, .position, .position + nchar(.emoji) - 1)</code> returns the
+glyph. In <code><a href="emoji_ngrams.html">emoji_ngrams()</a></code> it is the <strong>index within the row's emoji
+sequence</strong>, so the first n-gram of a row is 1 whatever the text looks
+like. Both pages say which, and the two are not interchangeable.</p></li>
 <li><p><strong>bare names</strong> – the columns of a <em>new</em> summary tibble, which is not your
 data with something added (<code><a href="emoji_frequency.html">emoji_frequency()</a></code>'s <code>emoji</code>, <code>name</code>, <code>n</code>;
 <code><a href="emoji_ambiguity.html">emoji_ambiguity()</a></code>'s <code>ambiguity</code>, <code>rank</code>). <code><a href="emoji_dfm.html">emoji_dfm()</a></code> is the one verb

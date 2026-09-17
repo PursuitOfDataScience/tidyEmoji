@@ -109,7 +109,10 @@ Default <code>FALSE</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with one row per emoji occurrence, in reading order, and
 columns <code>.row_number</code> (position of the entry in <code>data</code>), <code>.position</code> (the
-character position at which the emoji starts), <code>.emoji</code>,
+code-point offset at which the emoji starts, the unit <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr()</a></code> takes,
+so <code>substr(text, .position, .position + nchar(.emoji) - 1)</code> is the glyph;
+<code><a href="emoji_ngrams.html">emoji_ngrams()</a></code>'s column of the same name counts emoji instead),
+<code>.emoji</code>,
 <code>.emoji_context_left</code>, <code>.emoji_context_right</code> and <code>.emoji_context</code> (the two
 sides joined by a space – the co-text without the glyph). Rows with no
 emoji contribute nothing. The columns of <code>data</code> are not carried, so a
