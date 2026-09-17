@@ -188,6 +188,9 @@ one – it is what a screen reader announces.
 
 ## See also
 
+[`vignette("reversible-preprocessing", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md)
+runs this ladder end to end, including the round trip on skin tones,
+flags, keycaps and ZWJ sequences;
 [`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
 for what the emoji are costing you;
 [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)

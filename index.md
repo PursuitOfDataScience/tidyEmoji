@@ -364,3 +364,13 @@ vignette](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction
 ([`vignette("introduction", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.md))
 walks through a full analysis of a real corpus: counting, categorising,
 sentiment- and emotion-scoring emoji, and plotting the results.
+
+Sending text to a language model?
+[`vignette("reversible-preprocessing", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md)
+covers which
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+policy you can undo afterwards, and what the other four cost you. It is
+on the package website under the Vignettes menu. No URL for it here on
+purpose: `R CMD check` resolves every address in this file, and an
+article page is only live after the next site build, which would make
+the link a 404 in a submission.

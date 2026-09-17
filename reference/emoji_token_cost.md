@@ -81,7 +81,9 @@ emoji expensive.
 [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
 for acting on the answer;
 [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-for the share of the text that is emoji.
+for the share of the text that is emoji;
+[`vignette("reversible-preprocessing", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md)
+for the before-and-after token budget on a real corpus.
 
 ## Examples
 

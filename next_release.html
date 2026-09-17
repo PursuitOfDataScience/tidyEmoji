@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="articles/introduction.html">Introduction to tidyEmoji</a></li>
+    <li><a class="dropdown-item" href="articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -259,7 +260,7 @@
 <p><strong>Second, unrelated axis: right-to-left text.</strong> The offsets are <em>logical</em> (storage) order. Under UAX #9 a right-to-left run renders right-to-left, so in <code>"مرحبا 😀"</code> the emoji is logically last (<code>rel = 1.0</code>) but appears at the reader’s <strong>left</strong>. Every position-derived claim – placement, “interrupting”, sentence-final convention – therefore means something different for Arabic, Hebrew, Persian and Urdu corpora than for English ones, and §10.5’s cross-cultural users are exactly the people likely to hit it. There is no cheap fix (visual order requires running the bidi algorithm), so the deliverable is an explicit statement in the help page that positions are logical-order, plus a note in the §10.5 documentation pass. Do not silently imply visual order.</p>
 <p><strong>Action:</strong> fix the denominator in §4.5’s work, add the three cases above as regression fixtures, and grep for other <code><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar()</a></code> uses on user text before assuming these are the only two verbs affected.</p>
 <blockquote>
-<p>⚠️ <strong>Discharged in 0.4.0, so nothing here is outstanding.</strong> The polish pass (§1.11) fixed the denominator, and the three rows of the table above are pinned at <code>tests/testthat/test-regression-0.4.0.R:350</code>. Verified against the installed 0.4.0 on 2026-09-17: all three report <code>1</code>. Two consequences for the plan, both applied: <strong>§4.5 is no longer a prerequisite for §4.3</strong>, and the <code>.emoji_first</code> / <code>.emoji_last</code> offsets stayed in code points deliberately, so <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr()</a></code> still works with them. The right-to-left finding below is <em>not</em> discharged: positions are still logical-order, and the help-page statement and §10.5 note are still owed.</p>
+<p>⚠️ <strong>Discharged in 0.4.0, so nothing here is outstanding.</strong> The polish pass (§1.11) fixed the denominator, and the three rows of the table above are pinned at <code>tests/testthat/test-regression-0.4.0.R:350</code>. Verified against the installed 0.4.0 on 2026-09-17: all three report <code>1</code>. Two consequences for the plan, both applied: <strong>§4.5 is no longer a prerequisite for §4.3</strong>, and the <code>.emoji_first</code> / <code>.emoji_last</code> offsets stayed in code points deliberately, so <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr()</a></code> still works with them. The right-to-left finding below is <strong>half</strong> discharged: <code><a href="reference/emoji_position.html">?emoji_position</a></code> now carries the sentence that positions are logical rather than visual order (pinned by a test, since that sentence is what a right-to-left corpus depends on), but the §10.5 documentation note is still owed.</p>
 </blockquote>
 </div>
 <div class="section level3">
@@ -422,7 +423,7 @@
 <td><strong>silent – pools groups</strong></td>
 </tr></tbody></table><p><strong>Seven of ten guarded, three missed.</strong> All three verifiably return the pooled result for grouped input with no warning, so a user who groups by author, platform or date gets a corpus-wide answer that looks like a per-group one.</p>
 <blockquote>
-<p>⚠️ <strong>Superseded by §1.11.</strong> This round both under- and over-counted: the real silent-pooler list was <strong>seven</strong>, and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> was one of the five the 0.4.0 polish pass then guarded. Measured against the shipped 0.4.0 on 2026-09-17, only <strong><code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code></strong> still pool silently. The <code>var</code> message below shipped in 0.4.0 too. Read §1.11 for the corrected finding; the table above is kept as the audit record.</p>
+<p>⚠️ <strong>Superseded by §1.11, and now closed entirely.</strong> This round both under- and over-counted. The real silent-pooler list was <strong>seven</strong>, and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> was one of the five the 0.4.0 polish pass guarded. The other two named here were never aggregators at all, which the 2026-09-17 re-measurement settled: <strong><code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> is row-preserving</strong> and returns a <code>grouped_df</code> with the same values as ungrouped input, and <strong><code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code></strong> returns one row per n-gram occurrence keyed by <code>.row_number</code>, carrying none of the user’s columns, so there is no grouping for it to ignore (its help page has said so since 0.3.0). Adding a warning to either would have been the wrong fix, loudly. Pinned in <code>tests/testthat/test-regression-0.5.0.R</code>. The <code>var</code> message below shipped in 0.4.0 too. The table above is kept as the audit record.</p>
 </blockquote>
 <p><strong>Action:</strong> add the existing guard to those three. It is a two-line change per verb using the helper the other seven already share, and it should land in 0.5.0 – not deferred to the 1.0 grouped-df work, because a wrong number now is worse than an unimplemented feature later. Then rewrite §1’s gap sentence to name the two classes above, so the next reader does not have to re-derive which verbs the promise is even about.</p>
 <blockquote>
@@ -601,8 +602,8 @@ emoji_score()     -&gt; .emoji_score, .emoji_n_scored, .emoji_n</code></pre>
 <td>0.5.0 – blocks §4.1</td>
 </tr><tr><td>1.5</td>
 <td>Aggregators pool grouped data <strong>silently</strong> – the count was 7, not 3, and 2 of the 3 named were misdiagnosed</td>
-<td>✅ <strong>fixed 0.4.0</strong> (§1.11)</td>
-<td>shipped</td>
+<td>✅ <strong>fixed 0.4.0</strong> (§1.11); the 2 misdiagnosed <strong>confirmed non-defects</strong> 2026-09-17</td>
+<td>shipped, item closed</td>
 </tr><tr><td>1.5</td>
 <td>Missing / ambiguous / misspelled column reported as internal <code>`var`</code> – package-wide, not four verbs</td>
 <td>✅ <strong>fixed 0.4.0</strong> (§1.11)</td>
@@ -1524,16 +1525,16 @@ keywords  aliases</code></pre>
 </tr><tr><td>Orphan-modifier accounting (§1.2)</td>
 <td>corrupts the modified÷modifiable ratio</td>
 <td><strong>§4.1</strong></td>
-</tr><tr><td>Grouped guard on 2 aggregators (§1.5)</td>
-<td>silent cross-group pooling</td>
-<td>–</td>
+</tr><tr><td><del>Grouped guard on 2 aggregators (§1.5)</del></td>
+<td><del>silent cross-group pooling</del></td>
+<td>✅ no defect: measured 2026-09-17</td>
 </tr><tr><td>Rate/denominator audit (§4.8)</td>
 <td>makes existing output CoDA-safe</td>
 <td>–</td>
 </tr><tr><td><del>Round-trip tests (§1.3), <code>var</code> message (§1.5), <code>.emoji_*</code> reserved (§1.6)</del></td>
 <td><del>cheap, and each defends a stated contract</del></td>
 <td>✅ shipped 0.4.0</td>
-</tr></tbody></table><p><strong>Only one of the six now blocks a feature group’s prerequisite twice over:</strong> flags and orphan modifiers are the whole remaining blocking set, since the 0.4.0 polish pass (§1.11) took the grapheme fix and the three cheap items with it.</p>
+</tr></tbody></table><p><strong>Flags and orphan modifiers are the whole remaining set</strong>, blocking and otherwise: 0.4.0’s polish pass took the grapheme fix and the cheap items, and the grouped-guard item turned out to be a measurement error rather than a defect. See the note at the end of §3.1, because that has a consequence for the release shape.</p>
 <p><strong>Three of the six block a feature group.</strong> That is the finding that should drive the release shape, and it points at a conclusion this document did not start with.</p>
 <div class="section level3">
 <h3 id="id_31-recommendation--make-050-a-correctness-release-and-move-the-theme-to-060">3.1 Recommendation – make 0.5.0 a correctness release and move the theme to 0.6.0<a class="anchor" aria-label="anchor" href="#id_31-recommendation--make-050-a-correctness-release-and-move-the-theme-to-060"></a></h3>
@@ -1543,7 +1544,7 @@ keywords  aliases</code></pre>
 <table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Kind</th>
 <th>Items</th>
 </tr></thead><tbody><tr><td><em>Correctness (§1)</em></td>
-<td>flag-set validation (§1.2); orphan-modifier accounting (§1.2); grouped guard on <code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> (§1.5). <strong>Four items left this row on 2026-09-17</strong>, all shipped in 0.4.0’s polish pass: the <code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix (§1.1), the <code>time</code>/<code>var</code> message (§1.5), <code>.emoji_*</code> documented as reserved (§1.6), and the <code><a href="reference/emoji_sanitize.html">?emoji_sanitize</a></code> policy ladder (§1.9)</td>
+<td>flag-set validation (§1.2); orphan-modifier accounting (§1.2). <strong>Five items left this row on 2026-09-17</strong>: four shipped in 0.4.0’s polish pass (the <code><a href="reference/emoji_position.html">emoji_position()</a></code> grapheme fix §1.1, the <code>time</code>/<code>var</code> message §1.5, <code>.emoji_*</code> documented as reserved §1.6, the <code><a href="reference/emoji_sanitize.html">?emoji_sanitize</a></code> policy ladder §1.9) and one was never a defect (the grouped guard on <code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code>, §1.5)</td>
 </tr><tr><td><em>Engine</em></td>
 <td>§4.5 grapheme engine (<code>engine =</code> on affected verbs)</td>
 </tr><tr><td><em>Honesty</em></td>
@@ -1553,7 +1554,7 @@ keywords  aliases</code></pre>
 <code>emoji_keywords()</code>, <code>emoji_find()</code> (§4.6); <code>emoji_properties()</code>, <code>as_emoji_canonical()</code> (§4.4); <strong><code>presentation = "any"</code> (§4.7 – its own text says ship with §4.4)</strong>; <strong><code>emoji_identical()</code> (§10.1 – S-sized, rides §4.4)</strong>
 </td>
 </tr><tr><td><em>Documentation</em></td>
-<td>reversible-LLM vignette (§1.3 – the round-trip tests themselves shipped in 0.4.0); one real <code>text_score</code> recipe at <code>eval = FALSE</code> (§10.15, the vignette still uses a crude word list); research-question index + <code>\concept{}</code> tags (§10.14 – 0 <code>\concept</code> tags in <code>man/</code> today)</td>
+<td>research-question index + <code>\concept{}</code> tags (§10.14 – 0 <code>\concept</code> tags in <code>man/</code> today), which is <strong>all that is left of this row</strong>: the reversible-LLM vignette (§1.3) and the real <code>text_score</code> recipe (§10.15) both landed 2026-09-17, and the round-trip tests shipped in 0.4.0</td>
 </tr><tr><td><strong>New verbs</strong></td>
 <td>
 <strong>6</strong> – <code>emoji_coverage()</code>, <code>emoji_keywords()</code>, <code>emoji_find()</code>, <code>emoji_properties()</code>, <code>as_emoji_canonical()</code>, <code>emoji_identical()</code>
@@ -1582,7 +1583,10 @@ keywords  aliases</code></pre>
 <strong>It restores the 10-14 target honestly</strong> instead of quietly abandoning it. 0.5.0 becomes 6 verbs plus substantial repair; 0.6.0 lands the themed group at 10-13.</li>
 <li>
 <strong>Risk is lower in both.</strong> A correctness release is reviewable against a fixture table; a feature release on trusted primitives is reviewable against its specs. Merging them produces a release where a reviewer cannot tell which changed number is a fix and which is a bug.</li>
-</ol><p><strong>Cost of this recommendation:</strong> the long-planned identity/place/access theme slips one release, and §10’s audiences wait longer for the verbs they asked for – none of which are urgent, since §10.3, §10.10 and §10.14 showed the biggest wins there are documentation rather than code. <strong>If instead the theme must ship in 0.5.0</strong>, then apply iteration-1’s cut – drop <code>emoji_zwj_components()</code>, <code>emoji_diversity()</code>, <code>emoji_render_check()</code> and <code>emoji_subdivision()</code> – and accept 15 verbs plus six correctness items in one review.</p>
+</ol><blockquote>
+<p>⚠️ <strong>The premise of this recommendation has weakened, and it is worth re-deciding (2026-09-17).</strong> §3.1’s case rested on two claims: that three of the audit’s defects block a feature group, and that the fixes are user-visible enough to deserve their own release. Neither survives the reconciliation. 0.4.0 shipped the grapheme fix, the <code>var</code> message, the reserved-namespace documentation, the policy ladder and the round-trip tests; the grouped guard was not a defect. <strong>What is left of the correctness half is two items, flag validation and orphan-modifier accounting, and neither is observable through any verb the package currently exports</strong> – they are prerequisites for <code>emoji_country()</code> and <code>emoji_skin_tone()</code>, which live in §4.2 and §4.1. A correctness release whose fixes a user cannot see has no NEWS headline and nothing to review against. The honest options are to fold the two prerequisites into the themed release and ship §3’s original plan as 0.5.0, or to keep 0.5.0 but rebuild it around the additions (§4.4, §4.6, <code>emoji_coverage()</code>) and the honesty work (§4.8) rather than around repair. <strong>This is an owner decision, not a reconciliation, so the tables above are left as they stand.</strong></p>
+</blockquote>
+<p><strong>Cost of this recommendation:</strong> the long-planned identity/place/access theme slips one release, and §10’s audiences wait longer for the verbs they asked for – none of which are urgent, since §10.3, §10.10 and §10.14 showed the biggest wins there are documentation rather than code. <strong>If instead the theme must ship in 0.5.0</strong>, then apply iteration-1’s cut – drop <code>emoji_zwj_components()</code>, <code>emoji_diversity()</code>, <code>emoji_render_check()</code> and <code>emoji_subdivision()</code> – and accept 15 verbs plus six correctness items in one review.</p>
 <hr></div>
 </div>
 <div class="section level2">
@@ -1813,10 +1817,10 @@ keywords  aliases</code></pre>
 <div class="section level2">
 <h2 id="id_8-quality-bar-for-the-release">8. Quality bar for the release<a class="anchor" aria-label="anchor" href="#id_8-quality-bar-for-the-release"></a></h2>
 <p>Carried-forward debts to pay <em>during</em> 0.5.0 rather than defer again:</p>
-<ul class="task-list"><li><p><label><input type="checkbox"><strong>Refresh <code>data-raw/</code> against the current <a href="https://emilhvitfeldt.github.io/emoji/" class="external-link">emoji</a></strong> and record the Unicode version in NEWS. Make this the first item of every release checklist.</label></p></li>
-<li><p><label><input type="checkbox"><strong>{covr} coverage job + badge</strong>, and <code>urlchecker</code> + <code>spelling</code> as scheduled workflows. Promised since 0.2.0. 0.4.0 deferred it because a red job is worse than a missing one – which is an argument for configuring it properly, not for skipping it a fourth time.</label></p></li>
+<ul class="task-list"><li><p><label><input type="checkbox" checked><strong>Refresh <code>data-raw/</code> against the current <a href="https://emilhvitfeldt.github.io/emoji/" class="external-link">emoji</a></strong> and record the Unicode version in NEWS. Make this the first item of every release checklist. <strong>Checked 2026-09-17 against <code>emoji</code> 16.0.0</strong>: regenerating both crosswalks in a sandbox reproduces the bundled data exactly (5761 and 10 rows, <code><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal()</a></code> TRUE both ways), so there is nothing to refresh and <code><a href="reference/emoji_unicode_version.html">emoji_unicode_version()</a></code> correctly reports <strong>16.0</strong>. Do this in a sandbox rather than by running the script in place: it writes <code>data/*.rda</code>, and an <code>xz</code> re-compression can churn the bytes with no change in content.</label></p></li>
+<li><p><label><input type="checkbox" checked><strong>{covr} coverage job, and <code>urlchecker</code> + <code>spelling</code> as scheduled workflows.</strong> Added 2026-09-17, four releases after the promise. <code>test-coverage.yaml</code> uploads tokenless and is allowed to fail its upload, so a flaky codecov never reddens the repo. <code>checks.yaml</code> runs the other two weekly and <em>does</em> fail, which is the point: both go stale on their own rather than when the code changes. Configured green from the start: the spell check reports zero unknown words (one real word, “undercounted”, was added to <code>inst/WORDLIST</code>), and the one URL error that reproduces here is this host’s rather than the package’s: R’s libcurl cannot verify <code>clarin.si</code>, while <code>curl</code> on the same box gets the documented <code>302</code> from <code>hdl.handle.net</code>. That is why the job runs on a hosted runner. <strong>No coverage badge yet</strong> – one that reads “unknown” until the first upload lands is worse than none. The job’s own command was run here before committing it: <code>covr::package_coverage()</code> completes on this suite and reports <strong>98.71%</strong>, and <code>covr::to_cobertura()</code> writes the report the upload step expects, so the job is not being added on faith.</label></p></li>
 <li>
-<p><label><input type="checkbox" checked><strong>Baseline measured 2026-08-30</strong> (below). Still to do: commit it as <code>data-raw/benchmark.R</code> so it runs release over release. The debt’s guess about which verbs are hot is <strong>confirmed</strong>.</label></p>
+<p><label><input type="checkbox" checked><strong>Baseline measured 2026-08-30</strong> (below), and <strong>committed 2026-09-17 as <code>data-raw/benchmark.R</code></strong>, so it runs release over release instead of being re-derived. It warms the lazy-loaded reference table first: without that the smallest size pays for loading it and the scaling ratios come out below 1, an artefact that reads like a speed-up. It prints the markdown table plus a superlinear-growth flag per verb. The debt’s guess about which verbs are hot is <strong>confirmed</strong>.</label></p>
 <p>Elapsed seconds, synthetic corpus, 0-3 emoji per row, R 4.4.1:</p>
 <table class="table"><thead><tr><th>Verb</th>
 <th>1k</th>
@@ -1858,7 +1862,8 @@ keywords  aliases</code></pre>
 <td>1.95</td>
 <td>10.34</td>
 <td><strong>~207 s</strong></td>
-</tr></tbody></table><p><strong>Three readings.</strong> (1) <strong>Scaling is linear, not quadratic</strong> – 50x the rows costs 30-45x the time across every verb, so there is no algorithmic landmine waiting at scale; this is the most important thing the numbers say. (2) The §8 debt correctly guessed the hot paths: <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code> and <code><a href="reference/emoji_context.html">emoji_context()</a></code> cost <strong>10-15x</strong> <code><a href="reference/emoji_summary.html">emoji_summary()</a></code>, and they are the only two where a million rows means minutes rather than seconds. (3) The millions-of-rows target is therefore <em>met</em> for the detect/count/score core and <em>marginal</em> for the context pair – 3.5 minutes for <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code> on 1M rows is usable but is the obvious optimisation target, and it should be the first thing a performance backend (§9’s 1.0.0 row) touches.</p>
+</tr></tbody></table><p><strong>Re-measured 2026-09-17 with the committed script</strong> (<code>Rscript data-raw/benchmark.R</code>, its own synthetic corpus, R 4.4.1, 44 s end to end), which is the baseline to compare future runs against. Seconds at 1k / 10k / 50k rows: <code><a href="reference/emoji_summary.html">emoji_summary()</a></code> 0.02 / 0.13 / 0.75, <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code> 0.03 / 0.14 / 0.67, <code><a href="reference/emoji_position.html">emoji_position()</a></code> 0.04 / 0.19 / 1.02, <code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code> 0.06 / 0.23 / 1.19, <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> 0.11 / 0.68 / 3.64, <code><a href="reference/emoji_context.html">emoji_context()</a></code> 0.17 / 1.69 / 8.81, <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code> 0.34 / 3.13 / 16.28. Growth for 50x the rows is 20x to 52x, so the linear reading below holds on a second corpus. Do not diff these against the 2026-08-30 table cell by cell: the corpora are generated differently, and the emoji density drives the absolute numbers.</p>
+<p><strong>Three readings.</strong> (1) <strong>Scaling is linear, not quadratic</strong> – 50x the rows costs 30-45x the time across every verb, so there is no algorithmic landmine waiting at scale; this is the most important thing the numbers say. (2) The §8 debt correctly guessed the hot paths: <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code> and <code><a href="reference/emoji_context.html">emoji_context()</a></code> cost <strong>10-15x</strong> <code><a href="reference/emoji_summary.html">emoji_summary()</a></code>, and they are the only two where a million rows means minutes rather than seconds. (3) The millions-of-rows target is therefore <em>met</em> for the detect/count/score core and <em>marginal</em> for the context pair – 3.5 minutes for <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code> on 1M rows is usable but is the obvious optimisation target, and it should be the first thing a performance backend (§9’s 1.0.0 row) touches.</p>
 <p>Caveat: synthetic text with a short word pool understates <code><a href="reference/emoji_context.html">emoji_context()</a></code>/<code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code>, whose work scales with vocabulary as well as row count. Treat these as a floor and re-measure on real corpora before quoting them.</p>
 </li>
 <li><p><label><input type="checkbox"><strong>Snapshot tests</strong> (<code>expect_snapshot()</code>) over printed output, to catch silent column and ordering changes cheaply.</label></p></li>
@@ -1886,10 +1891,8 @@ keywords  aliases</code></pre>
 <td><strong>package 0.4.0</strong></td>
 </tr><tr><td>
 <strong>Correctness &amp; honesty</strong> (§3.1 – <em>recommended</em> 0.5.0)</td>
-<td>⏳ <strong>next</strong>
-</td>
-<td>the six §1 items + §4.4/§4.6 + <code>emoji_coverage()</code>
-</td>
+<td>⏳ <strong>next</strong>, and smaller than it was</td>
+<td>§1’s list is down to <strong>two</strong> items (flag validation, orphan modifiers), so what is left is §4.4/§4.6, <code>emoji_coverage()</code>, <code>presentation = "any"</code>, <code>emoji_identical()</code> and §4.8’s denominator work. See the note at the end of §3.1</td>
 </tr><tr><td>
 <strong>Identity, place &amp; access</strong> (§4.1-§4.3)</td>
 <td>⏳</td>
@@ -1959,31 +1962,36 @@ keywords  aliases</code></pre>
 <code>tests/testthat/test-regression-0.4.0.R</code>; the vignette is the part still owed</td>
 </tr><tr><td>
 <strong>Commit <code>test-regression-0.5.0.R</code></strong> (§12)</td>
-<td>⏳ <strong>0.5.0</strong>
+<td>✅ <strong>done 2026-09-17</strong>
 </td>
-<td>Part A green now; Part B is the correctness spec</td>
+<td>committed; the specs for verbs that do not exist yet skip by name, so the file states what is outstanding without reddening the suite</td>
 </tr><tr><td>
 <strong>Reversible-LLM-preprocessing vignette</strong> (§1.3)</td>
-<td>⏳</td>
-<td>highest-value undocumented capability found</td>
+<td>✅ <strong>done 2026-09-17</strong>
+</td>
+<td>
+<code>vignettes/reversible-preprocessing.Rmd</code>: the ladder executed, the round trip on awkward glyphs, the <code>wrap</code> contract, and the bare-<code>U+2764</code> detection limitation</td>
 </tr><tr><td>
 <strong>Commit <code>data-raw/benchmark.R</code></strong> (§8)</td>
-<td>⏳</td>
-<td>baseline now measured; needs to be repeatable</td>
+<td>✅ <strong>done 2026-09-17</strong>
+</td>
+<td>
+<code>Rscript data-raw/benchmark.R [sizes]</code>; warms up first, flags superlinear growth</td>
 </tr><tr><td>
 <strong><code>emoji_sample()</code></strong> stratified stimulus draw (§10.13)</td>
 <td>⏳ <strong>0.6.0</strong> (§3.1)</td>
 <td>S-sized; serves §10.6, §10.10, §10.13 and our own fixtures</td>
 </tr><tr><td>
 <strong>Locale-matrix CI job</strong> (§1.4)</td>
-<td>⏳</td>
-<td>must vary only <code>LC_COLLATE</code> – see the trap in §1.4</td>
-</tr><tr><td>
-<strong>Grouped-input guard on 2 aggregators</strong> (§1.5)</td>
-<td>⏳ <strong>0.5.0</strong>
+<td>✅ <strong>done 2026-09-17</strong>
 </td>
 <td>
-<code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> pool silently; 0.4.0 guarded the other five, <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> included</td>
+<code>collation</code> job in <code>R-CMD-check.yaml</code>: <code>C</code> and <code>en_US.UTF-8</code>, varies <code>LC_COLLATE</code> alone and asserts <code>LC_CTYPE</code> stayed UTF-8</td>
+</tr><tr><td>
+<strong>Grouped-input guard on 2 aggregators</strong> (§1.5)</td>
+<td>✅ <strong>closed, no defect</strong>
+</td>
+<td>measured 2026-09-17: <code><a href="reference/emoji_categorize.html">emoji_categorize()</a></code> carries the grouping through, <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> has none to carry. 0.4.0 guarded the five that needed it</td>
 </tr><tr><td>
 <strong><code>time</code>/<code>var</code> error-message leak</strong> (§1.5)</td>
 <td>✅ <strong>shipped 0.4.0</strong>
@@ -2016,9 +2024,9 @@ keywords  aliases</code></pre>
 <td>the help page now opens on the ladder</td>
 </tr><tr><td>
 <strong>One real <code>text_score</code> recipe, <code>eval = FALSE</code></strong> (§10.15)</td>
-<td>⏳ <strong>0.5.0</strong>
+<td>✅ <strong>done 2026-09-17</strong>
 </td>
-<td>§5’s composability promise is currently half-kept</td>
+<td>tidytext + AFINN and sentimentr, beside the word-list scorer the vignette runs</td>
 </tr><tr><td>
 <strong>Emoji scales</strong> – <code>emoji_scale()</code> / <code>as_emoji_ordinal()</code> (§10.6)</td>
 <td>⏳</td>
@@ -2029,7 +2037,13 @@ keywords  aliases</code></pre>
 </tr><tr><td>1.0.0 – grouped-df guarantees, performance, API freeze</td>
 <td>⏳</td>
 <td>one full cycle with <em>no</em> new verbs</td>
-</tr></tbody></table><p><strong>Version numbering.</strong> <strong>0.4.0 was submitted and accepted on 2026-09-17</strong> (auto-check <code>Result: OK</code> on r-devel-linux-x86_64-debian-gcc and r-devel-windows-x86_64), so CRAN’s published version is now <strong>0.4.0</strong>, tagged <code>v0.4.0</code> with a GitHub release. The previous published version was 0.3.0 (2026-08-04). 0.5.0 (this document) is what gets built next, and nothing here is on CRAN’s clock any more. Phase names in older documents refer to work packages, not package versions; note in particular that the “0.4.0” in commits from 2026-07-01 is a <em>different</em>, abandoned 0.4.0 – <code>DESCRIPTION</code> briefly carried it for 22 minutes before <code>c85be8c</code> reverted it, and that work shipped as 0.3.0 instead.</p>
+</tr><tr><td>
+<strong>0.5.0 cycle opened</strong> (this section)</td>
+<td>✅ <strong>done 2026-09-17</strong>
+</td>
+<td>
+<code>DESCRIPTION</code> 0.5.0, <code>NEWS.md</code> section, <code>cran-comments.md</code> reset to a skeleton that keeps the durable sections, spent <code>CRAN-SUBMISSION</code> marker removed</td>
+</tr></tbody></table><p><strong>Version numbering.</strong> <strong>0.4.0 was submitted and accepted on 2026-09-17</strong> (auto-check <code>Result: OK</code> on r-devel-linux-x86_64-debian-gcc and r-devel-windows-x86_64), so CRAN’s published version is <strong>0.4.0</strong>, tagged <code>v0.4.0</code> with a GitHub release. The previous published version was 0.3.0 (2026-08-04). <strong><code>DESCRIPTION</code> now reads 0.5.0 and <code>NEWS.md</code> has an open 0.5.0 section</strong>, which is how this repo has always opened a cycle: it has never carried a <code>.9000</code> development version, and two of its own invariants enforce that (<code>NEWS.md</code>’s top heading must equal <code>DESCRIPTION</code>’s <code>Version</code>, and every <code>NEWS.md</code> heading must be <code># tidyEmoji &lt;numeric version&gt;</code>). A <code>0.4.0.9000</code> also draws a “Version contains large components” NOTE from <code>--as-cran</code>. Phase names in older documents refer to work packages, not package versions; note in particular that the “0.4.0” in commits from 2026-07-01 is a <em>different</em>, abandoned 0.4.0 – <code>DESCRIPTION</code> briefly carried it for 22 minutes before <code>c85be8c</code> reverted it, and that work shipped as 0.3.0 instead.</p>
 <p><strong>The three audits, and the pattern in them.</strong> Each release has found its own crop of defects in the code written just before it, and they rhyme:</p>
 <ul><li>
 <strong>0.2.1</strong> – key-normalisation asymmetry: one join path was normalised, the others were not.</li>

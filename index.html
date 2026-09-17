@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
 <li><a class="dropdown-item" href="articles/introduction.html">Introduction to tidyEmoji</a></li>
+    <li><a class="dropdown-item" href="articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
@@ -310,6 +311,7 @@
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
 <p>The <a href="https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html">introductory vignette</a> (<code><a href="articles/introduction.html">vignette("introduction", package = "tidyEmoji")</a></code>) walks through a full analysis of a real corpus: counting, categorising, sentiment- and emotion-scoring emoji, and plotting the results.</p>
+<p>Sending text to a language model? <code><a href="articles/reversible-preprocessing.html">vignette("reversible-preprocessing", package = "tidyEmoji")</a></code> covers which <code><a href="reference/emoji_sanitize.html">emoji_sanitize()</a></code> policy you can undo afterwards, and what the other four cost you. It is on the package website under the Vignettes menu. No URL for it here on purpose: <code>R CMD check</code> resolves every address in this file, and an article page is only live after the next site build, which would make the link a 404 in a submission.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

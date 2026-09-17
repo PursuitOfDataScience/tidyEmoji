@@ -56,6 +56,6 @@ emoji_provenance()
 #> # A tibble: 1 × 7
 #>   tidyEmoji emoji_pkg unicode_emoji n_emoji sentiment_lexicon    emotion_lexicon
 #>   <chr>     <chr>     <chr>           <int> <chr>                <chr>          
-#> 1 0.4.0     16.0.0    16.0             5042 novak2015 (969 emoj… emotag1200 (15…
+#> 1 0.5.0     16.0.0    16.0             5042 novak2015 (969 emoj… emotag1200 (15…
 #> # ℹ 1 more variable: R <chr>
 ```

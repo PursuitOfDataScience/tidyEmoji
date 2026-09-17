@@ -1205,6 +1205,38 @@ logits on nothing in particular, so you have to say how the two sides
 were made comparable. `"rank"` puts both on percentiles and is the
 safest choice.
 
+The word list above keeps this vignette runnable on the package’s own
+dependencies, but it is not what you would use. Here is the same step
+with a real scorer, left unevaluated so that nothing here depends on it.
+Both produce a `text_score` column, and
+[`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)
+does not care which:
+
+``` r
+
+# tidytext + AFINN: one score per matched word, summed per document
+library(tidytext)
+library(dplyr)
+
+afinn <- tidytext::get_sentiments("afinn")     # prompts to download once
+
+scored <- ata_tweets %>%
+  mutate(.doc = row_number()) %>%
+  tidytext::unnest_tokens(word, full_text, drop = FALSE) %>%
+  inner_join(afinn, by = "word") %>%
+  group_by(.doc) %>%
+  summarise(text_score = sum(value), .groups = "drop") %>%
+  right_join(mutate(ata_tweets, .doc = row_number()), by = ".doc") %>%
+  mutate(text_score = tidyr::replace_na(text_score, 0))
+
+# sentimentr, which scores sentences and handles negation and amplifiers
+scored <- ata_tweets %>%
+  mutate(text_score = sentimentr::sentiment_by(full_text)$ave_sentiment)
+```
+
+Either way, pass `scale = "rank"` unless you can say why the two scales
+are already comparable.
+
 The percentiles are taken over the rows the comparison is defined on –
 those with both a scorable emoji and a text score – not over the whole
 corpus. Only 373 of these 2000 tweets qualify, and ranking the text
@@ -1400,6 +1432,13 @@ for (p in c("keep", "strip", "name", "shortcode", "placeholder")) {
 #> placeholder  ship it [emoji] today
 ```
 
+Those five policies are not interchangeable: they lose different amounts
+of information, and only one of them can be undone after the model call.
+[`vignette("reversible-preprocessing", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md)
+works through that round trip on the cases that break a hand-rolled
+substitution, and shows how to keep the emoji signal as feature columns
+while the text you send holds no emoji at all.
+
 ## Recording provenance
 
 “Emoji” is not a fixed object. Which glyphs exist, what they are called
@@ -1413,7 +1452,7 @@ puts the lot in one row you can paste into a methods section:
 emoji_provenance() %>% glimpse()
 #> Rows: 1
 #> Columns: 7
-#> $ tidyEmoji         <chr> "0.4.0"
+#> $ tidyEmoji         <chr> "0.5.0"
 #> $ emoji_pkg         <chr> "16.0.0"
 #> $ unicode_emoji     <chr> "16.0"
 #> $ n_emoji           <int> 5042

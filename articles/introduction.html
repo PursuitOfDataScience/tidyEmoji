@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
 <li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
+    <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -1212,6 +1213,32 @@ word-list scorer standing in for <code>tidytext</code> + AFINN,
 and a model’s logits on nothing in particular, so you have to say how
 the two sides were made comparable. <code>"rank"</code> puts both on
 percentiles and is the safest choice.</p>
+<p>The word list above keeps this vignette runnable on the package’s own
+dependencies, but it is not what you would use. Here is the same step
+with a real scorer, left unevaluated so that nothing here depends on it.
+Both produce a <code>text_score</code> column, and
+<code><a href="../reference/emoji_incongruity.html">emoji_incongruity()</a></code> does not care which:</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># tidytext + AFINN: one score per matched word, summed per document</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://juliasilge.github.io/tidytext/" class="external-link">tidytext</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">afinn</span> <span class="op">&lt;-</span> <span class="fu">tidytext</span><span class="fu">::</span><span class="fu">get_sentiments</span><span class="op">(</span><span class="st">"afinn"</span><span class="op">)</span>     <span class="co"># prompts to download once</span></span>
+<span></span>
+<span><span class="va">scored</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>.doc <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu">tidytext</span><span class="fu">::</span><span class="fu">unnest_tokens</span><span class="op">(</span><span class="va">word</span>, <span class="va">full_text</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">inner_join</a></span><span class="op">(</span><span class="va">afinn</span>, by <span class="op">=</span> <span class="st">"word"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">.doc</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>text_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span>, .groups <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">right_join</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">ata_tweets</span>, .doc <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/row_number.html" class="external-link">row_number</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>, by <span class="op">=</span> <span class="st">".doc"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>text_score <span class="op">=</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/replace_na.html" class="external-link">replace_na</a></span><span class="op">(</span><span class="va">text_score</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># sentimentr, which scores sentences and handles negation and amplifiers</span></span>
+<span><span class="va">scored</span> <span class="op">&lt;-</span> <span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>text_score <span class="op">=</span> <span class="fu">sentimentr</span><span class="fu">::</span><span class="fu">sentiment_by</span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span><span class="op">$</span><span class="va">ave_sentiment</span><span class="op">)</span></span></code></pre></div>
+<p>Either way, pass <code>scale = "rank"</code> unless you can say why
+the two scales are already comparable.</p>
 <p>The percentiles are taken over the rows the comparison is defined on
 – those with both a scorable emoji and a text score – not over the whole
 corpus. Only 373 of these 2000 tweets qualify, and ranking the text
@@ -1219,7 +1246,7 @@ score against all 2000 would compare a percentile of one population with
 a percentile of another. One consequence is a useful sanity check: on
 the rank scale the mean gap over the scored rows is exactly zero, so a
 non-zero mean means your filtering, not your data.</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">incong</span> <span class="op">&lt;-</span> <span class="va">scored</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_incongruity.html">emoji_incongruity</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">text_score</span>, scale <span class="op">=</span> <span class="st">"rank"</span><span class="op">)</span></span>
 <span></span>
@@ -1248,7 +1275,7 @@ all are different states, and collapsing them biases every model
 downstream. <code><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code> aggregates the same
 numbers by glyph, and <code><a href="../reference/emoji_congruence.html">emoji_congruence()</a></code> is the identical
 engine under the marketing framing.</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scored</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile</a></span><span class="op">(</span><span class="va">full_text</span>, <span class="va">text_score</span>, scale <span class="op">=</span> <span class="st">"rank"</span>, min_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 7</span></span></span>
@@ -1272,7 +1299,7 @@ readers) and as an NLP normalisation step before tokenising.
 <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> does this for a whole column, in either
 Unicode-name or shortcode form; <code><a href="../reference/text_to_emoji.html">text_to_emoji()</a></code> is the
 inverse.</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"great \U0001f600 love \u2764\ufe0f"</span><span class="op">)</span></span>
 <span><span class="va">demo</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 1</span></span></span>
@@ -1296,7 +1323,7 @@ variation selector) translates just as reliably as any other emoji,
 thanks to the normalised join key. For ad-hoc, vector-level use there
 are also <code><a href="../reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="../reference/as_emoji_name.html">as_emoji_shortcode()</a></code>
 and <code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>:</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji_name</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\u2764\ufe0f"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "grinning face" "red heart"</span></span>
 <span><span class="fu"><a href="../reference/as_emoji_name.html">as_emoji_shortcode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\u2764\ufe0f"</span><span class="op">)</span><span class="op">)</span></span>
@@ -1310,7 +1337,7 @@ and <code><a href="../reference/as_emoji_name.html">as_emoji()</a></code>:</p>
 <p><code><a href="../reference/emoji_search.html">emoji_search()</a></code> looks emoji up by keyword, name or
 shortcode (case-insensitive, literal matching), returning a tidy tibble
 you can filter further or feed into the other verbs:</p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                            shortcode             group     keyword</span></span>
@@ -1350,7 +1377,7 @@ decision matters: they inflate token counts several-fold, and models
 disambiguate them poorly. <code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code> gives the
 exact sizes plus a clearly-labelled estimate – pass your real tokeniser
 through <code>tokenizer</code> when the number matters:</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ata_tweets</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.emoji_n</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -1367,7 +1394,7 @@ to the column. The capability is not new – most of it exists across
 <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> and the extraction verbs – but the named
 argument shows up in a script diff and in a methods section, which is
 the point:</p>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">demo_llm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"ship it \U0001f680 today"</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">p</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"keep"</span>, <span class="st">"strip"</span>, <span class="st">"name"</span>, <span class="st">"shortcode"</span>, <span class="st">"placeholder"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">p</span>, width <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>, <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">demo_llm</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="va">p</span><span class="op">)</span><span class="op">$</span><span class="va">text</span>,</span>
@@ -1378,6 +1405,13 @@ the point:</p>
 <span><span class="co">#&gt; name         ship it rocket today </span></span>
 <span><span class="co">#&gt; shortcode    ship it :rocket: today </span></span>
 <span><span class="co">#&gt; placeholder  ship it [emoji] today</span></span></code></pre></div>
+<p>Those five policies are not interchangeable: they lose different
+amounts of information, and only one of them can be undone after the
+model call.
+<code><a href="../articles/reversible-preprocessing.html">vignette("reversible-preprocessing", package = "tidyEmoji")</a></code>
+works through that round trip on the cases that break a hand-rolled
+substitution, and shows how to keep the emoji signal as feature columns
+while the text you send holds no emoji at all.</p>
 </div>
 <div class="section level2">
 <h2 id="recording-provenance">Recording provenance<a class="anchor" aria-label="anchor" href="#recording-provenance"></a>
@@ -1386,11 +1420,11 @@ the point:</p>
 called and which lexicon scored them all depend on versions, and a
 result is not reproducible without them. <code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code>
 puts the lot in one row you can paste into a methods section:</p>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 1</span></span>
 <span><span class="co">#&gt; Columns: 7</span></span>
-<span><span class="co">#&gt; $ tidyEmoji         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.4.0"</span></span>
+<span><span class="co">#&gt; $ tidyEmoji         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.5.0"</span></span>
 <span><span class="co">#&gt; $ emoji_pkg         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0.0"</span></span>
 <span><span class="co">#&gt; $ unicode_emoji     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0"</span></span>
 <span><span class="co">#&gt; $ n_emoji           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 5042</span></span>
