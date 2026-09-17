@@ -8103,13 +8103,21 @@ test_that("README.md's shown output is what the package now produces", {
   # the same UTF-8 strings at run time and says nothing.
   ascii_markers <- stats::setNames(
     c("x", "~", "i"), intToUtf8(c(0x00D7, 0x2026, 0x2139), multiple = TRUE))
+  # Column *padding* is not the subject either, and it moves without the
+  # package moving: pillar pads to a glyph's display width, and `utf8` has
+  # changed its mind about the East-Asian-ambiguous ones. U+263A is width 2
+  # under utf8 1.2.1, which is what R 4.1.0 (our declared minimum) ships, and
+  # width 1 under 1.2.6. That one column shifts by a space and the whole
+  # comparison fails, on a checking machine that did nothing wrong. Runs of
+  # spaces are collapsed so the padding cannot decide it; every value, name
+  # and count still has to match, which is what the note above promises.
   out_lines <- function(f) {
     l <- readLines(f, warn = FALSE, encoding = "UTF-8")
     l <- trimws(grep("^\\s*#>", l, value = TRUE))
     for (m in names(ascii_markers)) {
       l <- gsub(m, ascii_markers[[m]], l, fixed = TRUE)
     }
-    l
+    gsub(" {2,}", " ", l)
   }
   fresh <- out_lines(file.path(wd, "README.md"))
   shipped <- out_lines(md)

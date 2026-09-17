@@ -153,10 +153,14 @@ package and its vignette build without their Suggests packages;
 `_R_CHECK_FORCE_SUGGESTS_=false` is needed there, since a complete check
 requires them by default.
 
-On R 4.1.0, the declared minimum, the `testthat` suite passed in full when
-last run there; that tree has `readr` 1.4.0, so the test gated on
-`readr (>= 2.0.0)` skips. The figure is from that run and the suite has grown
-since, so it is stated as history rather than as a current measurement.
+On R 4.1.0, the declared minimum, the `testthat` suite passes in full: 14664
+pass and one skip, that tree carrying `readr` 1.4.0 so the test gated on
+`readr (>= 2.0.0)` stands down. Re-measured for this submission rather than
+quoted from an older run. The one difference that showed up there was in the
+checking stack and not in the package: `utf8` 1.2.1 gives `U+263A` display
+width 2 where 1.2.6 gives 1, so `pillar` pads one README column differently,
+and the test that re-renders the README now compares its output with runs of
+spaces collapsed.
 
 The skip inventory itself is current and was re-measured for this submission
 on R 4.4.1. Run as CRAN runs it, seven tests skip, all seven `skip_on_cran()`,
