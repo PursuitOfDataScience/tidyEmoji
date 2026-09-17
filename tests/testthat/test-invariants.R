@@ -8852,6 +8852,38 @@ test_that("the four time verbs agree that an undated row contributes nothing", {
   }
 })
 
+test_that("the tangled vignette script matches what the vignette says of it", {
+  # A chunk's `eval` option is a build-time instruction and does not survive
+  # into the script knitr tangles, so introduction.R calls ggplot()
+  # unconditionally while the vignette's own charts are gated. The vignette
+  # now says so; this holds the claim to the file.
+  path <- system.file("doc", "introduction.R", package = "tidyEmoji")
+  skip_if(!nzchar(path) || !file.exists(path),
+          "tangled vignette script not installed")
+  script <- readLines(path, warn = FALSE, encoding = "UTF-8")
+  code <- script[!grepl("^\\s*(#|$)", script)]
+
+  # library(ggplot2) is conditional, and the ggplot() calls are not
+  expect_true(any(grepl("if (has_plot_pkgs) library(ggplot2)", code,
+                        fixed = TRUE)))
+  plots <- grep("ggplot(", code, fixed = TRUE)
+  expect_gt(length(plots), 0L)
+  expect_false(any(grepl("if (has_plot_pkgs)", code[plots], fixed = TRUE)))
+  # the eval option survives only as a comment, which is why
+  expect_true(any(grepl("^## ----eval = has_plot_pkgs", script)))
+
+  # and the corpus is read the way the vignette says, so the non-plotting
+  # half really does run on the declared dependencies alone
+  expect_true(any(grepl("utils::read.csv", code, fixed = TRUE)))
+  expect_false(any(grepl("readr::", code, fixed = TRUE)))
+
+  vig <- pkg_text_file("vignettes/introduction.Rmd", "doc/introduction.Rmd")
+  skip_if(is.na(vig), "vignette source not available")
+  prose <- paste(readLines(vig, warn = FALSE, encoding = "UTF-8"),
+                 collapse = " ")
+  expect_true(grepl("calls `ggplot()` unconditionally", prose, fixed = TRUE))
+})
+
 test_that("all three top_n arguments cut the same way", {
   # ?top_n_emojis documented the tie-at-the-cut rule and the no-padding rule;
   # emoji_trend() and emoji_flag_ambiguous() take the same argument, behave
