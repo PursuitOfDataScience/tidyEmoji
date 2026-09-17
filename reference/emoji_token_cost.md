@@ -48,6 +48,14 @@ emoji_token_cost(data, text, tokenizer = NULL)
   vectors. It is called on the row's emoji, concatenated. `NULL`
   (default) uses the byte heuristic.
 
+  What it returns is checked, because a wrong answer here is silent
+  otherwise. A count is rounded up, and it has to be finite, not
+  negative and within integer range; `NA` is accepted and passed
+  through, for a tokeniser that cannot answer for a row. A data frame is
+  refused rather than read, since
+  [`lengths()`](https://rdrr.io/r/base/lengths.html) on one counts its
+  columns rather than its tokens.
+
 ## Value
 
 `data`, as a tibble, with added columns `.emoji_n`, `.emoji_bytes`,

@@ -83,7 +83,13 @@ people, code points that are emoji only when they carry <code>U+FE0F</code>.</p>
 <dd><p>Optional function taking a character vector and returning
 either token counts (a numeric vector of the same length) or a list of
 token vectors. It is called on the row's emoji, concatenated. <code>NULL</code>
-(default) uses the byte heuristic.</p></dd>
+(default) uses the byte heuristic.</p>
+<p>What it returns is checked, because a wrong answer here is silent
+otherwise. A count is rounded up, and it has to be finite, not negative
+and within integer range; <code>NA</code> is accepted and passed through, for a
+tokeniser that cannot answer for a row. A data frame is refused rather
+than read, since <code><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths()</a></code> on one counts its columns rather than
+its tokens.</p></dd>
 
 </dl></div>
     <div class="section level2">

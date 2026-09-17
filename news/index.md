@@ -137,11 +137,11 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred of them, and reading just those leads gives the release without
-the verification detail. Not all one hundred changed observable
-behaviour: several record a test that could not have failed, or a figure
-the documentation quoted incorrectly, which are worth the same
-prominence because both meant something was unverified.
+hundred and one of them, and reading just those leads gives the release
+without the verification detail. Not all one hundred and one changed
+observable behaviour: several record a test that could not have failed,
+or a figure the documentation quoted incorrectly, which are worth the
+same prominence because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1626,20 @@ prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **`emoji_token_cost(tokenizer = )` took its answer on trust.** The
+  function is the widest surface the verb has, and three wrong answers
+  from it were silent. A negative count went straight into
+  `.emoji_token_estimate`, which is the nonsense `top_n_emojis(n = )`
+  already refuses. An infinite or out-of-integer-range one became `NA`
+  through R’s own `NAs introduced by coercion to integer range`, a
+  warning naming neither this argument nor this verb. And a data frame
+  is a list, so [`lengths()`](https://rdrr.io/r/base/lengths.html)
+  counted its *columns* and the shape check passed whenever the caller
+  happened to have as many columns as the data has rows. All three now
+  error, naming the values that came back. `NA` is still accepted and
+  passed through, for a tokeniser that cannot answer for a row, and a
+  fractional count still rounds up.
 
 - **A user lexicon’s `Inf` was counted as a score.** The score column is
   refused if it is not numeric, on the stated reasoning that a value
