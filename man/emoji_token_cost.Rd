@@ -26,7 +26,14 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \item{tokenizer}{Optional function taking a character vector and returning
 either token counts (a numeric vector of the same length) or a list of
 token vectors. It is called on the row's emoji, concatenated. \code{NULL}
-(default) uses the byte heuristic.}
+(default) uses the byte heuristic.
+
+What it returns is checked, because a wrong answer here is silent
+otherwise. A count is rounded up, and it has to be finite, not negative
+and within integer range; \code{NA} is accepted and passed through, for a
+tokeniser that cannot answer for a row. A data frame is refused rather
+than read, since \code{lengths()} on one counts its columns rather than
+its tokens.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n}, \code{.emoji_bytes},

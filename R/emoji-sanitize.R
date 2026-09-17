@@ -237,6 +237,13 @@ emoji_sanitize <- function(data, text, policy = "keep",
 #'   either token counts (a numeric vector of the same length) or a list of
 #'   token vectors. It is called on the row's emoji, concatenated. `NULL`
 #'   (default) uses the byte heuristic.
+#'
+#'   What it returns is checked, because a wrong answer here is silent
+#'   otherwise. A count is rounded up, and it has to be finite, not negative
+#'   and within integer range; `NA` is accepted and passed through, for a
+#'   tokeniser that cannot answer for a row. A data frame is refused rather
+#'   than read, since `lengths()` on one counts its columns rather than
+#'   its tokens.
 #' @return `data`, as a tibble, with added columns `.emoji_n`, `.emoji_bytes`,
 #'   `.emoji_codepoints`, `.emoji_graphemes` and `.emoji_token_estimate`.
 #' @seealso [emoji_sanitize()] for acting on the answer; [emoji_ratio()] for
@@ -262,6 +269,15 @@ emoji_token_cost <- function(data, text, tokenizer = NULL) {
     est <- as.integer(ceiling(n_bytes / 2))
   } else {
     tk <- tokenizer(joined)
+    # A data frame is a list, so `lengths()` would count its *columns* and
+    # the length check below would pass whenever the caller happens to have
+    # as many columns as rows. Silently counting the wrong thing is worse
+    # than refusing, and a token table is a plausible thing to return.
+    if (is.data.frame(tk)) {
+      stop("`tokenizer` returned a data frame. Return one count per element ",
+           "of its input, or a list of token vectors: lengths() on a data ",
+           "frame counts its columns, not its tokens.", call. = FALSE)
+    }
     if (is.list(tk)) tk <- lengths(tk)
     if (!is.numeric(tk) || length(tk) != length(joined)) {
       stop("`tokenizer` must return one token count, or one token vector, ",
@@ -271,7 +287,28 @@ emoji_token_cost <- function(data, text, tokenizer = NULL) {
     # so a tokeniser answering 2.6 was recorded as 2 -- the same silent
     # truncation .emoji_is_count() exists to refuse for a user's argument,
     # applied to a user's function's output.
-    est <- as.integer(ceiling(tk))
+    tk <- ceiling(tk)
+    # And the same argument carried the rest of the way. A negative count is
+    # not a count -- the nonsense `top_n_emojis(n = )` already refuses -- and
+    # an infinite or out-of-range one becomes `NA` through R's own "NAs
+    # introduced by coercion to integer range", a warning naming neither this
+    # argument nor this verb. Both come out of the caller's own function, so
+    # name the values it returned. `NA` is left alone: a tokeniser that
+    # cannot answer for a row is saying something, and it says it in the
+    # column's own vocabulary.
+    bad <- !is.na(tk) &
+      (!is.finite(tk) | tk < 0 | tk > .Machine$integer.max)
+    if (any(bad)) {
+      stop(sprintf(
+        paste0("`tokenizer` returned %d value%s that cannot be a token ",
+               "count: %s. A count has to be finite, not negative, and ",
+               "within integer range. `NA` is accepted, for a tokeniser ",
+               "that cannot answer for a row."),
+        sum(bad), if (sum(bad) == 1L) "" else "s",
+        paste(format(utils::head(tk[bad], 3L)), collapse = ", ")
+      ), call. = FALSE)
+    }
+    est <- as.integer(tk)
     est[!nzchar(joined)] <- 0L
   }
 

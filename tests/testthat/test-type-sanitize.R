@@ -175,6 +175,43 @@ test_that("emoji_token_cost accepts a real tokenizer", {
                "one token count")
 })
 
+test_that("emoji_token_cost checks what the tokenizer hands back", {
+  # A user's function is the widest surface this verb has, and a wrong
+  # answer from it was silent: a negative count went straight into the
+  # column, and an infinite or out-of-range one became NA through R's own
+  # "NAs introduced by coercion to integer range", which names neither the
+  # argument nor the verb.
+  df <- data.frame(text = c(paste("a", grin), paste("b", grin, grin), "none"),
+                   stringsAsFactors = FALSE)
+  for (bad in list(c(-5, 2, 0), c(Inf, 2, 0), c(-Inf, 2, 0), c(1e12, 2, 0))) {
+    expect_error(
+      emoji_token_cost(df, text, tokenizer = function(x) bad),
+      "cannot be a token count", fixed = TRUE)
+  }
+  # the message names the offending value, not just the shape
+  expect_error(emoji_token_cost(df, text, tokenizer = function(x) c(-5, 2, 0)),
+               "-5", fixed = TRUE)
+  # a data frame is refused rather than read as its column count
+  expect_error(
+    emoji_token_cost(df, text,
+                     tokenizer = function(x) data.frame(a = 1:3, b = 1:3,
+                                                        c = 1:3)),
+    "counts its columns", fixed = TRUE)
+  # NA is a legitimate answer and survives, and 0 is not negative
+  na_ok <- emoji_token_cost(df, text,
+                            tokenizer = function(x) c(NA_real_, 2, 0))
+  expect_identical(na_ok$.emoji_token_estimate, c(NA_integer_, 2L, 0L))
+  zero <- emoji_token_cost(df, text, tokenizer = function(x) c(0, 0, 0))
+  expect_identical(zero$.emoji_token_estimate, c(0L, 0L, 0L))
+  # and a fractional count still rounds up rather than truncating
+  frac <- emoji_token_cost(df, text, tokenizer = function(x) c(2.6, 3.2, 0))
+  expect_identical(frac$.emoji_token_estimate, c(3L, 4L, 0L))
+  # the documented contract says all of this
+  rd <- rd_flat("emoji_token_cost")
+  expect_match(rd, "finite, not negative", fixed = TRUE)
+  expect_match(rd, "counts its columns", fixed = TRUE)
+})
+
 test_that("emoji_provenance reports one row of versions", {
   out <- emoji_provenance()
   expect_equal(nrow(out), 1L)
