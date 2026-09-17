@@ -79,6 +79,11 @@ verb exists to add would not either. Use
 when you want `directed = TRUE`; the off-diagonal rows the two verbs
 return are otherwise identical.
 
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one row rather than two; see *Which spelling
+comes back* in
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
+
 ## See also
 
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md),

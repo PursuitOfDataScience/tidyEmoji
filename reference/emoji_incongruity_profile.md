@@ -99,6 +99,11 @@ genuinely incongruent one will therefore inherit some of its score; read
 `n` alongside `flip_rate` before drawing conclusions from a handful of
 occurrences.
 
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one row rather than two; see *Which spelling
+comes back* in
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
+
 ## See also
 
 [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md).

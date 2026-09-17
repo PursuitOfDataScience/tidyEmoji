@@ -157,6 +157,36 @@ which is why they are named here rather than silently filtered: dropping
 them inside the verbs would make the emoji counts disagree with the text.</p>
     </div>
     <div class="section level2">
+    <h2 id="which-spelling-comes-back">Which spelling comes back<a class="anchor" aria-label="anchor" href="#which-spelling-comes-back"></a></h2>
+
+
+<p>Two spellings of one emoji, differing only by <code>U+FE0F</code>, are one emoji to
+every lookup: the name, the score, the category and the type all resolve
+through a key that strips the selector. They are not always one <em>row</em>. A
+verb that reports a glyph either hands back the spelling it found or
+collapses both onto the catalogue's, and which it does follows from what
+the verb is for:</p><ul><li><p><strong>The spelling as found</strong>: <code><a href="emoji_frequency.html">emoji_frequency()</a></code>, <code><a href="top_n_emojis.html">top_n_emojis()</a></code>,
+<code><a href="emoji_tokens.html">emoji_tokens()</a></code>, <code><a href="emoji_extract_nest.html">emoji_extract_nest()</a></code>, <code><a href="emoji_extract_unnest.html">emoji_extract_unnest()</a></code> and
+<code><a href="emoji_context.html">emoji_context()</a></code>. These report occurrences, and an occurrence is the
+text you actually had.</p></li>
+<li><p><strong>Collapsed onto one</strong>: <code><a href="emoji_pairs.html">emoji_pairs()</a></code>, <code><a href="emoji_cooccurrence.html">emoji_cooccurrence()</a></code>,
+<code><a href="emoji_ngrams.html">emoji_ngrams()</a></code>, <code><a href="emoji_dfm.html">emoji_dfm()</a></code>, <code><a href="emoji_collocations.html">emoji_collocations()</a></code>,
+<code><a href="emoji_trend.html">emoji_trend()</a></code>, <code><a href="emoji_adoption_lag.html">emoji_adoption_lag()</a></code> and
+<code><a href="emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code>. These build an item, a node, a feature
+or a series, and two spellings of one emoji are one of those.
+<code><a href="emoji_turnover.html">emoji_turnover()</a></code> and <code><a href="emoji_version_profile.html">emoji_version_profile()</a></code> count the same way in
+their <code>n_types</code>, without reporting a glyph at all.</p></li>
+</ul><p>A corpus holding both spellings shows the difference in one line:
+<code><a href="emoji_frequency.html">emoji_frequency()</a></code> returns two rows of <code>n = 1</code> where
+<code><a href="emoji_cooccurrence.html">emoji_cooccurrence()</a></code> returns one node of <code>n = 2</code>. Nothing is lost
+either way, and the two sides line up on the name, which is the same for
+both spellings: <code><a href="emoji_frequency.html">emoji_frequency()</a></code> already carries it, and
+<code><a href="as_emoji_name.html">as_emoji_name()</a></code> supplies it for a glyph column of your own.</p>
+<p>This is only ever about spellings of the <em>same</em> emoji. Skin tones, genders
+and the members of a ZWJ sequence are different emoji and stay apart in
+every verb.</p>
+    </div>
+    <div class="section level2">
     <h2 id="grouped-data-frames">Grouped data frames<a class="anchor" aria-label="anchor" href="#grouped-data-frames"></a></h2>
 
 

@@ -81,6 +81,11 @@ shipping early, or a timestamp problem worth investigating.
 
 Occurrences whose time is missing or unparseable are dropped.
 
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one row rather than two; see *Which spelling
+comes back* in
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
+
 ## See also
 
 [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md),

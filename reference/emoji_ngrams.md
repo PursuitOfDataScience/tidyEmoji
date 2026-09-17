@@ -60,6 +60,13 @@ join back on `.row_number` to recover them. Unlike the corpus-wide verbs
 this one does not pool your rows, so there is no per-group answer being
 silently turned into a global one.
 
+## Details
+
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one n-gram token rather than two; see *Which
+spelling comes back* in
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
+
 ## See also
 
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
