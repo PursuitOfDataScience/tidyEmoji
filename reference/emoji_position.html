@@ -101,6 +101,15 @@ points instead put a sentence-final family emoji a third of the way through
 its message. Everything that is not an emoji still counts one position per
 code point, so a combining accent elsewhere in the text counts twice; that
 affects the denominator only, and only for text carrying such marks.</p>
+<p>A text that collapses to a <em>single</em> position cannot tell its start from its
+end, and <code>.emoji_rel_position</code> is <code>0</code> there by convention. That is exactly
+the row whose whole content is one emoji and nothing else, which a chat or
+reaction corpus is full of, so the filter this column exists for
+(<code>.emoji_rel_position &gt; 0.8</code>, "the emoji ends the message") skips every one
+of them. <code><a href="emoji_ratio.html">emoji_ratio()</a></code>'s <code>.emoji_only</code> finds that family of rows. One
+character either side is enough to resolve the ambiguity the convention
+settles: a trailing space scores the emoji <code>0</code>, a leading one scores it
+<code>1</code>, both on the ordinary path.</p>
 <p>Positions are in <em>logical</em> (storage) order, not visual order. In a
 right-to-left script an emoji that is logically last renders at the reader's
 left, so "final" here means final in the string, not final on the screen.</p>

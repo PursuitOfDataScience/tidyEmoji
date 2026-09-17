@@ -64,6 +64,18 @@ still counts one position per code point, so a combining accent
 elsewhere in the text counts twice; that affects the denominator only,
 and only for text carrying such marks.
 
+A text that collapses to a *single* position cannot tell its start from
+its end, and `.emoji_rel_position` is `0` there by convention. That is
+exactly the row whose whole content is one emoji and nothing else, which
+a chat or reaction corpus is full of, so the filter this column exists
+for (`.emoji_rel_position > 0.8`, "the emoji ends the message") skips
+every one of them.
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)'s
+`.emoji_only` finds that family of rows. One character either side is
+enough to resolve the ambiguity the convention settles: a trailing space
+scores the emoji `0`, a leading one scores it `1`, both on the ordinary
+path.
+
 Positions are in *logical* (storage) order, not visual order. In a
 right-to-left script an emoji that is logically last renders at the
 reader's left, so "final" here means final in the string, not final on

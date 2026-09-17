@@ -136,12 +136,12 @@ maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
-or in a test that was passing for the wrong reason. There are ninety-one
-of them, and reading just those leads gives the release without the
-verification detail. Not all ninety-one changed observable behaviour:
-several record a test that could not have failed, or a figure the
-documentation quoted incorrectly, which are worth the same prominence
-because both meant something was unverified.
+or in a test that was passing for the wrong reason. There are
+ninety-three of them, and reading just those leads gives the release
+without the verification detail. Not all ninety-three changed observable
+behaviour: several record a test that could not have failed, or a figure
+the documentation quoted incorrectly, which are worth the same
+prominence because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1627,6 +1627,22 @@ because both meant something was unverified.
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
 
+- **[`?emoji_position`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+  never documented the convention its own tests called documented.** A
+  text that collapses to a single position, meaning one emoji and
+  nothing else at all, cannot tell its start from its end, and
+  `.emoji_rel_position` is `0` there. The test asserting it said
+  “documented as 0” and the help page said so nowhere. It matters for
+  the one filter the column exists for: `.emoji_rel_position > 0.8`
+  finds sentence-final emoji and skips every emoji-only message, which
+  is the commonest shape in a chat or reaction corpus. The page now
+  states the convention, points at
+  [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)’s
+  `.emoji_only` for finding that family, and records that one character
+  either side settles the ambiguity (a trailing space scores the emoji
+  `0`, a leading one `1`). Pinned for a one-code-point glyph and a ZWJ
+  family, since the convention counts positions rather than code points.
+
 - **The reproducibility claim behind the bundled data is now verified.**
   Every dataset’s `@source` names the `data-raw/` script that builds it
   and the vignette says they “are regenerated from the current Unicode
@@ -1849,6 +1865,31 @@ because both meant something was unverified.
   applies to the text column too if you happen to have named it
   `.emoji_n`. A test asserts no verb invents a fourth dotted name and
   that the page lists the five.
+
+- **The same contract said the overwrite was always harmless, and twice
+  it is not.** It illustrates the reserved-prefix rule with
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  then
+  [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md),
+  where both write `.emoji_n` and “both mean the same thing”. Two shared
+  dotted names do not. `.emoji_n_scored` counts the emoji *that verb’s*
+  lexicon could score, and the lexicons cover different emoji:
+  `U+203C U+FE0F` scores `0` under
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md),
+  [`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md),
+  [`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md)
+  and
+  [`emoji_incongruity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_incongruity.md)
+  and `1` under
+  [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md),
+  so the natural chain of the first and the last leaves a count
+  describing one lexicon beside a sentiment from the other.
+  `.emoji_sentiment` averages every emoji in the row from
+  [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+  but only the trailing run from `emoji_incongruity(where = "final")`.
+  Both are now named in the contract, with the remedy, and a test pins
+  the divergence in both directions as well as the fact that `.emoji_n`
+  really is the same measurement in all eight verbs that write it.
 
 - **`emoji_search(NA_character_)` failed with R’s own “missing value
   where TRUE/FALSE needed”** instead of the verb’s own message.

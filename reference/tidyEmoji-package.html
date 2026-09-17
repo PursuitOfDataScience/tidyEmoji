@@ -72,6 +72,22 @@ verbs chainable and re-runnable – <code><a href="emoji_sentiment.html">emoji_s
 but it also means a column of your own called <code>.emoji_n</code> will be replaced,
 and that includes the text column itself if you named it <code>.emoji_n</code>. Rename
 it first if you need to keep it.</p>
+<p>Two of the shared dotted names do <strong>not</strong> mean the same thing in every verb
+that writes them, so chaining those verbs replaces a number with a
+different one rather than with the same one:</p><ul><li><p><code>.emoji_n_scored</code> counts the emoji <em>that verb's</em> lexicon could score, and
+the lexicons cover different emoji. <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>,
+<code><a href="emoji_score.html">emoji_score()</a></code> and <code><a href="emoji_incongruity.html">emoji_incongruity()</a></code> read the sentiment lexicon,
+<code><a href="emoji_risk.html">emoji_risk()</a></code> the ambiguity table built from it, and <code><a href="emoji_emotion.html">emoji_emotion()</a></code>
+the emotion lexicon: <code>U+203C U+FE0F</code> scores <code>0</code> under the first four and
+<code>1</code> under <code><a href="emoji_emotion.html">emoji_emotion()</a></code>. <code>emoji_score(lexicon = )</code> can be anything
+you registered.</p></li>
+<li><p><code>.emoji_sentiment</code> is the mean over every emoji in the row from
+<code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>, but over only the trailing run from
+<code><a href="emoji_incongruity.html">emoji_incongruity()</a></code> with <code>where = "final"</code>.</p></li>
+</ul><p>So <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code> followed by <code><a href="emoji_emotion.html">emoji_emotion()</a></code> leaves a
+<code>.emoji_n_scored</code> describing the emotion lexicon beside a
+<code>.emoji_sentiment</code> that does not. Rename the first result's column before
+adding the second, or keep the two tables apart.</p>
 <p><code>group</code> always refers to the Unicode top-level category (the term used by
 the underlying <code><a href="https://emilhvitfeldt.github.io/emoji/reference/emojis.html" class="external-link">emoji::emojis</a></code> table). Every glyph-to-metadata join is
 normalised through a codepoint key that strips the <code>U+FE0F</code> variation
