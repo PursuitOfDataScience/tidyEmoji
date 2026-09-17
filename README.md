@@ -13,9 +13,9 @@ maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lif
 <!-- badges: end -->
 
 tidyEmoji helps you **discover, count, categorise, sentiment-score,
-score emotions, translate and relate the emoji in any text column** —
-social-media posts, product reviews, chat logs, survey responses,
-support tickets — from summary counts through emotion profiles,
+score emotions, translate and relate the emoji in any text column**
+(social-media posts, product reviews, chat logs, survey responses,
+support tickets), from summary counts through emotion profiles,
 co-occurrence networks, structural metrics and model-ready feature
 tables, always as tidy data frames that drop straight into a tidyverse
 workflow.
@@ -95,7 +95,7 @@ reviews %>% top_n_emojis(text, n = 3)  # just the most frequent
 ### Pull the emoji out
 
 `emoji_tokens()` gives one tidy row per emoji occurrence, with its name,
-category and sentiment — ready to count, join or plot.
+category and sentiment, ready to count, join or plot.
 
 ``` r
 reviews %>% emoji_tokens(text)
@@ -166,7 +166,7 @@ reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
 ### Relate emoji to each other
 
 `emoji_pairs()` returns a graph-ready edge list of the emoji that appear
-in the same entry (`widyr`-style `item1`/`item2`/`n` — pipe it into
+in the same entry (`widyr`-style `item1`/`item2`/`n`; pipe it into
 igraph, tidygraph or ggraph), and `emoji_ngrams()` captures consecutive
 sequences.
 
@@ -179,9 +179,9 @@ reviews %>% emoji_pairs(text)
 #> 2 😀    😍        1
 ```
 
-There are structural metrics too — `emoji_position()` (emoji sit at the
+There are structural metrics too: `emoji_position()` (emoji sit at the
 end of messages), `emoji_density()` and `emoji_ratio()` (emoji-only
-detection) — and `emoji_dfm()` builds a document-by-emoji
+detection). And `emoji_dfm()` builds a document-by-emoji
 count/binary/tf-idf table for modelling.
 
 ``` r
@@ -215,7 +215,7 @@ reviews %>% emoji_sentiment(text, se = TRUE)  # a score with a standard error
 
 `emoji_context()` returns one row per occurrence with the surrounding
 words, and `emoji_collocations()` turns those windows into a PMI-scored
-emoji-word table — corpus-derived senses, with no licence baggage and
+emoji-word table: corpus-derived senses, with no licence baggage and
 nothing stale. On the time axis, `emoji_trend()` and `emoji_turnover()`
 follow usage and vocabulary churn, while `emoji_version_profile()` and
 `emoji_adoption_lag()` use the Unicode version of each glyph to ask how
@@ -230,7 +230,7 @@ posts %>% emoji_adoption_lag(text, posted_at)
 
 ### Does the text agree with the emoji?
 
-Emoji–text sentiment mismatch is a sarcasm feature in NLP and the
+Emoji-text sentiment mismatch is a sarcasm feature in NLP and the
 (in)congruence variable in marketing research. tidyEmoji supplies the
 emoji half and the arithmetic; you bring the text score from tidytext,
 sentimentr or a model, and say how the two were made comparable.
@@ -257,7 +257,7 @@ emoji_provenance()
 
 The scoring machinery is pluggable: `emoji_lexicons()` lists what’s
 available, `register_emoji_lexicon()` adds your own, and `emoji_score()`
-scores a text column against any of them — always joining through a
+scores a text column against any of them, always joining through a
 codepoint-normalised key, so qualified and unqualified emoji forms both
 match.
 
@@ -328,5 +328,5 @@ emoji_search("happy")
 The [introductory
 vignette](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html)
 (`vignette("introduction", package = "tidyEmoji")`) walks through a full
-analysis of a real corpus — counting, categorising, sentiment- and
+analysis of a real corpus: counting, categorising, sentiment- and
 emotion-scoring emoji, and plotting the results.

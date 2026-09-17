@@ -11,6 +11,17 @@
   c("keep", "strip", "name", "shortcode", "placeholder")
 }
 
+# Delete the spans in `locs` from each element of `v`. Split out of
+# emoji_sanitize() because "strip" runs it more than once; see the fixed-point
+# loop there for why.
+.emoji_strip_spans <- function(v, locs) {
+  vapply(seq_along(v), function(i) {
+    m <- locs[[i]]
+    .emoji_replace_in_order(v[[i]], m, .emoji_slice(m, v[[i]]),
+                            rep("", nrow(m)))
+  }, character(1), USE.NAMES = FALSE)
+}
+
 
 #' Apply an explicit emoji policy to a text column
 #'
@@ -31,12 +42,23 @@
 #' * `"strip"` deletes the emoji. Because deleting a glyph can leave two spaces
 #'   where there was one, `strip` also collapses runs of spaces and tabs and
 #'   trims the ends -- the only policy that touches anything but the emoji.
+#'   It is also the only one that guarantees an emoji-free column: removing a
+#'   span makes its two neighbours adjacent, and on malformed input those two
+#'   can spell an emoji the original text did not contain (a bare `U+2603`
+#'   beside an orphan `U+FE0F` becomes the qualified snowman), so `strip`
+#'   repeats until there is nothing left to remove.
 #' * `"name"` and `"shortcode"` substitute the Unicode name
 #'   ("grinning face") or the GitHub-style alias (":grinning:"), exactly as
-#'   [emoji_to_text()] does. `name` is also the accessibility answer: it is
+#'   [emoji_to_text()] does -- including its rule that a glyph with no known
+#'   name or alias is **left in place unchanged**. A ZWJ sequence too new for
+#'   the installed catalogue is detected but cannot be named, so these two
+#'   policies can return a column that still holds emoji. `"strip"` and
+#'   `"placeholder"` cannot. `name` is also the accessibility answer: it is
 #'   what a screen reader announces.
 #' * `"placeholder"` substitutes a fixed token, which keeps the *position* of
-#'   an emoji as a feature while removing its identity.
+#'   an emoji as a feature while removing its identity. An empty
+#'   `placeholder` is a deletion rather than a substitution, so it gets
+#'   `"strip"`'s repeat pass (but not its whitespace tidying).
 #'
 #' Replacements go exactly where the glyph was, with no padding, so a grinning
 #' face glued to the end of a word yields `"wordgrinning face"`. If your
@@ -147,9 +169,35 @@ emoji_sanitize <- function(data, text, policy = "keep",
       rep(placeholder, length(g))
     .emoji_replace_in_order(v[[i]], m, g, rpl)
   }, character(1))
+  had <- vapply(locs, function(m) !is.null(m) && nrow(m) > 0L, logical(1))
+  # Deleting a span makes the characters on either side of it adjacent, and
+  # those two can spell an emoji the original text did not contain: a bare
+  # U+2603 and an orphan U+FE0F become the qualified snowman, `#` and a
+  # stray U+FE0F U+20E3 become a keycap. One pass therefore did not always
+  # honour what the policy promises, so keep going until nothing is left.
+  # Each pass strictly shortens the rows it touches, so this terminates. The
+  # gate is cheap: every emoji carries at least one non-ASCII code point, so
+  # a row that is pure ASCII once the glyphs are gone -- which is most of
+  # them -- is never scanned a second time.
+  #
+  # Only a replacement that inserts nothing can do this; any non-empty token
+  # keeps the neighbours apart. `placeholder = ""` is such a replacement,
+  # which is why the condition is about what is substituted rather than about
+  # which policy asked for it.
+  if (policy == "strip" || !nzchar(placeholder)) {
+    idx <- which(had)
+    repeat {
+      idx <- idx[grepl("[^\x01-\x7f]", rewritten[idx], useBytes = TRUE)]
+      if (!length(idx)) break
+      again <- .emoji_locations(rewritten[idx])
+      keep <- vapply(again, nrow, integer(1)) > 0L
+      if (!any(keep)) break
+      idx <- idx[keep]
+      rewritten[idx] <- .emoji_strip_spans(rewritten[idx], again[keep])
+    }
+  }
   if (policy == "strip") {
     # only tidy the rows a glyph was actually removed from
-    had <- vapply(locs, function(m) !is.null(m) && nrow(m) > 0L, logical(1))
     rewritten[had] <- trimws(gsub("[ \t]{2,}", " ", rewritten[had]))
   }
   rewritten[was_na] <- NA_character_

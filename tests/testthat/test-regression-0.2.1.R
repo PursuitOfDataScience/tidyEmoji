@@ -31,7 +31,7 @@ test_that("top_n_emojis(duplicated = TRUE) keeps qualified emoji via key join", 
 })
 
 # ---------------------------------------------------------------------------
-# 4.2: Unified detection — summary/filter agree with extraction verbs
+# 4.2: Unified detection: summary/filter agree with extraction verbs
 # ---------------------------------------------------------------------------
 
 test_that("emoji_summary and emoji_tokens agree on what 'has an emoji' means", {

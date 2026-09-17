@@ -1,11 +1,11 @@
-# tidyEmoji — Roadmap for 0.5.0
+# tidyEmoji -- Roadmap for 0.5.0
 
 *Planning document, written after 0.4.0 landed. It replaces the 0.2.0-era
 roadmap of the same name, which had become an archaeological record: its
 maintenance audit (§4) is fully discharged, its phased plan (§9) is three
 releases out of date, and its ship reports (§12, §13) describe work that is now
-in `git log`. That document is preserved in the history — `git show
-f8989ef:next_release.md` — and its durable parts (the ledger, the design
+in `git log`. That document is preserved in the history -- `git show
+f8989ef:next_release.md` -- and its durable parts (the ledger, the design
 principles, the lesson from each audit) are carried forward here in §1 and §9.*
 
 *This file is build-ignored and is not part of the package.*
@@ -15,62 +15,62 @@ principles, the lesson from each audit) are carried forward here in §1 and §9.
 ## Contents
 
 - [How to read this](#how-to-read-this)
-- [0. TL;DR — what to do next](#0-tldr-what-to-do-next)
+- [0. TL;DR -- what to do next](#0-tldr-what-to-do-next)
 - [1. Where the package stands after 0.4.0](#1-where-the-package-stands-after-040)
-  - [1.1 A defect found while re-planning — `emoji_position()` is codepoint-based](#11-a-defect-found-while-re-planning-emoji_position-is-codepoint-based)
-  - [1.2 Detection edge cases — measured, and three of them change 0.5.0's specs](#12-detection-edge-cases-measured-and-three-of-them-change-050s-specs)
-  - [1.3 The reversibility contract — tested, and worth advertising](#13-the-reversibility-contract-tested-and-worth-advertising)
-  - [1.4 Locale robustness — the twice-broken invariant now holds](#14-locale-robustness-the-twice-broken-invariant-now-holds)
+  - [1.1 A defect found while re-planning -- `emoji_position()` is codepoint-based](#11-a-defect-found-while-re-planning-emoji_position-is-codepoint-based)
+  - [1.2 Detection edge cases -- measured, and three of them change 0.5.0's specs](#12-detection-edge-cases-measured-and-three-of-them-change-050s-specs)
+  - [1.3 The reversibility contract -- tested, and worth advertising](#13-the-reversibility-contract-tested-and-worth-advertising)
+  - [1.4 Locale robustness -- the twice-broken invariant now holds](#14-locale-robustness-the-twice-broken-invariant-now-holds)
   - [1.5 The grouped-input guard is missing from three aggregators](#15-the-grouped-input-guard-is-missing-from-three-aggregators)
-  - [1.6 The remaining §1 invariants — swept, and they hold](#16-the-remaining-1-invariants-swept-and-they-hold)
-  - [1.7 Lexicon coverage ceilings — the number that should be on every help page](#17-lexicon-coverage-ceilings-the-number-that-should-be-on-every-help-page)
+  - [1.6 The remaining §1 invariants -- swept, and they hold](#16-the-remaining-1-invariants-swept-and-they-hold)
+  - [1.7 Lexicon coverage ceilings -- the number that should be on every help page](#17-lexicon-coverage-ceilings-the-number-that-should-be-on-every-help-page)
   - [1.8 Two past fixes verified, one cosmetic inconsistency](#18-two-past-fixes-verified-one-cosmetic-inconsistency)
   - [1.9 `emoji_sanitize()` has a reversibility hierarchy, and it is undocumented](#19-emoji_sanitize-has-a-reversibility-hierarchy-and-it-is-undocumented)
   - [1.10 The audit in one table](#110-the-audit-in-one-table)
-  - [1.11 The pre-submission polish pass — what it fixed, and what the audit got wrong](#111-the-pre-submission-polish-pass-what-it-fixed-and-what-the-audit-got-wrong)
+  - [1.11 The pre-submission polish pass -- what it fixed, and what the audit got wrong](#111-the-pre-submission-polish-pass-what-it-fixed-and-what-the-audit-got-wrong)
 - [2. What changed in the world since `features.md` was written](#2-what-changed-in-the-world-since-featuresmd-was-written)
-  - [2.1 `{emoji}` moved — verified against the install](#21-emoji-moved-verified-against-the-install)
+  - [2.1 `{emoji}` moved -- verified against the install](#21-emoji-moved-verified-against-the-install)
   - [2.2 Unicode Emoji 17.0 shipped](#22-unicode-emoji-170-shipped)
   - [2.3 Colour emoji now render natively in R](#23-colour-emoji-now-render-natively-in-r)
   - [2.4 New literature, 2024-2026](#24-new-literature-2024-2026)
-  - [2.5 R ecosystem — the confirmed gaps](#25-r-ecosystem-the-confirmed-gaps)
+  - [2.5 R ecosystem -- the confirmed gaps](#25-r-ecosystem-the-confirmed-gaps)
   - [2.6 A second axis: audience, not just features](#26-a-second-axis-audience-not-just-features)
 - [3. What 0.5.0 should be](#3-what-050-should-be)
-  - [3.1 Recommendation — make 0.5.0 a correctness release and move the theme to 0.6.0](#31-recommendation-make-050-a-correctness-release-and-move-the-theme-to-060)
+  - [3.1 Recommendation -- make 0.5.0 a correctness release and move the theme to 0.6.0](#31-recommendation-make-050-a-correctness-release-and-move-the-theme-to-060)
 - [4. Feature specifications](#4-feature-specifications)
   - [4.1 Modifiers, identity and representation](#41-modifiers-identity-and-representation)
   - [4.2 Geography: flags and countries](#42-geography-flags-and-countries)
-  - [4.3 Accessibility — new in this roadmap](#43-accessibility-new-in-this-roadmap)
+  - [4.3 Accessibility -- new in this roadmap](#43-accessibility-new-in-this-roadmap)
   - [4.4 Unicode property surface](#44-unicode-property-surface)
-  - [4.5 The `{stringi}` grapheme engine — now a prerequisite, not an option](#45-the-stringi-grapheme-engine-now-a-prerequisite-not-an-option)
-  - [4.6 The keyword and alias surface — newly cheap](#46-the-keyword-and-alias-surface-newly-cheap)
-  - [4.7 Presentation selectors — a documented limitation, now quantified](#47-presentation-selectors-a-documented-limitation-now-quantified)
-  - [4.8 Zero-inflation and compositional structure — a statistical duty](#48-zero-inflation-and-compositional-structure-a-statistical-duty)
+  - [4.5 The `{stringi}` grapheme engine -- now a prerequisite, not an option](#45-the-stringi-grapheme-engine-now-a-prerequisite-not-an-option)
+  - [4.6 The keyword and alias surface -- newly cheap](#46-the-keyword-and-alias-surface-newly-cheap)
+  - [4.7 Presentation selectors -- a documented limitation, now quantified](#47-presentation-selectors-a-documented-limitation-now-quantified)
+  - [4.8 Zero-inflation and compositional structure -- a statistical duty](#48-zero-inflation-and-compositional-structure-a-statistical-duty)
 - [5. Explicitly not in 0.5.0](#5-explicitly-not-in-050)
 - [6. Design decisions to lock before coding](#6-design-decisions-to-lock-before-coding)
 - [7. Risks and open questions](#7-risks-and-open-questions)
 - [8. Quality bar for the release](#8-quality-bar-for-the-release)
 - [9. Release ledger](#9-release-ledger)
-- [10. Audience expansion — who else analyses emoji corpora](#10-audience-expansion-who-else-analyses-emoji-corpora)
-  - [10.1 Legal, eDiscovery and forensic linguistics — **build**](#101-legal-ediscovery-and-forensic-linguistics-build)
-  - [10.2 Software-engineering research — **build (the input-shape gap)**](#102-software-engineering-research-build-the-input-shape-gap)
-  - [10.3 Mental health and crisis informatics — document, and refuse the lexicon](#103-mental-health-and-crisis-informatics-document-and-refuse-the-lexicon)
-  - [10.4 Content moderation and algospeak — sharpens the existing plan](#104-content-moderation-and-algospeak-sharpens-the-existing-plan)
-  - [10.5 Cross-cultural and locale research — reframe now, build after §7.2](#105-cross-cultural-and-locale-research-reframe-now-build-after-72)
-  - [10.6 Survey methodology and psychometrics — a genuinely new audience](#106-survey-methodology-and-psychometrics-a-genuinely-new-audience)
-  - [10.7 Corpus annotation methodology — a recipe, and a debt we already owe](#107-corpus-annotation-methodology-a-recipe-and-a-debt-we-already-owe)
-  - [10.8 Authorship attribution and forensic stylometry — recipe plus one verb](#108-authorship-attribution-and-forensic-stylometry-recipe-plus-one-verb)
-  - [10.9 Finance and market sentiment — the case for the lexicon API](#109-finance-and-market-sentiment-the-case-for-the-lexicon-api)
-  - [10.10 Education and L2 acquisition — already served, badly advertised](#1010-education-and-l2-acquisition-already-served-badly-advertised)
-  - [10.11 Political communication — typed function, not valence](#1011-political-communication-typed-function-not-valence)
-  - [10.12 AAC and assistive communication — watch, do not build](#1012-aac-and-assistive-communication-watch-do-not-build)
-  - [10.13 Multimodal and retrieval — emoji as a stimulus set](#1013-multimodal-and-retrieval-emoji-as-a-stimulus-set)
-  - [10.14 Crisis and disaster communication — served, and nobody knows](#1014-crisis-and-disaster-communication-served-and-nobody-knows)
-  - [10.15 Workplace and organizational communication — the interaction, and a half-kept promise](#1015-workplace-and-organizational-communication-the-interaction-and-a-half-kept-promise)
+- [10. Audience expansion -- who else analyses emoji corpora](#10-audience-expansion-who-else-analyses-emoji-corpora)
+  - [10.1 Legal, eDiscovery and forensic linguistics -- **build**](#101-legal-ediscovery-and-forensic-linguistics-build)
+  - [10.2 Software-engineering research -- **build (the input-shape gap)**](#102-software-engineering-research-build-the-input-shape-gap)
+  - [10.3 Mental health and crisis informatics -- document, and refuse the lexicon](#103-mental-health-and-crisis-informatics-document-and-refuse-the-lexicon)
+  - [10.4 Content moderation and algospeak -- sharpens the existing plan](#104-content-moderation-and-algospeak-sharpens-the-existing-plan)
+  - [10.5 Cross-cultural and locale research -- reframe now, build after §7.2](#105-cross-cultural-and-locale-research-reframe-now-build-after-72)
+  - [10.6 Survey methodology and psychometrics -- a genuinely new audience](#106-survey-methodology-and-psychometrics-a-genuinely-new-audience)
+  - [10.7 Corpus annotation methodology -- a recipe, and a debt we already owe](#107-corpus-annotation-methodology-a-recipe-and-a-debt-we-already-owe)
+  - [10.8 Authorship attribution and forensic stylometry -- recipe plus one verb](#108-authorship-attribution-and-forensic-stylometry-recipe-plus-one-verb)
+  - [10.9 Finance and market sentiment -- the case for the lexicon API](#109-finance-and-market-sentiment-the-case-for-the-lexicon-api)
+  - [10.10 Education and L2 acquisition -- already served, badly advertised](#1010-education-and-l2-acquisition-already-served-badly-advertised)
+  - [10.11 Political communication -- typed function, not valence](#1011-political-communication-typed-function-not-valence)
+  - [10.12 AAC and assistive communication -- watch, do not build](#1012-aac-and-assistive-communication-watch-do-not-build)
+  - [10.13 Multimodal and retrieval -- emoji as a stimulus set](#1013-multimodal-and-retrieval-emoji-as-a-stimulus-set)
+  - [10.14 Crisis and disaster communication -- served, and nobody knows](#1014-crisis-and-disaster-communication-served-and-nobody-knows)
+  - [10.15 Workplace and organizational communication -- the interaction, and a half-kept promise](#1015-workplace-and-organizational-communication-the-interaction-and-a-half-kept-promise)
 - [11. References](#11-references)
-- [12. Appendix — the audit's regression fixtures, as code](#12-appendix-the-audits-regression-fixtures-as-code)
-  - [12.1 Part A — behaviour verified correct, now defended](#121-part-a-behaviour-verified-correct-now-defended)
-  - [12.2 Part B — the defects, written as the target behaviour](#122-part-b-the-defects-written-as-the-target-behaviour)
+- [12. Appendix -- the audit's regression fixtures, as code](#12-appendix-the-audits-regression-fixtures-as-code)
+  - [12.1 Part A -- behaviour verified correct, now defended](#121-part-a-behaviour-verified-correct-now-defended)
+  - [12.2 Part B -- the defects, written as the target behaviour](#122-part-b-the-defects-written-as-the-target-behaviour)
   - [12.3 Two cautions carried from the audit method](#123-two-cautions-carried-from-the-audit-method)
 
 ---
@@ -83,42 +83,42 @@ it. Pick a path:*
 | If you are… | Read |
 |---|---|
 | **Deciding what 0.5.0 is** | §0 TL;DR, then **§3.1** (the authoritative plan) |
-| **About to write code** | **§3.1**, then **§12** (executable fixtures — Part B is your spec), then the relevant §4.x |
+| **About to write code** | **§3.1**, then **§12** (executable fixtures -- Part B is your spec), then the relevant §4.x |
 | **Reviewing the audit's claims** | **§1.10** (summary table), drilling into §1.1-§1.9 only where you doubt a finding |
-| **Asking "does this package serve my field?"** | **§10** — fifteen research communities, table first |
+| **Asking "does this package serve my field?"** | **§10** -- fifteen research communities, table first |
 | **Looking for what we deliberately will not do** | §5, plus the recorded refusals in §10.3 and §10.4 |
 | **Checking scheduling** | **§3.1** wins; §9 is the running provenance list |
 
 **Two things to know before trusting any measurement here.** All `{emoji}`
 facts in §2.1 were verified against a real install (`emoji` 16.0.0, R 4.4.1) on
 2026-08-30, not inferred from documentation. And two audit methods produce
-convincing false results — see the traps in §1.4 and §1.5 before re-running
+convincing false results -- see the traps in §1.4 and §1.5 before re-running
 anything.
 
 ---
 
-## 0. TL;DR — what to do next
+## 0. TL;DR -- what to do next
 
-1. **`{emoji}` has been surveyed — the answers are in §2.1, not pending.**
+1. **`{emoji}` has been surveyed -- the answers are in §2.1, not pending.**
    `emoji` 16.0.0 ships a 5042 x 19 table. The modifier foundation is real
-   (`emoji_modifiers`, 4468 rows, **454 modifiable base glyphs** — that is the
+   (`emoji_modifiers`, 4468 rows, **454 modifiable base glyphs** -- that is the
    denominator §4.1 needs), so the expensive part of the modifier theme is now a
    thin tidy layer.
 2. **Two findings flip a decision each.** `keywords` and `aliases` are populated
-   for all 5042 rows, so **English keyword search needs no download helper** —
+   for all 5042 rows, so **English keyword search needs no download helper** --
    a new, cheap verb group (§4.6). And all eight `vendor_*` columns are empty
    (`TRUE = 0`), so **`emoji_vendor_support()` is dead** on this data source and
    moves to §5.
 3. **⚠️ The recommendation changed during this document's own audit: make 0.5.0
    a correctness release and move the identity/place/access theme to 0.6.0
    (§3.1).** Eight audit rounds (§1.1-§1.8) found four real defects, and
-   **three of them block a planned feature group** — the grapheme fix blocks
+   **three of them block a planned feature group** -- the grapheme fix blocks
    §4.3, flag validation blocks §4.2, orphan-modifier accounting blocks §4.1.
    Building the features on primitives being repaired in the same release is the
    worst available ordering, and §9's own principle is that the maintenance
    patch leads.
 4. **Do not reimplement upstream.** tidyEmoji's contribution is the *tidy verb*,
-   the *denominator discipline* and the *corpus-level summary* — never the
+   the *denominator discipline* and the *corpus-level summary* -- never the
    codepoint arithmetic.
 5. **Unicode 17.0 is upstream's problem first.** 17.0 landed 2025-09-09 with 163
    additions, but the installed `{emoji}` tops out at 16.0, so our crosswalks
@@ -171,7 +171,7 @@ anything.
   is in play. Use `.emoji_n > 0 & is.na(.emoji_n_scored)` to tell the two
   apart.
 - **No user-visible ordering may depend on the session's collation.** This has
-  bitten twice — `emoji_to_text()`'s shortcode choice in 0.3.0 and
+  bitten twice -- `emoji_to_text()`'s shortcode choice in 0.3.0 and
   `emoji_dfm(doc_id =)`'s row order in 0.4.0. `factor()` and `sort()` on
   character are `sort(method = "radix")` waiting to happen.
 - **Invalid argument values error; they are not absorbed.** 0.4.0 swept the
@@ -180,15 +180,15 @@ anything.
   New verbs validate on the way in.
 
 **Known gaps carried forward:** grouped data frames are not honoured (the 1.0
-promise) — and the guard that warns about them is missing from three
+promise) -- and the guard that warns about them is missing from three
 aggregators, see §1.5; `emoji_ratio()` counts characters, not graphemes, as does
 `emoji_position()` (§1.1); no committed benchmark script (a baseline now exists,
 §8); no {covr}/spelling CI.
 
 *The nine subsections below are the audit record. **§1.10 summarises all of it
-in one table** — start there and drill in only where you want the evidence.*
+in one table** -- start there and drill in only where you want the evidence.*
 
-### 1.1 A defect found while re-planning — `emoji_position()` is codepoint-based
+### 1.1 A defect found while re-planning -- `emoji_position()` is codepoint-based
 
 *Found 2026-08-30 by reading the source, then measured. This is the fourth
 audit in the pattern §9 describes, and it arrived before the release rather
@@ -214,15 +214,15 @@ wrong. `.emoji_first` and `.emoji_last` are affected identically.
 **It also invalidates a 0.5.0 spec as written.** §4.3's `emoji_a11y_check()` is
 specified to derive "interrupting (non-final) emoji" from `emoji_position()`.
 Built on the current implementation it would systematically misreport
-sentence-final flags and ZWJ sequences as mid-sentence interruptions — in an
+sentence-final flags and ZWJ sequences as mid-sentence interruptions -- in an
 *accessibility* verb, whose whole purpose is to be trustworthy about placement.
 **§4.5 is therefore a prerequisite for §4.3, not an independent nicety.**
 
 **Second, unrelated axis: right-to-left text.** The offsets are *logical*
 (storage) order. Under UAX #9 a right-to-left run renders right-to-left, so in
 `"مرحبا 😀"` the emoji is logically last (`rel = 1.0`) but appears at the
-reader's **left**. Every position-derived claim — placement, "interrupting",
-sentence-final convention — therefore means something different for Arabic,
+reader's **left**. Every position-derived claim -- placement, "interrupting",
+sentence-final convention -- therefore means something different for Arabic,
 Hebrew, Persian and Urdu corpora than for English ones, and §10.5's
 cross-cultural users are exactly the people likely to hit it. There is no cheap
 fix (visual order requires running the bidi algorithm), so the deliverable is an
@@ -233,7 +233,7 @@ note in the §10.5 documentation pass. Do not silently imply visual order.
 regression fixtures, and grep for other `nchar()` uses on user text before
 assuming these are the only two verbs affected.
 
-### 1.2 Detection edge cases — measured, and three of them change 0.5.0's specs
+### 1.2 Detection edge cases -- measured, and three of them change 0.5.0's specs
 
 *Also 2026-08-30. `.emoji_locations()` delegates to `emoji::emoji_locate_all()`
 plus a ZWJ merge, so the engine's behaviour on awkward sequences is largely
@@ -244,40 +244,40 @@ upstream's. Probed directly:*
 | `1️⃣` keycap (digit + FE0F + 20E3) | 1 unit | ✅ correct |
 | `#️⃣` keycap | 1 unit | ✅ correct |
 | `❤️` heart, emoji presentation (2764 FE0F) | 1 unit | ✅ correct |
-| `❤︎` heart, **text** presentation (2764 FE0E) | **0 — not detected** | documented; impact understated (§4.7) |
-| `❤` heart, **bare** (2764, no selector) | **0 — not detected** | documented; impact understated (§4.7) |
+| `❤︎` heart, **text** presentation (2764 FE0E) | **0 -- not detected** | documented; impact understated (§4.7) |
+| `❤` heart, **bare** (2764, no selector) | **0 -- not detected** | documented; impact understated (§4.7) |
 | `🇺🇸` valid flag | 1 unit | ✅ correct |
-| `🇽🇽` **invalid** regional-indicator pair | **1 unit — detected as an emoji** | ⚠️ breaks §4.2 as specified |
+| `🇽🇽` **invalid** regional-indicator pair | **1 unit -- detected as an emoji** | ⚠️ breaks §4.2 as specified |
 | `😀‍😀` non-RGI ZWJ sequence | **2 separate emoji** | ⚠️ §4.1 must define this |
 | `😀🏻` skin tone on a **non-modifiable** base | **2 emoji: `😀` + orphan `🏻`** | ⚠️ §4.1 must define this |
 | `👋🏻` valid tone on a modifiable base | 1 unit | ✅ correct |
 
-**Consequence 1 — §4.2's "no external data is needed" is wrong.** `🇽🇽` is a
+**Consequence 1 -- §4.2's "no external data is needed" is wrong.** `🇽🇽` is a
 well-formed regional-indicator pair that is not a country, and the engine hands
 it to us as an emoji. The pure-arithmetic mapping in §4.2 would happily return
-ISO-2 `"XX"`. The verb must validate against the real set — §2.1 verified there
+ISO-2 `"XX"`. The verb must validate against the real set -- §2.1 verified there
 are exactly **259** `country-flag` rows and **3** `subdivision-flag` rows, so the
 valid set is small, bundled and cheap to check. Invalid pairs return `NA` with
 the glyph preserved, never a fabricated code.
 
-**Consequence 2 — orphan modifiers are counted as emoji.** A skin-tone modifier
+**Consequence 2 -- orphan modifiers are counted as emoji.** A skin-tone modifier
 applied to a base that cannot take one is detected as its own occurrence, so
 `emoji_frequency()` today reports a bare `🏻` as an emoji in its own right. That
-is defensible as raw detection and misleading as a corpus statistic — and it
+is defensible as raw detection and misleading as a corpus statistic -- and it
 directly corrupts §4.1's `n_modifiable` / `n_modified` accounting, which is the
 methodological point of the whole group. `emoji_skin_tone()` must decide, and
 document, whether an orphan modifier is dropped, attributed to the preceding
 glyph, or surfaced in its own column. **Recommend a dedicated
-`.emoji_n_orphan_modifiers` column** — silently dropping data is how the 0.2.1
+`.emoji_n_orphan_modifiers` column** -- silently dropping data is how the 0.2.1
 asymmetry happened.
 
-**Consequence 3 — non-RGI ZWJ sequences split.** `😀‍😀` becomes two emoji, which
+**Consequence 3 -- non-RGI ZWJ sequences split.** `😀‍😀` becomes two emoji, which
 matches how it renders, so the behaviour is right. But `emoji_zwj_components()`
 (§4.1) must state that it decomposes *RGI* sequences and that non-RGI joins are
-already separate occurrences upstream — otherwise the verb looks broken on
+already separate occurrences upstream -- otherwise the verb looks broken on
 exactly the inputs a user would test it with.
 
-### 1.3 The reversibility contract — tested, and worth advertising
+### 1.3 The reversibility contract -- tested, and worth advertising
 
 *Also 2026-08-30, and the first audit item in three rounds that is good news.*
 
@@ -294,27 +294,27 @@ Round-tripping `emoji_to_text()` -> `text_to_emoji()` over the hard cases:
 | `👍` thumbs up | `:+1:` -> ✅ | ✗ |
 
 **The shortcode path is lossless on every case tested, including the ones that
-break naive implementations** — skin-tone modifiers, regional-indicator pairs,
+break naive implementations** -- skin-tone modifiers, regional-indicator pairs,
 ZWJ sequences, keycaps and the `U+FE0F` heart all survive the trip exactly.
 
 **This is an unadvertised selling point, and it belongs in the LLM story.**
 §2.4's LLM literature is about emoji breaking model pipelines, and 0.4.0 shipped
-`emoji_sanitize()` for it. The reversible move — strip emoji to shortcodes, send
-the text to a model, restore the glyphs afterwards — is *exactly* what those
+`emoji_sanitize()` for it. The reversible move -- strip emoji to shortcodes, send
+the text to a model, restore the glyphs afterwards -- is *exactly* what those
 pipelines need, and tidyEmoji can already do it losslessly. Nothing in the
 documentation says so.
 
 **The `name` format is one-way, by design and correctly.** `text_to_emoji()`
 matches `:delimited:` tokens, and bare names like `red heart` are unrecoverable
 because they are ordinary English words in ordinary text. That asymmetry is the
-right call — but it is currently implicit, and a user doing NLP preprocessing
+right call -- but it is currently implicit, and a user doing NLP preprocessing
 may reasonably assume symmetry.
 
 **One caveat worth recording now, because it constrains a future release.** The
-round-trip works because shortcodes are *unique* — CLDR requires emoji names to
+round-trip works because shortcodes are *unique* -- CLDR requires emoji names to
 be unique within a locale and treats a duplicate as an error. **That uniqueness
 is a per-locale property, not a universal one.** CLDR's own translator guidance
-notes languages that lack a distinction English makes — some Nordic languages do
+notes languages that lack a distinction English makes -- some Nordic languages do
 not separate *octopus* from *squid*, so translators must invent a disambiguating
 phrase. So if the multilingual CLDR work behind §7.2 ever lands, **the
 reversibility guarantee must be re-verified per locale rather than assumed**:
@@ -328,19 +328,19 @@ English is safe; other locales are an open question.
    `format = "name"` is not, and is intended for display and screen-reader
    preview (§4.3's `emoji_speak()`).
 2. **Add the seven cases above as round-trip regression tests.** This property
-   is worth defending — it will silently break the first time a shortcode
+   is worth defending -- it will silently break the first time a shortcode
    lookup changes.
-3. **Add a vignette section on reversible LLM preprocessing** — it is the
+3. **Add a vignette section on reversible LLM preprocessing** -- it is the
    highest-value undocumented capability found in four rounds of auditing.
 
-### 1.4 Locale robustness — the twice-broken invariant now holds
+### 1.4 Locale robustness -- the twice-broken invariant now holds
 
 *2026-08-30. Two negative findings, recorded because closing a worry is worth as
 much as opening one, and because the §9 lesson says this bug class recurs.*
 
 **The collation invariant holds.** §1's invariant list says "no user-visible
 ordering may depend on the session's collation", and §9 records it breaking
-twice — `emoji_to_text()`'s shortcode choice in 0.3.0, `emoji_dfm(doc_id =)`'s
+twice -- `emoji_to_text()`'s shortcode choice in 0.3.0, `emoji_dfm(doc_id =)`'s
 row order in 0.4.0. Tested by running seven verbs over a fixture with
 deliberately collation-sensitive content (mixed-case `Apple`/`apple`,
 `Zebra`/`zebra`, `ärger`) under `LC_COLLATE=en_US.UTF-8` and `LC_COLLATE=C`
@@ -362,11 +362,11 @@ sequence, the `U+FE0F` heart and the ZWJ family. This follows from
 character classes, but it is worth having tested: a package whose whole subject
 is non-ASCII text should know it survives a container with no locale set.
 
-> **⚠️ Methodological trap — read this before re-running the check.** The
+> **⚠️ Methodological trap -- read this before re-running the check.** The
 > obvious way to test locale sensitivity is to set `LC_ALL=C` and compare. **It
 > produces a false positive on every verb.** Under a non-UTF-8 `LC_CTYPE`, R
 > mis-reads UTF-8 *source files*, so a fixture built from literal non-ASCII
-> strings in the script is silently mangled before any package code runs — the
+> strings in the script is silently mangled before any package code runs -- the
 > inputs differ, so naturally the outputs differ, and it looks like seven
 > broken verbs. This happened on the first attempt here. **Vary only
 > `LC_COLLATE`, keep `LC_CTYPE` at UTF-8, and build fixtures from `\U`
@@ -384,10 +384,10 @@ That is imprecise in **both** directions, and the precise version matters.
 **Most verbs correctly do not warn**, because grouping cannot change their
 answer:
 
-- *Row-preserving* — `emoji_sentiment()`, `emoji_position()`,
+- *Row-preserving* -- `emoji_sentiment()`, `emoji_position()`,
   `emoji_emotion()`, `emoji_ratio()`, `emoji_density()`, `emoji_type()` add
   columns to each row independently.
-- *Row-reshaping but per-row independent* — `emoji_filter()`,
+- *Row-reshaping but per-row independent* -- `emoji_filter()`,
   `emoji_tokens()`, `emoji_extract_unnest()` change the row count by
   transforming each input row on its own.
 
@@ -395,17 +395,17 @@ Neither class pools anything across rows, so silence is right.
 
 **The verbs that matter are the cross-row aggregators**, where ignoring groups
 silently converts a per-group answer into a global one. Tested with a fixture
-designed so the two answers *must* differ — group `a` contains only faces,
-group `b` only flags — **one fresh R process per verb**:
+designed so the two answers *must* differ -- group `a` contains only faces,
+group `b` only flags -- **one fresh R process per verb**:
 
 | Aggregator | Grouped input |
 |---|---|
 | `emoji_frequency()`, `top_n_emojis()`, `emoji_dfm()` | warns |
 | `emoji_pairs()`, `emoji_cooccurrence()` | warns |
 | `emoji_flag_ambiguous()`, `emoji_summary()` | warns |
-| **`emoji_categorize()`** | **silent — pools groups** |
-| **`emoji_version_profile()`** | **silent — pools groups** |
-| **`emoji_ngrams()`** | **silent — pools groups** |
+| **`emoji_categorize()`** | **silent -- pools groups** |
+| **`emoji_version_profile()`** | **silent -- pools groups** |
+| **`emoji_ngrams()`** | **silent -- pools groups** |
 
 **Seven of ten guarded, three missed.** All three verifiably return the pooled
 result for grouped input with no warning, so a user who groups by author,
@@ -413,7 +413,7 @@ platform or date gets a corpus-wide answer that looks like a per-group one.
 
 **Action:** add the existing guard to those three. It is a two-line change per
 verb using the helper the other seven already share, and it should land in
-0.5.0 — not deferred to the 1.0 grouped-df work, because a wrong number now is
+0.5.0 -- not deferred to the 1.0 grouped-df work, because a wrong number now is
 worse than an unimplemented feature later. Then rewrite §1's gap sentence to
 name the two classes above, so the next reader does not have to re-derive which
 verbs the promise is even about.
@@ -423,7 +423,7 @@ verbs the promise is even about.
 > `lifecycle` warnings, which **deduplicate per call site**, so a loop that
 > calls every verb from the same line reports only the first few as warning and
 > the rest as silent. That produced three different, mutually inconsistent
-> answers here before the method was fixed — including one run where
+> answers here before the method was fixed -- including one run where
 > `emoji_frequency()` appeared silent despite being correctly guarded.
 > `options(lifecycle_verbosity = "always")` did **not** reliably suppress the
 > dedup. **The only method that gave stable results was one fresh R process per
@@ -443,7 +443,7 @@ The user's argument is `time`, not `var`, so the message names something that
 does not appear in the signature. Compare `emoji_congruence()`, which does this
 well: *"`scale` has no default: say how the text score and the emoji score were
 made comparable."* The 0.4.0 audit's "invalid values error, they are not
-absorbed" invariant is satisfied — the call does fail — but the message leaks an
+absorbed" invariant is satisfied -- the call does fail -- but the message leaks an
 implementation detail. **Effort** XS; fix with the §1.5 guard work.
 
 **Confirmed sound in the same sweep:** every one of the 38 `verb(data, text)`
@@ -452,7 +452,7 @@ all-`NA` text column without error. The seven that appeared to fail do so only
 because they have genuinely required arguments (`time`, or
 `text_score` + `scale`), which is correct behaviour.
 
-### 1.6 The remaining §1 invariants — swept, and they hold
+### 1.6 The remaining §1 invariants -- swept, and they hold
 
 *2026-08-30, completing the audit. §1 asserts five invariants "earned across
 three releases". §1.1 found one broken (grapheme counting) and §1.5 found the
@@ -460,14 +460,14 @@ grouped-input guard incomplete. The other three are now tested rather than
 asserted.*
 
 **✅ Dotted-column naming.** "Columns added to user data are dotted
-`.emoji_*`." Swept across 12 row-preserving verbs — `emoji_sentiment()`,
+`.emoji_*`." Swept across 12 row-preserving verbs -- `emoji_sentiment()`,
 `emoji_emotion()` (10 new columns), `emoji_emotion_label()`,
 `emoji_position()`, `emoji_ratio()`, `emoji_density()`, `emoji_type()`,
 `emoji_faceness()`, `emoji_risk()`, `emoji_score()`, `emoji_token_cost()`,
 `emoji_extract_nest()`. **Zero violations.** Every new column is dotted.
 
-**✅ `.emoji_n_scored` semantics.** The contract is precise — `NA` only when the
-row has no emoji, `0` when it has emoji the lexicon cannot score — and it holds
+**✅ `.emoji_n_scored` semantics.** The contract is precise -- `NA` only when the
+row has no emoji, `0` when it has emoji the lexicon cannot score -- and it holds
 exactly. Using pleading face (`U+1F97A`, Emoji 11.0, absent from the 2015-era
 Emoji Sentiment Ranking):
 
@@ -478,8 +478,8 @@ Emoji Sentiment Ranking):
 | `"new 🥺"` | **1** | **0** | `NA` |
 | `NA` | 0 | `NA` | `NA` |
 
-The distinction the invariant exists to make — *no emoji* versus *emoji the
-lexicon does not cover* — is exactly what the columns report. This is also the
+The distinction the invariant exists to make -- *no emoji* versus *emoji the
+lexicon does not cover* -- is exactly what the columns report. This is also the
 column §10.7's `emoji_coverage()` should aggregate.
 
 **✅ The `U+FE0F`-stripped codepoint key.** Qualified and unqualified forms
@@ -488,11 +488,11 @@ both score **0.5221143**, identical to seven decimal places. The 0.2.1
 key-normalisation fix is holding.
 
 **⚠️ One new gap: `.emoji_*` is a reserved namespace, and nothing says so.**
-A user whose data already contains `.emoji_n` has it **silently overwritten** —
+A user whose data already contains `.emoji_n` has it **silently overwritten** --
 tested with `.emoji_n = 999`, which came back as the computed count with no
 warning. Two mitigating facts keep this small: the prefix is a documented
 package convention, so collisions are unlikely by accident; and **chaining
-verbs is harmless** — `emoji_sentiment()` then `emoji_position()` both write
+verbs is harmless** -- `emoji_sentiment()` then `emoji_position()` both write
 `.emoji_n` with the same value and the same meaning, so the overwrite is
 benign in the normal workflow. **Action:** one sentence in the package-level
 help stating that `.emoji_*` is reserved and will be overwritten without
@@ -500,13 +500,13 @@ warning. Not worth a runtime check.
 
 **A note on fixtures, since it cost a cycle.** The first attempt at the
 `.emoji_n_scored` test used `U+1FA7F` as a "recent but unscoreable" glyph. It
-returned `.emoji_n = 0`, which looked like a detection failure and was not —
+returned `.emoji_n = 0`, which looked like a detection failure and was not --
 **`U+1FA7F` is not an assigned emoji at all** and is absent from
 `emoji::emojis`. Verify a fixture glyph exists in the upstream table before
 concluding anything from its absence; §10.13's `emoji_sample()` would make this
 class of mistake impossible, which is a further argument for it.
 
-### 1.7 Lexicon coverage ceilings — the number that should be on every help page
+### 1.7 Lexicon coverage ceilings -- the number that should be on every help page
 
 *2026-08-30/31. §1.6 verified that `.emoji_n_scored` correctly distinguishes
 "no emoji" from "emoji the lexicon cannot score". This asks the obvious next
@@ -524,14 +524,14 @@ qualified and unqualified forms of the same emoji as separate rows: there are
 only **3790 distinct codepoint keys**, which is the number of distinct emoji
 identities the package can actually detect and therefore the only denominator
 that answers "what fraction of emoji can I score?". The numerator was wrong in
-the other direction — it counted lexicon *rows*, and 233 of the 969 are not in
+the other direction -- it counted lexicon *rows*, and 233 of the 969 are not in
 the reference table at all. Corrected: sentiment **19.4%** (barely moved, by
 luck) and emotion **4.0%** (not 3.0%). Any figure quoted downstream, including
 `emoji_coverage()`'s, must use distinct keys.
 
 **`emoji_emotion()` can score four percent of the emoji that exist.** That is
-not a defect — EmoTag1200 is a carefully annotated 150-glyph resource and the
-package is right to bundle it — but it is a fact a user needs *before* they
+not a defect -- EmoTag1200 is a carefully annotated 150-glyph resource and the
+package is right to bundle it -- but it is a fact a user needs *before* they
 conclude their corpus has no emotional content. A modern corpus is full of
 post-2018 glyphs that no bundled lexicon has ever seen, and today the only
 signal is a quiet `NA`.
@@ -549,7 +549,7 @@ emoji_coverage(data, text, lexicon = NULL)
 
 `top_unscored` is the part that turns a caveat into an action: it tells a user
 exactly which glyphs to add via `register_emoji_lexicon()` (§10.9) to fix their
-own analysis. **Promote it from wave 3 to 0.5.0** — it is smaller than anything
+own analysis. **Promote it from wave 3 to 0.5.0** -- it is smaller than anything
 in §4 and it is what makes every affect verb honest.
 
 **Also state the ceiling in the help pages.** ✅ **Done 2026-09-03**, with the
@@ -569,7 +569,7 @@ patterns all return safely rather than erroring or being interpreted:
 |---|---|
 | `"("` | 11 hits (matched literally) |
 | `"["`, `"a(b"`, `"\\"` | 0 hits, no error |
-| `".*"` | **0 hits** — proving literal matching, not regex |
+| `".*"` | **0 hits** -- proving literal matching, not regex |
 | `"smil"` | 28 hits |
 
 `".*"` returning zero rather than everything is the decisive check. **Carry this
@@ -591,7 +591,7 @@ emoji_score()     -> .emoji_score, .emoji_n_scored, .emoji_n
 
 Same three columns, reversed. Harmless for `dplyr` users who select by name, and
 a nuisance for anyone using positional access or comparing printed output.
-**Fix before 1.0's freeze** (§9), not in 0.5.0 — reordering columns is a
+**Fix before 1.0's freeze** (§9), not in 0.5.0 -- reordering columns is a
 user-visible change and should ride with the release that is explicitly about
 API stability.
 
@@ -610,12 +610,12 @@ Tested against `"great 😀 work 👍 today"`:
 |---|---|---|---|
 | `"keep"` | `great 😀 work 👍 today` | ✅ | nothing |
 | `"shortcode"` | `great :grinning: work :+1: today` | ✅ | **nothing** |
-| `"name"` | `great grinning face work thumbs up today` | ✗ | the delimiters — names are ordinary words |
+| `"name"` | `great grinning face work thumbs up today` | ✗ | the delimiters -- names are ordinary words |
 | `"placeholder"` | `great [emoji] work [emoji] today` | ✗ | **which** emoji (position survives) |
 | `"strip"` | `great work today` | ✗ | that an emoji was there at all |
 
 **This is a graded hierarchy, and users need it stated as one.** The policies are
-currently presented as five parallel options. They are not parallel — they form
+currently presented as five parallel options. They are not parallel -- they form
 a ladder of information loss, and the choice has a consequence that is invisible
 until you try to put the emoji back:
 
@@ -631,7 +631,7 @@ a five-way choice into an informed one.
 (`"great 😀 work"` -> `"great work"`, not `"great  work"`), which is the obvious
 way this kind of rewriting goes wrong.
 
-**And `emoji_context()`'s window edges are correct** — worth recording since it
+**And `emoji_context()`'s window edges are correct** -- worth recording since it
 is the second-hottest path in §8's benchmark and windowing is easy to get wrong:
 
 | Input (`window = 2`, words) | left context | right context |
@@ -653,28 +653,28 @@ confirmed.** Every row is reproducible from §12's fixtures.
 | § | Finding | Status | Lands in |
 |---|---|---|---|
 | 1.1 | `.emoji_rel_position` is codepoint-based: a final family emoji reports **0.333** | ✅ **fixed 0.4.0** (§1.11) | shipped |
-| 1.2 | `🇽🇽` (invalid RI pair) is detected and would map to a fabricated ISO code | 🔴 **defect** | 0.5.0 — blocks §4.2 |
-| 1.2 | Orphan skin-tone modifiers counted as emoji, corrupting modified÷modifiable | 🔴 **defect** | 0.5.0 — blocks §4.1 |
-| 1.5 | Aggregators pool grouped data **silently** — the count was 7, not 3, and 2 of the 3 named were misdiagnosed | ✅ **fixed 0.4.0** (§1.11) | shipped |
-| 1.5 | Missing / ambiguous / misspelled column reported as internal `` `var` `` — package-wide, not four verbs | ✅ **fixed 0.4.0** (§1.11) | shipped |
+| 1.2 | `🇽🇽` (invalid RI pair) is detected and would map to a fabricated ISO code | 🔴 **defect** | 0.5.0 -- blocks §4.2 |
+| 1.2 | Orphan skin-tone modifiers counted as emoji, corrupting modified÷modifiable | 🔴 **defect** | 0.5.0 -- blocks §4.1 |
+| 1.5 | Aggregators pool grouped data **silently** -- the count was 7, not 3, and 2 of the 3 named were misdiagnosed | ✅ **fixed 0.4.0** (§1.11) | shipped |
+| 1.5 | Missing / ambiguous / misspelled column reported as internal `` `var` `` -- package-wide, not four verbs | ✅ **fixed 0.4.0** (§1.11) | shipped |
 | 1.6 | `.emoji_*` is a reserved namespace; user columns overwritten, undocumented | 🟠 gap | 0.5.0 (one sentence) |
-| 1.7 | Emotion lexicon covers **150 glyphs — 3.0% of RGI**; sentiment 19.2% | 🟠 honesty | 0.5.0 — `emoji_coverage()` |
+| 1.7 | Emotion lexicon covers **150 glyphs -- 3.0% of RGI**; sentiment 19.2% | 🟠 honesty | 0.5.0 -- `emoji_coverage()` |
 | 1.8 | `emoji_score()` and specific scorers return the same columns **reversed** | 🟠 cosmetic | 1.0.0 (API freeze) |
 | 1.9 | `emoji_sanitize()`'s five policies form an undocumented **loss ladder** | 🟠 docs | 0.5.0 |
 | 1.3 | Shortcode round-trip is **lossless** on tone, flags, ZWJ, keycaps, FE0F | ✅ confirmed | advertise it (§1.3) |
-| 1.4 | Collation invariance holds across 7 verbs; detection survives `LC_CTYPE=C` | ✅ confirmed | — |
-| 1.6 | Dotted-column naming: 0 violations / 12 verbs | ✅ confirmed | — |
-| 1.6 | `.emoji_n_scored` distinguishes *no emoji* from *unscoreable* exactly | ✅ confirmed | — |
-| 1.6 | `U+FE0F`-stripped key: bare and qualified 👍 both score 0.5221143 | ✅ confirmed | — |
+| 1.4 | Collation invariance holds across 7 verbs; detection survives `LC_CTYPE=C` | ✅ confirmed | -- |
+| 1.6 | Dotted-column naming: 0 violations / 12 verbs | ✅ confirmed | -- |
+| 1.6 | `.emoji_n_scored` distinguishes *no emoji* from *unscoreable* exactly | ✅ confirmed | -- |
+| 1.6 | `U+FE0F`-stripped key: bare and qualified 👍 both score 0.5221143 | ✅ confirmed | -- |
 | 1.8 | 0.3.0's `emoji_search()` regex-injection fix holds (`".*"` → 0 hits) | ✅ confirmed | extend to §4.6's `fields=` |
-| 1.9 | `emoji_context()` window edges correct; `"strip"` leaves no double space | ✅ confirmed | — |
+| 1.9 | `emoji_context()` window edges correct; `"strip"` leaves no double space | ✅ confirmed | -- |
 | 4.8 | Emoji counts are compositional and zero-inflated; structural ≠ count zeros | 🔵 new duty | 0.5.0 / 0.6.0 |
 
-### 1.11 The pre-submission polish pass — what it fixed, and what the audit got wrong
+### 1.11 The pre-submission polish pass -- what it fixed, and what the audit got wrong
 
 *2026-09-03, while 0.4.0 sat waiting for CRAN. Method: call **every** export
-with a deliberately awkward input — grouped, column omitted, column
-misspelled, column selecting two — and read what comes back. Three of the
+with a deliberately awkward input -- grouped, column omitted, column
+misspelled, column selecting two -- and read what comes back. Three of the
 findings below are not in §1.1-§1.9 at all, which is the point: the audit read
 the source, and this pass ran it.*
 
@@ -684,22 +684,22 @@ the source, and this pass ran it.*
    `text_to_emoji()`, `emoji_sanitize()` (every policy), `emoji_context()` and
    `emoji_collocations()` resolved their column through `dplyr::select()`,
    which re-adds the grouping columns, so the selection returned two names and
-   the verb died with ``` `text` must select exactly one column ``` — blaming
+   the verb died with ``` `text` must select exactly one column ``` -- blaming
    an argument the user had got right. §1.5 tested only whether verbs *warn*,
    so a verb that errors before it can warn read as "does not warn".
 2. **The row-at-a-time verbs silently dropped the grouping.**
    `tibble::as_tibble(data)` strips `grouped_df`, so
    `group_by(author) |> emoji_sentiment(text) |> summarise(...)` collapsed to
    one corpus-wide row. §1.5 concluded these verbs were right to stay silent
-   because "grouping cannot change their answer" — true of the verb, false of
+   because "grouping cannot change their answer" -- true of the verb, false of
    the pipeline it sits in. They now carry groups through, as `mutate()` and
    `filter()` do.
 
 **§1.5's aggregator count was wrong in both directions.** It named three
-silent poolers; the real list is **seven** — `emoji_version_profile()`,
+silent poolers; the real list is **seven** -- `emoji_version_profile()`,
 `emoji_trend()`, `emoji_turnover()`, `emoji_seasonality()`,
 `emoji_adoption_lag()`, `emoji_collocations()`, `emoji_incongruity_profile()`
-— and two of its three (`emoji_categorize()`, `emoji_ngrams()`) are *not*
+-- and two of its three (`emoji_categorize()`, `emoji_ngrams()`) are *not*
 aggregators: both emit one row per input row (or per n-gram *of* an input row)
 and pool nothing, so a guard there would be noise. The lesson is that the
 fixture ("group `a` is faces, group `b` is flags") only distinguishes verbs
@@ -711,20 +711,20 @@ Two more, in the same shape as §1.5's own lesson:
 the verb they delegate to, so the message named a function the user never
 called and lifecycle's per-topic dedup then silenced it for anyone who had
 already called `emoji_pairs()` / `emoji_frequency()`. And the guard is now
-**one helper**, not ten copies — which is the only change that stops the count
+**one helper**, not ten copies -- which is the only change that stops the count
 being wrong again. Two mechanical traps it has to handle, both found by
 testing: lifecycle's `env`/`user_env` default to the *helper's* frames, which
 made it append "Please report the issue at ..." to a warning about the user's
 own data; and because `what` carries the verb's name, dedup is per verb, so all
-fourteen aggregators warn in one session — §1.5's "one fresh R process per
+fourteen aggregators warn in one session -- §1.5's "one fresh R process per
 verb" is no longer needed to test them.
 
 **The `` `var` `` leak was package-wide.** §1.5 found it in four time verbs.
 It was in all 38 column-resolution sites, because every one of them used
 `dplyr::pull()`, whose formal is `var`. Three messages, all naming an argument
 that appears in no tidyEmoji signature: omitted (`` `var` is absent ``), two
-columns (`` `!!enquo(var)` must select exactly one column ``), and — the common
-one — misspelled, reported as `object 'txet' not found`, as if the user's own
+columns (`` `!!enquo(var)` must select exactly one column ``), and -- the common
+one -- misspelled, reported as `object 'txet' not found`, as if the user's own
 code had a free variable in it. One resolver now handles all of them, names
 `text` / `time` / `text_score` / `doc_id`, and hands the not-found case to
 `select()`, whose message says which column is missing.
@@ -732,7 +732,7 @@ code had a free variable in it. One resolver now handles all of them, names
 **`emoji_extract_nest()` accepted a missing column.** It was the one verb that
 resolved `{{ text }}` in the data mask instead of as a selection, so
 `emoji_extract_nest(df)` returned a bogus empty list-column rather than
-erroring — the exact failure mode the 0.4.0 "invalid values error, they are
+erroring -- the exact failure mode the 0.4.0 "invalid values error, they are
 not absorbed" invariant exists to prevent, in the one verb the sweep that
 established that invariant did not reach.
 
@@ -751,7 +751,7 @@ the help page.
 relative to `DESCRIPTION` (missing the whole paragraph about interpretation
 risk, context, time, incongruity and the sanitiser).
 
-**Round 2, same day — degenerate inputs, argument absorption, the registry.**
+**Round 2, same day -- degenerate inputs, argument absorption, the registry.**
 
 - **"Empty input returns a *typed* zero-row tibble" was false in five verbs.**
   `emoji_density()`, `emoji_ratio()`, `emoji_faceness()` and `emoji_risk()`
@@ -760,12 +760,12 @@ risk, context, time, incongruity and the sanitiser).
   returns `double` or `integer`; `emoji_tokens()` returned an unspecified
   `.emoji`. Split-map-bind over a corpus therefore produced a different schema
   depending on whether any chunk happened to be empty. The fix is
-  allocate-then-fill, and it changed no value — §12 has the fixture pinning
+  allocate-then-fill, and it changed no value -- §12 has the fixture pinning
   all seven columns of the three affected verbs.
 - **The `head(n = -1)` bug class had a second half nobody swept: fractional
   counts.** `top_n_emojis(n = 2.5)` returned two rows, `emoji_context(window =
   2.7)` used a window of two, `emoji_ngrams(n = 2.9)` built bigrams. Identical
-  failure mode — the number the user wrote is not the number used — and it
+  failure mode -- the number the user wrote is not the number used -- and it
   survived the 0.4.0 audit because that audit looked for *negative* and
   *non-numeric*, not *non-integral*. `n`, `top_n`, `window` and `min_n` now
   require a whole number, with `Inf` still meaning "all" where head() is the
@@ -779,18 +779,18 @@ risk, context, time, incongruity and the sanitiser).
   `name`*, and was unreachable, because `.emoji_lexicon_lookup()` resolves the
   bundled names before it consults the registry. And a `tbl` with no usable
   score column registered happily, failing only at first use with a message
-  naming `tbl` — an argument of a call that had already returned. Both are now
+  naming `tbl` -- an argument of a call that had already returned. Both are now
   refused at registration.
 - **The presentation-selector limitation was documented in the one place a
   user counting emoji would not look** (`?emoji_sentiment_lexicon`). It is now
   a *Detection* section on `?tidyEmoji`, with the catalogue-wide measurement
   (§4.7, corrected there) and the reason the default cannot change.
-**Round 3, same day — the time verbs, the numeric transforms, and doc drift.**
+**Round 3, same day -- the time verbs, the numeric transforms, and doc drift.**
 
 - **A string time column silently shrank the corpus.** `.emoji_as_date()`
   errors only when *nothing* parses; a column with a few `"2020-13-45"` or
   `"Jan 5 2020"` values turned those into `NA`, and every time verb then
-  dropped the row — indistinguishable in the result from a genuinely missing
+  dropped the row -- indistinguishable in the result from a genuinely missing
   date. It now reports the count and the first unreadable value. A real `NA`
   still passes silently, which is the distinction that matters.
 - **`?emoji_sanitize` now carries §1.9's loss ladder**, re-verified
@@ -801,15 +801,15 @@ risk, context, time, incongruity and the sanitiser).
   `emoji_emotion()` omitted all eight emotion columns plus `.emoji_n` /
   `.emoji_n_scored`, and said nothing about `long = TRUE` returning a different
   *shape*; `emoji_emotion_label()` omitted two columns. Found by a mechanical
-  cross-check — parse every `\value`, run every `\examples`, diff the dotted
-  column names — which is worth keeping as a release check because `R CMD
+  cross-check -- parse every `\value`, run every `\examples`, diff the dotted
+  column names -- which is worth keeping as a release check because `R CMD
   check` cannot see this class of error.
 - **I introduced a regression and caught it the same round**, worth recording
   because the invariant is easy to break: em-dashes in a roxygen comment made
   `R/tidyEmoji.R` non-ASCII, which 0.4.0 had specifically cleaned up so the
   PDF manual builds everywhere. Use ` -- ` in roxygen, and grep
   `grep -lP "[^\x00-\x7F]" R/*.R` before calling a doc pass done.
-- **`README.md` was not reproducible from `README.Rmd`** — one hand-edited
+- **`README.md` was not reproducible from `README.Rmd`** -- one hand-edited
   straight apostrophe where the render produces a curly one. Re-rendered, so
   it is now byte-identical to its source and drift becomes visible.
 - **Checked and found sound this round, so it need not be re-audited:** the
@@ -829,12 +829,12 @@ risk, context, time, incongruity and the sanitiser).
   §1's wording is what was wrong; it is now corrected there rather than the
   behaviour being changed.
 
-**Round 4, same day — the packaging surface and the bundled data.**
+**Round 4, same day -- the packaging surface and the bundled data.**
 
 - **§1.7's coverage denominator was wrong, and the corrected figure is now on
   the help pages.** It divided by 5042, the reference table's *row* count; the
   table stores an emoji's qualified and unqualified forms as separate rows, so
-  there are only **3790 distinct codepoint keys** — the number of distinct
+  there are only **3790 distinct codepoint keys** -- the number of distinct
   emoji the package can actually detect, and the only denominator that answers
   "what fraction can I score?". The numerator was wrong the other way, counting
   lexicon rows when 233 of the sentiment lexicon's 969 are not in the reference
@@ -844,7 +844,7 @@ risk, context, time, incongruity and the sanitiser).
   pages now state the share, name the `{emoji}` version it is measured against,
   and point at `.emoji_n_scored`.
 - **`cran-comments.md` claimed no behavioural change beyond `emoji_dfm()`.**
-  Three rounds of polish had made that false — the `.emoji_rel_position`
+  Three rounds of polish had made that false -- the `.emoji_rel_position`
   denominator, grouping preservation, zero-row column types, the newly
   rejected arguments and the new date warning are all user-visible. The
   submission note now lists them, because a reviewer reading an inaccurate
@@ -867,13 +867,13 @@ risk, context, time, incongruity and the sanitiser).
   throughout), so 0.3.0's injection fix holds; the vignette's "10 categories"
   claim matches the installed reference table.
 - **One API wart recorded rather than fixed, because fixing it breaks the
-  interface:** `by` means two unrelated things — the time bucket in
+  interface:** `by` means two unrelated things -- the time bucket in
   `emoji_trend()` / `emoji_turnover()`, the glyph-column name in
-  `emoji_score()` / `register_emoji_lexicon()` — and `top_n_emojis(n = )` is
+  `emoji_score()` / `register_emoji_lexicon()` -- and `top_n_emojis(n = )` is
   the row limit that two other verbs call `top_n`. Both belong in §9's 1.0 API
   freeze, not in a patch to a release that is already at CRAN's door.
 
-**Round 5, same day — reversibility measured, and the engine's own edges.**
+**Round 5, same day -- reversibility measured, and the engine's own edges.**
 
 - **The reversibility claim round 3 put in `?emoji_sanitize` was an overclaim,
   and is now a measurement.** "Lossless ... round-trip exactly" is false at the
@@ -916,7 +916,7 @@ risk, context, time, incongruity and the sanitiser).
   they passed on *any* error, including one raised for the wrong reason. Given
   patterns.
 
-**Round 6, same day — a cross-verb invariant suite, and what it caught.**
+**Round 6, same day -- a cross-verb invariant suite, and what it caught.**
 
 The method changed this round. Rounds 1-5 asked "does this verb behave?"; this
 one asks "do two verbs still agree?", which is the question no per-verb test
@@ -964,7 +964,7 @@ every individual verb's own tests still pass.
   column survives every verb, and `identical()` / `match()` still work across
   the encoding difference.
 
-**Round 7, same day — the NA-conflation family, chased to its end.**
+**Round 7, same day -- the NA-conflation family, chased to its end.**
 
 Rounds 3 and 6 each found one verb conflating "no emoji" with "nothing
 scorable" in a column that means something different for each. This round asked
@@ -1017,7 +1017,7 @@ table lists, which is precisely what a corpus newer than the installed
   fails in practice. Raising the floor would restrict users for no gain today;
   it belongs in the same 1.0 pass as the API freeze.
 
-**Round 8, same day — the biggest defect of the eight rounds, in detection.**
+**Round 8, same day -- the biggest defect of the eight rounds, in detection.**
 
 Round 7's probe was "a glyph that is detected but not catalogued". This round
 inverted it: **a glyph that IS catalogued but whose components are not all
@@ -1074,7 +1074,7 @@ worst kind the package can have.
   the denominator question §1.2 raises is a 0.5.0 accounting decision rather
   than a current wrong number.
 
-**Round 9, same day — the round-8 test was too weak, and the sharp test found more.**
+**Round 9, same day -- the round-8 test was too weak, and the sharp test found more.**
 
 Round 8 asserted `sum(n > 1L) == 0` over the catalogue's ZWJ sequences: *did it
 come back as one glyph?* That is the wrong question. **A sequence whose only
@@ -1109,7 +1109,7 @@ input** -- `U+2764 U+200D U+1F525` ("heart on fire") arriving as `U+1F525`
   one the text actually holds. Substring containment cannot answer a question
   about segmentation. The orphaned-joiner test can, and gave zero.
 
-**Round 10, same day — round 9's deferral was wrong, and reversing it landed the
+**Round 10, same day -- round 9's deferral was wrong, and reversing it landed the
 strongest claim in the file.**
 
 Round 9 measured a 793-spelling residual and chose to document it rather than
@@ -1149,7 +1149,7 @@ is an easy trade, and the deferral was simply a bad call.
   0.5.0's `presentation =` argument is only the first, which is a policy
   choice rather than a defect.
 
-**Round 11, same day — re-verifying what rounds 8 and 10 could have invalidated.**
+**Round 11, same day -- re-verifying what rounds 8 and 10 could have invalidated.**
 
 Changing detection changes the basis of every number the docs quote about
 detection. Rather than assume the fixes were confined, every such figure was
@@ -1184,7 +1184,7 @@ re-measured against the installed catalogue.
   `emoji_collocations()`. Tied counts also break deterministically and
   independently of input row order.
 
-**Round 12, same day — timezones, and a disagreement inside the package.**
+**Round 12, same day -- timezones, and a disagreement inside the package.**
 
 - **A `POSIXct` time column was bucketed by its UTC day.** `as.Date()` on a
   date-time converts in UTC whatever the object's `tzone` says, so an emoji
@@ -1215,7 +1215,7 @@ re-measured against the installed catalogue.
   `NA`, a zero-length column returns a zero-length `Date`, a `Date` column
   passes through identically, and `POSIXlt` works.
 
-**Round 13, same day — the internal-disagreement hunt, run to exhaustion.**
+**Round 13, same day -- the internal-disagreement hunt, run to exhaustion.**
 
 Round 12 found its defect by noticing two views of one timestamp that could
 not both be right. This round enumerated the remaining candidates -- every
@@ -1255,7 +1255,7 @@ tests instead of coincidences.
   match -- the probe using `abs(x - 1) < 1e-9` had passed. Wrap in
   `as.numeric()`.
 
-**Round 14, same day — the last three unexamined behaviours, all sound.**
+**Round 14, same day -- the last three unexamined behaviours, all sound.**
 
 Second consecutive round with no defect found, which is itself information:
 after twelve rounds of fixes the remaining surface is behaving. What this round
@@ -1291,7 +1291,7 @@ plus one documentation gap.
   `emoji_context()` (round 13). Three separate implementations, one consistent
   definition of whitespace.
 
-**Round 15, same day — the user-facing prose, and three untested code paths.**
+**Round 15, same day -- the user-facing prose, and three untested code paths.**
 
 Third consecutive round without a defect. The remaining work is closing gaps
 between what the code does and what the docs say it does.
@@ -1324,7 +1324,7 @@ between what the code does and what the docs say it does.
     declared levels are actually used, so there is no dead level and no
     fallthrough bucket.
 
-**Round 16 (2026-09-04) — the four affect formulas round 3 left unchecked.**
+**Round 16 (2026-09-04) -- the four affect formulas round 3 left unchecked.**
 
 Round 3 verified `tfidf`, the rank and z-score rescalings, PMI and entropy
 against hand computation. Four families were never checked, and they are the
@@ -1357,7 +1357,7 @@ ones behind published numbers. All four verify.
   exactly where the text-presentation forms live. The test now does that
   explicitly, with a comment saying why.
 
-**Round 17 (2026-09-04) — the version machinery, and a collation gap the round-11
+**Round 17 (2026-09-04) -- the version machinery, and a collation gap the round-11
 sweep had missed.**
 
 - **`emoji_adoption_lag()`'s arithmetic had never been verified.** It is
@@ -1395,7 +1395,7 @@ sweep had missed.**
   rather than dropped; my first probe read that as three failures before I
   checked the docs.
 
-**Round 18 (2026-09-04) — the last shallow-verified formula, and NEWS.md.**
+**Round 18 (2026-09-04) -- the last shallow-verified formula, and NEWS.md.**
 
 - **PMI was verified against a fixture that could not have failed.** Round 3
   checked `emoji_collocations()` on a symmetric corpus where every marginal was
@@ -1426,7 +1426,7 @@ sweep had missed.**
   `expect_equal` fails on `dim` while `max(abs(difference))` is exactly 0. Both
   times the code was right and the check was wrong.
 
-**Round 19 (2026-09-04) — mutation-testing the suite this loop built.**
+**Round 19 (2026-09-04) -- mutation-testing the suite this loop built.**
 
 Round 18's lesson was that a fixture which cannot distinguish right from wrong
 is not a test. The obvious next move is to point that at the 120 tests these
@@ -1475,7 +1475,7 @@ of this loop's uncommitted work. Each mutant is applied, installed to a
 throwaway library, tested, and reverted; a control mutant that changes nothing
 confirms the clean tree reports zero failures.
 
-**Round 20 (2026-09-04) — mutation-testing the code this loop never touched.**
+**Round 20 (2026-09-04) -- mutation-testing the code this loop never touched.**
 
 Round 19 mutated the fixes and found one gap. The obvious extension is to
 mutate the *original* logic: any survivor there is a coverage hole in code that
@@ -1516,7 +1516,7 @@ shipped correct and was never exercised. 17 mutants across `emoji_summary()`,
   behaviour teaches nothing, and "NOT APPLIED" is not "survived" -- the harness
   distinguishes them, and it should.
 
-**Round 21 (2026-09-04) — finishing the mutation sweep.**
+**Round 21 (2026-09-04) -- finishing the mutation sweep.**
 
 Rounds 19 and 20 covered the fixes and twelve verbs. This round finished the
 remaining logic: `emoji_summary()`, `emoji_incongruity()`'s core,
@@ -1554,7 +1554,7 @@ fallback lookup, a boundary comparison, a tiebreak, one field of a three-field
 match. None was in a headline code path; all four headline paths (detection,
 grouping, dates, affect) were already covered several times over.
 
-**Round 22 (2026-09-04) — test-suite hygiene, and the one axis still untested.**
+**Round 22 (2026-09-04) -- test-suite hygiene, and the one axis still untested.**
 
 - **The suite was order-dependent, and had been since before this loop.**
   `test-dimensions.R` opened with `library(dplyr)`. `testthat` runs every file
@@ -1589,7 +1589,7 @@ grouping, dates, affect) were already covered several times over.
   already covers R-release, R-devel and R-oldrel-1 -- so pushing the branch
   would answer it without any local installs.
 
-**Round 23 (2026-09-04) — the cross-version check, done. The last open item
+**Round 23 (2026-09-04) -- the cross-version check, done. The last open item
 from round 22 is closed.**
 
 Round 22 named this the highest-value remaining pre-submission check and
@@ -1626,7 +1626,7 @@ harmless.** The fix is a wrapper *script* (functions are not inherited by
 scripts) or `command Rscript`; `$SP/rs` had been working by accident of being a
 script all along.
 
-**Round 24 (2026-09-04) — reading what I had only ever grepped.**
+**Round 24 (2026-09-04) -- reading what I had only ever grepped.**
 
 Round 23's lesson was that a warning printed on every invocation is not thereby
 harmless. Applied to the rest of the loop's habits: the check log had only ever
@@ -1657,7 +1657,7 @@ been grepped, and one CRAN check mode had never been run.
   plain check does not, and it *suppresses* the marked-UTF-8 NOTE that a plain
   check emits. Running only one mode leaves a blind spot in either direction.
 
-**Round 25 (2026-09-04) — the locale axis, and a rule applied to only half the
+**Round 25 (2026-09-04) -- the locale axis, and a rule applied to only half the
 package.**
 
 Round 24 ended on "running one mode leaves a blind spot in either direction".
@@ -1692,7 +1692,7 @@ The untried mode here was the *locale*: round 3 confirmed detection survives
   itself rejected for containing a stray non-ASCII byte. The tooling caught in
   one keystroke the exact class of mistake the guard exists to catch.
 
-**Round 26 (2026-09-04) — spell-checking 25 rounds of prose, and one real
+**Round 26 (2026-09-04) -- spell-checking 25 rounds of prose, and one real
 packaging omission.**
 
 Thousands of words of documentation were written across this loop and none of
@@ -1732,7 +1732,7 @@ in `Suggests` plus a `tests/spelling.R`. §1's gap list already scopes
 "{covr}/spelling CI" as future work, so the wordlist makes the manual check
 correct now and the CI wiring stays where the roadmap put it.
 
-**Round 27 (2026-09-04) — CI caught a defect two of my own audits had cleared,
+**Round 27 (2026-09-04) -- CI caught a defect two of my own audits had cleared,
 and the first fix was the wrong one.**
 
 Pushing PR #8 failed on all five platforms with one error, identical everywhere:
@@ -1785,7 +1785,7 @@ verification that passes tells you nothing until you know what it is capable
 of failing on. `--as-cran` versus a plain check (round 24), a symmetric PMI
 fixture (round 18), and now `DEPENDS_ONLY` against an undeclared package.
 
-**Round 28 (2026-09-04) — the same audit applied to the other two artifacts.**
+**Round 28 (2026-09-04) -- the same audit applied to the other two artifacts.**
 
 Round 27's `commonmark` failure came from a *test* reaching a package that is
 in neither `Imports` nor `Suggests`. `R CMD check` runs three things -- tests,
@@ -1814,7 +1814,7 @@ checklist, run against all three artifacts, with the caveat recorded there:
 tell that apart from a genuine reach, which is why it is a checklist item and
 not a suite assertion.
 
-**Round 29 (2026-09-04) — the same test failed CI twice, and the second failure
+**Round 29 (2026-09-04) -- the same test failed CI twice, and the second failure
 was my reasoning, not my code.**
 
 `22bbe3b` failed on all five platforms again, same test, different package:
@@ -1851,7 +1851,7 @@ failed on. `--as-cran` versus plain (round 24), the symmetric PMI fixture
 (round 18), `DEPENDS_ONLY` against an undeclared package (round 27), and now a
 one-error-at-a-time CI run standing in for a three-package audit.
 
-**Round 30 (2026-09-04) — line coverage, which found what mutation testing
+**Round 30 (2026-09-04) -- line coverage, which found what mutation testing
 structurally could not.**
 
 `main` went green on all five platforms plus pkgdown, so the CI gate was clear.
@@ -1897,7 +1897,7 @@ builds locally with no warnings. Both build artefacts -- `docs/` at 5.8 MB and
 a `pkgdown/favicon/` directory -- were removed, since neither was in the repo
 before.
 
-**Round 31 (2026-09-04) — the check I had disabled in every previous round.**
+**Round 31 (2026-09-04) -- the check I had disabled in every previous round.**
 
 Every `R CMD check` this loop has run set `_R_CHECK_CRAN_INCOMING_REMOTE_=false`,
 because a memory note says it hangs on this host. **That is precisely the flag
@@ -1931,7 +1931,7 @@ used to show that a URL's colons do not swallow a following `:shortcode:`.
 `cran-comments.md`'s claim of no reverse dependencies still needs verifying
 against a live CRAN index, which this host's stale trust store also blocks.
 
-**Round 32 (2026-09-04) — the memory note that cost 31 rounds of URL checking.**
+**Round 32 (2026-09-04) -- the memory note that cost 31 rounds of URL checking.**
 
 Round 31 found that every check had `_R_CHECK_CRAN_INCOMING_REMOTE_=false`, and
 blamed a memory note saying it hangs on this host. **This round tried it. It
@@ -1970,7 +1970,7 @@ had never been re-tested: `--as-cran` suppressing a note, `DEPENDS_ONLY`
 masking Suggests, a one-error CI run standing in for an audit, a disabled flag,
 and a memory note. **Re-measure the thing that tells you not to look.**
 
-**Round 33 (2026-09-04) — what actually ships, and the last inherited beliefs.**
+**Round 33 (2026-09-04) -- what actually ships, and the last inherited beliefs.**
 
 Two things had never been measured, only assumed.
 
@@ -2012,7 +2012,7 @@ memory notes was re-tested:
 expected outcome, and the value is in the two provenance facts now being
 measured rather than assumed.
 
-**Round 34 (2026-09-04) — auditing the invariant list itself, and one it caught.**
+**Round 34 (2026-09-04) -- auditing the invariant list itself, and one it caught.**
 
 §1's invariant list has already been wrong three times (§1.5 in both
 directions, §1.7's denominator, §4.7's symptom list). This round re-tested
@@ -2063,7 +2063,7 @@ the family: `wrap` under `policy = "shortcode"`, `placeholder` under
 - **Two things round 2 checked and found sound**, worth recording so they
   are not re-audited: every `verb(data, text)` export survives zero-row,
   all-`NA`, empty-string, `factor` and `numeric` text columns without error;
-  and the counts agree across verbs on a mixed fixture — `emoji_summary()`'s
+  and the counts agree across verbs on a mixed fixture -- `emoji_summary()`'s
   `n_with_emoji` equals `nrow(emoji_filter())`, and `sum(emoji_frequency()$n)`
   equals `sum(emoji_extract_unnest()$.emoji_count)` equals
   `nrow(emoji_tokens())` equals `sum(.emoji_n)` from every row verb that
@@ -2072,11 +2072,11 @@ the family: `wrap` under `policy = "shortcode"`, `placeholder` under
 
 ---
 
-**Round 35 (2026-09-04) — cost, the one axis 34 rounds never measured.**
+**Round 35 (2026-09-04) -- cost, the one axis 34 rounds never measured.**
 
 Every earlier round asked whether the verbs were *correct*. None asked what
 they *cost*. Six cross-verb correctness probes opened this round and all six
-came back clean, which is the useful signal — recorded here so they are not
+came back clean, which is the useful signal -- recorded here so they are not
 re-audited:
 
 - User column order and count are preserved by all fifteen row verbs.
@@ -2096,7 +2096,7 @@ re-audited:
 
 **The defect, which was structural rather than local.** Three hot paths reached
 a character offset with `substr()`/`substring()`. R rescans a multi-byte string
-from its first byte to reach a character offset, so each call is O(offset) —
+from its first byte to reach a character offset, so each call is O(offset) --
 and all three called it once per emoji, giving O(m*L) in a row holding m emoji.
 Ratios for a 4x input increase (4.0 is linear, ~16 quadratic):
 
@@ -2111,7 +2111,7 @@ The window loop was the most wasteful: it handed `.emoji_window()` the *entire*
 prefix and suffix, and re-evaluated `nchar(masked[r])` every iteration, when the
 answer only ever depends on the `window` tokens nearest the glyph. And because
 `.emoji_slice()` sits under `emoji_glyph_list()`, `.emoji_mask()` and
-`.emoji_occurrences()`, the cost was **shared** — `emoji_summary()` and
+`.emoji_occurrences()`, the cost was **shared** -- `emoji_summary()` and
 `emoji_sentiment()` paid it too, not just `emoji_context()`.
 
 **The fixes.** `.emoji_slice()` and `.emoji_replace_in_order()` index code
@@ -2121,7 +2121,7 @@ below which `substring()` is genuinely faster, so ordinary rows stay byte for
 byte on the path every other verb was built against, and `anyNA()` on the
 conversion falls back for anything `utf8ToInt()` cannot represent.
 `emoji_context()` reads a bounded slice anchored at the glyph, widening the
-budget until it demonstrably contains the answer — more than `window` tokens
+budget until it demonstrably contains the answer -- more than `window` tokens
 (the outermost may be cut by the slice edge, the nearer ones cannot be), or for
 `unit = "char"` still `window` characters after the emoji-adjacent whitespace is
 trimmed; falling back to the full side keeps pathological all-whitespace input
@@ -2131,16 +2131,16 @@ faster, `emoji_context()` ~4x, `.emoji_mask()` 1.164s to 0.106s.
 **Two measurement lessons.**
 
 - **The obvious culprit was the wrong one.** After fixing the window loop the
-  residual was still super-linear, and the natural hypothesis — that `substr()`
+  residual was still super-linear, and the natural hypothesis -- that `substr()`
   on a small slice still rescans, so slicing should go through a character
-  vector — was *measured and rejected*: the char-vector variant was slower on
+  vector -- was *measured and rejected*: the char-vector variant was slower on
   every input size tried, realistic and extreme. Profiling the stages
   separately, rather than reasoning about which was likely, is what found the
   real cost in `.emoji_slice()`/`.emoji_replace_in_order()`.
 - **A fast path pinned against a slow path is only pinned if the comparison can
   fail.** The new tests compare `.emoji_slice()` against `substring()` and
   `.emoji_window_at()` against `.emoji_window()` on the whole side. Both were
-  verified to bite by mutation — an off-by-one in the code-point index and a
+  verified to bite by mutation -- an off-by-one in the code-point index and a
   removed widen loop each produce failures. Without that step they would have
   passed just as happily against a broken fast path. This is the same
   meta-lesson §1 keeps relearning: **name the thing a passing check would have
@@ -2149,7 +2149,7 @@ faster, `emoji_context()` ~4x, `.emoji_mask()` 1.164s to 0.106s.
 **Then a sweep for the same defect class, which found two more instances and
 one consolidation.** Having fixed three sites, the obvious next question was
 whether the pattern occurred elsewhere: every `substr()`/`substring()` call in
-`R/` was read. Two more had it — `emoji_ratio()`'s residual loop (does anything
+`R/` was read. Two more had it -- `emoji_ratio()`'s residual loop (does anything
 but emoji remain?) and `.emoji_final_glyphs()`'s walk-back over the trailing
 emoji run behind `emoji_incongruity()`. All four sites that cut text *around*
 glyph spans were doing the same thing with their own loop, so they now share
@@ -2161,7 +2161,7 @@ and one indexing the tail agree by construction.
 **The measurement lesson that only showed up here: a ratio can hide a
 quadratic.** `emoji_ratio()` measured a 2.7x increase for 4x input, which reads
 as comfortably linear, and on that basis it was nearly left alone. It was in
-fact the slowest per-row verb in the package — both measurement points were
+fact the slowest per-row verb in the package -- both measurement points were
 *already* deep in the quadratic regime, so the ratio between them understated
 the growth. Consolidating it made it **13x faster** (0.326s to 0.024s at 1600
 emoji). Ratios locate super-linear growth only when one endpoint is still in
@@ -2183,11 +2183,11 @@ exact on every sequence class (astral, ZWJ, `U+FE0F`, regional indicator,
 keycap, skin tone) and on latin1-marked input. Threshold crossing: verb output
 proportional and translations identical at 508, 512 and 520 glyphs. Suite 304
 blocks, 0 failures. Local `--as-cran` with remote checks enabled: 1 WARNING,
-3 NOTEs — the four documented host artefacts, unchanged.
+3 NOTEs -- the four documented host artefacts, unchanged.
 
 ---
 
-**Round 36 (2026-09-05) — composing the verbs, which no round had done.**
+**Round 36 (2026-09-05) -- composing the verbs, which no round had done.**
 
 Rounds 1-34 tested verbs one at a time; round 34 compared them to each other.
 This round *composed* them and asserted algebraic properties of the pair, which
@@ -2204,7 +2204,7 @@ the qualified row is the one carrying it (the unqualified row's `shortcode` is
 on all 5042, and a second pass is a fixed point. So the behaviour is right and
 the **documentation was wrong**: `text_to_emoji()` claimed flatly to be "the
 inverse of `emoji_to_text()`", a claim it satisfies only up to the presentation
-selector — and a user round-tripping a corpus would see a fifth of their glyphs
+selector -- and a user round-tripping a corpus would see a fifth of their glyphs
 change bytes. Note the vector helpers **already documented this correctly**
 ("All three resolve through `emoji_key()`, so qualified emoji ... resolve
 identically"); the data-frame verb was the one member that had drifted, which is
@@ -2220,7 +2220,7 @@ its "... face" variant (`cat`, `cow`, `pig`, `tiger`, `mouse`, `rabbit`,
 (`umbrella`, `snowman`, `calendar`, `sunglasses`, `satellite`, `train`).
 
 **This was judged not to be a behaviour defect, and the reasoning matters.**
-The tempting fix — make `as_emoji()` prefer shortcodes so the two agree — is
+The tempting fix -- make `as_emoji()` prefer shortcodes so the two agree -- is
 wrong: `"dog"` really is the Unicode name of `U+1F415`, an exact name match is a
 stronger signal than an alias, and `:dog:` is *explicitly delimited* as a
 shortcode, so the two inputs genuinely mean different things. Changing the order
@@ -2256,23 +2256,23 @@ behaviour changed.
 **Two wrong hypotheses, both killed by measurement rather than argument.** I
 predicted the qualified form won the round trip through a row-ordering
 dependence in `setNames(ref$emoji, ref$shortcode)`, and mutated the table order
-to prove the new test guarded it — the mutation did not bite, because the
+to prove the new test guarded it -- the mutation did not bite, because the
 unqualified row simply has no shortcode and the key lookup does the work. And
 three expectations in the composition probe were mine, not the package's:
 `emoji_ngrams()` returns occurrence rows rather than counts, `emoji_sanitize()`
 defaults to `policy = "keep"` so an unchanged `.emoji_n` is correct, and the
 entropy ceiling above. **When a probe disagrees with the package, the probe is
-the more likely culprit** — check the documented contract before writing a
+the more likely culprit** -- check the documented contract before writing a
 finding.
 
 ---
 
-**Round 37 (2026-09-05) — the axis CI structurally cannot see.**
+**Round 37 (2026-09-05) -- the axis CI structurally cannot see.**
 
 Rounds 35 and 36 exhausted the properties a test on this machine can check.
 This round asked a different question: **what would CI never catch, however
 green it is?** The matrix is macOS/Windows release plus Ubuntu devel, release
-and oldrel-1 — so anything about *older* R, or about files CI regenerates rather
+and oldrel-1 -- so anything about *older* R, or about files CI regenerates rather
 than compares, is invisible to it.
 
 **The finding: the declared R minimum was unachievable.** `DESCRIPTION` said
@@ -2290,7 +2290,7 @@ than compares, is invisible to it.
 `install.packages()` serves only current versions, so on R 3.5 to 4.0 the
 resolver fetches a `dplyr` that refuses to install and the user gets an opaque
 dependency failure instead of "this package needs a newer R". The package's own
-code needs nothing newer than 3.5 — checked explicitly for the native pipe,
+code needs nothing newer than 3.5 -- checked explicitly for the native pipe,
 `\(x)` lambdas, `sort_by()`, `...names()` and `%||%`; none appear, and `%||%`
 turned out to be **defined locally** at `R/emoji-engine.R:447` with a comment
 saying why, so it does not silently depend on base R 4.4. The floor is purely
@@ -2299,8 +2299,8 @@ explained in `cran-comments.md`, and guarded by a test that compares the
 declared minimum against the installed hard dependencies' floors.
 
 **A test that passes because it never ran is worth nothing.** The guard test
-carries `skip_on_cran()`, and my first mutation of it — lowering the declared
-minimum back to 3.5.0 — produced **no failure at all**. The reason was not that
+carries `skip_on_cran()`, and my first mutation of it -- lowering the declared
+minimum back to 3.5.0 -- produced **no failure at all**. The reason was not that
 the test was weak but that it was *skipped*: `NOT_CRAN` is unset in a bare
 `testthat::test_file()` run. Re-running with `NOT_CRAN=true` then exposed a
 second, worse problem: the test errored **even in the correct state**, because
@@ -2321,8 +2321,8 @@ floor, that should not turn into a CRAN check failure for tidyEmoji.
 
 - **`README.md`'s committed output is not stale.** It carries 117 lines of
   `#>` snapshots generated from `README.Rmd`, and round 34 changed
-  `emoji_extract_nest()` from a `data.frame` to a tibble — which prints
-  differently — so this was a live staleness risk. Re-knitting and diffing *only
+  `emoji_extract_nest()` from a `data.frame` to a tibble -- which prints
+  differently -- so this was a live staleness risk. Re-knitting and diffing *only
   the output blocks* (prose line-wrapping differs because `knit()` skips the
   `github_document` pandoc pass, which made a whole-file diff useless) shows
   **zero** differences.
@@ -2332,7 +2332,7 @@ floor, that should not turn into a CRAN check failure for tidyEmoji.
   stated; `breaks = seq(1, 15)` does not clip anything (the plotted quantity is
   the per-entry total, correctly derived with
   `group_by(.row_number) |> summarise(sum(.emoji_count))`, and its maximum is
-  33 — but `scale_x_continuous(breaks =)` sets ticks, not limits); and the
+  33 -- but `scale_x_continuous(breaks =)` sets ticks, not limits); and the
   `top_n_emojis()` sentence attributing `n = 20` reads correctly once the whole
   sentence is read rather than a grep window.
 - All four `?topic` cross-references in the vignette and README resolve to real
@@ -2372,11 +2372,11 @@ been to ask what the *current* verification cannot see: round 35 found cost
 because every test asserted values and none measured time; round 36 found doc
 drift because every test called one verb and none composed two; round 37 found
 mis-declared metadata because CI never runs an R older than oldrel-1. **Green
-does not mean checked — it means checked by whatever is currently checking.**
+does not mean checked -- it means checked by whatever is currently checking.**
 
 ---
 
-**Round 38 (2026-09-05) — state, the last thing every test had avoided.**
+**Round 38 (2026-09-05) -- state, the last thing every test had avoided.**
 
 Every round up to here ran verbs on fresh data in isolation. Nothing asked
 whether one call leaves behind state that changes the next. The package has two
@@ -2448,7 +2448,7 @@ skipped test, one level up.
 
 ---
 
-**Round 39 (2026-09-05) — the documentation surface, where a green check proves least.**
+**Round 39 (2026-09-05) -- the documentation surface, where a green check proves least.**
 
 `R CMD check` passes an example that *runs*, whatever it returns, and never
 executes a `\dontrun` block at all. So example quality and example coverage are
@@ -2505,7 +2505,7 @@ check, not a regression.
 
 ---
 
-**Round 40 (2026-09-05) — the dependency's data, which no round had questioned.**
+**Round 40 (2026-09-05) -- the dependency's data, which no round had questioned.**
 
 Round 37 checked the declared **R** floor. It never checked *package* floors,
 and `Imports: emoji` carries no version constraint at all while the package
@@ -2628,7 +2628,7 @@ failures.
 
 ---
 
-**Round 42 (2026-09-05) — tie-breaking, which five green platforms cannot compare.**
+**Round 42 (2026-09-05) -- tie-breaking, which five green platforms cannot compare.**
 
 CI runs macOS, Windows and three Ubuntu R versions, and never compares their
 *outputs* to each other. So an ordering that fell back on input order, a hash,
@@ -2688,7 +2688,7 @@ verification that did not happen.
 
 ---
 
-**Round 43 (2026-09-05) — the locale category nobody varied.**
+**Round 43 (2026-09-05) -- the locale category nobody varied.**
 
 Round 33 established that ordering does not depend on `LC_COLLATE`. It never
 touched `LC_CTYPE`, which governs *case conversion* -- and every
@@ -2773,7 +2773,7 @@ fixture changes before package code runs.
 
 ---
 
-**Round 44 (2026-09-05) — the calendar, which turned out to be right.**
+**Round 44 (2026-09-05) -- the calendar, which turned out to be right.**
 
 Round 33 established that `.emoji_as_date()` reads POSIXt in local time rather
 than UTC, and that ordering is timezone-invariant. Nothing had tested the
@@ -2839,7 +2839,7 @@ mutation-verified.
 
 ---
 
-**Round 45 (2026-09-05) — the package's claims about its own data.**
+**Round 45 (2026-09-05) -- the package's claims about its own data.**
 
 tidyEmoji states facts about its bundled data in **six** independent places:
 `emoji_provenance()`, `emoji_lexicons()`, `DESCRIPTION`'s Description field,
@@ -2989,7 +2989,7 @@ renderer's heuristics, not about the code.* Assert the input to the renderer.
 
 **The pattern worth carrying into 0.5.0.** §9 records that every release found
 defects in the code written just before it. This audit found its crop **before**
-the features were written — and three of the four block a planned feature group,
+the features were written -- and three of the four block a planned feature group,
 which is why §3.1 recommends resequencing rather than folding the fixes in.
 
 ---
@@ -3005,7 +3005,7 @@ real install** (`emoji` 16.0.0, R 4.4.1) on **2026-08-30**, discharging the
 literature in §2.4 and §10 comes from web search; where a claim rests only on a
 search result and not on a fetched document it is still marked **(verify)**.*
 
-### 2.1 `{emoji}` moved — verified against the install
+### 2.1 `{emoji}` moved -- verified against the install
 
 `emoji` **16.0.0**, `emojis` = **5042 rows x 19 columns**. The previous draft
 guessed nine columns; there are nineteen, and the extra ten change the plan in
@@ -3018,14 +3018,14 @@ vendor_messenger  vendor_samsung  vendor_windows
 keywords  aliases
 ```
 
-**Confirmed as hoped — the modifier foundation is real.**
+**Confirmed as hoped -- the modifier foundation is real.**
 
 - `qualified` has exactly the four expected levels: `fully-qualified`,
   `unqualified`, `minimally-qualified`, `component`. The qualified/unqualified
   asymmetry that 0.2.1 patched anecdotally can now be handled exhaustively.
 - `emoji_modifiers` is a **4468-row** tibble of
   `emoji_modifiers` / `emoji` / `modifiers`, covering **454 unique modifiable
-  base glyphs** — that 454 *is* the denominator §4.1 insists on, available as
+  base glyphs** -- that 454 *is* the denominator §4.1 insists on, available as
   data rather than as a heuristic.
 - `component` rows carry the five skin tones **and** red / curly / white / bald
   hair, so `emoji_hair()` (§4.1) is a join, not an implementation.
@@ -3035,7 +3035,7 @@ keywords  aliases
   for **3**, which sizes §4.2 exactly and confirms subdivision tags are a
   three-case problem, not a long tail.
 
-**A new unblock — `keywords` and `aliases` are fully populated.**
+**A new unblock -- `keywords` and `aliases` are fully populated.**
 
 Both are non-empty for **all 5042 rows**. `keywords` is the CLDR English
 keyword set (`grinning face` -> *cheerful, cheery, face, grin, grinning, happy,
@@ -3043,16 +3043,16 @@ laugh, nice, smile, smiling, teeth*); `aliases` is the shortcode set
 (`grinning, grinning_face`).
 
 This partially dissolves the CLDR blocker in §5. **English** keyword search and
-tag-based lookup need *no* download helper — the data is already bundled and
+tag-based lookup need *no* download helper -- the data is already bundled and
 `emoji_search()` is currently not using it. Only *multilingual* CLDR still
 needs the fetch-and-cache decision in §7.2. See §4.6.
 
-**A new dead end — all eight `vendor_*` columns are empty.**
+**A new dead end -- all eight `vendor_*` columns are empty.**
 
 Every one of them: `TRUE = 0`, `FALSE = 1910`, `NA = 3132`. The columns exist
 but no glyph is marked as supported by any vendor.
 
-**So `emoji_vendor_support()` cannot be built on `{emoji}`** — it was parked for
+**So `emoji_vendor_support()` cannot be built on `{emoji}`** -- it was parked for
 a later release on the assumption that this data would arrive with the package.
 It has not. Building it means sourcing vendor-support data ourselves (Emojipedia
 scrapes, `emoji-test.txt` does not carry it), which is a licence and maintenance
@@ -3060,7 +3060,7 @@ tail well outside 0.5.0. **Move it to "explicitly not" (§5)** and say why, so
 this is not rediscovered a fourth time.
 
 **One caveat that matters for the refresh.** `unique(version)` tops out at
-**16.0** — the installed data does *not* contain Emoji 17.0's 163 additions
+**16.0** -- the installed data does *not* contain Emoji 17.0's 163 additions
 (§2.2). Any crosswalk refresh is bounded by upstream's Unicode version, not by
 ours, so `emoji_provenance()` reporting 16.0 is correct behaviour rather than a
 staleness bug. Pin a minimum `{emoji}` version the moment we read `qualified`,
@@ -3094,9 +3094,9 @@ image URLs for `{ggimage}`.
 **Revised position:** do not build `emoji_image()`. The remaining real needs
 are two diagnostics, and they are cheap:
 
-- `emoji_render_check()` — "will this glyph draw on this device?", the answer
+- `emoji_render_check()` -- "will this glyph draw on this device?", the answer
   to "why are my axis labels tofu boxes?"
-- `emoji_label()` — a render-safe label that degrades to name or shortcode.
+- `emoji_label()` -- a render-safe label that degrades to name or shortcode.
 
 Both belong with the accessibility work in §4.3, not in a visualization theme
 of their own. `{emojifont}` remains showtext-based and RStudio-incompatible,
@@ -3106,7 +3106,7 @@ which is a reason to point users at `ragg`, not to wrap `{emojifont}`.
 
 Grouped by whether it changes what we build.
 
-**Changes the plan — accessibility is a first-class theme, not a footnote.**
+**Changes the plan -- accessibility is a first-class theme, not a footnote.**
 
 - *Emoji Accessibility for Visually Impaired People* (CHI 2020,
   doi:10.1145/3313831.3376267) established the problem: screen readers speak
@@ -3127,32 +3127,32 @@ primitive it needs**: `emoji_to_text(format = "name")` *is* PREVIEW, and
 **Reinforces the modifier theme.**
 
 - *Digital Skin, Digital Bias: Uncovering Tone-Based Biases in LLMs and Emoji
-  Embeddings* (ACM Web Conference 2026, doi:10.1145/3774904.3792508) — the
+  Embeddings* (ACM Web Conference 2026, doi:10.1145/3774904.3792508) -- the
   first large-scale comparative study of skin-tone bias across emoji embedding
   models (emoji2vec, emoji-sw2v) and four modern LLMs. Skin tone is not a
   cosmetic attribute of a glyph; it propagates into downstream representations.
 - *Digital Colourism? Understanding Emoji Skin Tone Preferences Among
-  Indian-Origin Users* (BCS HCI 2025) — tone preference is culturally patterned
+  Indian-Origin Users* (BCS HCI 2025) -- tone preference is culturally patterned
   well beyond the US/UK samples the earlier work used.
 - 2025 work reports that women are more likely than men to use tones matching
-  their own and to value the range of options — a *group difference*, which is
+  their own and to value the range of options -- a *group difference*, which is
   exactly what `emoji_tone_summary(group_by =)` should make a one-liner.
 
 **Reinforces the LLM theme (0.4.0 shipped the plumbing; the case got stronger).**
 
 - **EMODIS** is now published at **AAAI 2026** (arXiv 2511.07193) with a number
   worth quoting: human annotators 88.5% versus GPT-4 58.8% on context-dependent
-  emoji disambiguation — a roughly 30-point gap.
+  emoji disambiguation -- a roughly 30-point gap.
 - *Small Symbols, Big Risks: Emoticon Semantic Confusion in LLMs* (arXiv
-  2601.07885, 2026) — six LLMs, average confusion ratio above 38%, and **over
+  2601.07885, 2026) -- six LLMs, average confusion ratio above 38%, and **over
   90% of confused responses are "silent failures"**: syntactically valid output
   that deviates from intent. This is the strongest argument yet that
   `emoji_sanitize()` should be an explicit, recorded decision.
-- *Emoji-Based Jailbreaking of Large Language Models* — supports the defensive
+- *Emoji-Based Jailbreaking of Large Language Models* -- supports the defensive
   framing of a future `emoji_obfuscation_scan()`, and the discipline of
   reporting structural anomalies rather than shipping attack patterns.
 
-**Applied domains — new syntheses, no new API pressure.**
+**Applied domains -- new syntheses, no new API pressure.**
 
 - *Emojis in Marketing and Advertising: A Systematic Literature Review*
   (Behavioral Sciences 2025, doi:10.3390/bs15111490), T-C-C-M framework; the
@@ -3166,20 +3166,20 @@ primitive it needs**: `emoji_to_text(format = "name")` *is* PREVIEW, and
   the variables these literatures use. **Continue to ship no clinical
   instrument.**
 
-**Semantics and embeddings — still not urgent.**
+**Semantics and embeddings -- still not urgent.**
 
 EmoSim508 remains the intrinsic benchmark; a 2025 evaluation puts GPT-4o at
 79.23% semantics preservation. Nothing here beats the plan of building
 `emoji_embed_corpus()` (dependency-free PPMI + SVD) before touching pretrained
 downloads.
 
-### 2.5 R ecosystem — the confirmed gaps
+### 2.5 R ecosystem -- the confirmed gaps
 
 | Capability | State of the R ecosystem | tidyEmoji's position |
 |---|---|---|
 | Emoji data + string helpers | `{emoji}`, current and actively maintained | **Depend on it.** Do not duplicate |
 | Modifier extraction / base glyph | `{emoji}` has it | Wrap as tidy verbs |
-| ISO 3166 <-> flag emoji | **Nothing on CRAN.** A gist, and non-R libraries | **Real gap — fill it** (§4.2) |
+| ISO 3166 <-> flag emoji | **Nothing on CRAN.** A gist, and non-R libraries | **Real gap -- fill it** (§4.2) |
 | Colour emoji in plots | `{ragg}` natively; `{emojifont}` (showtext, RStudio-incompatible) | Point at `ragg`; ship diagnostics only |
 | Emoji + text sentiment | `{EmojiSentR}` (integrated), `{text2emotion}` (emotion + emoji mapping) | Stay composable; document the recipe |
 | Grapheme segmentation | `{stringi}` only | Suggests-gated opt-in engine (§4.5) |
@@ -3192,13 +3192,13 @@ it maps text to emotion *and* emoji, so there may be overlap with
 ### 2.6 A second axis: audience, not just features
 
 Everything above asks "what has changed in the emoji tooling and literature we
-already track?". A separate question — **which research communities work with
-emoji data that our input shape does not fit?** — turned out to be the more
+already track?". A separate question -- **which research communities work with
+emoji data that our input shape does not fit?** -- turned out to be the more
 productive one, and it now has its own section. See **§10**. The headline is
 that the package assumes a text column of prose, and **four** active
-literatures hold *pre-aggregated tallies* instead — GitHub reaction studies
+literatures hold *pre-aggregated tallies* instead -- GitHub reaction studies
 (§10.2), survey psychometrics (§10.6), retail-investor boards (§10.9) and
-workplace messaging (§10.15) — which no current verb accepts. That count rising
+workplace messaging (§10.15) -- which no current verb accepts. That count rising
 from two to four over the survey is the strongest single argument in this
 document for `emoji_from_counts()`.
 
@@ -3206,7 +3206,7 @@ document for `emoji_from_counts()`.
 
 ## 3. What 0.5.0 should be
 
-**Theme: identity, place and access — the human attributes of a glyph.**
+**Theme: identity, place and access -- the human attributes of a glyph.**
 
 Three feature groups plus two pieces of infrastructure. It is coherent
 (everything answers "what does this glyph say about a person or a place, and
@@ -3221,7 +3221,7 @@ expensive part cheap.
 | §4.4 Unicode property surface | Now a join, not a parser (§2.1) |
 | §4.5 `{stringi}` grapheme engine | Retires a documented limitation; gives exact ratios |
 
-**Size discipline — reconciled after the audit (§1.1-§1.8).** 0.4.0 added 21
+**Size discipline -- reconciled after the audit (§1.1-§1.8).** 0.4.0 added 21
 verbs in one release, which was a lot to review at once. This document opened by
 targeting **10-14 verbs** for 0.5.0. Eight rounds of auditing have since added
 nine *correctness* items to the release, and several of them are prerequisites
@@ -3246,17 +3246,17 @@ for the features rather than independent work. The honest position:
 | `emoji_position()` grapheme fix (§1.1) | reports a final family emoji at 0.333 | **§4.3** |
 | Flag validation, 259+3 set (§1.2) | `🇽🇽` maps to a fabricated ISO code | **§4.2** |
 | Orphan-modifier accounting (§1.2) | corrupts the modified÷modifiable ratio | **§4.1** |
-| Grouped guard on 3 aggregators (§1.5) | silent cross-group pooling | — |
-| Rate/denominator audit (§4.8) | makes existing output CoDA-safe | — |
-| Round-trip tests (§1.3), `var` message (§1.5), `.emoji_*` reserved (§1.6) | cheap, and each defends a stated contract | — |
+| Grouped guard on 3 aggregators (§1.5) | silent cross-group pooling | -- |
+| Rate/denominator audit (§4.8) | makes existing output CoDA-safe | -- |
+| Round-trip tests (§1.3), `var` message (§1.5), `.emoji_*` reserved (§1.6) | cheap, and each defends a stated contract | -- |
 
 **Three of the six block a feature group.** That is the finding that should
 drive the release shape, and it points at a conclusion this document did not
 start with.
 
-### 3.1 Recommendation — make 0.5.0 a correctness release and move the theme to 0.6.0
+### 3.1 Recommendation -- make 0.5.0 a correctness release and move the theme to 0.6.0
 
-The roadmap's own §9 states the principle: *"the maintenance patch leads — it
+The roadmap's own §9 states the principle: *"the maintenance patch leads -- it
 fixes correctness before we build on the engine."* That is exactly what 0.2.1
 did, and §9's "three audits" note observes that every release has found defects
 in the code written just before it. **The eight audit rounds in §1 found a
@@ -3264,41 +3264,41 @@ fourth crop, and they found it *before* the features were written rather than
 after.** Acting on that is cheaper than the alternative.
 
 **This table is the authoritative plan.** Where §9's ledger or an individual
-section says something different about scheduling, §3.1 wins — the ledger is a
+section says something different about scheduling, §3.1 wins -- the ledger is a
 running list, this is the reconciliation.
 
-**0.5.0 — Correctness & honesty**
+**0.5.0 -- Correctness & honesty**
 
 | Kind | Items |
 |---|---|
 | *Correctness (§1)* | `emoji_position()` grapheme fix (§1.1); flag-set validation (§1.2); orphan-modifier accounting (§1.2); grouped guard on 3 aggregators (§1.5); `time`/`var` message (§1.5); `.emoji_*` reserved, documented (§1.6) |
 | *Engine* | §4.5 grapheme engine (`engine =` on affected verbs) |
 | *Honesty* | §4.8 rate/denominator principle + audit; `emoji_coverage()` (§1.7) |
-| *Additions on verified data* | `emoji_keywords()`, `emoji_find()` (§4.6); `emoji_properties()`, `as_emoji_canonical()` (§4.4); **`presentation = "any"` (§4.7 — its own text says ship with §4.4)**; **`emoji_identical()` (§10.1 — S-sized, rides §4.4)** |
+| *Additions on verified data* | `emoji_keywords()`, `emoji_find()` (§4.6); `emoji_properties()`, `as_emoji_canonical()` (§4.4); **`presentation = "any"` (§4.7 -- its own text says ship with §4.4)**; **`emoji_identical()` (§10.1 -- S-sized, rides §4.4)** |
 | *Documentation* | round-trip tests + reversible-LLM vignette (§1.3); `?emoji_sanitize` policy ladder (§1.9); one real `text_score` recipe at `eval = FALSE` (§10.15); research-question index + `\concept{}` tags (§10.14) |
-| **New verbs** | **6** — `emoji_coverage()`, `emoji_keywords()`, `emoji_find()`, `emoji_properties()`, `as_emoji_canonical()`, `emoji_identical()` |
+| **New verbs** | **6** -- `emoji_coverage()`, `emoji_keywords()`, `emoji_find()`, `emoji_properties()`, `as_emoji_canonical()`, `emoji_identical()` |
 
-**0.6.0 — Identity, place & access, plus the input-shape widening**
+**0.6.0 -- Identity, place & access, plus the input-shape widening**
 
 | Kind | Items |
 |---|---|
-| *The theme* | §4.1 modifiers, §4.2 flags, §4.3 accessibility — now on a fixed `emoji_position()`, a validated flag set and correct modifier accounting |
-| *Input shape* | **`emoji_from_counts()` (§10.2)** — requested by four literatures (§2.6); **`emoji_sample()` (§10.13)** — stratified stimulus draw |
+| *The theme* | §4.1 modifiers, §4.2 flags, §4.3 accessibility -- now on a fixed `emoji_position()`, a validated flag set and correct modifier accounting |
+| *Input shape* | **`emoji_from_counts()` (§10.2)** -- requested by four literatures (§2.6); **`emoji_sample()` (§10.13)** -- stratified stimulus draw |
 | *Zeros* | structural-vs-count zeros, `zeros =` / `.emoji_available` (§4.8) |
-| **New verbs** | **12-15** (10-13 themed + 2 input-shape) — apply iteration-1's cut if this exceeds review capacity |
+| **New verbs** | **12-15** (10-13 themed + 2 input-shape) -- apply iteration-1's cut if this exceeds review capacity |
 
 **Why this is better than shipping 19 verbs with the fixes folded in:**
 
 1. **The features get built on correct primitives.** §4.3's `emoji_a11y_check()`
    is specified to derive interrupting-emoji counts from `emoji_position()`. If
    both ship together, the accessibility verb is being written against a
-   primitive that is being repaired in the same release — the most error-prone
+   primitive that is being repaired in the same release -- the most error-prone
    possible ordering.
 2. **The fixes are user-visible and deserve their own NEWS entry.** "Your
    `.emoji_rel_position` values were wrong for multi-codepoint emoji" is a
    headline, not a footnote under nineteen new verbs.
 3. **`emoji_coverage()` reframes the existing package** rather than extending
-   it. Users learn that the emotion lexicon covers 3% of RGI (§1.7) — that
+   it. Users learn that the emotion lexicon covers 3% of RGI (§1.7) -- that
    changes how they read output they already have, which is a correctness
    release's job.
 4. **It restores the 10-14 target honestly** instead of quietly abandoning it.
@@ -3311,11 +3311,11 @@ running list, this is the reconciliation.
 
 **Cost of this recommendation:** the long-planned identity/place/access theme
 slips one release, and §10's audiences wait longer for the verbs they asked
-for — none of which are urgent, since §10.3, §10.10 and §10.14 showed the
+for -- none of which are urgent, since §10.3, §10.10 and §10.14 showed the
 biggest wins there are documentation rather than code. **If instead the theme
-must ship in 0.5.0**, then apply iteration-1's cut — drop
+must ship in 0.5.0**, then apply iteration-1's cut -- drop
 `emoji_zwj_components()`, `emoji_diversity()`, `emoji_render_check()` and
-`emoji_subdivision()` — and accept 15 verbs plus six correctness items in one
+`emoji_subdivision()` -- and accept 15 verbs plus six correctness items in one
 review.
 
 ---
@@ -3342,7 +3342,7 @@ emoji_diversity(data, text,
                 measures = c("richness", "shannon", "simpson", "tone_diversity"))
 ```
 
-**Design notes — the methodology is the feature.**
+**Design notes -- the methodology is the feature.**
 
 - **`n_modifiable` is a returned column, not an internal.** Robertson et al.'s
   42% is modified ÷ modifiable. Reporting modified ÷ all emoji is the single
@@ -3356,7 +3356,7 @@ emoji_diversity(data, text,
 - **`modifiers = c("keep", "strip")` threaded through `emoji_frequency()`,
   `emoji_dfm()` and `emoji_pairs()`** rather than forcing pre-processing.
   Default `keep`, because Barbieri & Camacho-Collados show modifiers change
-  semantics — and because `keep` is today's behaviour, so the default is not a
+  semantics -- and because `keep` is today's behaviour, so the default is not a
   silent break. Document loudly in NEWS.
 - Reuse `{emoji}`'s `emoji_modifiers` / `emoji_modifier_remove()`; write no
   codepoint arithmetic we do not have to. Still needs a fixture table for cases
@@ -3370,7 +3370,7 @@ emoji_diversity(data, text,
   joins arrive as separate occurrences from the engine; say so in the help page
   so the verb does not look broken on hand-constructed test input.
 
-**Effort** M (was L). **Risk** medium — reputational, not technical.
+**Effort** M (was L). **Risk** medium -- reputational, not technical.
 
 ### 4.2 Geography: flags and countries
 
@@ -3384,7 +3384,7 @@ Regional-indicator pairs map mechanically to ISO 3166-1 alpha-2: the offset
 between an ASCII capital and its regional indicator is constant (`A` = 65,
 `U+1F1E6` = 127462, difference 127397).
 
-**The arithmetic is necessary but not sufficient — §1.2 disproved the original
+**The arithmetic is necessary but not sufficient -- §1.2 disproved the original
 "no external data is needed" claim.** `🇽🇽` is a well-formed RI pair that the
 detector returns as an emoji and the arithmetic maps to `"XX"`, a country that
 does not exist. So the verb needs the **valid set** as well as the offset:
@@ -3394,8 +3394,8 @@ A name lookup is still needed and ISO-2 to name is small enough to inline.
 
 Two things not to miss:
 
-- **Subdivision tag sequences** are a different encoding — a base flag plus tag
-  characters — and are easy to overlook. Handle them in the same verb family or
+- **Subdivision tag sequences** are a different encoding -- a base flag plus tag
+  characters -- and are easy to overlook. Handle them in the same verb family or
   document their absence explicitly.
 - **Cross-package recipe, not a dependency.** Hand `.emoji_iso2` to
   `countrycode::countrycode()` or `countryatlas` and a corpus of flag emoji
@@ -3404,7 +3404,7 @@ Two things not to miss:
 This is the clearest unfilled gap in the R ecosystem (§2.5). **Effort** S-M.
 **Risk** low.
 
-### 4.3 Accessibility — new in this roadmap
+### 4.3 Accessibility -- new in this roadmap
 
 Screen readers announce each emoji's Unicode name, so a run of six emoji
 becomes six spoken names, and an emoji between two words interrupts the
@@ -3443,12 +3443,12 @@ emoji_render_check(x, device = NULL)
 - This also gives the package a real answer to "why would I use
   `emoji_to_text()`?" beyond NLP preprocessing.
 
-**Deps** none externally, **but §4.5 is a hard prerequisite** — see §1.1.
+**Deps** none externally, **but §4.5 is a hard prerequisite** -- see §1.1.
 `emoji_a11y_check()`'s "interrupting emoji" count is derived from
 `emoji_position()`, which is codepoint-based and misreports sentence-final
 flags and ZWJ sequences as mid-sentence. Shipping the a11y verb on the current
 primitive would put a wrong number in the one place users are least able to
-check it. **Effort** S once §4.5 lands. **Risk** low. **Value** high — no R
+check it. **Effort** S once §4.5 lands. **Risk** low. **Value** high -- no R
 package does this, the literature is clear, and the cost is a weekend.
 
 ### 4.4 Unicode property surface
@@ -3466,12 +3466,12 @@ as_emoji_canonical(x)    # export the internal canonicaliser
 away: users doing their own joins hit exactly the qualified/unqualified trap the
 package already solves internally. **Effort** S.
 
-### 4.5 The `{stringi}` grapheme engine — now a prerequisite, not an option
+### 4.5 The `{stringi}` grapheme engine -- now a prerequisite, not an option
 
 **Scope grew.** This was filed as retiring a documented `emoji_ratio()` caveat.
 §1.1 showed `emoji_position()` has the same defect *without* the documentation,
 and that §4.3 cannot be built correctly on top of it. So this is no longer the
-optional item in 0.5.0 — it is the one that unblocks the accessibility group,
+optional item in 0.5.0 -- it is the one that unblocks the accessibility group,
 and it must land first or alongside.
 
 Affected verbs: `emoji_ratio()` (documented), `emoji_position()` (§1.1, silent),
@@ -3487,11 +3487,11 @@ Resolve it as an opt-in engine rather than a permanent caveat:
 Two code paths and two sets of tests forever is the cost; a documented
 limitation that never goes away is the alternative. **Effort** M.
 
-### 4.6 The keyword and alias surface — newly cheap
+### 4.6 The keyword and alias surface -- newly cheap
 
 §2.1 found `keywords` and `aliases` populated for all 5042 glyphs. Today
 `emoji_search()` matches on `name` only, so a user searching "happy" misses
-`grinning face`, whose keywords include *happy* — the data to fix that is
+`grinning face`, whose keywords include *happy* -- the data to fix that is
 already installed.
 
 ```r
@@ -3518,7 +3518,7 @@ emoji_search(pattern, fields = c("name", "keywords", "aliases"))
 **Deps** none beyond the pinned `{emoji}`. **Effort** S. **Risk** low, except
 for the default-fields decision above.
 
-### 4.7 Presentation selectors — a documented limitation, now quantified
+### 4.7 Presentation selectors -- a documented limitation, now quantified
 
 `?emoji_sentiment_lexicon` already documents that text-presentation code points
 (the bare heart `U+2764`, the white smiling face `U+263A`, the heavy check mark
@@ -3532,15 +3532,15 @@ measured is how much of the lexicon it covers:**
 **The 28% was re-measured 2026-09-03 and the split is not what this section
 said.** Of the 270, only **57** are RGI emoji in text-presentation form; the
 other **213** are not in the RGI catalogue at any qualification. The example
-list below originally mixed the two buckets — `♡`, `★`, `♫`, `☆`, `♪` are in
+list below originally mixed the two buckets -- `♡`, `★`, `♫`, `☆`, `♪` are in
 the *non-emoji* 213, not the recoverable 57. The honest reading, corrected:
 
-- **213 are not emoji and never were** — `█` box drawing, the replacement
+- **213 are not emoji and never were** -- `█` box drawing, the replacement
   character `�`, `►`, `━`, `│`, and the dingbat hearts/stars/notes `♡ ★
-  ♫` — inherited from the tweets the lexicon was built from. These *should*
+  ♫` -- inherited from the tweets the lexicon was built from. These *should*
   be undetectable, and they are four fifths of the 270, so the 28% must never
   be quoted as lost emoji coverage.
-- **57 are real emoji in text-presentation form** — `❤ ♥ ☺ ☯ ☀ ❄ ✈ ✔ ➡
+- **57 are real emoji in text-presentation form** -- `❤ ♥ ☺ ☯ ☀ ❄ ✈ ✔ ➡
   ✖ ▪`. These are genuinely missed, and the bare `U+2764` in particular is
   common in the wild because several keyboards emit it without `U+FE0F`.
 
@@ -3550,13 +3550,13 @@ depend on one lexicon's provenance: of the 5042 RGI emoji, **1252 carry
 number the help page now states.
 
 **One caution the `presentation = "any"` design must handle.** `©`, `®` and
-`™` are inside the recoverable set — they are RGI emoji as `©️`, `®️`, `™️`.
+`™` are inside the recoverable set -- they are RGI emoji as `©️`, `®️`, `™️`.
 Matching them unqualified would count the copyright sign in a legal footer as
 emoji use, which is a worse error than the one being fixed. Whatever the opt-in
 looks like, those three (and anything else whose bare form is ordinary
 punctuation) need excluding, or the argument needs a third level.
 
-**Proposal — make it an argument, not a footnote.**
+**Proposal -- make it an argument, not a footnote.**
 
 ```r
 emoji_summary(data, text, presentation = c("emoji", "any"))
@@ -3568,7 +3568,7 @@ emoji_summary(data, text, presentation = c("emoji", "any"))
 `qualified` makes this newly cheap: `minimally-qualified` and `unqualified` rows
 are exactly the set to opt into, and `component` rows are exactly the set to
 keep excluding (which also gives §1.2's orphan-modifier problem a principled
-answer). **Do not change the default** — it would alter every existing user's
+answer). **Do not change the default** -- it would alter every existing user's
 counts. Ship it as opt-in, and report the count of skipped-but-scorable glyphs
 so a user can see what the choice costs them; that number is the natural
 headline for §10.7's `emoji_coverage()`.
@@ -3577,7 +3577,7 @@ headline for §10.7's `emoji_coverage()`.
 dependency:** this is the same "expose what upstream already knows" pattern as
 §4.4, and the two should be implemented together.
 
-### 4.8 Zero-inflation and compositional structure — a statistical duty
+### 4.8 Zero-inflation and compositional structure -- a statistical duty
 
 *New in this round, and it cuts across every section of §10 rather than serving
 one audience. It is the only item here that is about the **validity** of what
@@ -3592,7 +3592,7 @@ not independent, and raising one necessarily lowers the others. Ordinary
 regression on such proportions is a known error, and compositional data analysis
 (CoDA) exists to handle it.
 
-**It is heavily zero-inflated.** A document-by-emoji matrix is mostly zeros —
+**It is heavily zero-inflated.** A document-by-emoji matrix is mostly zeros --
 §1.7 sharpens why: any given corpus uses a tiny fraction of 5042 glyphs. The
 CoDA literature's central practical problem is exactly this, because the
 log-ratio transforms it depends on are undefined at zero, and the discreteness
@@ -3600,7 +3600,7 @@ of counts violates their continuity assumptions.
 
 **The good news: the package's instincts are already right.** The "denominator
 discipline" §4.1 insists on for skin tone, and `.emoji_n_scored` alongside every
-score, are precisely the CoDA-safe pattern — **return counts and their
+score, are precisely the CoDA-safe pattern -- **return counts and their
 denominator, never a bare proportion.** Generalise that into a stated principle
 rather than a per-verb habit:
 
@@ -3612,11 +3612,11 @@ Audit `emoji_ratio()`, `emoji_density()` and `emoji_frequency()` against it;
 `.emoji_per_char` / `.emoji_per_token` should be accompanied by the character
 and token counts, not just the quotient.
 
-**And the genuinely novel part — tidyEmoji can distinguish structural zeros from
+**And the genuinely novel part -- tidyEmoji can distinguish structural zeros from
 count zeros, and almost nothing else can.** CoDA separates *structural* zeros
 (the component genuinely cannot occur) from *count* zeros (it could occur but
 was not observed), and warns that conflating them biases everything downstream.
-In emoji time series the distinction is not a modelling assumption — **it is a
+In emoji time series the distinction is not a modelling assumption -- **it is a
 matter of record**:
 
 > A zero for 🫠 in 2019 is a **structural** zero. Melting face did not exist
@@ -3624,7 +3624,7 @@ matter of record**:
 
 `emoji_unicode_releases()` already carries the release dates and
 `emoji_version_profile()` already knows each glyph's version, so the package has
-everything needed to label this — and `emoji_adoption_lag()` is already doing
+everything needed to label this -- and `emoji_adoption_lag()` is already doing
 adjacent arithmetic.
 
 ```r
@@ -3643,7 +3643,7 @@ alone, a new glyph's pre-release zeros are read as evidence of non-use, which
 flattens the very adoption curve the analysis is measuring. This is a *silent
 inferential error in work the package already enables today*.
 
-**Deps** none — the data is bundled. **Effort** M (the labelling is small; the
+**Deps** none -- the data is bundled. **Effort** M (the labelling is small; the
 tests and the vignette section are the work). **Risk** low. **Value** high and
 unusual: it is a correctness contribution to users' statistics rather than a
 feature, and no other emoji tooling is positioned to offer it.
@@ -3654,28 +3654,28 @@ feature, and no other emoji tooling is positioned to offer it.
 
 Keeping this list honest is what stopped 0.4.0 from sprawling.
 
-- **Text sentiment scoring** — defer to `{tidytext}` / `{sentimentr}` /
+- **Text sentiment scoring** -- defer to `{tidytext}` / `{sentimentr}` /
   `{vader}` permanently. `emoji_incongruity()`'s `text_score` contract is the
   position.
-- **A rendering engine** — `{ragg}` solved it (§2.3).
-- **`emoji_image()` / twemoji downloads** — deflated by §2.3; the download
+- **A rendering engine** -- `{ragg}` solved it (§2.3).
+- **`emoji_image()` / twemoji downloads** -- deflated by §2.3; the download
   infrastructure is no longer worth building for this.
-- **Pretrained embeddings** — `emoji_embed_corpus()` (PPMI + `base::svd`)
+- **Pretrained embeddings** -- `emoji_embed_corpus()` (PPMI + `base::svd`)
   first, in a later release; pretrained is a maintenance tail.
-- **CLDR *multilingual* names** — needs the download-and-cache helper, the
+- **CLDR *multilingual* names** -- needs the download-and-cache helper, the
   single biggest piece of infrastructure left. Decide it once (§7.2), then do
   CLDR, embeddings and any image set together or not at all. **Note the
   narrowing:** §2.1 found the CLDR *English* keywords already bundled, so the
   English half of this is in scope now as §4.6. Only other locales are blocked.
-- **`emoji_vendor_support()`** — newly moved here. §2.1 verified that all eight
+- **`emoji_vendor_support()`** -- newly moved here. §2.1 verified that all eight
   `vendor_*` columns in `{emoji}` are empty (`TRUE = 0` for every one), so the
   data this feature assumed does not exist upstream. Building it means sourcing
   and maintaining vendor-support data ourselves, which is a licence and
   freshness tail, not a verb. Revisit only if upstream populates the columns.
-- **Any bundled clinical or risk glyph set** — the mechanism
+- **Any bundled clinical or risk glyph set** -- the mechanism
   (`emoji_flag_set()` / `emoji_set_register()`) is fine and cheap; the data is
   not ours to ship.
-- **Emoji generation or recommendation** — out of scope permanently.
+- **Emoji generation or recommendation** -- out of scope permanently.
 
 ---
 
@@ -3708,21 +3708,21 @@ Keeping this list honest is what stopped 0.4.0 from sprawling.
    `aliases`, `emoji_modifiers`) that fails loudly rather than yielding `NA`,
    and keep `emoji_key()` as the only join path so a shape change breaks in one
    place. Note that upstream tracks Unicode **16.0**, so our ceiling is theirs.
-2. **The download helper — build it once, or not at all.** CLDR (§5),
+2. **The download helper -- build it once, or not at all.** CLDR (§5),
    pretrained embeddings and any image set all need the same machinery: a cache
    under `tools::R_user_dir()`, a version stamp, an offline test mode, clear
    failure messages, and nothing fetched at build or check time. Either write
    it once as infrastructure or drop all three. Do not write it three times.
 3. **Sensitive framing.** The modifier work is the one place this package can
    do harm. Every verb in §4.1 needs the "describes glyph usage, never infers
-   identity" statement on its own help page — help pages are what people read.
+   identity" statement on its own help page -- help pages are what people read.
 4. **Test surface.** 0.5.0's fixtures are the hard part: mixed-tone
    multi-person sequences, ♀/♂ versus ZWJ gender forms, subdivision tag
    sequences, professions. Budget as much time for the fixture table as for the
    code.
 5. **Unicode churn.** Emoji 17.0 is out and 18.0 will follow. The refresh must
    be a checklist item (§8), not a habit.
-6. **`{text2emotion}` overlap** — read it before writing docs, and state
+6. **`{text2emotion}` overlap** -- read it before writing docs, and state
    plainly where the packages differ. **(verify)**
 7. **§10 is a catalogue, not a plan.** The audience section exists so ideas stop
    being rediscovered, and it is deliberately larger than any one release. The
@@ -3735,7 +3735,7 @@ Keeping this list honest is what stopped 0.4.0 from sprawling.
    versions; we have **no** vendor-rendering data (§2.1 verified the
    `vendor_*` columns empty). Every verb in that group states the limit on its
    own help page, in the same discipline §4.1 applies to identity.
-9. **Unicode normalisation is *not* a risk — checked, so nobody checks again.**
+9. **Unicode normalisation is *not* a risk -- checked, so nobody checks again.**
    A plausible worry is that NFC/NFD/NFKC normalisation of user text could
    split or recombine emoji sequences and break the codepoint join. Tested on
    tone sequences, ZWJ families, `U+FE0F` hearts, flags and keycaps: all five
@@ -3759,7 +3759,7 @@ Carried-forward debts to pay *during* 0.5.0 rather than defer again:
       checklist.
 - [ ] **{covr} coverage job + badge**, and `urlchecker` + `spelling` as
       scheduled workflows. Promised since 0.2.0. 0.4.0 deferred it because a
-      red job is worse than a missing one — which is an argument for
+      red job is worse than a missing one -- which is an argument for
       configuring it properly, not for skipping it a fourth time.
 - [x] **Baseline measured 2026-08-30** (below). Still to do: commit it as
       `data-raw/benchmark.R` so it runs release over release. The debt's guess
@@ -3777,14 +3777,14 @@ Carried-forward debts to pay *during* 0.5.0 rather than defer again:
   | `emoji_context()` | 0.14 | 1.24 | 6.50 | ~130 s |
   | `emoji_collocations()` | 0.23 | 1.95 | 10.34 | **~207 s** |
 
-  **Three readings.** (1) **Scaling is linear, not quadratic** — 50x the rows
+  **Three readings.** (1) **Scaling is linear, not quadratic** -- 50x the rows
   costs 30-45x the time across every verb, so there is no algorithmic landmine
   waiting at scale; this is the most important thing the numbers say. (2) The
   §8 debt correctly guessed the hot paths: `emoji_collocations()` and
   `emoji_context()` cost **10-15x** `emoji_summary()`, and they are the only
   two where a million rows means minutes rather than seconds. (3) The
   millions-of-rows target is therefore *met* for the detect/count/score core
-  and *marginal* for the context pair — 3.5 minutes for
+  and *marginal* for the context pair -- 3.5 minutes for
   `emoji_collocations()` on 1M rows is usable but is the obvious optimisation
   target, and it should be the first thing a performance backend (§9's 1.0.0
   row) touches.
@@ -3796,7 +3796,7 @@ Carried-forward debts to pay *during* 0.5.0 rather than defer again:
 - [ ] **Snapshot tests** (`expect_snapshot()`) over printed output, to catch
       silent column and ordering changes cheaply.
 - [ ] **An "emoji networks" vignette** built on `emoji_pairs()` (ggraph /
-      tidygraph in Suggests) — the data source has existed since 0.3.0.
+      tidygraph in Suggests) -- the data source has existed since 0.3.0.
 - [ ] **Re-run `devtools::document()` from a real R install** and commit any
       difference. 0.4.0's help pages were generated by a stand-in converter
       because no R was available in the authoring environment; they pass
@@ -3807,7 +3807,7 @@ Carried-forward debts to pay *during* 0.5.0 rather than defer again:
 ## 9. Release ledger
 
 *Running list of every work package, in the order it entered the roadmap. **For
-release scheduling, §3.1 is authoritative** — this table records what exists and
+release scheduling, §3.1 is authoritative** -- this table records what exists and
 where it came from; §3.1 records what ships when.*
 
 | Work package | State | Where |
@@ -3815,57 +3815,57 @@ where it came from; §3.1 records what ships when.*
 | 0.2.1 correctness patch | ✅ shipped | folded into package 0.3.0 |
 | 0.3.0 affect & translation | ✅ shipped | package 0.3.0 |
 | "0.4.0 phase" relational & structure | ✅ shipped | folded into package 0.3.0 |
-| `features.md` wave 1 — risk, context, time, mismatch, type, LLM, provenance | ✅ shipped | **package 0.4.0** |
-| **Correctness & honesty** (§3.1 — *recommended* 0.5.0) | ⏳ **next** | the six §1 items + §4.4/§4.6 + `emoji_coverage()` |
+| `features.md` wave 1 -- risk, context, time, mismatch, type, LLM, provenance | ✅ shipped | **package 0.4.0** |
+| **Correctness & honesty** (§3.1 -- *recommended* 0.5.0) | ⏳ **next** | the six §1 items + §4.4/§4.6 + `emoji_coverage()` |
 | **Identity, place & access** (§4.1-§4.3) | ⏳ | **recommended 0.6.0**, on repaired primitives (§3.1) |
 | Affect breadth & coverage honesty (wave 3) | ⏳ | blocked on the batched licence review |
-| Semantics — `emoji_embed_corpus()`, similarity, clustering (wave 4) | ⏳ | after the download decision (§7.2) |
+| Semantics -- `emoji_embed_corpus()`, similarity, clustering (wave 4) | ⏳ | after the download decision (§7.2) |
 | Locale / CLDR, pragmatics, drift (wave 5) | ⏳ | after the download decision (§7.2) |
-| **Tally input** — `emoji_from_counts()` / `weights =` (§10.2) | ⏳ **0.6.0** (§3.1) | doubles the input surface; no new domain logic |
-| **Evidentiary surface** — `emoji_identical()` (§10.1) | ⏳ **0.5.0** (§3.1) | S-sized; rides §4.4's properties work |
-| **Coverage honesty** — `emoji_coverage()` (§10.7, §1.7) | ⏳ **promoted to 0.5.0** | emotion lexicon covers 3% of RGI; users see only a quiet `NA` |
+| **Tally input** -- `emoji_from_counts()` / `weights =` (§10.2) | ⏳ **0.6.0** (§3.1) | doubles the input surface; no new domain logic |
+| **Evidentiary surface** -- `emoji_identical()` (§10.1) | ⏳ **0.5.0** (§3.1) | S-sized; rides §4.4's properties work |
+| **Coverage honesty** -- `emoji_coverage()` (§10.7, §1.7) | ⏳ **promoted to 0.5.0** | emotion lexicon covers 3% of RGI; users see only a quiet `NA` |
 | **Column-order alignment** `emoji_score()`/specific scorers (§1.8) | ⏳ **1.0.0** | user-visible; ride the API freeze |
 | **`emoji_position()` grapheme fix** (§1.1) | ⏳ **0.5.0, blocking** | prerequisite for §4.3; ship with §4.5 |
-| **Distinctiveness** — `emoji_distinctive()` (§10.8) | ⏳ | wave 3; serves §10.8, §10.9 and the marketing literature |
-| **Flag validation** — bundle the 259+3 valid set (§1.2) | ⏳ **0.5.0** | §4.2 is wrong without it |
+| **Distinctiveness** -- `emoji_distinctive()` (§10.8) | ⏳ | wave 3; serves §10.8, §10.9 and the marketing literature |
+| **Flag validation** -- bundle the 259+3 valid set (§1.2) | ⏳ **0.5.0** | §4.2 is wrong without it |
 | **Orphan-modifier accounting** (§1.2) | ⏳ **0.5.0** | §4.1's ratio is wrong without it |
 | **`presentation = "any"`** opt-in (§4.7) | ⏳ **0.5.0** (§3.1) | ships with §4.4; 270 lexicon rows currently unreachable |
 | **`register_emoji_types()`** (§10.11) | ⏳ | wave 3; one mechanism serves §2.4, §10.11, §10.12 |
-| **Round-trip regression tests** (§1.3) | ⏳ **0.5.0** | 7 cases; written and verified in §12.1 — ready to commit |
+| **Round-trip regression tests** (§1.3) | ⏳ **0.5.0** | 7 cases; written and verified in §12.1 -- ready to commit |
 | **Commit `test-regression-0.5.0.R`** (§12) | ⏳ **0.5.0** | Part A green now; Part B is the correctness spec |
 | **Reversible-LLM-preprocessing vignette** (§1.3) | ⏳ | highest-value undocumented capability found |
 | **Commit `data-raw/benchmark.R`** (§8) | ⏳ | baseline now measured; needs to be repeatable |
 | **`emoji_sample()`** stratified stimulus draw (§10.13) | ⏳ **0.6.0** (§3.1) | S-sized; serves §10.6, §10.10, §10.13 and our own fixtures |
-| **Locale-matrix CI job** (§1.4) | ⏳ | must vary only `LC_COLLATE` — see the trap in §1.4 |
+| **Locale-matrix CI job** (§1.4) | ⏳ | must vary only `LC_COLLATE` -- see the trap in §1.4 |
 | **Grouped-input guard on 3 aggregators** (§1.5) | ⏳ **0.5.0** | `emoji_categorize()`, `emoji_version_profile()`, `emoji_ngrams()` pool silently |
 | **`time`/`var` error-message leak** (§1.5) | ⏳ **0.5.0** | XS; 4 time verbs name an internal argument |
 | **Document `.emoji_*` as reserved** (§1.6) | ⏳ | one sentence; user columns are silently overwritten |
 | **Rate/denominator audit + stated principle** (§4.8) | ⏳ **0.5.0** | cheap; makes existing output CoDA-safe |
-| **Structural vs count zeros** — `zeros=`, `.emoji_available` (§4.8) | ⏳ **0.6.0** | fixes a silent inferential error in adoption curves |
+| **Structural vs count zeros** -- `zeros=`, `.emoji_available` (§4.8) | ⏳ **0.6.0** | fixes a silent inferential error in adoption curves |
 | **Research-question index + `\concept{}` tags** (§10.14) | ⏳ | fixes the discoverability pattern behind §10.3, §10.10, §10.14 |
 | **Policy reversibility table in `?emoji_sanitize`** (§1.9) | ⏳ **0.5.0** | five options are a loss ladder, not parallel choices |
 | **One real `text_score` recipe, `eval = FALSE`** (§10.15) | ⏳ **0.5.0** | §5's composability promise is currently half-kept |
-| **Emoji scales** — `emoji_scale()` / `as_emoji_ordinal()` (§10.6) | ⏳ | wave 5+, build with §10.2's tally work |
+| **Emoji scales** -- `emoji_scale()` / `as_emoji_ordinal()` (§10.6) | ⏳ | wave 5+, build with §10.2's tally work |
 | Documentation-only debts from §10.3 / §10.4 / §10.5 / §10.8 / §10.9 / §10.10 | ⏳ | help-page + vignette wording; no code. §10.10 is XS and unblocks a whole literature |
-| 1.0.0 — grouped-df guarantees, performance, API freeze | ⏳ | one full cycle with *no* new verbs |
+| 1.0.0 -- grouped-df guarantees, performance, API freeze | ⏳ | one full cycle with *no* new verbs |
 
 **Version numbering.** CRAN's published version is **0.3.0, published
 2026-08-04** (verified against the CRAN package page on 2026-08-30). The repo is
-at 0.4.0, which is complete but **not yet submitted** — so 0.4.0 is the next
+at 0.4.0, which is complete but **not yet submitted** -- so 0.4.0 is the next
 CRAN submission, and 0.5.0 (this document) is the next thing to build. Phase
 names in older documents refer to work packages, not package versions; note in
 particular that the "0.4.0" in commits from 2026-07-01 is a *different*,
-abandoned 0.4.0 — `DESCRIPTION` briefly carried it for 22 minutes before
+abandoned 0.4.0 -- `DESCRIPTION` briefly carried it for 22 minutes before
 `c85be8c` reverted it, and that work shipped as 0.3.0 instead.
 
 **The three audits, and the pattern in them.** Each release has found its own
 crop of defects in the code written just before it, and they rhyme:
 
-- **0.2.1** — key-normalisation asymmetry: one join path was normalised, the
+- **0.2.1** -- key-normalisation asymmetry: one join path was normalised, the
   others were not.
-- **0.3.0** — locale-dependent shortcode choice; a dead `wrap` argument; regex
+- **0.3.0** -- locale-dependent shortcode choice; a dead `wrap` argument; regex
   injection in `emoji_search()`.
-- **0.4.0** — locale-dependent document ordering in `emoji_dfm()`, *the same
+- **0.4.0** -- locale-dependent document ordering in `emoji_dfm()`, *the same
   bug class as 0.3.0's in a different axis*, plus nine arguments that absorbed
   invalid values instead of rejecting them.
 
@@ -3875,12 +3875,12 @@ the one.** That is how 0.4.0 turned three reported gaps into nine fixed ones.
 
 ---
 
-## 10. Audience expansion — who else analyses emoji corpora
+## 10. Audience expansion -- who else analyses emoji corpora
 
 *New in this round. Every verb tidyEmoji ships assumes one input shape: a text
 column of naturalistic prose, usually social media. That shape came from the
 literatures §2.4 surveys. This section asks the other question the roadmap has
-never asked — **who else already works with emoji data, and does our input
+never asked -- **who else already works with emoji data, and does our input
 shape fit them?** **Fifteen** communities, surveyed 2026-08-30/31, roughly in
 descending order of what they would cost us. **Seven** would produce a verb
 (§10.1, §10.2, §10.6, §10.7, §10.8, §10.11, §10.13); **six** need documentation
@@ -3891,28 +3891,28 @@ with their reasons inside §10.3 and §10.4.*
 
 | # | Community | What they need | Verdict |
 |---|---|---|---|
-| 10.1 | Legal / eDiscovery / forensic linguistics | Codepoint-exact identity and an audit trail | **Build** — small, and we are 80% there |
-| 10.2 | Software-engineering research | Reaction *tallies*, not text | **Build** — the one real input-shape gap |
+| 10.1 | Legal / eDiscovery / forensic linguistics | Codepoint-exact identity and an audit trail | **Build** -- small, and we are 80% there |
+| 10.2 | Software-engineering research | Reaction *tallies*, not text | **Build** -- the one real input-shape gap |
 | 10.3 | Mental health / crisis informatics | Features without a diagnosis claim | Document + refuse the lexicon |
 | 10.4 | Content moderation / algospeak | Structural anomalies, not a codebook | Sharpens an existing plan |
 | 10.5 | Cross-cultural / locale research | Interpretation variance by locale | Blocked on §7.2; reframe now |
 | 10.6 | Survey methodology / psychometrics | Emoji-anchored ordinal scales | Real audience, later wave |
 | 10.7 | Corpus annotation methodology | Agreement stats and coverage honesty | Recipe, not a verb |
 | 10.8 | Authorship attribution / stylometry | Per-author distinctiveness, addressee conditioning | Recipe + one small verb |
-| 10.9 | Finance / market sentiment | Domain lexicons and tally input | No verb — but the best argument for the lexicon API |
+| 10.9 | Finance / market sentiment | Domain lexicons and tally input | No verb -- but the best argument for the lexicon API |
 | 10.10 | Education / L2 acquisition | Stimulus sets by semantic field | Already served; a discoverability failure |
 | 10.11 | Political communication | Function-typed emoji use, not valence | Needs `emoji_type()` extension, not a new verb |
-| 10.12 | AAC and assistive communication | Emoji as visual prosody | Watch — literature too thin to build on |
-| 10.13 | Multimodal / VLM evaluation | Emoji as a *stimulus set*, not a feature | Build the sampler — S, and nothing else offers it |
-| 10.14 | Crisis / disaster communication | Face-vs-object split; solidarity over time | Already served — third discoverability case |
+| 10.12 | AAC and assistive communication | Emoji as visual prosody | Watch -- literature too thin to build on |
+| 10.13 | Multimodal / VLM evaluation | Emoji as a *stimulus set*, not a feature | Build the sampler -- S, and nothing else offers it |
+| 10.14 | Crisis / disaster communication | Face-vs-object split; solidarity over time | Already served -- third discoverability case |
 | 10.15 | Workplace / organizational | Text-valence x emoji-valence **interaction** | Makes §5's composability promise urgent |
 
-### 10.1 Legal, eDiscovery and forensic linguistics — **build**
+### 10.1 Legal, eDiscovery and forensic linguistics -- **build**
 
 Emoji litigation is growing and diversifying: contract formation (a thumbs-up
 answering "are you prepared to buy?"), employment disputes, criminal matters and
 IP. "Emoji forensics" is now a named subfield (Danesi 2021), and courts are
-grappling with *variation* — the same nominal emoji rendering differently across
+grappling with *variation* -- the same nominal emoji rendering differently across
 platforms is itself the evidentiary problem (Nature HSSC 2022).
 
 **Why this fits tidyEmoji specifically.** This community's need is the exact
@@ -3932,7 +3932,7 @@ emoji_codepoints(x)        # already implied by emoji_properties(); make the
 
 **And the disclaimer is part of the feature.** We can report what codepoints a
 message contains and which Unicode version defines them. We cannot report what
-the sender saw — that depends on their font and platform, and the `vendor_*`
+the sender saw -- that depends on their font and platform, and the `vendor_*`
 columns are empty (§2.1), so tidyEmoji has *no* vendor-rendering data. Say this
 plainly in the help page; a forensic user who assumes otherwise is the worst
 failure mode this package has.
@@ -3940,7 +3940,7 @@ failure mode this package has.
 **Effort** S. **Risk** low technically, but the help-page wording is the
 deliverable as much as the code.
 
-### 10.2 Software-engineering research — **build (the input-shape gap)**
+### 10.2 Software-engineering research -- **build (the input-shape gap)**
 
 The best-developed emoji literature we do not serve. Lu & Cao mined 66 months of
 GitHub; "More than React" analysed **365,811 pull requests across 1,850
@@ -3950,7 +3950,7 @@ first-time contributors receive fewer reactions; "Emotional Contagion in Code"
 positive sentiment and positive cascades outnumbering negative 23:1.
 
 **The gap is structural, not thematic.** GitHub reaction data is not text. It
-arrives as *(item, glyph, count)* — a tally. Every tidyEmoji verb takes a text
+arrives as *(item, glyph, count)* -- a tally. Every tidyEmoji verb takes a text
 column and derives counts by extraction. A researcher holding
 `(pr_id, "👍", 12)` cannot use `emoji_sentiment()`, `emoji_frequency()` or
 `emoji_dfm()` at all without fabricating synthetic strings, which is what
@@ -3965,23 +3965,23 @@ emoji_from_counts(data, emoji, n, id = NULL)
 ```
 
 This is the single highest-leverage item in this section: it does not add a
-domain feature, it **doubles the input surface of the whole package** — every
+domain feature, it **doubles the input surface of the whole package** -- every
 existing scoring and summarising verb becomes available to tally data, which
 covers GitHub/GitLab reactions, Slack reacjis, poll results and any
 pre-aggregated corpus. It also composes with §10.6.
 
-**Effort** M — the work is in the internals (the long-form contract) plus tests
+**Effort** M -- the work is in the internals (the long-form contract) plus tests
 that a tally and its expanded text give identical scores. **Risk** low.
 **Recommend for 0.6.0** and do not squeeze it into 0.5.0's 13.
 
-### 10.3 Mental health and crisis informatics — document, and refuse the lexicon
+### 10.3 Mental health and crisis informatics -- document, and refuse the lexicon
 
 Real and active: **SuicidEmoji** (SIGIR 2024) derives a 25k-post emoji dataset
 (2,329 suicide-related, 22,722 control) from ~1.3M Reddit posts; depression
 detection work reports distinct emoji profiles (depressed users favouring 😔 /
 😢 / 💔, controls 😂 / 😊 / 😎) and BERT-family models trained on emoji features.
 
-**Position — unchanged and now written down.** Continue to ship **no clinical
+**Position -- unchanged and now written down.** Continue to ship **no clinical
 instrument and no bundled risk-glyph lexicon.** The reasons are that the mapping
 is population- and platform-specific, that a bundled list invites use as a
 screening tool, and that a false negative here is a different category of harm
@@ -3991,21 +3991,21 @@ What we *should* do costs nothing: the `register_emoji_lexicon()` mechanism
 already lets a research group load its own validated lexicon, and §4.6's
 keyword surface plus `emoji_frequency(group_by =)` already produce the
 group-contrast profile these papers compute by hand. **Add a vignette section
-naming this use case, the mechanism, and the refusal** — researchers currently
+naming this use case, the mechanism, and the refusal** -- researchers currently
 cannot tell from the docs that the package supports them.
 
-### 10.4 Content moderation and algospeak — sharpens the existing plan
+### 10.4 Content moderation and algospeak -- sharpens the existing plan
 
 Emoji are a documented content-moderation evasion channel. Meta's Oversight
 Board has taken cases specifically on emoji-encoded racial targeting; CyberWell
 documents antisemitic emoji codes (🧃, 🐷, 🐀, 🐒 with code words) whose meaning
-is **language-specific** — the 🐒 pattern appears in Arabic-language posts via a
+is **language-specific** -- the 🐒 pattern appears in Arabic-language posts via a
 different route than in English. "The Hidden Language of Harm" (2025) surveys
 the moderation problem directly.
 
 **This confirms the design rule the roadmap already chose** for
-`emoji_obfuscation_scan()`: report *structural* anomalies — unusual runs,
-substitution patterns, glyph-for-word positions — and **never ship the
+`emoji_obfuscation_scan()`: report *structural* anomalies -- unusual runs,
+substitution patterns, glyph-for-word positions -- and **never ship the
 codebook.** A bundled dictionary of hate-emoji patterns would be stale in
 months, wrong across languages, and a ready-made evasion checklist. The
 literature's own recommendation (regionally appropriate, continuously updated
@@ -4013,7 +4013,7 @@ training data) is an argument for *not* freezing a list into a CRAN package.
 
 No change to scope; add the citation and the rule to the eventual help page.
 
-### 10.5 Cross-cultural and locale research — reframe now, build after §7.2
+### 10.5 Cross-cultural and locale research -- reframe now, build after §7.2
 
 Interpretation varies by culture in ways that are documented and large: a
 Malaysian study across Malay, Chinese and Indian participants found shared
@@ -4028,12 +4028,12 @@ tidyEmoji reports *usage*, and its bundled lexicons are English-annotated. Every
 affect verb therefore carries an unstated locale assumption. State it: the
 sentiment and emotion lexicons were annotated by particular populations, and
 scores are not culture-neutral. This is the same discipline §4.1 applies to skin
-tone, extended to affect — and it costs a paragraph per help page.
+tone, extended to affect -- and it costs a paragraph per help page.
 
 The verb version (`emoji_interpretation_variance()`, or locale-aware names) is
 blocked on the multilingual CLDR fetch (§7.2) and belongs with wave 5.
 
-### 10.6 Survey methodology and psychometrics — a genuinely new audience
+### 10.6 Survey methodology and psychometrics -- a genuinely new audience
 
 Emoji are used as **scale anchors** in survey instruments, and the psychometric
 literature has tested whether that works. Phan et al. (2019) anchored vocational
@@ -4042,7 +4042,7 @@ verbally-labelled Likert categories. Findings are mixed and that is the useful
 part: emoji-anchored scales sometimes match verbal ones and sometimes are *less*
 reliable, so instrument designers need to check rather than assume.
 
-This community holds ordinal data keyed by glyph — structurally the same tally
+This community holds ordinal data keyed by glyph -- structurally the same tally
 shape as §10.2, which is why the two should be built together.
 
 ```r
@@ -4053,9 +4053,9 @@ as_emoji_ordinal(x, scale)      # glyph -> ordered factor, with unmapped
 
 Small, and it opens a discipline that currently has no R tooling for this at
 all. **Wave 5 or later**, bundled with §10.2's tally work. Ship no validated
-instrument — the same rule as §10.3.
+instrument -- the same rule as §10.3.
 
-### 10.7 Corpus annotation methodology — a recipe, and a debt we already owe
+### 10.7 Corpus annotation methodology -- a recipe, and a debt we already owe
 
 When researchers hand-annotate emoji meaning they need inter-annotator
 agreement, and the measure has to match the task: Krippendorff's alpha for
@@ -4063,7 +4063,7 @@ arbitrary rater counts and mixed measurement levels, Fleiss' kappa for fixed
 panels, with recent guidance (2026) stressing that the metric must match the
 rater design and that uncertainty should be reported.
 
-**Not our verb** — `{irr}` and `{DescTools}` do this well and generally.
+**Not our verb** -- `{irr}` and `{DescTools}` do this well and generally.
 
 **But there is a tidyEmoji-shaped piece of it,** and it is already on the ledger
 as "wave 3 coverage honesty". Our bundled lexicons carry annotation counts;
@@ -4074,18 +4074,18 @@ occurrences could any bundled lexicon score, and with what annotation depth?"
 summary would let a paper report its own measurement limits. That is one verb
 (`emoji_coverage()`) and it belongs with wave 3.
 
-### 10.8 Authorship attribution and forensic stylometry — recipe plus one verb
+### 10.8 Authorship attribution and forensic stylometry -- recipe plus one verb
 
 Adjacent to §10.1 but a distinct task: not "what does this glyph mean?" but
 "who wrote this?". Researchers have attempted attribution of chat messages
 **from emoji and emoticon use alone**, and find them useful, individuating
-markers of authorship — emoji are part of an idiolect (Frontiers in
+markers of authorship -- emoji are part of an idiolect (Frontiers in
 Communication 2022). Forensic stylometry reviews now list emoji among
 idiosyncratic features, and microblog attribution work treats them as first-class
 signal precisely because tweets are too short for syntactic features to work.
 
 **The methodological caveat is the interesting part, and it is a trap.** The same
-work finds emoji use is subject to **accommodation** — authors adjust their emoji
+work finds emoji use is subject to **accommodation** -- authors adjust their emoji
 choices to their addressee. So a per-author emoji profile pooled across
 conversations mixes the author's style with their audience's influence, and
 attribution built on the pooled profile will be optimistic. Any credible
@@ -4096,15 +4096,15 @@ analysis conditions on addressee or conversation.
 
 **What is missing is distinctiveness.** Raw frequency identifies the corpus's
 common emoji, not the author's characteristic ones. The measure wanted is
-TF-IDF-shaped — emoji over-represented in one author relative to the corpus
-baseline — and `emoji_dfm()` already returns the matrix it needs:
+TF-IDF-shaped -- emoji over-represented in one author relative to the corpus
+baseline -- and `emoji_dfm()` already returns the matrix it needs:
 
 ```r
 emoji_distinctive(data, text, group, measure = c("tfidf", "log_odds", "keyness"))
 #> per group: which emoji are characteristic, not merely frequent
 ```
 
-This generalises well beyond authorship — the same verb answers "which emoji
+This generalises well beyond authorship -- the same verb answers "which emoji
 distinguish these subreddits / these brands / these age cohorts", which is a
 question §2.4's marketing literature and §10.9 both ask. **Effort** S-M (it is
 arithmetic over an existing matrix). **Risk** low. Schedule with wave 3.
@@ -4113,7 +4113,7 @@ arithmetic over an existing matrix). **Risk** low. Schedule with wave 3.
 computing author profiles needs to know that pooling across addressees biases
 the result, and the package is where they will look.
 
-### 10.9 Finance and market sentiment — the case for the lexicon API
+### 10.9 Finance and market sentiment -- the case for the lexicon API
 
 Emoji are a tracked signal in retail-investor research. Work on emoji and stock
 returns finds emoji positively related to returns when heavily discussed on
@@ -4124,30 +4124,30 @@ and density specifically.
 **This is the sharpest illustration of a limit the package should state
 loudly.** In r/wallstreetbets, 🚀 is a *directional bet* ("to the moon"), 🐻 is a
 position rather than an animal, and 💎🙌 means holding through a drawdown. The
-bundled Emoji Sentiment Ranking scores none of these that way — it was annotated
+bundled Emoji Sentiment Ranking scores none of these that way -- it was annotated
 on general social media, so it will score 🚀 as mildly positive and miss the
 entire semantic content. A finance researcher who calls `emoji_sentiment()` on
 board data gets a number that looks fine and means nothing.
 
-**The right response is not a finance lexicon** — it would be a maintenance and
+**The right response is not a finance lexicon** -- it would be a maintenance and
 licence tail, and the vocabulary shifts faster than CRAN releases. It is:
 
 1. **`register_emoji_lexicon()` is the answer, and should be advertised as such.**
    This community is the clearest use case the mechanism has, and the docs
    currently do not name a single one.
 2. **Say that bundled lexicons are domain-bound** on every affect verb's help
-   page — the same discipline §10.5 asks for regarding locale, applied to
+   page -- the same discipline §10.5 asks for regarding locale, applied to
    register. `.emoji_n_scored` already exposes how much of a corpus a lexicon
    could touch; §10.7's `emoji_coverage()` would make it a headline number.
 3. **They also need §10.2's tally input.** Board-level emoji counts arrive
    pre-aggregated, which is another independent constituency asking for
-   `emoji_from_counts()` — that verb is requested by **four** sections
+   `emoji_from_counts()` -- that verb is requested by **four** sections
    (§10.2, §10.6, §10.9, §10.15), tallied in §2.6.
 
 **No new verb.** A vignette section, two help-page paragraphs, and one more
 vote for the tally work.
 
-### 10.10 Education and L2 acquisition — already served, badly advertised
+### 10.10 Education and L2 acquisition -- already served, badly advertised
 
 An active 2024-2026 literature. Experimental work finds a processing advantage
 for emoji in **L2 vocabulary recognition** under semantic congruency (Frontiers
@@ -4155,7 +4155,7 @@ in Psychology 2025); Cambridge has a volume on emoji literacy as a teaching
 tool; EFL studies test emoji feedback on learner outcomes.
 
 **tidyEmoji already ships what this community needs, under names that hide it.**
-Their core measure is emoji-word *semantic congruency* — and
+Their core measure is emoji-word *semantic congruency* -- and
 `emoji_congruence()` shipped in 0.4.0. It was designed for irony and
 incongruity detection, and its help page frames it that way, so a researcher
 designing a vocabulary-matching experiment will never find it. Similarly, §4.6's
@@ -4163,7 +4163,7 @@ designing a vocabulary-matching experiment will never find it. Similarly, §4.6'
 field ("give me all emoji whose keywords include *animal*"), which is how these
 studies build their materials.
 
-**So the gap is discoverability, not capability** — which makes it the cheapest
+**So the gap is discoverability, not capability** -- which makes it the cheapest
 item in this section:
 
 - add an "experimental stimulus design" section to the vignette,
@@ -4175,18 +4175,18 @@ item in this section:
 verbs are named for one literature is invisible to the next one, and this is the
 second time this round that has turned out to be the actual problem (see §10.3).
 
-### 10.11 Political communication — typed function, not valence
+### 10.11 Political communication -- typed function, not valence
 
 Political actors use emoji to make institutional text informal and accessible,
 and the research question is not "is this positive?" but "what is the emoji
-*doing*?" — party branding, mobilisation, credentialing, attack. There is an
+*doing*?" -- party branding, mobilisation, credentialing, attack. There is an
 explicit *typology* effort in the literature (IJOC, "Toward a Typology of
 Political Emoji Use"), and adjacent work on emoji in the 2019 European
 Parliament election campaigns. The broader 2024-25 polarisation literature is
 active but treats emoji as one feature among many rather than as its object.
 
 **Why this needs no new verb, but does need an extension.** tidyEmoji already
-ships `emoji_type()` and `as_emoji_type()` — a functional-type classifier — and
+ships `emoji_type()` and `as_emoji_type()` -- a functional-type classifier -- and
 0.4.0's `emoji_faceness()`. A political-communication typology is exactly a
 *registered type scheme* over the same mechanism. So the right move mirrors
 §10.9's conclusion about lexicons:
@@ -4204,19 +4204,19 @@ register_emoji_types(name, mapping)   # mirror of register_emoji_lexicon()
 emoji_types()                         # mirror of emoji_lexicons()
 ```
 
-**Effort** S — it is the lexicon API's shape applied to a second axis, and the
+**Effort** S -- it is the lexicon API's shape applied to a second axis, and the
 generic scorer `emoji_score()` already demonstrates the pattern. **Value**
 compounding: one mechanism serves at least four literatures. Schedule with
 wave 3 alongside §10.8's `emoji_distinctive()`, which the same communities want.
 
-### 10.12 AAC and assistive communication — watch, do not build
+### 10.12 AAC and assistive communication -- watch, do not build
 
 The thinnest of the twelve, and included because the framing is worth borrowing.
 Augmentative and alternative communication serves people with autism, cerebral
 palsy, intellectual disability, ALS, traumatic brain injury and aphasia, using
 symbol systems that are highly individualised. Practitioner work (Global
 Symbols) is beginning to combine AAC symbol sets with emoji, on the argument
-that **emoji act as visual prosody** — they do not carry the message's content,
+that **emoji act as visual prosody** -- they do not carry the message's content,
 they modify how it should be understood.
 
 **That phrase is the most useful thing in this section.** "Visual prosody" is a
@@ -4232,14 +4232,14 @@ population is one where a wrong tool does real harm. Revisit if peer-reviewed
 corpus work appears. **Effort** none. **Action** one borrowed phrase, one
 watch-list entry.
 
-### 10.13 Multimodal and retrieval — emoji as a stimulus set
+### 10.13 Multimodal and retrieval -- emoji as a stimulus set
 
 §2.4 tracks what *text* LLMs do with emoji (EMODIS, the silent-failure work).
 Vision-language models are a separate and newer question, because an emoji is
 both a code point and a picture, so a VLM can be asked to reason about it in
 either channel. **EmojiGrid** evaluates 25 leading open and proprietary VLMs on
 emoji understanding and reports a large gap between foundational perceptual
-tasks and higher-level cognition — models handle "what is this glyph" and fail
+tasks and higher-level cognition -- models handle "what is this glyph" and fail
 on abstraction, compositional logic and emotional or semantic reasoning.
 Separately, retrieval work uses emoji as visual cues in query autocompletion for
 video search (ACM 2025), which is emoji as an *interface* element rather than
@@ -4247,7 +4247,7 @@ corpus content.
 
 **The interesting inversion: this community does not want to analyse a corpus.
 It wants to construct one.** Every other section in §10 hands tidyEmoji a text
-column. VLM evaluation needs the opposite service — a *principled stimulus set*:
+column. VLM evaluation needs the opposite service -- a *principled stimulus set*:
 give me 200 emoji stratified by Unicode version, group, modifiability and
 annotation depth, so my benchmark is not accidentally 80% smileys. Right now
 researchers hand-pick these or scrape Emojipedia, and both are unreproducible.
@@ -4261,30 +4261,30 @@ emoji_sample(n, strata = c("group", "version", "modifiable", "qualified"),
 
 **Everything this needs was verified present in §2.1**: `group` / `subgroup`,
 `version` (0.6 through 16.0), `qualified`, and the 454 modifiable bases. It is a
-stratified sample over a table we already join to — arguably the smallest verb
+stratified sample over a table we already join to -- arguably the smallest verb
 in this entire document relative to what it unlocks.
 
 **Why it is worth doing despite being outside the roadmap's usual remit:**
 reproducible stimulus construction is *also* what §10.6's psychometricians need
 (scale anchors sampled fairly), what §10.10's L2 researchers need (vocabulary
 items by semantic field, via §4.6's `emoji_find()`), and what our own §7.4
-fixture-table problem needs — the "budget as much time for the fixture table as
+fixture-table problem needs -- the "budget as much time for the fixture table as
 for the code" risk is partly a sampling problem. **Four constituencies including
 ourselves.**
 
 **Deps** none. **Effort** S. **Risk** low. **Recommend 0.6.0** with §10.2's
-tally input — together they make the package usable by people who are not
+tally input -- together they make the package usable by people who are not
 starting from a text column at all, which is the single biggest widening
 available.
 
-### 10.14 Crisis and disaster communication — served, and nobody knows
+### 10.14 Crisis and disaster communication -- served, and nobody knows
 
 An established literature with a directly actionable finding. Work on emoji and
-solidarity analysed three crisis events — Hurricane Irma (2017), the November
-2015 Paris attacks and the Charlottesville protests — treating emoji as
+solidarity analysed three crisis events -- Hurricane Irma (2017), the November
+2015 Paris attacks and the Charlottesville protests -- treating emoji as
 sociolinguistic markers of solidarity as events unfold. Separately, a study of
 2018 California Camp Fire tweets, framed by uncertainty reduction theory, found
-that information uncertainty depresses dissemination — **and that the effect was
+that information uncertainty depresses dissemination -- **and that the effect was
 amplified when the emoji depicted items and objects rather than facial
 expressions.**
 
@@ -4294,14 +4294,14 @@ and tidyEmoji already computes it, along with `emoji_type()` for the finer
 functional split. The solidarity-over-time question is `emoji_trend()` plus
 `emoji_frequency(group_by =)`. Nothing needs building.
 
-**This is the third independent case of the same failure** — §10.3
-(mental health), §10.10 (education), and now this — where the capability exists
+**This is the third independent case of the same failure** -- §10.3
+(mental health), §10.10 (education), and now this -- where the capability exists
 and the audience cannot find it because the verb is named and documented for the
 literature that motivated it. Three instances make it a pattern worth fixing
 structurally rather than one help page at a time:
 
 - **Add a "which verb answers my question?" table to the vignette**, indexed by
-  *research question* rather than by verb name — "how prominent are emoji in
+  *research question* rather than by verb name -- "how prominent are emoji in
   this message?", "do these two groups use different emoji?", "are faces or
   objects being used?", "what will a screen reader say?".
 - **Use `\concept{}` tags in roxygen** so `help.search()` finds verbs by
@@ -4311,11 +4311,11 @@ structurally rather than one help page at a time:
 any verb in §4. A capability nobody can find is indistinguishable from one that
 does not exist.
 
-### 10.15 Workplace and organizational communication — the interaction, and a half-kept promise
+### 10.15 Workplace and organizational communication -- the interaction, and a half-kept promise
 
 A large and fast-growing practical literature. Experimental work on emoji in
 workplace instant messages finds that **both sentence valence and emoji valence
-affect perceived sender competence and appropriateness — and that they
+affect perceived sender competence and appropriateness -- and that they
 interact**: positive emoji raise competence judgements when paired with positive
 or neutral sentences, but have no such effect on negative ones. Adjacent work
 covers emoji and workplace technology adoption, and industry reporting puts
@@ -4324,22 +4324,22 @@ of millions of daily users.
 
 **The measure this audience needs is an interaction term, not a main effect.**
 That is precisely `emoji_congruence()` and `emoji_incongruity()`, shipped in
-0.4.0. But both require the user to supply `text_score` — the text's own
-sentiment — because §5 defers text scoring to `{tidytext}` / `{sentimentr}` /
+0.4.0. But both require the user to supply `text_score` -- the text's own
+sentiment -- because §5 defers text scoring to `{tidytext}` / `{sentimentr}` /
 `{vader}` *permanently*, and rightly so.
 
 **So this audience turns a promise into a dependency.** §5 says "stay
 composable; document the recipe". The recipe is currently **half-documented**:
-`vignettes/introduction.Rmd` does demonstrate the interface, but with — in its
-own words — "a deliberately crude word-list scorer standing in for `tidytext` +
+`vignettes/introduction.Rmd` does demonstrate the interface, but with -- in its
+own words -- "a deliberately crude word-list scorer standing in for `tidytext` +
 AFINN, `sentimentr` or a transformer". That is fine for teaching the *shape* of
 the argument and useless as something to cite in a paper. A researcher measuring
 the competence interaction cannot publish a hand-rolled seven-word list.
 
 **The fix, and why it is cheap:**
 
-- **Add one worked recipe with a real package** — `tidytext` + AFINN is the
-  obvious choice, and `sentimentr` for valence shifters — shown as a complete
+- **Add one worked recipe with a real package** -- `tidytext` + AFINN is the
+  obvious choice, and `sentimentr` for valence shifters -- shown as a complete
   runnable pipeline into `emoji_incongruity()`.
 - **Use `eval = FALSE`** so no new vignette-build dependency lands in
   `Suggests`. The recipe's value is in being copyable and correct, not in being
@@ -4350,7 +4350,7 @@ the competence interaction cannot publish a hand-rolled seven-word list.
 - **§10.2's tally input.** Slack and Teams reaction data are
   `(message, glyph, count)` tallies, so this is the fourth constituency for
   `emoji_from_counts()`.
-- **§10.9's domain-boundedness.** A workplace 👍 is not a consumer-review 👍 —
+- **§10.9's domain-boundedness.** A workplace 👍 is not a consumer-review 👍 --
   the acknowledgement/dismissal reading is register-specific, and the bundled
   general-social-media lexicon will not carry it. `register_emoji_lexicon()`
   again.
@@ -4363,7 +4363,7 @@ stated architectural principle into something a user can actually execute.
 ## 11. References
 
 New or updated in this round. The fuller bibliography lives in the
-`features.md` catalogue, which is **not in the working tree** — it is preserved
+`features.md` catalogue, which is **not in the working tree** -- it is preserved
 verbatim as GitHub **issue #5** (`gh issue view 5 --json body --jq '.body'`).
 References marked (verify) rest on a search result rather than a fetched
 document.
@@ -4383,7 +4383,7 @@ document.
   <https://doi.org/10.1145/3774904.3792508>
 - Digital Colourism? Understanding Emoji Skin Tone Preferences Among
   Indian-Origin Users. *BCS HCI 2025*.
-- Robertson et al. (2018 ICWSM; 2020 ACM TSC 3(2)) — the 42% modified ÷
+- Robertson et al. (2018 ICWSM; 2020 ACM TSC 3(2)) -- the 42% modified ÷
   modifiable result. <https://doi.org/10.1145/3377479>
 - Black or White but Never Neutral. *CSCW 2021*.
   <https://doi.org/10.1145/3476091>
@@ -4392,9 +4392,9 @@ document.
 **LLM era (0.4.0 shipped the plumbing; these strengthen it)**
 
 - EMODIS: A Benchmark for Context-Dependent Emoji Disambiguation in LLMs.
-  *AAAI 2026*. <https://arxiv.org/abs/2511.07193> — human 88.5% vs GPT-4 58.8%.
+  *AAAI 2026*. <https://arxiv.org/abs/2511.07193> -- human 88.5% vs GPT-4 58.8%.
 - Small Symbols, Big Risks: Emoticon Semantic Confusion in LLMs (2026).
-  <https://arxiv.org/abs/2601.07885> — >38% confusion, >90% silent failures.
+  <https://arxiv.org/abs/2601.07885> -- >38% confusion, >90% silent failures.
 - When Smiley Turns Hostile: How Emojis Trigger LLMs' Toxicity (2025).
   <https://arxiv.org/abs/2509.11141>
 
@@ -4408,7 +4408,7 @@ document.
 - Chakraborty et al. (2025). *Journal of Consumer Behaviour*.
   <https://doi.org/10.1002/cb.70017>
 
-**Audience expansion (§10) — new this round**
+**Audience expansion (§10) -- new this round**
 
 *Legal and forensic (§10.1)*
 
@@ -4424,9 +4424,9 @@ document.
   Study. <https://arxiv.org/abs/1812.04863>
 - More than React: Investigating the Role of Emoji Reaction in GitHub Pull
   Requests. *Empirical Software Engineering* (2023).
-  <https://doi.org/10.1007/s10664-023-10336-5> — 365,811 PRs, 1,850 repos.
+  <https://doi.org/10.1007/s10664-023-10336-5> -- 365,811 PRs, 1,850 repos.
 - Emotional Contagion in Code: How GitHub Emoji Reactions Shape Developer
-  Collaboration (2025). <https://arxiv.org/abs/2511.02515> — 106,743 reactions.
+  Collaboration (2025). <https://arxiv.org/abs/2511.02515> -- 106,743 reactions.
 
 *Mental health and crisis informatics (§10.3)*
 
@@ -4464,10 +4464,10 @@ document.
 
 *Authorship attribution and stylometry (§10.8)*
 
-- "Depends on Who I'm Writing To" — The Influence of Addressees and Personality
+- "Depends on Who I'm Writing To" -- The Influence of Addressees and Personality
   Traits on the Use of Emoji and Emoticons, and Related Implications for
   Forensic Authorship Analysis. *Frontiers in Communication* (2022).
-  <https://doi.org/10.3389/fcomm.2022.840646> — emoji are individuating, but
+  <https://doi.org/10.3389/fcomm.2022.840646> -- emoji are individuating, but
   subject to addressee accommodation.
 - Forensic Authorship Analysis of Microblogging Texts.
   <https://arxiv.org/abs/2003.11545>
@@ -4494,7 +4494,7 @@ document.
   Communication*. <https://ijoc.org/index.php/ijoc/article/download/20268/4259>
 - Reranking partisan animosity in algorithmic social media feeds alters
   affective polarization. *Science* (2025).
-  <https://doi.org/10.1126/science.adu5584> — context for the polarisation
+  <https://doi.org/10.1126/science.adu5584> -- context for the polarisation
   literature; emoji are a feature, not its object.
 
 *AAC and assistive communication (§10.12)*
@@ -4508,7 +4508,7 @@ document.
 
 - EmojiGrid / Beyond Counting: Evaluating Abstract and Emotional Reasoning
   [in vision-language models]. *AAAI*.
-  <https://ojs.aaai.org/index.php/AAAI/article/download/38389/42351> — 25 VLMs;
+  <https://ojs.aaai.org/index.php/AAAI/article/download/38389/42351> -- 25 VLMs;
   perceptual tasks pass, emotional and semantic reasoning fails.
 - Emojis in Autocompletion: Enhancing Video Search with Visual Cues. *ACM*
   (2025). <https://dl.acm.org/doi/pdf/10.1145/3736733.3736745>
@@ -4517,11 +4517,11 @@ document.
 
 - I Stand With You: Using Emojis to Study Solidarity in Crisis Events.
   <https://arxiv.org/abs/1907.08326> (also Springer, 2021,
-  doi:10.1007/978-3-030-80624-8_17) — Hurricane Irma, Paris 2015,
+  doi:10.1007/978-3-030-80624-8_17) -- Hurricane Irma, Paris 2015,
   Charlottesville.
 - Examining the Impact of Emojis on Disaster Communication: A Perspective from
   the Uncertainty Reduction Theory. *THCI* 15(4).
-  <https://aisel.aisnet.org/thci/vol15/iss4/1/> — Camp Fire 2018; the
+  <https://aisel.aisnet.org/thci/vol15/iss4/1/> -- Camp Fire 2018; the
   object-vs-face moderator that `emoji_faceness()` computes.
 
 *Zero-inflation and compositional structure (§4.8)*
@@ -4529,7 +4529,7 @@ document.
 - Compositional Data Analysis. *Annual Review of Statistics and Its
   Application*. <https://doi.org/10.1146/annurev-statistics-042720-124436>
 - A critical comparison of handling zeros in high-dimensional compositional
-  count data. <https://arxiv.org/html/2605.22181> — structural vs count zeros;
+  count data. <https://arxiv.org/html/2605.22181> -- structural vs count zeros;
   log-ratio methods are undefined at zero.
 - Principal component analysis for zero-inflated compositional data.
   *Computational Statistics & Data Analysis* 198 (2024).
@@ -4542,7 +4542,7 @@ document.
 
 - Emojis at Work: The Effects of Emoji Use on Perceptions of Competence and
   Appropriateness. *Collabra: Psychology*.
-  <https://doi.org/10.1525/collabra.147309> — the valence x valence interaction.
+  <https://doi.org/10.1525/collabra.147309> -- the valence x valence interaction.
 - Embracing emojis: Bridging the gap in workplace technology adoption and
   elevating communication effectiveness. *SAGE* (2025).
   <https://doi.org/10.1177/20438869231220676>
@@ -4552,24 +4552,24 @@ document.
 - Unicode Emoji 17.0, released 2025-09-09; 163 additions, RGI total 3,953.
   <https://www.unicode.org/emoji/charts-17.0/emoji-released.html>
 - UTS #51 and `emoji-test.txt`. <https://www.unicode.org/reports/tr51/>
-- **UAX #9, Unicode Bidirectional Algorithm** — the basis for the logical-vs-
+- **UAX #9, Unicode Bidirectional Algorithm** -- the basis for the logical-vs-
   visual position limitation in §1.1.
   <https://www.unicode.org/reports/tr9/>
-- CLDR emoji annotations — including the name-uniqueness rule and the
+- CLDR emoji annotations -- including the name-uniqueness rule and the
   translator guidance on languages lacking an English distinction (§1.3).
   <https://cldr.unicode.org/translation/characters/short-names-and-keywords>
 - Regional indicator symbols and ISO 3166-1.
   <https://en.wikipedia.org/wiki/Regional_indicator_symbol>
 - `{emoji}` (CRAN, updated 2026-05-08, tracks Unicode 16.0).
   <https://cran.r-project.org/package=emoji>
-- `{ragg}` — native colour emoji rendering in R graphics.
-- `{text2emotion}` — emotion analysis and emoji mapping for text.
+- `{ragg}` -- native colour emoji rendering in R graphics.
+- `{text2emotion}` -- emotion analysis and emoji mapping for text.
   <https://cran.r-project.org/package=text2emotion>
 - EmojiSentR (JBDS). <https://jbds.isdsa.org/public/journals/1/html/v6n1/tong/>
 
 ---
 
-## 12. Appendix — the audit's regression fixtures, as code
+## 12. Appendix -- the audit's regression fixtures, as code
 
 *Eleven rounds of auditing (§1.1-§1.9) each ended with "add this as a fixture".
 This appendix collects all of them into one runnable file, following the repo's
@@ -4579,17 +4579,17 @@ passes today and locks in verified-correct behaviour; Part B fails today and is
 the TDD spec for §3.1's 0.5.0 correctness work.***
 
 > **Both halves were executed, not just written (2026-08-31).** Part A runs
-> green against the current tree — **12 tests, 53 assertions, 0 failures**.
+> green against the current tree -- **12 tests, 53 assertions, 0 failures**.
 > Part B's §1.1 fixture fails exactly as documented:
 > `actual: 1.00 0.75 0.33` against `expected: 1.00 1.00 1.00`. The remaining
 > Part B tests reference verbs that do not exist yet (`emoji_country()`,
 > `emoji_skin_tone()`, `emoji_coverage()`, the `presentation =` argument), so
-> they error rather than fail until those land — which is the normal state of a
+> they error rather than fail until those land -- which is the normal state of a
 > TDD spec, not a defect in the fixtures.
 
 Save as `tests/testthat/test-regression-0.5.0.R`.
 
-### 12.1 Part A — behaviour verified correct, now defended
+### 12.1 Part A -- behaviour verified correct, now defended
 
 ```r
 # Fixtures for behaviour the 2026-08-30/31 audit confirmed correct.
@@ -4709,7 +4709,7 @@ test_that("zero-row and all-NA input are handled, not errored (roadmap S1.5)", {
 })
 ```
 
-### 12.2 Part B — the defects, written as the target behaviour
+### 12.2 Part B -- the defects, written as the target behaviour
 
 *These **fail on the current tree**. They are the acceptance criteria for
 §3.1's 0.5.0 correctness items, in the same order as §1.*
@@ -4788,5 +4788,5 @@ rather than fail loudly:
 2. **Locale tests must vary only `LC_COLLATE` (§1.4).** Setting `LC_ALL=C`
    mangles UTF-8 *source files*, so the fixture changes before package code
    runs and every verb appears broken. Build fixture glyphs from `\U` escapes
-   rather than literal characters — as this appendix does throughout, which is
+   rather than literal characters -- as this appendix does throughout, which is
    also why it is safe to run under any locale.

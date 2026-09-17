@@ -60,6 +60,52 @@ test_that("emoji_sanitize strip collapses the gap it leaves behind", {
                               policy = "strip")$text, "")
 })
 
+test_that("emoji_sanitize strip leaves no emoji, even a recombined one", {
+  # Removing a span makes its neighbours adjacent, and on malformed input the
+  # two can spell an emoji the text never held. One pass used to return it.
+  snow <- "\u2603"                                  # bare, so undetected
+  cases <- c(
+    paste0(snow, grin, "\uFE0F"),                   # -> U+2603 U+FE0F
+    paste0("#", grin, "\uFE0F\u20E3"),              # -> keycap #
+    paste0("\U0001F1FA", grin, "\U0001F1F8"),       # -> flag: US
+    paste0("a ", grin, " b")                        # the ordinary case
+  )
+  out <- emoji_sanitize(data.frame(text = cases), text, policy = "strip")$text
+  expect_false(any(tidyEmoji:::emoji_has(out)))
+  expect_identical(out[4L], "a b")
+  # and it is a fixed point: stripping the result changes nothing
+  expect_identical(
+    emoji_sanitize(data.frame(text = out), text, policy = "strip")$text, out
+  )
+  # the other emoji-removing policy never had the problem, because what it
+  # substitutes keeps the neighbours apart
+  ph <- emoji_sanitize(data.frame(text = cases), text,
+                       policy = "placeholder")$text
+  expect_false(any(tidyEmoji:::emoji_has(ph)))
+  # unless the token is empty, which is a deletion wearing a substitution's
+  # name -- so it takes the same repeat pass, and none of the tidying
+  empty <- emoji_sanitize(data.frame(text = cases), text,
+                          policy = "placeholder", placeholder = "")$text
+  expect_false(any(tidyEmoji:::emoji_has(empty)))
+  expect_identical(empty[4L], "a  b")
+})
+
+test_that("emoji_sanitize name/shortcode leave an unnameable glyph in place", {
+  # ?emoji_sanitize says so, and ?emoji_to_text is where the rule comes from:
+  # a ZWJ sequence the catalogue does not know is detected but cannot be
+  # named, so these two policies can return a column that still holds emoji.
+  zwj <- paste0(grin, "\u200d\U0001F525")       # detected, not catalogued
+  expect_true(tidyEmoji:::emoji_has(zwj))
+  expect_true(is.na(as_emoji_name(zwj)))
+  df <- data.frame(text = zwj)
+  expect_identical(emoji_sanitize(df, text, policy = "name")$text, zwj)
+  expect_identical(emoji_sanitize(df, text, policy = "shortcode")$text, zwj)
+  # while the two that do not need a name still clear it
+  expect_identical(emoji_sanitize(df, text, policy = "strip")$text, "")
+  expect_identical(emoji_sanitize(df, text, policy = "placeholder")$text,
+                   "[emoji]")
+})
+
 test_that("emoji_sanitize keeps the column name and validates its arguments", {
   df <- data.frame(id = 1:2, body = c(paste0("hi ", grin), "plain"))
   out <- emoji_sanitize(df, body, policy = "strip")

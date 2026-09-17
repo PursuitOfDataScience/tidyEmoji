@@ -24,8 +24,8 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-Emoji are everywhere in modern text — social-media posts, product reviews, chat
-and support logs, survey free-text — and they carry information that plain words
+Emoji are everywhere in modern text (social-media posts, product reviews, chat
+and support logs, survey free-text), and they carry information that plain words
 do not. Yet summarising emoji from a corpus is surprisingly awkward. Unicode does
 not interact cleanly with regular expressions, not every code point is an emoji,
 and a single visible emoji is often built from several code points joined
@@ -92,7 +92,7 @@ if (has_plot_pkgs) library(ggplot2)
 
 Throughout this vignette we use a sample of text collected in Atlanta,
 Georgia. The data happens to come from a social-media corpus, but nothing below
-is specific to any platform — any data frame with a text column will do.
+is specific to any platform: any data frame with a text column will do.
 
 ```{r}
 # read.csv() rather than readr::read_csv(): readr is a Suggests package, and
@@ -195,7 +195,7 @@ long, thin tail of more emoji-heavy entries.
 
 ### `emoji_tokens()`
 
-`emoji_tokens()` produces a "one row per emoji occurrence" table — the emoji
+`emoji_tokens()` produces a "one row per emoji occurrence" table, the emoji
 analogue of a tidy-text token table. It keeps the original columns and adds the
 glyph (`.emoji`) together with its name (`.emoji_name`), category
 (`.emoji_category`) and sentiment score (`.emoji_sentiment`). This single call
@@ -211,7 +211,7 @@ ata_tweets %>%
 Modern emoji are frequently composed of several code points: a base emoji plus a
 skin-tone modifier, or several emoji joined by zero-width joiners. tidyEmoji
 detects emoji at the level of grapheme clusters, so these stay intact. The
-example below contains exactly two emoji — one family and one thumbs-up — and
+example below contains exactly two emoji (one family and one thumbs-up), and
 tidyEmoji counts them as such rather than splitting the family into four people
 or separating the thumb from its skin tone:
 
@@ -408,7 +408,7 @@ ata_tweets %>%
 
 The scores come from `emoji_sentiment_lexicon`, the *Emoji Sentiment Ranking* of
 Kralj Novak et al. (2015), computed from around 70,000 tweets annotated in 13
-European languages. You can work with it directly — for instance, to find the
+European languages. You can work with it directly, for instance to find the
 most positive and most negative reasonably common emoji:
 
 ```{r}
@@ -510,8 +510,8 @@ emoji_lexicons()
 ```
 
 `emoji_score()` is the generic scorer underneath `emoji_sentiment()`: give it
-any data frame with an emoji column and a score column — say, scores tailored
-to your own domain — and it returns the per-row mean, joined through the same
+any data frame with an emoji column and a score column (say, scores tailored
+to your own domain), and it returns the per-row mean, joined through the same
 codepoint-normalised key as everything else:
 
 ```{r}
@@ -525,7 +525,7 @@ data.frame(text = c("great \U0001f600", "bad \U0001f621\U0001f637", "none")) %>%
 ```
 
 `register_emoji_lexicon()` stores a lexicon under a name for the session, so
-you can refer to it in `emoji_score()` — or in `emoji_emotion()`, if it carries
+you can refer to it in `emoji_score()`, or in `emoji_emotion()` if it carries
 emotion columns:
 
 ```{r}
@@ -535,7 +535,7 @@ emoji_lexicons() %>% filter(name == "mine")
 
 ## Relating emoji: co-occurrence and sequences
 
-Which emoji appear *together*? `emoji_pairs()` returns a tidy edge list — one
+Which emoji appear *together*? `emoji_pairs()` returns a tidy edge list: one
 row per pair of distinct emoji that co-occur in the same entry, with the number
 of entries in which they do. The `item1`/`item2`/`n` shape matches
 `widyr::pairwise_count()` and feeds directly into graph tools such as igraph,
@@ -627,7 +627,7 @@ ata_tweets %>%
 
 `emoji_density()` normalises the emoji count by text length (per character and
 per whitespace-delimited token), and `emoji_ratio()` reports what share of the
-text's characters belong to emoji — including an `.emoji_only` flag for entries
+text's characters belong to emoji, including an `.emoji_only` flag for entries
 that are nothing but emoji (and whitespace):
 
 ```{r}
@@ -682,7 +682,7 @@ month-of-year, day-of-week and hour-of-day cycles.
 For classification and regression work, `emoji_dfm()` turns the corpus into a
 document-by-emoji feature table: one row per entry (or per `doc_id`), one
 column per emoji, weighted by counts, binary presence or tf-idf. Every entry is
-kept — emoji-free rows are all zeros — so the table binds row-for-row to your
+kept (emoji-free rows are all zeros), so the table binds row-for-row to your
 outcome columns:
 
 ```{r}
@@ -835,15 +835,15 @@ emoji_provenance() %>% glimpse()
 
 tidyEmoji ships four datasets, each documented with its own help page:
 
-* **`emoji_sentiment_lexicon`** — emoji sentiment scores from the Emoji
+* **`emoji_sentiment_lexicon`**: emoji sentiment scores from the Emoji
   Sentiment Ranking (see `?emoji_sentiment_lexicon`).
-* **`emoji_emotion_lexicon`** — emoji emotion scores from EmoTag1200
+* **`emoji_emotion_lexicon`**: emoji emotion scores from EmoTag1200
   (see `?emoji_emotion_lexicon`).
-* **`emoji_unicode_crosswalk`** — one row per (name, glyph) pair, mapping
+* **`emoji_unicode_crosswalk`**: one row per (name, glyph) pair, mapping
   names / shortcodes to glyphs and categories. The mapping is many-to-many
   both ways, so join on `key` rather than `emoji_name` unless you want the
   duplicates (see `?emoji_unicode_crosswalk`).
-* **`category_unicode_crosswalk`** — one row per Unicode category, listing its
+* **`category_unicode_crosswalk`**: one row per Unicode category, listing its
   emoji.
 
 These are regenerated from the current Unicode emoji list by the scripts in the

@@ -4264,6 +4264,17 @@ test_that("the annotation-count caveat ?emoji_ambiguity states is the data's", {
   expect_equal(tbl$ci_width, 2 * stats::qnorm(0.975) * tbl$se)
   # so doubling the evidence at the same spread narrows it by sqrt(2)
   expect_equal(sqrt(v[1] / 100) / sqrt(v[1] / 200), sqrt(2))
+
+  # ?emoji_ambiguity says a Wald width is not bounded by the range of the
+  # score, and names how many rows overrun it. Pin the claim both ways: the
+  # count, and that every one of them is a three-annotation glyph.
+  expect_identical(nrow(tbl), 969L)
+  wide <- which(tbl$ci_width > 2)
+  expect_identical(length(wide), 4L)
+  expect_identical(unique(tbl$n_annotations[wide]), 3L)
+  # the score they bracket does stay inside [-1, 1]
+  expect_true(all(score >= -1 & score <= 1, na.rm = TRUE))
+  expect_identical(sum(tbl$ci_width == 0, na.rm = TRUE), 166L)
 })
 
 test_that("emoji_ambiguity(x) returns one row per element, in order", {

@@ -4,8 +4,8 @@ This release delivers the first wave of the feature roadmap filed as
 [issue #5](https://github.com/PursuitOfDataScience/tidyEmoji/issues/5):
 the items that are cheap, research-grounded, and need no new dataset and no
 new dependency. Most of them are recombinations of machinery the package
-already had — the Novak lexicon's annotation counts, the reference table's
-Unicode version column, the grapheme-aware locator — read out in a way no R
+already had -- the Novak lexicon's annotation counts, the reference table's
+Unicode version column, the grapheme-aware locator -- read out in a way no R
 package exposed before.
 
 ## New features
@@ -20,8 +20,8 @@ so that disagreement was already inside the package as an empirical
 distribution. It is now a number.
 
 * `emoji_ambiguity()` reports per-glyph annotation shares and one of four
-  disagreement statistics — Shannon `entropy` (the default), `gini`,
-  `neutral_share` or `ci_width` — with a rank over the whole lexicon.
+  disagreement statistics -- Shannon `entropy` (the default), `gini`,
+  `neutral_share` or `ci_width` -- with a rank over the whole lexicon.
 * `emoji_risk()` is the per-row version: `.emoji_ambiguity_mean`,
   `.emoji_ambiguity_max` and `.emoji_n_ambiguous`.
 * `emoji_flag_ambiguous()` is the content-QA shortlist: the emoji in *your*
@@ -61,13 +61,13 @@ distribution. It is now a number.
 ### Text-emoji mismatch (roadmap theme E)
 
 * `emoji_incongruity()` measures the signed gap between a row's text sentiment
-  and its emoji sentiment — the sarcasm feature in NLP, the (in)congruence
+  and its emoji sentiment -- the sarcasm feature in NLP, the (in)congruence
   variable in marketing research. `emoji_congruence()` is the same engine under
   the marketing framing; `emoji_incongruity_profile()` reports which glyphs go
   against the grain of their host text.
 * tidyEmoji still does not score text: you supply `text_score` from
   tidytext, sentimentr, vader or a model. Because those live
-  on incompatible scales, `scale` has **no default** — you have to say how the
+  on incompatible scales, `scale` has **no default** -- you have to say how the
   two sides were made comparable.
 * Rows with no scorable emoji get `NA`, never `0`, in every new column.
 
@@ -81,8 +81,8 @@ distribution. It is now a number.
 
 ### Language-model plumbing (roadmap theme J)
 
-* `emoji_sanitize()` applies one named policy — `"keep"`, `"strip"`, `"name"`,
-  `"shortcode"` or `"placeholder"` — to a text column. The capability mostly
+* `emoji_sanitize()` applies one named policy -- `"keep"`, `"strip"`, `"name"`,
+  `"shortcode"` or `"placeholder"` -- to a text column. The capability mostly
   existed; the value is an argument that shows up in a script diff and in a
   methods section.
 * `emoji_token_cost()` reports exact `.emoji_bytes`, `.emoji_codepoints` and
@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are ninety of them, and
+test that was passing for the wrong reason. There are ninety-one of them, and
 reading just those leads gives the release without the verification detail.
-Not all ninety changed observable behaviour: several record a test that
+Not all ninety-one changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1488,7 +1488,7 @@ are worth the same prominence because both meant something was unverified.
   and `emoji_collocations()` resolved their text column with
   `dplyr::select()`, which silently re-adds the grouping columns, so a grouped
   data frame made the selection return two names and the call failed with
-  ``` `text` must select exactly one column ``` — an error blaming an argument
+  ``` `text` must select exactly one column ``` -- an error blaming an argument
   the user had got right. And the verbs that work a row at a time returned
   `tibble::as_tibble(data)`, which strips the `grouped_df` class, so
   `group_by(author) |> emoji_sentiment(text) |> summarise(...)` quietly
@@ -1505,13 +1505,13 @@ are worth the same prominence because both meant something was unverified.
   per-group one. All seven now warn. `emoji_cooccurrence()` and
   `emoji_flag_ambiguous()` warned under the name of the verb they delegate to
   (`emoji_pairs()`, `emoji_frequency()`) and now warn under their own. The
-  guard lives in one helper rather than being copy-pasted into each verb —
-  that copy-paste is why the seven were missed — and the helper reports the
+  guard lives in one helper rather than being copy-pasted into each verb --
+  that copy-paste is why the seven were missed -- and the helper reports the
   warning against the caller's frame, so it no longer appends "Please report
   the issue" to a warning about the user's own data.
 * **A missing, ambiguous or misspelled column argument now names the argument
   the user actually wrote.** Every verb resolved its column with
-  `dplyr::pull()`, whose errors are phrased in terms of `var` — a formal of
+  `dplyr::pull()`, whose errors are phrased in terms of `var` -- a formal of
   `pull()` that appears in no tidyEmoji signature. `emoji_sentiment(df)` said
   ``` `var` is absent but must be supplied ```, `emoji_trend(df, text)` said
   the same about the missing `time`, a two-column selection said
@@ -1542,7 +1542,7 @@ are worth the same prominence because both meant something was unverified.
 * **A fractional count errors instead of being silently truncated.**
   `top_n_emojis(n = 2.5)` returned two rows, `emoji_context(window = 2.7)` used
   a window of two, `emoji_ngrams(n = 2.9)` built bigrams: in each case the
-  number the user wrote was not the number that was used — the same failure
+  number the user wrote was not the number that was used -- the same failure
   mode as the `head(n = -1)` this release already caught, in the other
   direction. `n`, `top_n`, `window` and `min_n` now require a whole number;
   `NULL` and `Inf` keep their "all of them" meanings where they had one.
@@ -1553,7 +1553,7 @@ are worth the same prominence because both meant something was unverified.
   `?tidyEmoji` promises "every verb ... returns a tibble", but this was the one
   row verb that did not route its output through the shared helper, so a plain
   `data.frame` in gave a plain `data.frame` back while the other seventeen
-  returned a tibble — which also meant a list-column printing badly instead of
+  returned a tibble -- which also meant a list-column printing badly instead of
   as `<list>`. A grouped input still stays grouped. The whole output contract is
   now asserted across every verb at once rather than verb by verb.
 * Test line coverage went from 96.6% to 99.4%, and closing the gap found four
@@ -1564,12 +1564,12 @@ are worth the same prominence because both meant something was unverified.
   Also now covered: the lexicon aliases `"sentiment"` and
   `"emoji_sentiment_lexicon"`, a `factor` time column, the degenerate branches
   of the rank and z-score rescalings, `emoji_incongruity_profile()`'s zero-row
-  return, and every argument-validation error on the lexicon surface — each of
+  return, and every argument-validation error on the lexicon surface -- each of
   which had been checked by hand in an earlier round and never written down.
   The nine lines still uncovered are guards whose callers validate first.
 * `commonmark` and `xml2` join `Suggests`. The test that checks `NEWS.md`
   parses calls `utils::news()`, and R's Markdown news reader calls both of them
-  unguarded — packages that were present in the development library only
+  unguarded -- packages that were present in the development library only
   because roxygen2 and testthat pull them in. Declaring them means CI installs
   them and the test runs, rather than skipping everywhere but the maintainer's
   machine. `NEWS.md`'s version headings are now *also* checked directly,
@@ -1577,44 +1577,44 @@ are worth the same prominence because both meant something was unverified.
   reader is unavailable.
 * `DESCRIPTION` declares `Language: en-GB`. The field was missing, so
   `spelling::spell_check_package()` defaulted to `en-US` and flagged 55 correct
-  British spellings — `licence`, `normalised`, `analysed`, `summarise`,
-  `behaviour`, `neighbouring` — as errors, which made the check unusable as a
+  British spellings -- `licence`, `normalised`, `analysed`, `summarise`,
+  `behaviour`, `neighbouring` -- as errors, which made the check unusable as a
   gate. The prose was already consistently British: across ten British/American
   word pairs, the R sources, help pages, vignette, README, NEWS and
   `cran-comments.md` contain **zero** American spellings. The only American
   tokens are the exported names `emoji_categorize()` and `emoji_sanitize()`,
   which follow R convention and stay.
 * A new `inst/WORDLIST` records the 84 remaining terms the dictionary cannot
-  know — author surnames, package names, and vocabulary like `codepoint`,
+  know -- author surnames, package names, and vocabulary like `codepoint`,
   `grapheme`, `shortcode`, `keycaps`, `ZWJ`, `Plutchik`, `idf`. With the
   language declared and the wordlist in place, `spell_check_package()` now
   reports zero, so a future typo is visible instead of buried in 139 lines of
   false positives.
 * The test suite now passes in a non-UTF-8 locale. Ten test files carried 114
-  literal non-ASCII characters inside string literals — zero-width joiners,
-  gender signs, hearts, the no-break and ideographic spaces — and R parses a
+  literal non-ASCII characters inside string literals -- zero-width joiners,
+  gender signs, hearts, the no-break and ideographic spaces -- and R parses a
   source literal byte-wise under `LC_ALL=C`, so each became a run of
   replacement characters and every fixture built from one silently tested the
   wrong string. All 114 are now `\u` / `\U` escapes, and the suite gives
   identical results under `LC_ALL=C` and a UTF-8 locale. Two new tests keep it
   that way: one asserts `R/` is pure ASCII (the invariant 0.4.0 introduced so
   the PDF manual builds, checked by hand until now), the other that test string
-  literals stay escaped. The package's own detection was never affected —
+  literals stay escaped. The package's own detection was never affected --
   verified by re-running the whole-catalogue sweep under `LC_ALL=C`, which
   gives exactly the same 4830 of 5042 as a UTF-8 locale.
 * The test suite no longer attaches `dplyr`. One test file called
   `library(dplyr)`, which in a single `testthat` session leaks into every
   alphabetically-later file and masks `filter()`, `lag()`, `intersect()`,
   `setdiff()`, `setequal()`, `union()` and `testthat::matches()` for all of
-  them — so nine set-operation call sites were resolving to dplyr's generics
+  them -- so nine set-operation call sites were resolving to dplyr's generics
   purely because of filename order. They worked, but by accident. The attach is
   gone, those calls are `base::`-qualified, and the suite's behaviour no longer
   depends on the order its files happen to sort in.
 * `as_emoji()` and `text_to_emoji()` accept **every** GitHub alias, not just
   the primary one each emoji is listed under, and that is now tested. The
   reference table keeps only an emoji's first alias as its `shortcode`, so 751
-  of the 4698 aliases — `"grinning_face"`, `"satisfied"`,
-  `"face_with_tears_of_joy"` — resolve solely through `as_emoji()`'s fallback
+  of the 4698 aliases -- `"grinning_face"`, `"satisfied"`,
+  `"face_with_tears_of_joy"` -- resolve solely through `as_emoji()`'s fallback
   to `emoji::emoji_name`. Nothing exercised that path.
 * `emoji_incongruity(threshold =)` is documented as the gap "at or above which"
   `.emoji_incongruent` is `TRUE`, and the boundary is now tested. A row sitting
@@ -1623,8 +1623,8 @@ are worth the same prominence because both meant something was unverified.
   reclassified every borderline row.
 * `emoji_search()`'s three search fields are now tested separately. It is
   documented to match against keywords, name *and* shortcodes, and some
-  queries match on one field only — `"grinning_face"` and `"thumbsup"` appear
-  in no name (names use spaces, not underscores) and in no keyword — so a
+  queries match on one field only -- `"grinning_face"` and `"thumbsup"` appear
+  in no name (names use spaces, not underscores) and in no keyword -- so a
   regression that dropped the shortcode field would have gone unnoticed. Also
   pinned: the search is case-insensitive, a query matching nothing returns a
   typed zero-row tibble, and the `+1` shortcode's regex metacharacter is safe.
@@ -1633,12 +1633,12 @@ are worth the same prominence because both meant something was unverified.
   as tiebreak; without that tiebreak, tied columns fell back to the order the
   glyphs happened to appear in the data, so the same corpus sorted differently
   produced a differently-ordered feature matrix. The behaviour was already
-  correct — this release pins it, along with row-order independence for
+  correct -- this release pins it, along with row-order independence for
   `emoji_frequency()`, `top_n_emojis()`, `emoji_version_profile()`,
   `emoji_pairs()`, `emoji_cooccurrence()` and `emoji_collocations()`.
 * `?emoji_emotion_label` now documents that ties are broken in Plutchik order,
   so the winning emotion is deterministic and does not depend on a row's
-  position in the data — it was a code comment only. The help page also points
+  position in the data -- it was a code comment only. The help page also points
   at `emoji_emotion()` for the profile the label collapses, since a near-tie is
   invisible in a single winning name.
 * The introduction vignette's "design choices" list now mentions how grouping
@@ -1646,14 +1646,14 @@ are worth the same prominence because both meant something was unverified.
   only on `?tidyEmoji`.
 * `?emoji_incongruity` now says what "ends the text" means for
   `where = "final"`. Only whitespace may follow the last glyph, so
-  `"great \U0001f602"` has a final run and `"great \U0001f602."` does not — a
+  `"great \U0001f602"` has a final run and `"great \U0001f602."` does not -- a
   trailing full stop, bracket or quote mark disqualifies it, which is easy to
   meet unaware in a punctuated corpus. The behaviour is unchanged; it was
   simply not stated.
 * **A `POSIXct` time column was bucketed by its UTC day, not its own.**
   `as.Date()` on a date-time converts in UTC whatever the object's `tzone`
   says, so an emoji posted at 23:30 New York time was counted on the *next*
-  calendar day — and for an evening-heavy corpus, systematically so. It also
+  calendar day -- and for an evening-heavy corpus, systematically so. It also
   made the package disagree with itself: `emoji_seasonality(period = "hour")`
   reads `format(x, "%H")` and had always used the timestamp's own zone, so the
   same row could be hour 23 and the following day at once. `emoji_trend()`,
@@ -1662,7 +1662,7 @@ are worth the same prominence because both meant something was unverified.
   day the timestamp displays as. The session's `TZ` does not affect any of
   them, before or after.
 * **A time column of strings silently shrank the corpus.** A value that would
-  not parse as a date became `NA`, and the time verbs then dropped the row —
+  not parse as a date became `NA`, and the time verbs then dropped the row --
   indistinguishable, in the result, from a row whose date was genuinely
   missing. `emoji_trend()`, `emoji_turnover()`, `emoji_seasonality()` and
   `emoji_adoption_lag()` now say how many values were unreadable and show the
@@ -1681,7 +1681,7 @@ are worth the same prominence because both meant something was unverified.
   matches to be exactly one joiner. In a sequence whose middle component is a
   text-presentation code point, that component is not matched either, so the
   gap is `ZWJ + component + ZWJ` and the rule declined. The damage was a
-  *wrong* count, not a missing one — `🚶` `U+200D` `U+2640` `U+200D`
+  *wrong* count, not a missing one -- `🚶` `U+200D` `U+2640` `U+200D`
   `U+27A1` `U+FE0F`, "woman walking facing right", arrived as two emoji,
   "person walking" and "right arrow", neither of which the text contains, and
   most of the 232 are 2023-2024 additions. The repair now also merges when the
@@ -1695,11 +1695,11 @@ are worth the same prominence because both meant something was unverified.
 
   A second, subtler form of the same defect needed a second rule. Both merge
   rules need *two* matches to work with, and a sequence whose only detectable
-  component is one of its parts yields a single match — so there was no pair to
+  component is one of its parts yields a single match -- so there was no pair to
   merge and the sequence arrived as that part. `U+2764 U+200D U+1F525` ("heart
   on fire") with its selectors omitted read as `U+1F525` ("fire"), and
   `U+1F9D4 U+200D U+2642` ("man: beard") as "person with beard". Counting
-  glyphs cannot see this — one match is still one glyph — so the test for it
+  glyphs cannot see this -- one match is still one glyph -- so the test for it
   looks for a joiner left *outside* every detected span. A lone match beside
   such a joiner is now grown outwards while the span stays a catalogued emoji,
   bounded by the longest catalogued emoji (10 code points), never crossing a
@@ -1709,7 +1709,7 @@ are worth the same prominence because both meant something was unverified.
   Together the three rules take exact detection of the reference table from
   **63.2% to 95.8%** (3189 of 5042 spellings read as exactly one emoji equal to
   the whole spelling, against 4830 now) and orphaned joiners from **1643 to
-  2** — the two being spellings with no detectable component at all, both of
+  2** -- the two being spellings with no detectable component at all, both of
   which have a canonical form that is found. Staged, so each figure is
   attributable: rule 1 alone, which is UAX #29's GB11, gives 75.5% and leaves
   1025 orphaned joiners; rule 2 leaves 793; rule 3 takes those to 2.
@@ -1723,16 +1723,16 @@ are worth the same prominence because both meant something was unverified.
   filtered on `.emoji_category` being non-`NA`, and that column is `NA` for two
   different reasons: the row has no emoji, or the row's emoji are not in the
   reference table. The second case is real and grows with every Unicode
-  release — detection is grapheme-aware, so a zero-width-joiner sequence newer
+  release -- detection is grapheme-aware, so a zero-width-joiner sequence newer
   than your installed \pkg{emoji} is found as one emoji but cannot be
-  categorised — and those rows vanished from the result. 0.2.1 fixed one
+  categorised -- and those rows vanished from the result. 0.2.1 fixed one
   instance of this (a `U+FE0F`-qualified heart went missing) by repairing that
   particular join; the conflation behind it survived. The filter is now on
   "contains at least one emoji", so such a row is kept with
   `.emoji_category = NA`, and `nrow(emoji_categorize())` now always equals
   `nrow(emoji_filter())`.
 * **`emoji_risk()` treated the same row two ways.** A row holding emoji the
-  ambiguity lexicon cannot score — anything added to Unicode after 2015 —
+  ambiguity lexicon cannot score -- anything added to Unicode after 2015 --
   correctly got `.emoji_n_scored = 0`, but `.emoji_n_ambiguous = NA`, where the
   count of ambiguous glyphs found is genuinely zero. The `@return` had promised
   `NA` only for rows with no emoji at all, so the documentation was right and
@@ -1745,17 +1745,17 @@ are worth the same prominence because both meant something was unverified.
   whose glyph is a stray `U+FE0F` is ignored rather than keyed on `""`.
 * `?emoji_sanitize`'s reversibility claim is now measured rather than
   asserted, and the measurement is stronger than the old wording: for all 3790
-  emoji in their canonical spelling — the spelling a keyboard emits — the
+  emoji in their canonical spelling -- the spelling a keyboard emits -- the
   `"shortcode"` round trip **returns the original text byte for byte, 100% of
   the time**. Feed it one of Unicode's shorter spellings, with the `U+FE0F`
   selectors omitted, and it returns the canonical one instead; across all 4853
   catalogued spellings that is 79.5% byte-identical, with every difference
   being `U+FE0F` alone and never more. Tests assert the exact claim rather than
   a byte-identity threshold, because that rate falls each time detection
-  improves — a spelling that used to fragment now merges and normalises.
+  improves -- a spelling that used to fragment now merges and normalises.
 * **The lexicon coverage ceilings are now on the help pages, with the right
-  denominator.** `emoji_emotion()` can score 150 glyphs — about **4%** of the
-  3790 distinct emoji tidyEmoji can detect — and `emoji_sentiment()` about
+  denominator.** `emoji_emotion()` can score 150 glyphs -- about **4%** of the
+  3790 distinct emoji tidyEmoji can detect -- and `emoji_sentiment()` about
   **19%**, with nothing added to Unicode after 2015. A user who does not know
   that reads a column of `NA` as "no emotional content" rather than "not in the
   lexicon". Both verbs and both dataset pages now state the figure, name the
@@ -1774,15 +1774,15 @@ are worth the same prominence because both meant something was unverified.
   `register_emoji_lexicon("novak2015", ...)` succeeded, showed up in
   `emoji_lexicons()` as a second row with the same `name`, and was then
   unreachable, because a bundled name resolves before the registry is
-  consulted — so `lexicon = "novak2015"` still got the bundled table. All six
+  consulted -- so `lexicon = "novak2015"` still got the bundled table. All six
   bundled names are now refused with the list of them. And a lexicon with no
   usable score column registered happily and only failed at first use, from
-  inside `emoji_score()`, in a message naming `tbl` — an argument of a call
+  inside `emoji_score()`, in a message naming `tbl` -- an argument of a call
   that had long since returned; the score column is resolved at registration.
   An `NA` name is rejected too.
 * **The detection contract is now on the help pages.** Code points that are
-  emoji only when they carry `U+FE0F` — the bare heart `U+2764` being the one
-  people meet — are not detected, which was documented on
+  emoji only when they carry `U+FE0F` -- the bare heart `U+2764` being the one
+  people meet -- are not detected, which was documented on
   `?emoji_sentiment_lexicon` but nowhere a user counting emoji would look.
   `?tidyEmoji` gains a *Detection* section with the measured size of the
   exclusion (1252 of 5042 catalogue emoji carry `U+FE0F`; 216 of those are
@@ -1794,13 +1794,28 @@ are worth the same prominence because both meant something was unverified.
 * **`emoji_dfm(doc_id = )` no longer orders its rows by the session's
   collation.** Documents were grouped with `factor()`, whose levels are sorted
   with the locale's collation, so the row order of the result could differ
-  between machines — the same class of bug 0.3.0 fixed for glyph ordering in
+  between machines -- the same class of bug 0.3.0 fixed for glyph ordering in
   `emoji_pairs()` and the dfm's columns. Documents now appear in the order
   their id is first seen in the data. `emoji_pairs()`,
   `emoji_cooccurrence()` and `emoji_dfm()` share one grouping helper, so they
   cannot drift apart again.
 * `emoji_sanitize(policy = "strip")` tidies only the whitespace left behind by
   a removed glyph, and only on rows that actually contained one.
+* **`emoji_sanitize(policy = "strip")` could leave an emoji behind.** Deleting
+  a span makes the characters on either side of it adjacent, and on malformed
+  input those two spell an emoji the original text never contained: a bare
+  `U+2603` beside an orphan `U+FE0F` becomes the qualified snowman, `#` beside
+  a stray `U+FE0F U+20E3` becomes a keycap, and two regional indicators
+  separated by an emoji become a flag. Found by stripping 1500 randomly
+  assembled strings and re-detecting: 1 came back still carrying an emoji,
+  from the one policy whose whole promise is that they are gone. `strip` now
+  repeats until there is nothing left to remove, which terminates because
+  every pass shortens the row. The rescan is gated on the row still holding a
+  non-ASCII code point, so ordinary text pays nothing and a corpus of
+  accented words pays about 10%. `"placeholder"` was never affected, because
+  what it substitutes keeps the neighbours apart, and `"name"` and
+  `"shortcode"` are documented to leave an unnameable glyph in place, which
+  `?emoji_sanitize` now says in its own words rather than by reference.
 * **Arguments given nonsense now error instead of quietly returning a
   different answer.** An audit of every argument that reaches a base R function
   without validation found one shape of bug repeated across the package: a
@@ -1812,7 +1827,7 @@ are worth the same prominence because both meant something was unverified.
   (`emoji_pairs(directed = , sort = )`, `emoji_cooccurrence(diagonal = )`,
   `emoji_emotion(long = )`, `emoji_context(keep_text = )`,
   `top_n_emojis(duplicated = )`, `emoji_sentiment(se = )`) is now checked,
-  because `isTRUE()` reads every non-`TRUE` value as `FALSE` — so
+  because `isTRUE()` reads every non-`TRUE` value as `FALSE` -- so
   `long = "yes"` used to return the wide form without complaint. The deprecated
   `top_n_emojis(duplicated_unicode = "yes")` still works: the check runs after
   the lifecycle conversion.
@@ -2210,8 +2225,8 @@ are worth the same prominence because both meant something was unverified.
   generic scorer all the verbs share. `emoji_sentiment()` gains a `lexicon`
   argument (default `"novak2015"`, unchanged behaviour).
 * Relational analysis. `emoji_pairs()` returns a tidy, graph-ready edge list
-  (`item1`, `item2`, `n`) of the emoji that co-occur in the same document —
-  each row is a document, or supply `doc_id` to pool rows — with
+  (`item1`, `item2`, `n`) of the emoji that co-occur in the same document --
+  each row is a document, or supply `doc_id` to pool rows -- with
   `directed = TRUE` to order pairs by first appearance. `emoji_cooccurrence()`
   is the same with an optional `diagonal` (each emoji's document frequency).
   `emoji_ngrams()` slides a window over each row's emoji in reading order and
@@ -2222,7 +2237,7 @@ are worth the same prominence because both meant something was unverified.
   `emoji_ratio()` reports the share of the text's characters that are emoji
   plus an `.emoji_only` flag.
 * `emoji_dfm()` builds a document-by-emoji feature table (weightings: counts,
-  binary, tf-idf), keeping every document — including emoji-free ones — so the
+  binary, tf-idf), keeping every document -- including emoji-free ones -- so the
   result binds row-for-row to outcome columns in modelling workflows.
 * The corpus-level verbs above (`emoji_pairs()`, `emoji_cooccurrence()`,
   `emoji_ngrams()`, `emoji_dfm()`) canonicalise glyphs through the package's
@@ -2231,7 +2246,7 @@ are worth the same prominence because both meant something was unverified.
   node/feature. `emoji_frequency()` intentionally still reports the exact
   extracted glyph.
 * `emoji_to_text()` replaces emoji in a text column with their Unicode names or
-  shortcodes (demojize — useful for accessibility and NLP preprocessing), and
+  shortcodes (demojize -- useful for accessibility and NLP preprocessing), and
   `text_to_emoji()` is the inverse (emojize).
 * Vector helpers `as_emoji_name()`, `as_emoji_shortcode()` and `as_emoji()` for
   ad-hoc conversion.
@@ -2245,9 +2260,9 @@ are worth the same prominence because both meant something was unverified.
 
 * **Grapheme-aware detection now covers newer zero-width-joiner sequences.**
   The upstream emoji regex only knows the ZWJ sequences that were current when
-  it was built, so it reported later ones — face exhaling, face with spiral
+  it was built, so it reported later ones -- face exhaling, face with spiral
   eyes, heart on fire, people holding hands, the skin-toned handshakes,
-  "woman: blond hair", and around 630 others — as their *component* emoji.
+  "woman: blond hair", and around 630 others -- as their *component* emoji.
   tidyEmoji now re-joins them (a ZWJ between two emoji always binds them into
   one grapheme cluster). Previously such an emoji inflated counts, resolved to
   the wrong name, split into several co-occurrence nodes and stopped
@@ -2288,8 +2303,8 @@ are worth the same prominence because both meant something was unverified.
 * `emoji_search()` matches literally, so queries containing regex
   metacharacters (for example the `+1` alias) are safe and cannot error.
 * `emoji_to_text(format = "shortcode")` now always emits the emoji's canonical
-  (first) GitHub-style alias — the same one reported by `emoji_frequency()` and
-  `as_emoji_shortcode()` — and the `wrap` template is honoured. Emoji with no
+  (first) GitHub-style alias -- the same one reported by `emoji_frequency()` and
+  `as_emoji_shortcode()` -- and the `wrap` template is honoured. Emoji with no
   known name/shortcode are left in place rather than dropped from the text.
 * `emoji_to_text()` and `text_to_emoji()` keep `NA` text entries as `NA`.
 * `emoji_emotion()` and `emoji_emotion_label()` accept registered or
@@ -2308,7 +2323,7 @@ are worth the same prominence because both meant something was unverified.
   `doc_id` argument); it was already a hard transitive dependency, so the
   installed footprint is unchanged.
 * Grouped data frames passed to `emoji_pairs()`, `emoji_cooccurrence()` or
-  `emoji_dfm()` warn that grouping is ignored — use `doc_id` to express
+  `emoji_dfm()` warn that grouping is ignored -- use `doc_id` to express
   per-group structure.
 * The vignette header no longer carries a build date.
 * DESCRIPTION Title and Description broadened to cover emotions, translation,
@@ -2364,7 +2379,7 @@ tweets.
 * `emoji_frequency()` returns the count of *every* emoji in a text column, with
   name, shortcode and category. `top_n_emojis()` is now a thin wrapper over it.
 * `emoji_tokens()` expands data to one row per emoji occurrence with its name,
-  category and sentiment score — a tidy, "one-token-per-row" shape.
+  category and sentiment score -- a tidy, "one-token-per-row" shape.
 * `emoji_filter()` is a clearer, text-agnostic name for `emoji_tweets()` (which
   is kept as a synonym).
 * New bundled dataset `emoji_sentiment_lexicon`.

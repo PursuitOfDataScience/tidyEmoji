@@ -140,6 +140,13 @@ emoji_ambiguity_measures <- function() {
 #' well-known from poorly-known scores only among glyphs that are not
 #' unanimous.
 #'
+#' The same degeneracy runs the other way at the top of the scale. A Wald
+#' width is not bounded by the range of the quantity it measures, so
+#' **4 of the 969 rows report a `ci_width` wider than 2** while the sentiment
+#' score itself can only run from -1 to 1. All four have 3 annotations. Read
+#' that as "this score is not known at all" rather than as a width, and filter
+#' on `n_annotations` as above.
+#'
 #' @param x Optional character vector of emoji glyphs to report on. The default,
 #'   `NULL`, returns every emoji in the lexicon, most ambiguous first. Glyphs
 #'   absent from the lexicon come back with `NA` statistics.
