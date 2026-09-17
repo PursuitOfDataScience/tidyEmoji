@@ -105,6 +105,14 @@ own <code>format</code> first.</p></dd>
 1-12, 1-7 with Monday first, or 0-23), <code>.period_label</code>, <code>n_texts</code>,
 <code>n_with_emoji</code>, <code>n_emoji</code>, <code>emoji_per_text</code> and <code>share</code> (this level's share
 of all emoji tokens).</p>
+<p><code>emoji_per_text</code> is <code>n_emoji / n_texts</code>, so the average is over <strong>every</strong>
+text in the level and not only over the ones carrying an emoji. The
+distinction is large on a mixed corpus: four emoji spread over three
+texts, one of which carries all four, gives <code>1.33</code> here and would give
+<code>4</code> the other way. Both denominators are in the table, so divide by
+<code>n_with_emoji</code> yourself for the intensity among users of emoji, and read
+<code>emoji_per_text</code> as a rate over the whole level. It is <code>NA</code>, not <code>0</code>,
+where the level holds no text at all.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

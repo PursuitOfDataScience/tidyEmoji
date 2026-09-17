@@ -76,6 +76,15 @@ A tibble with one row per level of the cycle: `.period` (integer: 1-12,
 `n_with_emoji`, `n_emoji`, `emoji_per_text` and `share` (this level's
 share of all emoji tokens).
 
+`emoji_per_text` is `n_emoji / n_texts`, so the average is over
+**every** text in the level and not only over the ones carrying an
+emoji. The distinction is large on a mixed corpus: four emoji spread
+over three texts, one of which carries all four, gives `1.33` here and
+would give `4` the other way. Both denominators are in the table, so
+divide by `n_with_emoji` yourself for the intensity among users of
+emoji, and read `emoji_per_text` as a rate over the whole level. It is
+`NA`, not `0`, where the level holds no text at all.
+
 ## Details
 
 Every level of the cycle is returned, including the empty ones, so a bar

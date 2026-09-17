@@ -137,11 +137,11 @@ maintainer as knowing what moved.
 Entries whose first sentence is **bold** are the ones where something
 was actually wrong and got fixed – in the package, in its documentation,
 or in a test that was passing for the wrong reason. There are one
-hundred and eight of them, and reading just those leads gives the
-release without the verification detail. Not all one hundred and eight
-changed observable behaviour: several record a test that could not have
-failed, or a figure the documentation quoted incorrectly, which are
-worth the same prominence because both meant something was unverified.
+hundred and nine of them, and reading just those leads gives the release
+without the verification detail. Not all one hundred and nine changed
+observable behaviour: several record a test that could not have failed,
+or a figure the documentation quoted incorrectly, which are worth the
+same prominence because both meant something was unverified.
 
 - The whole of this release’s polish was audited against the version it
   started from, by installing both side by side and comparing 57 verb
@@ -1626,6 +1626,23 @@ worth the same prominence because both meant something was unverified.
   [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text”. All
   thirteen are now accounted for – four feed a documented user-facing
   figure, nine are internal offsets.
+
+- **[`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)’s
+  `emoji_per_text` had no definition, and the table hands you both
+  candidate denominators.** It is `n_emoji / n_texts`, an average over
+  *every* text in the level rather than over the ones carrying an emoji,
+  and the two readings are far apart on a mixed corpus: four emoji
+  spread over three texts, one of which carries all four, is `1.33` one
+  way and `4` the other. The `@return` listed the column name and
+  stopped, while printing `n_texts` and `n_with_emoji` side by side, so
+  a reader had no way to tell which had been used. It now gives the
+  formula, the worked contrast and the one-line recipe for the other
+  reading, and says the column is `NA` rather than `0` where a level
+  holds no text.
+  [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)’s
+  `share` was already precise about its own denominator; a test now also
+  pins the consequence that a `top_n` cut does not renormalise it, so a
+  followed glyph keeps the share it had in the full call.
 
 - **[`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)’s
   contract glossed `.position` once, and it means two different
