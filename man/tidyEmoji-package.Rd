@@ -138,6 +138,40 @@ which is why they are named here rather than silently filtered: dropping
 them inside the verbs would make the emoji counts disagree with the text.
 }
 
+\section{Which spelling comes back}{
+
+Two spellings of one emoji, differing only by \code{U+FE0F}, are one emoji to
+every lookup: the name, the score, the category and the type all resolve
+through a key that strips the selector. They are not always one \emph{row}. A
+verb that reports a glyph either hands back the spelling it found or
+collapses both onto the catalogue's, and which it does follows from what
+the verb is for:
+\itemize{
+\item \strong{The spelling as found}: \code{\link[=emoji_frequency]{emoji_frequency()}}, \code{\link[=top_n_emojis]{top_n_emojis()}},
+\code{\link[=emoji_tokens]{emoji_tokens()}}, \code{\link[=emoji_extract_nest]{emoji_extract_nest()}}, \code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}} and
+\code{\link[=emoji_context]{emoji_context()}}. These report occurrences, and an occurrence is the
+text you actually had.
+\item \strong{Collapsed onto one}: \code{\link[=emoji_pairs]{emoji_pairs()}}, \code{\link[=emoji_cooccurrence]{emoji_cooccurrence()}},
+\code{\link[=emoji_ngrams]{emoji_ngrams()}}, \code{\link[=emoji_dfm]{emoji_dfm()}}, \code{\link[=emoji_collocations]{emoji_collocations()}},
+\code{\link[=emoji_trend]{emoji_trend()}}, \code{\link[=emoji_adoption_lag]{emoji_adoption_lag()}} and
+\code{\link[=emoji_incongruity_profile]{emoji_incongruity_profile()}}. These build an item, a node, a feature
+or a series, and two spellings of one emoji are one of those.
+\code{\link[=emoji_turnover]{emoji_turnover()}} and \code{\link[=emoji_version_profile]{emoji_version_profile()}} count the same way in
+their \code{n_types}, without reporting a glyph at all.
+}
+
+A corpus holding both spellings shows the difference in one line:
+\code{\link[=emoji_frequency]{emoji_frequency()}} returns two rows of \code{n = 1} where
+\code{\link[=emoji_cooccurrence]{emoji_cooccurrence()}} returns one node of \code{n = 2}. Nothing is lost
+either way, and the two sides line up on the name, which is the same for
+both spellings: \code{emoji_frequency()} already carries it, and
+\code{\link[=as_emoji_name]{as_emoji_name()}} supplies it for a glyph column of your own.
+
+This is only ever about spellings of the \emph{same} emoji. Skin tones, genders
+and the members of a ZWJ sequence are different emoji and stay apart in
+every verb.
+}
+
 \section{Grouped data frames}{
 
 Grouping is respected where it can be, and reported where it cannot. The

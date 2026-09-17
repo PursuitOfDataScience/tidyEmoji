@@ -8710,6 +8710,83 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
 })
 
+test_that("each verb is on the side of the spelling rule ?tidyEmoji puts it", {
+  # Two spellings of one emoji are one emoji to every lookup and not always
+  # one row: some verbs report the spelling they found, others collapse both
+  # onto the catalogue's. The split was real and undocumented. Derive it from
+  # behaviour rather than from the prose, so a verb that changes sides fails
+  # here rather than quietly contradicting the help.
+  skip_if_catalogue_moved()
+  qual <- intToUtf8(c(0x1F642, 0x200D, 0x2195, 0xFE0F))
+  unq <- intToUtf8(c(0x1F642, 0x200D, 0x2195))
+  A <- "\U0001F600"
+  ekey <- asNamespace("tidyEmoji")$emoji_key
+  has <- asNamespace("tidyEmoji")$emoji_has
+  # the fixture only means anything if both spellings are detectable on
+  # their own and share one key
+  expect_true(all(has(c(qual, unq))))
+  expect_identical(ekey(qual), ekey(unq))
+  expect_false(identical(qual, unq))
+
+  d <- data.frame(
+    text = c(paste("yes", unq, A), paste("yes", qual, A)),
+    sc = c(0.5, -0.5),
+    when = as.Date(c("2024-01-05", "2024-02-05")),
+    stringsAsFactors = FALSE)
+  n_spellings <- function(g) length(unique(setdiff(g[!is.na(g)], A)))
+
+  as_found <- list(
+    emoji_frequency = function() emoji_frequency(d, text)$emoji,
+    top_n_emojis = function() top_n_emojis(d, text)$unicode,
+    emoji_tokens = function() emoji_tokens(d, text)$.emoji,
+    emoji_extract_unnest = function() emoji_extract_unnest(d, text)$.emoji_unicode,
+    emoji_extract_nest = function() unlist(emoji_extract_nest(d, text)$.emoji_unicode),
+    emoji_context = function() emoji_context(d, text)$.emoji)
+  collapsed <- list(
+    emoji_pairs = function() unlist(emoji_pairs(d, text)[c("item1", "item2")]),
+    emoji_cooccurrence = function() unlist(emoji_cooccurrence(d, text)[c("item1", "item2")]),
+    emoji_ngrams = function() unlist(strsplit(emoji_ngrams(d, text)$.emoji_ngram, " ")),
+    emoji_dfm = function() setdiff(names(emoji_dfm(d, text)), ".row_number"),
+    emoji_collocations = function() emoji_collocations(d, text, min_n = 1L)$emoji,
+    emoji_trend = function() emoji_trend(d, text, when, top_n = NULL)$emoji,
+    emoji_adoption_lag = function() emoji_adoption_lag(d, text, when)$emoji,
+    emoji_incongruity_profile = function()
+      emoji_incongruity_profile(d, text, sc, scale = "none", min_n = 1L)$emoji)
+
+  for (nm in names(as_found)) {
+    expect_identical(n_spellings(as_found[[nm]]()), 2L, info = nm)
+  }
+  for (nm in names(collapsed)) {
+    expect_identical(n_spellings(collapsed[[nm]]()), 1L, info = nm)
+  }
+  # the two count-only verbs count the way the collapsing ones report
+  expect_identical(unique(emoji_version_profile(d, text)$n_types), 1L)
+  expect_identical(emoji_turnover(d, text, when, by = "month")$n_types, 2L)
+
+  # the worked contrast the help page gives, exactly
+  f <- emoji_frequency(d, text)
+  co <- emoji_cooccurrence(d, text)
+  expect_identical(sum(f$emoji %in% c(qual, unq)), 2L)
+  expect_identical(f$n[f$emoji %in% c(qual, unq)], c(1L, 1L))
+  expect_identical(nrow(co), 1L)
+  expect_identical(co$n, 2L)
+  # and the two sides line up on the name, which is what the page offers
+  expect_identical(length(unique(f$name[f$emoji %in% c(qual, unq)])), 1L)
+  expect_identical(as_emoji_name(qual), as_emoji_name(unq))
+
+  pkg <- rd_flat("tidyEmoji-package")
+  expect_match(pkg, "Which spelling comes back", fixed = TRUE)
+  for (nm in c(names(as_found), names(collapsed))) {
+    expect_match(pkg, nm, fixed = TRUE, info = nm)
+  }
+  # the four pages that were silent now point at the section
+  for (tp in c("emoji_cooccurrence", "emoji_ngrams", "emoji_adoption_lag",
+               "emoji_incongruity_profile")) {
+    expect_match(rd_flat(tp), "Which spelling comes back", fixed = TRUE,
+                 info = tp)
+  }
+})
+
 test_that("the four time verbs agree that an undated row contributes nothing", {
   # emoji_trend() and emoji_adoption_lag() said so; emoji_seasonality() and
   # emoji_turnover() did not, and seasonality is where it bites, because it

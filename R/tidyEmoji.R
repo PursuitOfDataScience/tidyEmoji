@@ -123,6 +123,37 @@
 #' which is why they are named here rather than silently filtered: dropping
 #' them inside the verbs would make the emoji counts disagree with the text.
 #'
+#' @section Which spelling comes back:
+#' Two spellings of one emoji, differing only by `U+FE0F`, are one emoji to
+#' every lookup: the name, the score, the category and the type all resolve
+#' through a key that strips the selector. They are not always one *row*. A
+#' verb that reports a glyph either hands back the spelling it found or
+#' collapses both onto the catalogue's, and which it does follows from what
+#' the verb is for:
+#'
+#' * **The spelling as found**: [emoji_frequency()], [top_n_emojis()],
+#'   [emoji_tokens()], [emoji_extract_nest()], [emoji_extract_unnest()] and
+#'   [emoji_context()]. These report occurrences, and an occurrence is the
+#'   text you actually had.
+#' * **Collapsed onto one**: [emoji_pairs()], [emoji_cooccurrence()],
+#'   [emoji_ngrams()], [emoji_dfm()], [emoji_collocations()],
+#'   [emoji_trend()], [emoji_adoption_lag()] and
+#'   [emoji_incongruity_profile()]. These build an item, a node, a feature
+#'   or a series, and two spellings of one emoji are one of those.
+#'   [emoji_turnover()] and [emoji_version_profile()] count the same way in
+#'   their `n_types`, without reporting a glyph at all.
+#'
+#' A corpus holding both spellings shows the difference in one line:
+#' [emoji_frequency()] returns two rows of `n = 1` where
+#' [emoji_cooccurrence()] returns one node of `n = 2`. Nothing is lost
+#' either way, and the two sides line up on the name, which is the same for
+#' both spellings: `emoji_frequency()` already carries it, and
+#' [as_emoji_name()] supplies it for a glyph column of your own.
+#'
+#' This is only ever about spellings of the *same* emoji. Skin tones, genders
+#' and the members of a ZWJ sequence are different emoji and stay apart in
+#' every verb.
+#'
 #' @section Grouped data frames:
 #' Grouping is respected where it can be, and reported where it cannot. The
 #' verbs that work a row at a time -- the ones that add `.emoji_*` columns, and

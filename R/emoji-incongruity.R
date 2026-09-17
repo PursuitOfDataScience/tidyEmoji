@@ -328,6 +328,10 @@ emoji_congruence <- function(data, text, text_score,
 #' incongruent one will therefore inherit some of its score; read `n` alongside
 #' `flip_rate` before drawing conclusions from a handful of occurrences.
 #'
+#' Glyphs are canonicalised through the package's codepoint key, so two
+#' spellings of one emoji make one row rather than two; see
+#' *Which spelling comes back* in [tidyEmoji].
+#'
 #' @inheritParams emoji_incongruity
 #' @param min_n Minimum number of scored occurrences for an emoji to be
 #'   reported. Default `5`.

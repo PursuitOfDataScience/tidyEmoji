@@ -72,6 +72,10 @@ Incongruity is a property of a row, so every emoji in a row is credited with
 that row's gap. A glyph that habitually shares a message with a genuinely
 incongruent one will therefore inherit some of its score; read \code{n} alongside
 \code{flip_rate} before drawing conclusions from a handful of occurrences.
+
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one row rather than two; see
+\emph{Which spelling comes back} in \link{tidyEmoji}.
 }
 \examples{
 df <- data.frame(

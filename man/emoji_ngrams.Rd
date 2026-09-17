@@ -44,6 +44,11 @@ twice in a row yields a bigram of that emoji with itself. This is the emoji
 analogue of \code{tidytext::unnest_tokens(..., token = "ngrams")} and feeds
 sequence / Markov-style analyses of how emoji chain together.
 }
+\details{
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one n-gram token rather than two; see
+\emph{Which spelling comes back} in \link{tidyEmoji}.
+}
 \examples{
 df <- data.frame(text = c("\U0001f602\U0001f60d\U0001f389", "\U0001f602"))
 emoji_ngrams(df, text)

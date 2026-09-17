@@ -530,6 +530,10 @@ emoji_version_profile <- function(data, text) {
 #'
 #' Occurrences whose time is missing or unparseable are dropped.
 #'
+#' Glyphs are canonicalised through the package's codepoint key, so two
+#' spellings of one emoji make one row rather than two; see
+#' *Which spelling comes back* in [tidyEmoji].
+#'
 #' @inheritParams emoji_trend
 #' @return A tibble with one row per emoji, most frequent first and ties
 #'   broken by the glyph so the order is fully determined: `emoji`, `name`,

@@ -63,6 +63,10 @@ before its official release date -- usually a vendor shipping early, or a
 timestamp problem worth investigating.
 
 Occurrences whose time is missing or unparseable are dropped.
+
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one row rather than two; see
+\emph{Which spelling comes back} in \link{tidyEmoji}.
 }
 \examples{
 df <- data.frame(

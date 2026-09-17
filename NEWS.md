@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are one hundred and four of them, and
+test that was passing for the wrong reason. There are one hundred and five of them, and
 reading just those leads gives the release without the verification detail.
-Not all one hundred and four changed observable behaviour: several record a test that
+Not all one hundred and five changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,28 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **Nothing said which verbs merge two spellings of one emoji, and they do
+  not all agree.** Fourteen verbs report a glyph. Six hand back the spelling
+  they found (`emoji_frequency()`, `top_n_emojis()`, `emoji_tokens()`, the
+  two extraction verbs and `emoji_context()`), because an occurrence is the
+  text you had. Eight collapse both spellings onto the catalogue's
+  (`emoji_pairs()`, `emoji_cooccurrence()`, `emoji_ngrams()`,
+  `emoji_dfm()`, `emoji_collocations()`, `emoji_trend()`,
+  `emoji_adoption_lag()` and `emoji_incongruity_profile()`), because an
+  item, a node, a feature or a series is one thing per emoji; and
+  `emoji_turnover()` and `emoji_version_profile()` count that way in
+  `n_types` without reporting a glyph at all. On a corpus holding both
+  spellings of `U+1F642 U+200D U+2195` the split is one line:
+  `emoji_frequency()` returns two rows of `n = 1` where
+  `emoji_cooccurrence()` returns one node of `n = 2`. `?tidyEmoji` gains a
+  *Which spelling comes back* section naming both lists and the remedy (the
+  `name` is the same for both spellings, and `as_emoji_name()` supplies it
+  for a column of your own), and the four verb pages that were silent point
+  at it. Only eight of the fourteen had said anything, and the sentence
+  `?tidyEmoji` already carried -- that the key "resolves identically in
+  every verb" -- is about the metadata join and invites exactly the wrong
+  generalisation. A test derives the split from behaviour, so a verb that
+  changes sides fails rather than quietly contradicting the page.
 * **Two of the four time verbs never said an undated row is dropped.**
   `emoji_trend()` and `emoji_adoption_lag()` both state it;
   `emoji_seasonality()` and `emoji_turnover()` did not, and seasonality is

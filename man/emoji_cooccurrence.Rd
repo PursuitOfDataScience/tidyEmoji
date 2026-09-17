@@ -56,6 +56,10 @@ symmetric, so an ordered pair has no meaning on it and the diagonal this
 verb exists to add would not either. Use \code{\link[=emoji_pairs]{emoji_pairs()}} when you want
 \code{directed = TRUE}; the off-diagonal rows the two verbs return are otherwise
 identical.
+
+Glyphs are canonicalised through the package's codepoint key, so two
+spellings of one emoji make one row rather than two; see
+\emph{Which spelling comes back} in \link{tidyEmoji}.
 }
 \examples{
 df <- data.frame(text = c("\U0001f602\U0001f60d", "\U0001f602"))

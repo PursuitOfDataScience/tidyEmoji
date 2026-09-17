@@ -115,6 +115,10 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 #' `directed = TRUE`; the off-diagonal rows the two verbs return are otherwise
 #' identical.
 #'
+#' Glyphs are canonicalised through the package's codepoint key, so two
+#' spellings of one emoji make one row rather than two; see
+#' *Which spelling comes back* in [tidyEmoji].
+#'
 #' @inheritParams emoji_pairs
 #' @param diagonal If `TRUE`, include one `item1 == item2` row per emoji with
 #'   its document frequency. Default `FALSE`.
@@ -164,6 +168,10 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
 #' twice in a row yields a bigram of that emoji with itself. This is the emoji
 #' analogue of `tidytext::unnest_tokens(..., token = "ngrams")` and feeds
 #' sequence / Markov-style analyses of how emoji chain together.
+#'
+#' Glyphs are canonicalised through the package's codepoint key, so two
+#' spellings of one emoji make one n-gram token rather than two; see
+#' *Which spelling comes back* in [tidyEmoji].
 #'
 #' @inheritParams emoji_summary
 #' @param n Length of the n-gram window. Default `2` (bigrams).
