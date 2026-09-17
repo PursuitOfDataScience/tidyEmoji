@@ -147,11 +147,19 @@ does not build, so the local run is the one that covers it).
 
 On R 4.6.0 (the newest release available locally), the same check reports
 `Status: 2 NOTEs` -- the URL below and the missing `tidy` -- with everything
-else OK, including vignette re-building and the PDF manual. That tree has
-neither 'readr' nor 'forcats' installed, so it doubles as the check that the
-package and its vignette build without their Suggests packages;
-`_R_CHECK_FORCE_SUGGESTS_=false` is needed there, since a complete check
-requires them by default.
+else OK: installation, examples, the `testthat` suite, vignette re-building
+and the PDF manual. That host has `qpdf` and a verifiable clock, so two of
+the four artefacts above simply do not arise there, which is the clearest
+evidence we can offer that they are the host and not the package.
+
+That tree also has neither 'readr' nor 'forcats' installed, so the same run
+doubles as the check that the package, its examples and its vignette build
+without those Suggests packages: the vignette's plotting chunks stand down
+on their `requireNamespace()` gate, the corpus is read with
+`utils::read.csv()` rather than `readr`, and the one test gated on
+`readr (>= 2.0.0)` skips. `_R_CHECK_FORCE_SUGGESTS_=false` is needed there,
+since a complete check requires Suggests by default. Run on its own on that
+R, the suite is 14665 pass and one skip.
 
 On R 4.1.0, the declared minimum, the `testthat` suite passes in full: 14664
 pass and one skip, that tree carrying `readr` 1.4.0 so the test gated on
