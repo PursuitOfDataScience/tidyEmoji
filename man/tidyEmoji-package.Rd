@@ -40,6 +40,27 @@ but it also means a column of your own called \code{.emoji_n} will be replaced,
 and that includes the text column itself if you named it \code{.emoji_n}. Rename
 it first if you need to keep it.
 
+Two of the shared dotted names do \strong{not} mean the same thing in every verb
+that writes them, so chaining those verbs replaces a number with a
+different one rather than with the same one:
+\itemize{
+\item \code{.emoji_n_scored} counts the emoji \emph{that verb's} lexicon could score, and
+the lexicons cover different emoji. \code{\link[=emoji_sentiment]{emoji_sentiment()}},
+\code{\link[=emoji_score]{emoji_score()}} and \code{\link[=emoji_incongruity]{emoji_incongruity()}} read the sentiment lexicon,
+\code{\link[=emoji_risk]{emoji_risk()}} the ambiguity table built from it, and \code{\link[=emoji_emotion]{emoji_emotion()}}
+the emotion lexicon: \verb{U+203C U+FE0F} scores \code{0} under the first four and
+\code{1} under \code{\link[=emoji_emotion]{emoji_emotion()}}. \code{emoji_score(lexicon = )} can be anything
+you registered.
+\item \code{.emoji_sentiment} is the mean over every emoji in the row from
+\code{\link[=emoji_sentiment]{emoji_sentiment()}}, but over only the trailing run from
+\code{\link[=emoji_incongruity]{emoji_incongruity()}} with \code{where = "final"}.
+}
+
+So \code{emoji_sentiment()} followed by \code{emoji_emotion()} leaves a
+\code{.emoji_n_scored} describing the emotion lexicon beside a
+\code{.emoji_sentiment} that does not. Rename the first result's column before
+adding the second, or keep the two tables apart.
+
 \code{group} always refers to the Unicode top-level category (the term used by
 the underlying \code{emoji::emojis} table). Every glyph-to-metadata join is
 normalised through a codepoint key that strips the \code{U+FE0F} variation

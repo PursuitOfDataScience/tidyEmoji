@@ -5222,6 +5222,52 @@ test_that("the verbs compose in the chains a user would actually write", {
   expect_true(all(is.na(emoji_sentiment(stripped, text)$.emoji_sentiment)))
 })
 
+test_that("the two shared columns that change meaning when chained do", {
+  # ?tidyEmoji's naming contract says a dotted name is overwritten without
+  # warning, and names the two that are not interchangeable between the verbs
+  # writing them. Both halves are pinned here: the claim that the value
+  # changes, and the specific glyph and argument the help quotes.
+  bang <- "\u203C\uFE0F"        # in the emotion lexicon, not the sentiment one
+  d <- data.frame(text = bang, sc = 0, stringsAsFactors = FALSE)
+  expect_true(is.na(emoji_sentiment(d, text)$.emoji_sentiment))
+  expect_identical(emoji_sentiment(d, text)$.emoji_n_scored, 0L)
+  expect_identical(emoji_score(d, text)$.emoji_n_scored, 0L)
+  expect_identical(emoji_risk(d, text)$.emoji_n_scored, 0L)
+  expect_identical(
+    emoji_incongruity(d, text, sc, scale = "none")$.emoji_n_scored, 0L)
+  expect_identical(emoji_emotion(d, text)$.emoji_n_scored, 1L)
+  # so the chain the help warns about does replace the number
+  chained <- emoji_emotion(emoji_sentiment(d, text), text)
+  expect_identical(chained$.emoji_n_scored, 1L)
+  expect_true(is.na(chained$.emoji_sentiment))
+
+  # and `where = "final"` rewrites .emoji_sentiment over a different set
+  A <- "\U0001F600"; F2 <- "\U0001F621"
+  d2 <- data.frame(text = paste0(F2, " mid ", A), sc = 0.5,
+                   stringsAsFactors = FALSE)
+  all_glyphs <- emoji_sentiment(d2, text)
+  final_run <- emoji_incongruity(all_glyphs, text, sc, scale = "none",
+                                 where = "final")
+  expect_identical(all_glyphs$.emoji_n_scored, 2L)
+  expect_identical(final_run$.emoji_n_scored, 1L)
+  expect_false(isTRUE(all.equal(all_glyphs$.emoji_sentiment,
+                                final_run$.emoji_sentiment)))
+  # the final run is the trailing glyph on its own
+  expect_equal(final_run$.emoji_sentiment,
+               emoji_sentiment(data.frame(text = A), text)$.emoji_sentiment)
+
+  # .emoji_n, by contrast, is the same measurement in every verb that writes
+  # it, which is what makes the overwrite safe there
+  n_writers <- c("emoji_sentiment", "emoji_score", "emoji_emotion",
+                 "emoji_faceness", "emoji_position", "emoji_density",
+                 "emoji_risk", "emoji_token_cost")
+  d3 <- data.frame(text = c(paste0(A, F2), "none", NA_character_),
+                   stringsAsFactors = FALSE)
+  ns <- lapply(n_writers, function(v)
+    do.call(v, list(d3, rlang::sym("text")))$.emoji_n)
+  for (i in seq_along(ns)) expect_identical(ns[[i]], ns[[1L]], info = n_writers[i])
+})
+
 # ---------------------------------------------------------------------------
 # Round 59: the pluggable-lexicon API, exercised through every consumer rather
 # than only through emoji_score(). The one gap: emoji_score() averages emotion
@@ -8634,6 +8680,32 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_identical(sum(multi & bearing), sum(multi))
   rd <- rd_flat("emoji_density")
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
+})
+
+test_that("the vignette's 373-of-2000 figure and its zero-mean check hold", {
+  # "Only 373 of these 2000 tweets qualify" and "on the rank scale the mean
+  # gap over the scored rows is exactly zero, so a non-zero mean means your
+  # filtering, not your data". The second is a property of scaling both sides
+  # over the same rows, so it is pinned for three different scorers rather
+  # than for the vignette's one; the first turns out not to depend on the
+  # scorer at all, because that scorer never returns NA, which is what keeps
+  # this test free of tolower() and so of the locale.
+  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
+  skip_if_not(file.exists(path), "vignette corpus not available")
+  d <- utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8")
+  expect_identical(nrow(d), 2000L)
+  expect_identical(sum(!is.na(emoji_sentiment(d, full_text)$.emoji_sentiment)),
+                   373L)
+  set.seed(1)
+  scorers <- list(rep(0, nrow(d)), seq_len(nrow(d)), stats::rnorm(nrow(d)))
+  for (sc in scorers) {
+    dd <- d
+    dd$ts <- sc
+    inc <- emoji_incongruity(dd, full_text, ts, scale = "rank")
+    gap <- inc$.emoji_incongruity
+    expect_identical(sum(!is.na(gap)), 373L)
+    expect_equal(mean(gap, na.rm = TRUE), 0)
+  }
 })
 
 

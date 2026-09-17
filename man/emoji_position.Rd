@@ -50,6 +50,16 @@ its message. Everything that is not an emoji still counts one position per
 code point, so a combining accent elsewhere in the text counts twice; that
 affects the denominator only, and only for text carrying such marks.
 
+A text that collapses to a \emph{single} position cannot tell its start from its
+end, and \code{.emoji_rel_position} is \code{0} there by convention. That is exactly
+the row whose whole content is one emoji and nothing else, which a chat or
+reaction corpus is full of, so the filter this column exists for
+(\code{.emoji_rel_position > 0.8}, "the emoji ends the message") skips every one
+of them. \code{\link[=emoji_ratio]{emoji_ratio()}}'s \code{.emoji_only} finds that family of rows. One
+character either side is enough to resolve the ambiguity the convention
+settles: a trailing space scores the emoji \code{0}, a leading one scores it
+\code{1}, both on the ordinary path.
+
 Positions are in \emph{logical} (storage) order, not visual order. In a
 right-to-left script an emoji that is logically last renders at the reader's
 left, so "final" here means final in the string, not final on the screen.

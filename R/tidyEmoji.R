@@ -30,6 +30,26 @@
 #' and that includes the text column itself if you named it `.emoji_n`. Rename
 #' it first if you need to keep it.
 #'
+#' Two of the shared dotted names do **not** mean the same thing in every verb
+#' that writes them, so chaining those verbs replaces a number with a
+#' different one rather than with the same one:
+#'
+#' * `.emoji_n_scored` counts the emoji *that verb's* lexicon could score, and
+#'   the lexicons cover different emoji. [emoji_sentiment()],
+#'   [emoji_score()] and [emoji_incongruity()] read the sentiment lexicon,
+#'   [emoji_risk()] the ambiguity table built from it, and [emoji_emotion()]
+#'   the emotion lexicon: `U+203C U+FE0F` scores `0` under the first four and
+#'   `1` under [emoji_emotion()]. `emoji_score(lexicon = )` can be anything
+#'   you registered.
+#' * `.emoji_sentiment` is the mean over every emoji in the row from
+#'   [emoji_sentiment()], but over only the trailing run from
+#'   [emoji_incongruity()] with `where = "final"`.
+#'
+#' So `emoji_sentiment()` followed by `emoji_emotion()` leaves a
+#' `.emoji_n_scored` describing the emotion lexicon beside a
+#' `.emoji_sentiment` that does not. Rename the first result's column before
+#' adding the second, or keep the two tables apart.
+#'
 #' `group` always refers to the Unicode top-level category (the term used by
 #' the underlying `emoji::emojis` table). Every glyph-to-metadata join is
 #' normalised through a codepoint key that strips the `U+FE0F` variation

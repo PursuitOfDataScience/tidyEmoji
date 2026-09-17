@@ -17,6 +17,18 @@ test_that("emoji_position reports first/last/relative positions", {
 test_that("emoji_position averages over occurrences and handles 1-char text", {
   out <- emoji_position(data.frame(text = "\U0001f600"), text)
   expect_equal(out$.emoji_rel_position, 0)
+  # ?emoji_position says a one-position text scores 0 by convention, that one
+  # character either side resolves it, and that emoji_ratio()'s .emoji_only
+  # is how to find the family. Pin all three, for a one-code-point glyph and
+  # for a ZWJ family, since the convention is about positions not code points.
+  fam <- "\U0001F468\u200d\U0001F469\u200d\U0001F467"
+  for (g in c("\U0001f600", fam)) {
+    d <- data.frame(text = c(g, paste0(g, " "), paste0(" ", g)),
+                    stringsAsFactors = FALSE)
+    expect_equal(emoji_position(d, text)$.emoji_rel_position, c(0, 0, 1),
+                 info = g)
+    expect_true(all(emoji_ratio(d, text)$.emoji_only), info = g)
+  }
   mid <- emoji_position(data.frame(text = "\U0001f600a\U0001f600"), text)
   expect_equal(mid$.emoji_first, 1L)
   expect_equal(mid$.emoji_last, 3L)
