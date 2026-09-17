@@ -2537,12 +2537,18 @@ because both meant something was unverified.
   there is nothing left to remove, which terminates because every pass
   shortens the row. The rescan is gated on the row still holding a
   non-ASCII code point, so ordinary text pays nothing and a corpus of
-  accented words pays about 10%. `"placeholder"` was never affected,
-  because what it substitutes keeps the neighbours apart, and `"name"`
-  and `"shortcode"` are documented to leave an unnameable glyph in
-  place, which
+  accented words pays about 10%. `"placeholder"` was not affected,
+  because a non-empty token keeps the neighbours apart, and `"name"` and
+  `"shortcode"` are documented to leave an unnameable glyph in place,
+  which
   [`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
-  now says in its own words rather than by reference.
+  now says in its own words rather than by reference. The page is
+  careful about which policies clear the column and on what terms:
+  `"strip"` does so whatever it is handed, `"placeholder"` does unless
+  the token you supply is itself emoji-forming (one that *is* an emoji
+  survives, and a lone `U+FE0F` binds to whatever the removed glyph
+  stood next to), and `"name"` and `"shortcode"` do not when the glyph
+  has no name. All four cases are pinned.
 
 - **Arguments given nonsense now error instead of quietly returning a
   different answer.** An audit of every argument that reaches a base R
