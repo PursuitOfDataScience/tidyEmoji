@@ -6,6 +6,14 @@
 #'
 #' @return A tibble with columns `name`, `type`, `dimensions`, `n`, `source`,
 #'   `licence`.
+#'
+#'   `n` is the lexicon's **row count**. For the two bundled ones that is
+#'   also the number of emoji they score, 969 and 150, because each has one
+#'   row per code-point key. A registered lexicon need not: two spellings of
+#'   one emoji are two rows and score one glyph, and a row whose glyph yields
+#'   no key at all (an empty string, an `NA`) is counted here and matched
+#'   never. `length(unique(emoji_key(tbl$emoji)))` is the count of distinct
+#'   emoji, the same distinction [emoji_provenance()] draws for `n_emoji`.
 #' @seealso [register_emoji_lexicon()] to add your own;
 #'   [emoji_score()] to score text against any lexicon.
 #' @examples
@@ -56,7 +64,11 @@ emoji_lexicons <- function() {
 #' the package's codepoint key (`U+FE0F` stripped), so a lexicon keyed on
 #' unqualified glyphs still matches qualified text.
 #'
-#' Registration lasts for the session; it is not written to disk.
+#' Registration lasts for the session; it is not written to disk. Registering
+#' a name that is already taken replaces the table under it, without warning
+#' and without a way to get the old one back: there is no public counterpart
+#' that removes a registration, so re-registering is how a lexicon is
+#' changed. [emoji_lexicons()] shows what is currently registered.
 #'
 #' @param name Name to register the lexicon under.
 #' @param tbl A data frame. Must contain a glyph column named `by` (default
@@ -66,7 +78,10 @@ emoji_lexicons <- function() {
 #'   one-row-per-emoji requirement, which is checked when the lexicon is used.
 #' @param by Name of the column holding the emoji glyph, as a single string.
 #'   Default `"emoji"`.
-#' @return Invisibly, the registered lexicon (with an added `key` column).
+#' @return Invisibly, the registered lexicon, with a `key` column holding the
+#'   code-point key of each glyph. A `key` column already in `tbl` is
+#'   replaced rather than trusted: the registry looks a lexicon up by that
+#'   column, so one holding anything else would resolve every row to nothing.
 #' @seealso [emoji_lexicons()] to list lexicons; [emoji_score()] to use one.
 #' @examples
 #' my_lex <- data.frame(

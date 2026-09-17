@@ -9,6 +9,14 @@ emoji_lexicons()
 \value{
 A tibble with columns \code{name}, \code{type}, \code{dimensions}, \code{n}, \code{source},
 \code{licence}.
+
+\code{n} is the lexicon's \strong{row count}. For the two bundled ones that is
+also the number of emoji they score, 969 and 150, because each has one
+row per code-point key. A registered lexicon need not: two spellings of
+one emoji are two rows and score one glyph, and a row whose glyph yields
+no key at all (an empty string, an \code{NA}) is counted here and matched
+never. \code{length(unique(emoji_key(tbl$emoji)))} is the count of distinct
+emoji, the same distinction \code{\link[=emoji_provenance]{emoji_provenance()}} draws for \code{n_emoji}.
 }
 \description{
 \code{emoji_lexicons()} returns a tibble describing the lexicons bundled with

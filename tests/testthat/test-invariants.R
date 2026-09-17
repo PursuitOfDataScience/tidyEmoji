@@ -8710,6 +8710,66 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
 })
 
+test_that("emoji_lexicons()'s n is a row count, and the registry replaces", {
+  # ?emoji_lexicons called n the "number of emoji". For the two bundled
+  # lexicons that is true, and the page now says why: one row per code-point
+  # key. For a registered one it need not be, which is the distinction
+  # ?emoji_provenance already draws for n_emoji.
+  local_clean_registry()
+  skip_if_catalogue_moved()
+  ekey <- asNamespace("tidyEmoji")$emoji_key
+  A <- "\U0001F600"
+  B <- "\U0001F621"
+  bare <- "\u2764"
+  qual <- "\u2764\uFE0F"
+
+  bundled <- emoji_lexicons()
+  n_of <- function(x, nm) x$n[match(nm, x$name)]
+  expect_identical(n_of(bundled, "novak2015"), nrow(emoji_sentiment_lexicon))
+  expect_identical(n_of(bundled, "emotag1200"), nrow(emoji_emotion_lexicon))
+  # and for those two, rows really are emoji: one key each, none unusable
+  for (k in list(ekey(emoji_sentiment_lexicon$emoji), emoji_emotion_lexicon$key)) {
+    expect_false(anyNA(k))
+    expect_identical(length(unique(k)), length(k))
+  }
+
+  # a registered lexicon where rows outrun emoji, both ways
+  register_emoji_lexicon("two_spellings",
+                         data.frame(emoji = c(bare, qual), score = c(1, 1),
+                                    stringsAsFactors = FALSE))
+  register_emoji_lexicon("unusable_rows",
+                         data.frame(emoji = c(A, "", NA), score = c(1, 2, 3),
+                                    stringsAsFactors = FALSE))
+  reg <- emoji_lexicons()
+  expect_identical(n_of(reg, "two_spellings"), 2L)
+  expect_identical(length(unique(ekey(c(bare, qual)))), 1L)
+  expect_identical(n_of(reg, "unusable_rows"), 3L)
+  expect_identical(sum(!is.na(ekey(c(A, "", NA)))), 1L)
+
+  # re-registering a name replaces the table, silently and completely
+  register_emoji_lexicon("two_spellings",
+                         data.frame(emoji = A, score = 9,
+                                    stringsAsFactors = FALSE))
+  d <- data.frame(text = paste("x", A), stringsAsFactors = FALSE)
+  expect_identical(emoji_score(d, text, lexicon = "two_spellings")$.emoji_score,
+                   9)
+  expect_identical(sum(emoji_lexicons()$name == "two_spellings"), 1L)
+
+  # a key column in the caller's table is replaced, not trusted
+  out <- register_emoji_lexicon(
+    "own_key",
+    data.frame(emoji = c(A, B), key = c("ZZ", "YY"), score = c(1, -1),
+               stringsAsFactors = FALSE))
+  expect_identical(out$key, ekey(c(A, B)))
+  expect_identical(emoji_score(d, text, lexicon = "own_key")$.emoji_score, 1)
+
+  rd <- rd_flat("emoji_lexicons")
+  expect_match(rd, "is the lexicon's", fixed = TRUE)
+  expect_match(rd, "969 and 150", fixed = TRUE)
+  expect_match(rd_flat("register_emoji_lexicon"),
+               "replaces the table under it", fixed = TRUE)
+})
+
 test_that("a lexicon's unusable values behave the same whichever kind they are", {
   # Round 113: emoji_incongruity() treats a non-finite `text_score` as
   # missing and says so, and .emoji_lexicon_record() refuses a non-numeric

@@ -19,7 +19,10 @@ one-row-per-emoji requirement, which is checked when the lexicon is used.}
 Default \code{"emoji"}.}
 }
 \value{
-Invisibly, the registered lexicon (with an added \code{key} column).
+Invisibly, the registered lexicon, with a \code{key} column holding the
+code-point key of each glyph. A \code{key} column already in \code{tbl} is
+replaced rather than trusted: the registry looks a lexicon up by that
+column, so one holding anything else would resolve every row to nothing.
 }
 \description{
 \code{register_emoji_lexicon()} adds a user-supplied lexicon to the in-session
@@ -29,7 +32,11 @@ the package's codepoint key (\code{U+FE0F} stripped), so a lexicon keyed on
 unqualified glyphs still matches qualified text.
 }
 \details{
-Registration lasts for the session; it is not written to disk.
+Registration lasts for the session; it is not written to disk. Registering
+a name that is already taken replaces the table under it, without warning
+and without a way to get the old one back: there is no public counterpart
+that removes a registration, so re-registering is how a lexicon is
+changed. \code{\link[=emoji_lexicons]{emoji_lexicons()}} shows what is currently registered.
 }
 \examples{
 my_lex <- data.frame(
