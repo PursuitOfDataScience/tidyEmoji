@@ -112,6 +112,8 @@ navbar:
     menu:
     - text: Introduction to tidyEmoji
       href: articles/introduction.html
+    - text: Reversible emoji preprocessing for language models
+      href: articles/reversible-preprocessing.html
   - text: News
     href: news/index.html
   right:

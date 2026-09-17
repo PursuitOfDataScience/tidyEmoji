@@ -4377,7 +4377,14 @@ test_that("the vignette names every export, and reaches for nothing superseded",
   # `R CMD check` only the installed vignette is reachable; from the source
   # tree all of R/ is, and there the count is worth asserting.
   r_files <- Sys.glob("../../R/*.R")
-  sources <- c(vig, "../../README.Rmd", r_files)
+  # every vignette, not just the introduction: the guard is about what the
+  # prose teaches, and a second article teaches just as loudly. Both paths are
+  # listed because only one of them exists at a time -- vignettes/ from the
+  # source tree, inst/doc/ inside `R CMD check`.
+  doc_dir <- system.file("doc", package = "tidyEmoji")
+  vigs <- unique(c(vig, Sys.glob("../../vignettes/*.Rmd"),
+                   if (nzchar(doc_dir)) Sys.glob(file.path(doc_dir, "*.Rmd"))))
+  sources <- c(vigs, "../../README.Rmd", r_files)
   sources <- sources[file.exists(sources)]
   expect_gt(length(sources), 0L)
   if (length(r_files)) expect_gt(length(sources), 20L)
@@ -4496,7 +4503,12 @@ test_that("the declared dependency floors cover the arguments the code uses", {
     list(pkg = "tidyr", fun = "separate_longer_delim",
          args = "delim", floor = "1.3.0"),
     list(pkg = "readr", fun = "read_csv",
-         args = "show_col_types", floor = "2.0.0")
+         args = "show_col_types", floor = "2.0.0"),
+    # the suite itself: expect_no_error() and expect_no_warning() arrived in
+    # testthat 3.1.5, and the suite calls them 15 times. A declared floor of
+    # 3.0.0 described a testthat the tests could not run on.
+    list(pkg = "testthat", fun = "expect_no_warning",
+         args = "object", floor = "3.1.5")
   )
   desc <- utils::packageDescription("tidyEmoji")
   declared <- paste(desc$Imports, desc$Suggests, sep = ", ")
@@ -8588,15 +8600,21 @@ test_that("NEWS.md's orientation matches the section it describes", {
   f <- system.file("NEWS.md", package = "tidyEmoji")
   skip_if(!nzchar(f) || !file.exists(f), "NEWS.md not installed")
   l <- readLines(f, warn = FALSE, encoding = "UTF-8")
-  v <- as.character(utils::packageVersion("tidyEmoji"))
-  start <- grep(paste0("^# tidyEmoji ", v, "\\s*$"), l)
-  expect_length(start, 1L)
-  later <- grep("^# tidyEmoji ", l)
-  stop_at <- later[later > start]
+  # Keyed to the claim, not to packageVersion(). Only a section long enough to
+  # need a way in carries an orientation, so once a new version opens above it
+  # the version-keyed lookup went looking for one that was never promised.
+  # Whichever section states the count is the section to check.
+  at <- grep("Entries whose first sentence is", l, fixed = TRUE)
+  skip_if(length(at) == 0L, "no NEWS section carries an orientation")
+  expect_length(at, 1L)
+  heads <- grep("^# tidyEmoji ", l)
+  # max(integer(0)) is -Inf with a warning, and the slice below would then
+  # error rather than report, so say what is wrong instead.
+  expect_true(any(heads < at),
+              info = "the orientation sits above every version heading")
+  start <- max(heads[heads < at])
+  stop_at <- heads[heads > start]
   sect <- l[start:(if (length(stop_at)) stop_at[1L] - 1L else length(l))]
-
-  # the orientation is present and describes this section
-  expect_true(any(grepl("Entries whose first sentence is", sect, fixed = TRUE)))
   # and the count it quotes is the number of bold leads there actually are
   n_bold <- sum(grepl("^\\* \\*\\*", sect))
   expect_gt(n_bold, 0L)

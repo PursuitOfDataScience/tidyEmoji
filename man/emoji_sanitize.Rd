@@ -163,6 +163,9 @@ emoji_sanitize(df, text, policy = "name")
 emoji_sanitize(df, text, policy = "placeholder")
 }
 \seealso{
-\code{\link[=emoji_token_cost]{emoji_token_cost()}} for what the emoji are costing you;
-\code{\link[=emoji_to_text]{emoji_to_text()}} for the name/shortcode rewrite on its own.
+\code{vignette("reversible-preprocessing", package = "tidyEmoji")}
+runs this ladder end to end, including the round trip on skin tones,
+flags, keycaps and ZWJ sequences; \code{\link[=emoji_token_cost]{emoji_token_cost()}} for what the emoji
+are costing you; \code{\link[=emoji_to_text]{emoji_to_text()}} for the name/shortcode rewrite on its
+own.
 }

@@ -58,3 +58,73 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+
+  # The package promises that no user-visible ordering depends on the session's
+  # collation, and that promise has been broken twice: emoji_to_text()'s
+  # shortcode choice in 0.3.0 and emoji_dfm(doc_id =)'s row order in 0.4.0.
+  # Both times a plain-locale check was green. This job varies LC_COLLATE and
+  # nothing else.
+  #
+  # LC_ALL=C would be the obvious thing to write and is a trap: it changes
+  # LC_CTYPE too, which mangles the UTF-8 in the test files themselves, so the
+  # fixtures break before any package code runs and every verb looks broken.
+  collation:
+    runs-on: ubuntu-latest
+
+    name: ubuntu-latest (release, LC_COLLATE=${{ matrix.collate }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        collate: ['C', 'en_US.UTF-8']
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      LC_COLLATE: ${{ matrix.collate }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      # A locale R cannot set is worse than no job: R warns at startup, falls
+      # back to C, and the matrix entry then tests the same thing twice while
+      # claiming otherwise. Generate it before R starts.
+      - name: Make the collation available
+        if: matrix.collate != 'C'
+        run: |
+          sudo locale-gen "${{ matrix.collate }}"
+          locale -a | grep -i -E 'en_us|c\.utf' || true
+        shell: bash
+
+      - name: Confirm the collation actually took effect
+        run: |
+          want <- "${{ matrix.collate }}"
+          got <- Sys.getlocale("LC_COLLATE")
+          cat("LC_COLLATE wanted:", want, "got:", got, "\n")
+          cat("LC_CTYPE:", Sys.getlocale("LC_CTYPE"), "\n")
+          # Compared case- and separator-insensitively, because glibc reports
+          # en_US.utf8 for a request of en_US.UTF-8.
+          norm <- function(x) tolower(gsub("[-_.]", "", x))
+          if (!identical(norm(got), norm(want))) {
+            stop("LC_COLLATE did not take effect: this job would test nothing.")
+          }
+          # And LC_CTYPE must stay UTF-8, or the UTF-8 in the test files is
+          # parsed byte-wise and every detection fixture becomes a different
+          # string. That is the trap that makes LC_ALL=C useless here.
+          stopifnot(grepl("UTF-8", Sys.getlocale("LC_CTYPE"), ignore.case = TRUE))
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: false

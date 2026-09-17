@@ -143,8 +143,11 @@
 #'   it is in [emoji_to_text()] for `format = "name"`.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`.
-#' @seealso [emoji_token_cost()] for what the emoji are costing you;
-#'   [emoji_to_text()] for the name/shortcode rewrite on its own.
+#' @seealso `vignette("reversible-preprocessing", package = "tidyEmoji")`
+#'   runs this ladder end to end, including the round trip on skin tones,
+#'   flags, keycaps and ZWJ sequences; [emoji_token_cost()] for what the emoji
+#'   are costing you; [emoji_to_text()] for the name/shortcode rewrite on its
+#'   own.
 #' @examples
 #' df <- data.frame(text = c("ship it \U0001f680", "no emoji"))
 #' emoji_sanitize(df, text, policy = "strip")
@@ -259,7 +262,9 @@ emoji_sanitize <- function(data, text, policy = "keep",
 #' @return `data`, as a tibble, with added columns `.emoji_n`, `.emoji_bytes`,
 #'   `.emoji_codepoints`, `.emoji_graphemes` and `.emoji_token_estimate`.
 #' @seealso [emoji_sanitize()] for acting on the answer; [emoji_ratio()] for
-#'   the share of the text that is emoji.
+#'   the share of the text that is emoji;
+#'   `vignette("reversible-preprocessing", package = "tidyEmoji")` for the
+#'   before-and-after token budget on a real corpus.
 #' @examples
 #' family <- paste0("\U0001F468\u200d\U0001F469\u200d",
 #'                   "\U0001F467\u200d\U0001F466")

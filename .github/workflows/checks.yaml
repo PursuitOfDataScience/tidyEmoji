@@ -1,0 +1,59 @@
+# The two checks that go stale on their own rather than when the code changes:
+# a URL that rots, and a typo that reaches a help page. Both are cheap, neither
+# belongs in the per-push matrix, so they run weekly and on demand.
+#
+# Note on running them locally: on this cluster's login nodes R's libcurl
+# cannot verify clarin.si (the CA bundle predates the issuing root), and other
+# third-party academic hosts time out intermittently under the parallel
+# checker. Both are the host's problem rather than the package's, which is the
+# whole reason this job runs on a hosted runner.
+on:
+  schedule:
+    - cron: '30 6 * * 1'
+  workflow_dispatch:
+
+name: checks
+
+permissions: read-all
+
+jobs:
+  urls:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::urlchecker
+      - name: Check every URL in DESCRIPTION, Rd, vignettes and CITATION
+        run: |
+          res <- urlchecker::url_check(".")
+          print(res)
+          if (NROW(res)) stop("URLs need attention: see the table above.")
+        shell: Rscript {0}
+
+  spelling:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::spelling
+          needs: check
+      - name: Spell check help pages, vignettes, README and NEWS
+        run: |
+          res <- spelling::spell_check_package(".")
+          print(res)
+          if (NROW(res)) {
+            stop("Unknown words: fix them, or add the real ones to inst/WORDLIST.")
+          }
+        shell: Rscript {0}

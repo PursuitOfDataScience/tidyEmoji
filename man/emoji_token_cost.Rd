@@ -67,5 +67,7 @@ emoji_token_cost(df, text)
 }
 \seealso{
 \code{\link[=emoji_sanitize]{emoji_sanitize()}} for acting on the answer; \code{\link[=emoji_ratio]{emoji_ratio()}} for
-the share of the text that is emoji.
+the share of the text that is emoji;
+\code{vignette("reversible-preprocessing", package = "tidyEmoji")} for the
+before-and-after token budget on a real corpus.
 }

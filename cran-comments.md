@@ -1,277 +1,117 @@
 ## Submission notes
 
-This is a feature release (0.4.0; previous CRAN version 0.3.0, published
-2026-08-04). The 0.2.1 correctness patch and the 0.3.0 features shipped in that
-0.3.0 release and are documented separately in NEWS.md. New in 0.4.0:
+*Skeleton for the next submission, opened 2026-09-17 after 0.4.0 was accepted.
+Fill in the two TODO sections before submitting; everything below them is
+carried forward because the test suite derives it and will fail if it goes
+stale. The 0.4.0 text is in git history (`git show v0.4.0:cran-comments.md`)
+if a paragraph is worth reusing.*
 
-* Interpretation risk (`emoji_ambiguity()`, `emoji_risk()`,
-  `emoji_flag_ambiguous()`, `emoji_sentiment(se = TRUE)`), computed from the
-  annotation counts already carried by the bundled Emoji Sentiment Ranking.
-* Context windows and corpus-derived collocations (`emoji_context()`,
-  `emoji_collocations()`).
-* Time verbs (`emoji_trend()`, `emoji_turnover()`, `emoji_seasonality()`,
-  `emoji_version_profile()`, `emoji_adoption_lag()`,
-  `emoji_unicode_releases()`).
-* Text-emoji mismatch (`emoji_incongruity()`, `emoji_congruence()`,
-  `emoji_incongruity_profile()`).
-* Functional type (`emoji_type()`, `emoji_faceness()`, `as_emoji_type()`).
-* Preprocessing policies and token accounting for language-model pipelines
-  (`emoji_sanitize()`, `emoji_token_cost()`).
-* Provenance (`emoji_provenance()`, `emoji_unicode_version()`) and a new
-  `inst/CITATION`.
+**TODO before submitting.** In this order:
 
-No new dependencies and no new bundled data. No verb gains or loses an output
-column, but a pre-submission audit produced several behavioural fixes, all
-detailed in NEWS.md. The ones a user could notice:
-
-* Detection: 232 of the 2501 zero-width-joiner sequences in the reference
-  table were split into their component emoji instead of being read as one.
-  The 2023-2024 sequences built around a bare gender sign are the clearest
-  case: "woman walking facing right" arrived as "person walking" plus "right
-  arrow". The grapheme repair now also rejoins a pair whose union is itself a
-  catalogued emoji, and grows a lone match outwards when its sequence has no
-  second match to merge with. Exact detection of the reference table goes from
-  63.2% to 95.8% (3189 of 5042 spellings, against 4830) and the number of
-  spellings that lose a joiner from 1643 to 2.
-  Counts change only for corpora holding one of the affected spellings: the
-  bundled 2000-tweet corpus used in the vignette has 38 rows containing a
-  joiner and its counts are unchanged, and `README.md` re-renders byte for
-  byte, so well-formed text is unaffected.
-* The time verbs bucketed a `POSIXct` column by its UTC day rather than by the
-  day it shows in its own timezone, so a 23:30 timestamp in a western zone was
-  counted on the following day. Day, month, quarter, year and weekday buckets
-  change for date-time columns outside UTC; `Date` columns are unaffected.
-* `emoji_categorize()` filtered on "has a categorisable emoji" rather than "has
-  an emoji", so a row whose only glyph was newer than the installed 'emoji'
-  package was dropped from the result. It is now kept with `.emoji_category`
-  set to NA.
-* `emoji_position()`'s `.emoji_rel_position` counted code points, so a
-  multi-code-point emoji (a flag, a ZWJ family) inflated the denominator and an
-  emoji that ended the text scored well under 1. Each emoji now counts as one
-  position. `.emoji_first` / `.emoji_last` are unchanged and remain code-point
-  offsets.
-* `emoji_dfm(doc_id = )` previously ordered its rows with the session's
-  collation and now uses first-appearance order of the id.
-* The verbs that work a row at a time now carry a grouped data frame's grouping
-  through to their result, as `dplyr::mutate()` and `dplyr::filter()` do;
-  previously the grouping was dropped, so a later `summarise()` silently gave
-  one corpus-wide row. Six verbs also stopped rejecting grouped input outright.
-* Zero-row input now returns the documented column *types*; five verbs built
-  them with `ifelse()` and returned `logical` columns where a populated call
-  returns `double` or `integer`. No value changed.
-* Arguments that were absorbed now error: a fractional `n` / `top_n` /
-  `window` / `min_n` (each was silently truncated), a non-string
-  `emoji_ngrams(sep = )`, and a `register_emoji_lexicon()` name that a bundled
-  lexicon already answers to (the registration used to succeed and then be
-  unreachable).
-* A character `time` column now warns about values it cannot read as dates
-  before the rows are dropped; previously they were dropped silently.
-
-The package makes no network requests, at check time or at run time.
-
-`emoji_version_profile()` and `emoji_adoption_lag()` change output for
-variation-selector emoji. The upstream `emoji::emojis` table attaches the
-introducing Unicode version to the unqualified member of a variation pair and
-leaves it `NA` on the fully-qualified one, so 1252 of 5042 reference rows had
-no version and were reported as unknown. The reference table now fills
-`version` across glyphs sharing a codepoint key, which is the normalisation
-already used for every other glyph-to-metadata join in the package. No
-codepoint key carries two different versions, so the change only fills gaps.
-
-
-The declared R dependency is raised from `R (>= 3.5.0)` to `R (>= 4.1.0)`. This
-is a correction, not a new requirement: the package's own code uses nothing
-newer than R 3.5, but `dplyr` and `tidyr` -- both hard dependencies -- declare
-`R (>= 4.1.0)`, so R 4.1.0 is the oldest version on which `tidyEmoji` can in
-fact be installed. The previous value produced an opaque dependency-resolution
-error on R 3.5 to 4.0 rather than a clear message about the R version.
-
-Three package floors are also newly declared, each for a specific argument the
-package would otherwise fail on. None adds a dependency; all three name a
-version from 2021-2023, no newer than the existing `dplyr (>= 1.1.0)`.
-
-* `lifecycle (>= 1.0.3)` -- `deprecate_warn(env=, user_env=)`. These arguments
-  do not exist in lifecycle 1.0.0. Every grouped-input warning in the package
-  goes through one helper that passes them, so on an older lifecycle a dozen
-  verbs would fail with "unused argument".
-* `tidyr (>= 1.3.0)` -- `separate_longer_delim()`, used in the vignette in
-  place of the superseded `separate_rows()`.
-* `readr (>= 2.0.0)` in Suggests -- `read_csv(show_col_types=)`, absent in
-  readr 1.4.0. Used only by one test, which now also gates on the version
-  rather than on mere presence.
-
-The introduction vignette no longer requires any Suggests package to build.
-It read its example corpus with `readr::read_csv()` and drew its charts with
-\pkg{ggplot2}, \pkg{forcats} and \pkg{stringr} unconditionally, so
-`R CMD build` failed outright on a library tree without them. The corpus is now
-read with `utils::read.csv()`, and the nine plotting chunks are gated on a
-`requireNamespace()` flag, so the vignette builds with or without them.
-
+* What kind of release this is, and the previous CRAN version with its
+  publication date.
+* The new verbs and the behaviour changes a user could notice, each in one
+  sentence, pointing at NEWS.md for the detail.
+* Whether dependencies, bundled data or the licence changed.
+* Anything a CRAN reviewer flagged last time, and how it was addressed.
 
 ## Test environments
 
+*Re-run all of these. The list is the environments to cover, not a record of a
+run that has happened for this version.*
+
 * Local: R 4.1.0 (the declared minimum), R 4.4.1 and R 4.6.0 on Linux
-* Locale: `R CMD check --as-cran` was also run end to end under `LC_ALL=C`,
-  examples, vignette and tests included, with the same result (see the skip
-  inventory below for the three tests that stand down there, and why)
-* GitHub Actions:
-  - ubuntu-latest: R-release, R-devel, R-oldrel-1
+* Locale: `R CMD check --as-cran` end to end under `LC_ALL=C`, examples,
+  vignette and tests included, with the skip inventory explained
+* GitHub Actions, six GitHub Actions flavours in the check matrix:
+  - ubuntu-latest: R-release, R-devel, R-oldrel-1, R 4.1
   - macOS-latest: R-release
   - windows-latest: R-release
+* GitHub Actions, additionally: two collation jobs running the same check with
+  `LC_COLLATE` set to `C` and to `en_US.UTF-8` and nothing else varied, a
+  weekly URL and spelling job, and a coverage job
 * win-builder: R-devel and R-release
 
 ## R CMD check results
 
-On the six GitHub Actions flavours: 0 errors | 0 warnings | 0 notes.
-On our own machine: 0 errors | 1 warning | 3 notes, all four host artefacts,
-itemised below.
+**TODO: fill in from an actual run.** Report per environment rather than as one
+headline, and separate the package's own results from this host's artefacts.
+The four that recur on our machine, and are not the package, are: no `qpdf`,
+no `tidy`, an unverifiable system clock, and the URL discussed below. The PDF
+reference manual is only built locally, so the local run is the one that covers
+it: do not skip it.
 
-Reported per environment rather than as one headline, because the two differ
-and the difference is entirely our host's missing tooling.
+## The skip inventory
 
-That is not an assertion about our own machine. Every flavour of the GitHub
-Actions matrix reports `Status: OK` for the commit submitted here: macOS
-(R 4.6.1), Windows (R 4.6.1), and Ubuntu on R-release (4.6.1), R-devel,
-R-oldrel-1 (4.5.3) and R 4.1 (4.1.3). All six build the vignette and run the
-full `testthat` suite. The last of those is there because `oldrel-1` sits far
-above the declared floor of R 4.1.0, so without it the minimum this package
-promises was never actually built against.
+Run as CRAN runs it, **seventeen** tests skip on R 4.4.1, and none of them is a
+test that might fail.
 
-Locally, a full `R CMD check --as-cran` with the remote incoming checks
-*enabled* (`_R_CHECK_CRAN_INCOMING_REMOTE_=true`) reports 1 WARNING and 3
-NOTEs, and all four are artefacts of this host rather than the package: no
-`qpdf`, no `tidy`, an unverifiable system clock, and the URL below. The six
-clean flavours above are the evidence for that reading, rather than our word
-for it -- none of the four reproduces anywhere the host is not ours. The
-substantive checks all pass locally too: installation, examples, the
-`testthat` suite, vignette re-building and the PDF manual (which the CI matrix
-does not build, so the local run is the one that covers it).
+* **seven are `skip_on_cran()`**: they read the checking machine rather than
+  the package. The declared R minimum against an installable tree, a
+  `select()`-avoidance benchmark comparing two wall-clock timings, four that
+  read files a tarball does not carry (`data-raw/` for regenerating the
+  crosswalks, `README.Rmd` for re-rendering it, and this file twice for its own
+  claims), and one asserting the installed `emoji` release is the exact one the
+  documented catalogue figures came from.
+* **Three stand down because the tarball does not carry the file they read**,
+  and each says which file. Their messages are, on one line each so they stay
+  greppable:
+  `README sources not available`
+  `package sources not available; scanned the namespace instead`
+  `workflow not available`
+  The second scans the installed namespace instead, and the third is coupled to
+  `.github/`, which is build-ignored.
+* **Seven are acceptance tests for verbs the next release will add**, each
+  naming its target: `emoji_country()`, `emoji_skin_tone()`,
+  `emoji_coverage()`, `emoji_keywords()`, `as_emoji_canonical()`,
+  `emoji_identical()` and a `presentation =` argument. They live in
+  `test-regression-0.5.0.R` so the specification sits where it will run, and
+  they stand down by name until the verb exists rather than failing.
 
-On R 4.6.0 (the newest release available locally), the same check reports
-`Status: 2 NOTEs` -- the URL below and the missing `tidy` -- with everything
-else OK: installation, examples, the `testthat` suite, vignette re-building
-and the PDF manual. That host has `qpdf` and a verifiable clock, so two of
-the four artefacts above simply do not arise there, which is the clearest
-evidence we can offer that they are the host and not the package.
+Count this from the run rather than copying the number forward: it changes
+whenever a verb lands or a test is added.
 
-That tree also has neither 'readr' nor 'forcats' installed, so the same run
-doubles as the check that the package, its examples and its vignette build
-without those Suggests packages: the vignette's plotting chunks stand down
-on their `requireNamespace()` gate, the corpus is read with
-`utils::read.csv()` rather than `readr`, and the one test gated on
-`readr (>= 2.0.0)` skips. `_R_CHECK_FORCE_SUGGESTS_=false` is needed there,
-since a complete check requires Suggests by default. Run on its own on that
-R, the suite is 14665 pass and one skip.
+## Marked UTF-8 strings
 
-On R 4.1.0, the declared minimum, the `testthat` suite passes in full: 14664
-pass and one skip, that tree carrying `readr` 1.4.0 so the test gated on
-`readr (>= 2.0.0)` stands down. Re-measured for this submission rather than
-quoted from an older run. The one difference that showed up there was in the
-checking stack and not in the package: `utf8` 1.2.1 gives `U+263A` display
-width 2 where 1.2.6 gives 1, so `pillar` pads one README column differently,
-and the test that re-renders the README now compares its output with runs of
-spaces collapsed.
-
-The skip inventory itself is current and was re-measured for this submission
-on R 4.4.1. Run as CRAN runs it, ten tests skip: seven are `skip_on_cran()`,
-and three stand down because a tarball does not carry the file they read.
-Those three report `README sources not available`, `package sources not
-available; scanned the namespace instead` and `workflow not available` -- the
-second scans the installed namespace instead, and the third is coupled to
-`.github/`, which is build-ignored. None of the ten is a test that might
-fail.
-
-The `skip_on_cran()` seven skip for a reason that is not "this might fail"
-either: the declared R minimum
-against an installable tree and a `select()`-avoidance benchmark, both of
-which read the checking machine rather than the package -- one inspects the
-installed dependencies' own R floors, the other compares two wall-clock
-timings, and neither is a fair question to ask a CRAN flavour -- plus four
-that read files a tarball does not carry (`data-raw/` for regenerating the
-crosswalks, `README.Rmd` for re-rendering it, and this file twice, for its
-own claims), plus one that asserts the installed `emoji` package is the exact
-release the documented catalogue figures were derived from.
-
-Three further tests are skipped on a checking flavour whose locale is not
-UTF-8, and their skip message says why. R transliterates a string it cannot
-represent natively on the way into a symbol and on the way out of
-`deparse()`, so a glyph used as a column name, or recovered from a deparsed
-list column, arrives as the literal text `<U+0001F602>`; `pillar` also prints
-an ASCII tibble there, so a fresh render of `README.Rmd` cannot match the
-shipped `README.md`. All three are about R's own transliteration rather than
-about this package, and everything else passes unchanged: under `LC_ALL=C`
-the suite is 14074 pass, 0 failures and 0 warnings.
-
-That last one deserves a note, because it is the reason this submission is
-robust to something outside our control. Roughly seventy figures in the help
-pages are counts taken from `emoji::emojis` -- 5042 catalogue rows, 3790
-distinct code-point keys, 212 undetectable spellings and so on -- and they are
-pinned in the suite deliberately, because the pinning is what catches
-documentation drifting away from the data. `emoji`'s version tracks the
-Unicode emoji version, and `DESCRIPTION` declares `emoji (>= 16.0.0)` with no
-upper bound, so the day a 17.0.0 catalogue ships every one of those figures
-moves at once. Rather than let that turn into dozens of unrelated-looking
-failures on every flavour, the count assertions are gated on the installed
-release matching the documented one, and the mismatch is reported once, by the
-single test above, where the maintainer will see it locally and in CI. On a
-checking machine the figures are simply no longer the subject. Checking a built tarball skips two more for the same reason,
-`README.Rmd` and the `R/` tree, each of which asserts against the installed
-package instead when the source is absent. Nothing skips for want of a
-Suggests package on a complete tree.
-
-Two checks that used to be skipped now run everywhere, having had no reason
-beyond caution: `emoji_dfm()` at its widest, which builds a 3791-column table
-and is the shape most likely to behave differently on a platform we cannot
-test here, and an audit that no example except `?register_emoji_lexicon`
-registers a lexicon -- a hazard created by `R CMD check` running every example
-in one session, so a CRAN flavour is exactly where it needs to hold.
-
-The bundled datasets contain emoji glyphs and are therefore marked UTF-8, and
-a plain `R CMD check` (without `--as-cran`, which suppresses it) does report
-`Note: found 6890 marked UTF-8 strings`. That count is fully accounted for and
-every one of the strings is an emoji glyph in a glyph column:
-`emoji_unicode_crosswalk$unicode` 5761, `emoji_sentiment_lexicon$emoji` 969,
-`emoji_emotion_lexicon$emoji` 150, `category_unicode_crosswalk$unicodes` 10.
-No other column in any dataset carries a marked string. The note did not appear
-on any of the 13 CRAN check flavours for 0.2.0 and 0.4.0 adds no further data,
-so it is not expected here; it is recorded because it is inherent to emoji data
+The bundled datasets contain emoji glyphs and are therefore marked UTF-8, and a
+plain `R CMD check` (without `--as-cran`, which suppresses it) reports
+`Note: found 6890 marked UTF-8 strings`. Every one of those strings is an emoji
+glyph in a glyph column: `emoji_unicode_crosswalk$unicode` 5761,
+`emoji_sentiment_lexicon$emoji` 969, `emoji_emotion_lexicon$emoji` 150,
+`category_unicode_crosswalk$unicodes` 10. No other column in any dataset
+carries a marked string. It is recorded because it is inherent to emoji data
 rather than a defect, and because the figure should be verifiable rather than
 asserted.
 
-The reference manual builds as PDF. Help pages refer to emoji by code point
-(for example `U+2764 U+FE0F`) rather than embedding the glyph, so pdfLaTeX has
-no unmapped characters to typeset.
+## The one URL note, and what it is not
 
 `?emoji_sentiment_lexicon` links to <https://hdl.handle.net/11356/1048>, the
-canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. Every URL in
-the package was checked by `R CMD check --as-cran` with remote checks enabled,
-and this is the only one reported -- on our machine only. The precise cause follows.
+canonical CLARIN.SI handle for the Emoji Sentiment Ranking data. It is the only
+URL `R CMD check --as-cran` reports with remote checks enabled, and only on our
+machine.
 
-The documented URL itself is healthy, and this is the part that matters: it
+The documented URL itself is healthy, which is the part that matters: it
 returns `HTTP/2 302` with
-`location: https://www.clarin.si/repository/xmlui/handle/11356/1048`. What
-`R CMD check` cannot reach is that redirect target -- a third-party CLARIN.SI
-host -- not `hdl.handle.net`, and not anything the package controls.
+`location: https://www.clarin.si/repository/xmlui/handle/11356/1048`. What the
+checker cannot reach is that redirect target, a third-party CLARIN.SI host,
+rather than `hdl.handle.net` or anything the package controls.
 
-Why the target fails has changed between our own check runs, which is itself
-the point. It first failed verification: the chain `clarin.si` <-
-`GEANT TLS RSA 1` (HARICA) ends at an intermediate, and `openssl s_client`
-reported `Verify return code: 20 (unable to get local issuer certificate)`
-because this host is CentOS 8 carrying `ca-certificates-2020.2.41` with no
-current HARICA root; R's wording then was
-`Status: Error ... (Status without verification: OK)`. On the most recent run
-the host does not answer at all: DNS resolves `www.clarin.si` to
-`95.87.154.205`, but a TCP connect times out after 40s, with or without TLS
-verification, while other European academic hosts (`aclanthology.org`,
-`doi.org`) respond normally from the same machine in the same session.
-
-So we make no claim about the target's current availability -- it is not ours
-to make. The claim is narrower and checkable: the URL the package documents
+So we make no claim about the target's current availability: it is not ours to
+make. The claim is narrower and checkable. The URL the package documents
 resolves and redirects correctly, and the note describes a third-party host
 reached only by following that redirect. A checking host that can reach
-CLARIN.SI reports nothing. We have kept the canonical handle rather than
-substituting a mirror, because it is the citable identifier the data is
-published under.
+CLARIN.SI reports nothing. We keep the canonical handle rather than a mirror,
+because it is the citable identifier the data is published under.
+
+## Detection figures, carried forward
+
+These are properties of the package rather than of one submission, and the test
+suite asserts that this file still quotes them. Exact detection of the reference
+table is **95.8%**, which is 4830 of its 5042 spellings, up from **63.2%**
+(3189 of 5042) before the 0.4.0 grapheme repair. The number of spellings that
+lose a zero-width joiner went from **1643** to 2. `test-invariants.R` derives
+all four numbers from the installed catalogue, so re-run the suite rather than
+copying them forward if the catalogue moves.
 
 ## Bundled data and licence
 
@@ -292,8 +132,8 @@ There are no reverse dependencies. Verified against a live CRAN index
 (24,748 packages when last re-checked) with
 `tools::package_dependencies("tidyEmoji", db = available.packages(),
 reverse = TRUE, which = c("Depends", "Imports", "LinkingTo", "Suggests",
-"Enhances"))`, which returns none. The same index confirms the currently
-published version is 0.3.0.
+"Enhances"))`, which returns none. Re-run this against a live index before submitting, and state the published
+version it reports.
 
 The DOI in DESCRIPTION and on `?emoji_sentiment_lexicon`
 (<doi:10.1371/journal.pone.0144296>) resolves to the PLoS ONE article.

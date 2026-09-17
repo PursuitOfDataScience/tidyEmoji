@@ -1,3 +1,77 @@
+# tidyEmoji 0.5.0
+
+Nothing user-visible yet. 0.4.0 reached CRAN on 2026-09-17; this section
+collects changes for the next release as they land.
+
+The bundled crosswalks track **Unicode emoji 16.0**, via `emoji` 16.0.0.
+Re-generating them from `data-raw/crosswalks.R` against that release reproduces
+the shipped data exactly, so the catalogue is current.
+
+## Verified, no change needed
+
+* `emoji_categorize()` and `emoji_ngrams()` were the last two verbs the
+  pre-release audit listed as pooling grouped data silently. Measured against
+  0.4.0: neither does. `emoji_categorize()` is row-preserving and carries the
+  grouping through untouched (same values as ungrouped input, `grouped_df`
+  preserved), and `emoji_ngrams()` returns one row per n-gram occurrence keyed
+  by `.row_number` without carrying user columns, so there is no grouping for
+  it to ignore. Both are now pinned by tests rather than left as a suspicion.
+* The help page for `emoji_position()` already states that positions are
+  logical rather than visual order, which the roadmap still carried as owed.
+  A test now holds it there, because it is the sentence a right-to-left corpus
+  depends on.
+
+## Documentation
+
+* **New article: `vignette("reversible-preprocessing")`.** The roadmap carried
+  this as the highest-value undocumented capability in the package. It runs
+  the `emoji_sanitize()` loss ladder rather than describing it, shows the
+  shortcode round trip surviving skin tones, flags, ZWJ sequences and keycaps,
+  demonstrates that `wrap` is part of the reversibility contract (a wrap
+  without colons restores nothing, silently), and shows how to keep the emoji
+  signal as feature columns while the text you send to a model holds no emoji.
+  It also makes the detection limitation concrete: a bare `U+2764` carries text
+  presentation, so it is not detected and survives a policy meant to remove it.
+* The introduction vignette now carries a **real `text_score` recipe** at
+  `eval = FALSE`, for tidytext with AFINN and for sentimentr, next to the
+  word-list scorer it uses to stay runnable. `emoji_incongruity()` has always
+  required you to supply the text score, and the promise that any scorer
+  composes was previously only stated.
+* The introduction's LLM section, the README, `?emoji_sanitize` and
+  `?emoji_token_cost` all point at the new article.
+
+## Development infrastructure
+
+None of this changes the package, but all of it was promised in an earlier
+release and kept slipping.
+
+* `data-raw/benchmark.R` makes the timing baseline repeatable instead of a
+  number measured once in a session. It warms the lazy-loaded reference table
+  before timing, reports seconds per verb per corpus size, and flags any verb
+  whose cost grows faster than its row count.
+* Coverage, now that there is a job to report it, is **98.71%** of the
+  package's own code, measured by `covr::package_coverage()` on this suite. The
+  thinnest files are `emoji-sentiment.R` at 95.0%, `emoji-emotion.R` at 95.5%
+  and `emoji-engine.R` at 96.6%; fifteen of the twenty are at 100%.
+* Continuous integration gained three things: a coverage job, a weekly job that
+  spell-checks and URL-checks the built documentation, and a collation matrix
+  that runs the suite under `LC_COLLATE=C` and `en_US.UTF-8`. The last one
+  exists because the "no user-visible ordering depends on collation" invariant
+  has now broken twice, both times with a green plain-locale check. It varies
+  `LC_COLLATE` alone and asserts `LC_CTYPE` stayed UTF-8: `LC_ALL=C` would
+  mangle the UTF-8 in the test files and measure nothing.
+* `spelling` is wired into `tests/spelling.R` (non-failing, skipped on CRAN)
+  and into the weekly job, where it does fail. One real word,
+  "undercounted", joined `inst/WORDLIST`; the file keeps the order it had
+  rather than being re-sorted.
+* **The declared `testthat` floor was wrong.** DESCRIPTION asked for
+  `>= 3.0.0` while the suite has called `expect_no_error()` and
+  `expect_no_warning()` since 0.4.0, both of which arrived in 3.1.5. It now
+  declares `>= 3.1.5`, and the table in `test-invariants.R` that couples each
+  declared floor to the argument that needs it covers testthat too, so the
+  next such gap fails a test rather than waiting for a flavour that has an old
+  testthat installed.
+
 # tidyEmoji 0.4.0
 
 This release delivers the first wave of the feature roadmap filed as
