@@ -258,6 +258,9 @@
 <p><strong>It also invalidates a 0.5.0 spec as written.</strong> §4.3’s <code>emoji_a11y_check()</code> is specified to derive “interrupting (non-final) emoji” from <code><a href="reference/emoji_position.html">emoji_position()</a></code>. Built on the current implementation it would systematically misreport sentence-final flags and ZWJ sequences as mid-sentence interruptions – in an <em>accessibility</em> verb, whose whole purpose is to be trustworthy about placement. <strong>§4.5 is therefore a prerequisite for §4.3, not an independent nicety.</strong></p>
 <p><strong>Second, unrelated axis: right-to-left text.</strong> The offsets are <em>logical</em> (storage) order. Under UAX #9 a right-to-left run renders right-to-left, so in <code>"مرحبا 😀"</code> the emoji is logically last (<code>rel = 1.0</code>) but appears at the reader’s <strong>left</strong>. Every position-derived claim – placement, “interrupting”, sentence-final convention – therefore means something different for Arabic, Hebrew, Persian and Urdu corpora than for English ones, and §10.5’s cross-cultural users are exactly the people likely to hit it. There is no cheap fix (visual order requires running the bidi algorithm), so the deliverable is an explicit statement in the help page that positions are logical-order, plus a note in the §10.5 documentation pass. Do not silently imply visual order.</p>
 <p><strong>Action:</strong> fix the denominator in §4.5’s work, add the three cases above as regression fixtures, and grep for other <code><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar()</a></code> uses on user text before assuming these are the only two verbs affected.</p>
+<blockquote>
+<p>⚠️ <strong>Discharged in 0.4.0, so nothing here is outstanding.</strong> The polish pass (§1.11) fixed the denominator, and the three rows of the table above are pinned at <code>tests/testthat/test-regression-0.4.0.R:350</code>. Verified against the installed 0.4.0 on 2026-09-17: all three report <code>1</code>. Two consequences for the plan, both applied: <strong>§4.5 is no longer a prerequisite for §4.3</strong>, and the <code>.emoji_first</code> / <code>.emoji_last</code> offsets stayed in code points deliberately, so <code><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr()</a></code> still works with them. The right-to-left finding below is <em>not</em> discharged: positions are still logical-order, and the help-page statement and §10.5 note are still owed.</p>
+</blockquote>
 </div>
 <div class="section level3">
 <h3 id="id_12-detection-edge-cases--measured-and-three-of-them-change-050s-specs">1.2 Detection edge cases – measured, and three of them change 0.5.0’s specs<a class="anchor" aria-label="anchor" href="#id_12-detection-edge-cases--measured-and-three-of-them-change-050s-specs"></a></h3>
@@ -1453,6 +1456,9 @@ keywords  aliases</code></pre>
 </div>
 <div class="section level2">
 <h2 id="id_3-what-050-should-be">3. What 0.5.0 should be<a class="anchor" aria-label="anchor" href="#id_3-what-050-should-be"></a></h2>
+<blockquote>
+<p>⚠️ <strong>Read §3.1 before acting on this section.</strong> What follows is the theme proposal this document opened with, and §3.1 reverses it: the theme below is <strong>0.6.0</strong>, and 0.5.0 is the correctness release. The section is kept because §3.1’s argument is only readable against the proposal it rejected, and because §4’s specs are written for it.</p>
+</blockquote>
 <p><strong>Theme: identity, place and access – the human attributes of a glyph.</strong></p>
 <p>Three feature groups plus two pieces of infrastructure. It is coherent (everything answers “what does this glyph say about a person or a place, and who can read it?”), it is the long-planned phase, and §2.1 has made the expensive part cheap.</p>
 <table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Group</th>
@@ -1573,7 +1579,7 @@ keywords  aliases</code></pre>
 <li>
 <strong><code>emoji_coverage()</code> reframes the existing package</strong> rather than extending it. Users learn that the emotion lexicon covers 3% of RGI (§1.7) – that changes how they read output they already have, which is a correctness release’s job.</li>
 <li>
-<strong>It restores the 10-14 target honestly</strong> instead of quietly abandoning it. 0.5.0 becomes 5 verbs plus substantial repair; 0.6.0 lands the themed group at 10-13.</li>
+<strong>It restores the 10-14 target honestly</strong> instead of quietly abandoning it. 0.5.0 becomes 6 verbs plus substantial repair; 0.6.0 lands the themed group at 10-13.</li>
 <li>
 <strong>Risk is lower in both.</strong> A correctness release is reviewable against a fixture table; a feature release on trusted primitives is reviewable against its specs. Merging them produces a release where a reviewer cannot tell which changed number is a fix and which is a bug.</li>
 </ol><p><strong>Cost of this recommendation:</strong> the long-planned identity/place/access theme slips one release, and §10’s audiences wait longer for the verbs they asked for – none of which are urgent, since §10.3, §10.10 and §10.14 showed the biggest wins there are documentation rather than code. <strong>If instead the theme must ship in 0.5.0</strong>, then apply iteration-1’s cut – drop <code>emoji_zwj_components()</code>, <code>emoji_diversity()</code>, <code>emoji_render_check()</code> and <code>emoji_subdivision()</code> – and accept 15 verbs plus six correctness items in one review.</p>
@@ -1668,8 +1674,8 @@ keywords  aliases</code></pre>
 </div>
 <div class="section level3">
 <h3 id="id_45-the-stringi-grapheme-engine--now-a-prerequisite-not-an-option">4.5 The <code>{stringi}</code> grapheme engine – now a prerequisite, not an option<a class="anchor" aria-label="anchor" href="#id_45-the-stringi-grapheme-engine--now-a-prerequisite-not-an-option"></a></h3>
-<p><strong>Scope grew.</strong> This was filed as retiring a documented <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> caveat. §1.1 showed <code><a href="reference/emoji_position.html">emoji_position()</a></code> has the same defect <em>without</em> the documentation, and that §4.3 cannot be built correctly on top of it. So this is no longer the optional item in 0.5.0 – it is the one that unblocks the accessibility group, and it must land first or alongside.</p>
-<p>Affected verbs: <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> (documented), <code><a href="reference/emoji_position.html">emoji_position()</a></code> (§1.1, silent), and any other <code><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar()</a></code>-on-user-text site the audit turns up.</p>
+<p><strong>Scope grew, then shrank again.</strong> This was filed as retiring a documented <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> caveat. §1.1 showed <code><a href="reference/emoji_position.html">emoji_position()</a></code> had the same defect <em>without</em> the documentation, which made the engine a prerequisite for §4.3. <strong>0.4.0’s polish pass fixed <code><a href="reference/emoji_position.html">emoji_position()</a></code> directly</strong> (each emoji now counts as one unit, verified 2026-09-17), so the accessibility group is no longer blocked on this item and it goes back to being what it was: an exactness improvement worth having, not a gate.</p>
+<p>Affected verbs: <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> and <code><a href="reference/emoji_density.html">emoji_density()</a></code>, which still count code points and say so on their help pages, plus any other <code><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar()</a></code>-on-user-text site the audit turns up.</p>
 <p>Resolve it as an opt-in engine rather than a permanent caveat:</p>
 <ul><li><code>Suggests: stringi</code></li>
 <li>
@@ -1778,7 +1784,7 @@ keywords  aliases</code></pre>
 <li>
 <strong>Flags return ISO-2, not names, as the join key.</strong> Names are a display convenience; the code is what other packages take.</li>
 <li>
-<strong>Group support</strong>: <code>emoji_tone_summary(group_by =)</code> is a per-verb argument, not the grouped-df fix. Do not let 0.5.0 half-solve the 1.0 promise.</li>
+<strong>Group support</strong>: <code>emoji_tone_summary(group_by =)</code> is a per-verb argument, not the grouped-df fix. Do not let 0.6.0, which is where §3.1 puts that verb, half-solve the 1.0 promise.</li>
 </ol><hr></div>
 <div class="section level2">
 <h2 id="id_7-risks-and-open-questions">7. Risks and open questions<a class="anchor" aria-label="anchor" href="#id_7-risks-and-open-questions"></a></h2>
@@ -1789,14 +1795,14 @@ keywords  aliases</code></pre>
 <li>
 <strong>Sensitive framing.</strong> The modifier work is the one place this package can do harm. Every verb in §4.1 needs the “describes glyph usage, never infers identity” statement on its own help page – help pages are what people read.</li>
 <li>
-<strong>Test surface.</strong> 0.5.0’s fixtures are the hard part: mixed-tone multi-person sequences, ♀/♂ versus ZWJ gender forms, subdivision tag sequences, professions. Budget as much time for the fixture table as for the code.</li>
+<strong>Test surface.</strong> The themed release’s fixtures are the hard part, which under §3.1 makes them <strong>0.6.0</strong>’s problem: mixed-tone multi-person sequences, ♀/♂ versus ZWJ gender forms, subdivision tag sequences, professions. Budget as much time for the fixture table as for the code. 0.5.0’s own fixture work is smaller and already written, in §12.2.</li>
 <li>
 <strong>Unicode churn.</strong> Emoji 17.0 is out and 18.0 will follow. The refresh must be a checklist item (§8), not a habit.</li>
 <li>
 <strong><code>{text2emotion}</code> overlap</strong> – read it before writing docs, and state plainly where the packages differ. <strong>(verify)</strong>
 </li>
 <li>
-<strong>§10 is a catalogue, not a plan.</strong> The audience section exists so ideas stop being rediscovered, and it is deliberately larger than any one release. The failure mode is treating it as a backlog to burn down: 0.5.0’s cap is 13 verbs (§3), and §10’s only 0.5.0-eligible item is the S-sized <code>emoji_identical()</code> in §10.1. Everything else is scheduled in §9 or later.</li>
+<strong>§10 is a catalogue, not a plan.</strong> The audience section exists so ideas stop being rediscovered, and it is deliberately larger than any one release. The failure mode is treating it as a backlog to burn down: 0.5.0’s cap is 6 verbs (§3.1, not §3’s superseded 13), and §10’s only 0.5.0-eligible item is the S-sized <code>emoji_identical()</code> in §10.1. Everything else is scheduled in §9 or later.</li>
 <li>
 <strong>Forensic misuse (§10.1) is the sharpest new misuse risk.</strong> A user who reads “emoji forensics” support as “tidyEmoji can tell me what the sender saw” will be wrong, and may be wrong in a legal filing. We have codepoints and Unicode versions; we have <strong>no</strong> vendor-rendering data (§2.1 verified the <code>vendor_*</code> columns empty). Every verb in that group states the limit on its own help page, in the same discipline §4.1 applies to identity.</li>
 <li>
@@ -2128,7 +2134,7 @@ keywords  aliases</code></pre>
 <span></span>
 <span><span class="co"># equivalently: a `weights =` argument on the scoring verbs</span></span></code></pre></div>
 <p>This is the single highest-leverage item in this section: it does not add a domain feature, it <strong>doubles the input surface of the whole package</strong> – every existing scoring and summarising verb becomes available to tally data, which covers GitHub/GitLab reactions, Slack reacjis, poll results and any pre-aggregated corpus. It also composes with §10.6.</p>
-<p><strong>Effort</strong> M – the work is in the internals (the long-form contract) plus tests that a tally and its expanded text give identical scores. <strong>Risk</strong> low. <strong>Recommend for 0.6.0</strong> and do not squeeze it into 0.5.0’s 13.</p>
+<p><strong>Effort</strong> M – the work is in the internals (the long-form contract) plus tests that a tally and its expanded text give identical scores. <strong>Risk</strong> low. <strong>Recommend for 0.6.0</strong> and do not squeeze it into 0.5.0’s 6.</p>
 </div>
 <div class="section level3">
 <h3 id="id_103-mental-health-and-crisis-informatics--document-and-refuse-the-lexicon">10.3 Mental health and crisis informatics – document, and refuse the lexicon<a class="anchor" aria-label="anchor" href="#id_103-mental-health-and-crisis-informatics--document-and-refuse-the-lexicon"></a></h3>
@@ -2510,38 +2516,25 @@ keywords  aliases</code></pre>
 <span>    <span class="fu">expect_no_error</span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">z</span>, <span class="va">text</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="fu">expect_no_error</span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="va">na</span>, <span class="va">text</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Promoted from Part B on 2026-09-17: fixed by 0.4.0's polish pass (S1.11), so</span></span>
-<span><span class="co"># these now defend a repair rather than specify one.</span></span>
-<span></span>
-<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.1: rel_position is grapheme-based, so a final emoji reports 1.0"</span>, <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="st">"hi \U0001F600"</span>,                                   <span class="co"># 1 codepoint</span></span>
-<span>    <span class="st">"hi \U0001F1FA\U0001F1F8"</span>,                         <span class="co"># 2 codepoints, was 0.750</span></span>
-<span>    <span class="st">"hi \U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"</span>  <span class="co"># 7, was 0.333</span></span>
-<span>  <span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_equal</span><span class="op">(</span><span class="fu"><a href="reference/emoji_position.html">emoji_position</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span><span class="op">$</span><span class="va">.emoji_rel_position</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: emoji_version_profile() warns on grouped input"</span>, <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span></span>
-<span>    <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>grp  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span><span class="op">)</span>,</span>
-<span>                   text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x \U0001F600"</span>, <span class="st">"y \U0001F602"</span>,</span>
-<span>                            <span class="st">"p \U0001F1FA\U0001F1F8"</span>, <span class="st">"q \U0001F1EF\U0001F1F5"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    <span class="va">grp</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_warning</span><span class="op">(</span><span class="fu"><a href="reference/emoji_version_profile.html">emoji_version_profile</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"ungrouped|group"</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">test_that</span><span class="op">(</span><span class="st">"S1.5: time verbs name `time`, not the internal `var`, when it is missing"</span>, <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="st">"hi \U0001F600"</span>, when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_error</span><span class="op">(</span><span class="fu"><a href="reference/emoji_trend.html">emoji_trend</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"time"</span><span class="op">)</span></span>
-<span>  <span class="fu">expect_error</span><span class="op">(</span><span class="fu"><a href="reference/emoji_turnover.html">emoji_turnover</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">text</span><span class="op">)</span>, <span class="st">"time"</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
-</div>
+<p><strong>Three of Part B’s cases left it on 2026-09-17, and none of them need adding here: 0.4.0 both fixed the defect and pinned the fixture.</strong> Checked against the installed package and the suite on disk:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Was Part B</th>
+<th>Now</th>
+<th>Pinned at</th>
+</tr></thead><tbody><tr><td>S1.1 grapheme <code>rel_position</code> (1, 1, 1)</td>
+<td>✅ passes</td>
+<td><code>test-regression-0.4.0.R:350</code></td>
+</tr><tr><td>S1.5 <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> warns when grouped</td>
+<td>✅ passes</td>
+<td><code>test-regression-0.4.0.R:291</code></td>
+</tr><tr><td>S1.5 time verbs name <code>time</code>
+</td>
+<td>✅ passes</td>
+<td><code>test-regression-0.4.0.R:162</code></td>
+</tr></tbody></table></div>
 <div class="section level3">
 <h3 id="id_122-part-b--the-defects-written-as-the-target-behaviour">12.2 Part B – the defects, written as the target behaviour<a class="anchor" aria-label="anchor" href="#id_122-part-b--the-defects-written-as-the-target-behaviour"></a></h3>
-<p><em>Re-run against the shipped 0.4.0 on 2026-09-17: <strong>three of these now pass</strong> and have moved up to Part A (the grapheme fix, the <code>time</code> message, and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code>’s grouped guard). What is left below still <strong>fails on the current tree</strong>, and is the acceptance criteria for §3.1’s 0.5.0 correctness items, in the same order as §1.</em></p>
+<p><em>Re-run against the shipped 0.4.0 on 2026-09-17: <strong>three of these now pass</strong> and have left this block (the grapheme fix, the <code>time</code> message, and <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code>’s grouped guard). They are not repeated in Part A, because the package’s own suite already pins all three: see the table at the end of §12.1. What is left below still <strong>fails on the current tree</strong>, and is the acceptance criteria for §3.1’s 0.5.0 correctness items, in the same order as §1.</em></p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># TDD spec for the 0.5.0 correctness release. Each test names the roadmap</span></span>
 <span><span class="co"># section that found the defect. Expect failures until that item lands.</span></span>

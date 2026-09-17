@@ -325,6 +325,18 @@ above as regression fixtures, and grep for other
 [`nchar()`](https://rdrr.io/r/base/nchar.html) uses on user text before
 assuming these are the only two verbs affected.
 
+> ⚠️ **Discharged in 0.4.0, so nothing here is outstanding.** The polish
+> pass (§1.11) fixed the denominator, and the three rows of the table
+> above are pinned at `tests/testthat/test-regression-0.4.0.R:350`.
+> Verified against the installed 0.4.0 on 2026-09-17: all three report
+> `1`. Two consequences for the plan, both applied: **§4.5 is no longer
+> a prerequisite for §4.3**, and the `.emoji_first` / `.emoji_last`
+> offsets stayed in code points deliberately, so
+> [`substr()`](https://rdrr.io/r/base/substr.html) still works with
+> them. The right-to-left finding below is *not* discharged: positions
+> are still logical-order, and the help-page statement and §10.5 note
+> are still owed.
+
 ### 1.2 Detection edge cases – measured, and three of them change 0.5.0’s specs
 
 *Also 2026-08-30. `.emoji_locations()` delegates to
@@ -4018,6 +4030,12 @@ the survey is the strongest single argument in this document for
 
 ## 3. What 0.5.0 should be
 
+> ⚠️ **Read §3.1 before acting on this section.** What follows is the
+> theme proposal this document opened with, and §3.1 reverses it: the
+> theme below is **0.6.0**, and 0.5.0 is the correctness release. The
+> section is kept because §3.1’s argument is only readable against the
+> proposal it rejected, and because §4’s specs are written for it.
+
 **Theme: identity, place and access – the human attributes of a glyph.**
 
 Three feature groups plus two pieces of infrastructure. It is coherent
@@ -4123,7 +4141,7 @@ individual section says something different about scheduling, §3.1 wins
     (§1.7) – that changes how they read output they already have, which
     is a correctness release’s job.
 4.  **It restores the 10-14 target honestly** instead of quietly
-    abandoning it. 0.5.0 becomes 5 verbs plus substantial repair; 0.6.0
+    abandoning it. 0.5.0 becomes 6 verbs plus substantial repair; 0.6.0
     lands the themed group at 10-13.
 5.  **Risk is lower in both.** A correctness release is reviewable
     against a fixture table; a feature release on trusted primitives is
@@ -4315,22 +4333,26 @@ qualified/unqualified trap the package already solves internally.
 
 ### 4.5 The `{stringi}` grapheme engine – now a prerequisite, not an option
 
-**Scope grew.** This was filed as retiring a documented
+**Scope grew, then shrank again.** This was filed as retiring a
+documented
 [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
 caveat. §1.1 showed
 [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
-has the same defect *without* the documentation, and that §4.3 cannot be
-built correctly on top of it. So this is no longer the optional item in
-0.5.0 – it is the one that unblocks the accessibility group, and it must
-land first or alongside.
+had the same defect *without* the documentation, which made the engine a
+prerequisite for §4.3. **0.4.0’s polish pass fixed
+[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
+directly** (each emoji now counts as one unit, verified 2026-09-17), so
+the accessibility group is no longer blocked on this item and it goes
+back to being what it was: an exactness improvement worth having, not a
+gate.
 
 Affected verbs:
 [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-(documented),
-[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
-(§1.1, silent), and any other
-[`nchar()`](https://rdrr.io/r/base/nchar.html)-on-user-text site the
-audit turns up.
+and
+[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md),
+which still count code points and say so on their help pages, plus any
+other [`nchar()`](https://rdrr.io/r/base/nchar.html)-on-user-text site
+the audit turns up.
 
 Resolve it as an opt-in engine rather than a permanent caveat:
 
@@ -4589,8 +4611,8 @@ Keeping this list honest is what stopped 0.4.0 from sprawling.
 5.  **Flags return ISO-2, not names, as the join key.** Names are a
     display convenience; the code is what other packages take.
 6.  **Group support**: `emoji_tone_summary(group_by =)` is a per-verb
-    argument, not the grouped-df fix. Do not let 0.5.0 half-solve the
-    1.0 promise.
+    argument, not the grouped-df fix. Do not let 0.6.0, which is where
+    §3.1 puts that verb, half-solve the 1.0 promise.
 
 ------------------------------------------------------------------------
 
@@ -4616,10 +4638,12 @@ Keeping this list honest is what stopped 0.4.0 from sprawling.
     package can do harm. Every verb in §4.1 needs the “describes glyph
     usage, never infers identity” statement on its own help page – help
     pages are what people read.
-4.  **Test surface.** 0.5.0’s fixtures are the hard part: mixed-tone
+4.  **Test surface.** The themed release’s fixtures are the hard part,
+    which under §3.1 makes them **0.6.0**’s problem: mixed-tone
     multi-person sequences, ♀/♂ versus ZWJ gender forms, subdivision tag
     sequences, professions. Budget as much time for the fixture table as
-    for the code.
+    for the code. 0.5.0’s own fixture work is smaller and already
+    written, in §12.2.
 5.  **Unicode churn.** Emoji 17.0 is out and 18.0 will follow. The
     refresh must be a checklist item (§8), not a habit.
 6.  **`{text2emotion}` overlap** – read it before writing docs, and
@@ -4627,9 +4651,10 @@ Keeping this list honest is what stopped 0.4.0 from sprawling.
 7.  **§10 is a catalogue, not a plan.** The audience section exists so
     ideas stop being rediscovered, and it is deliberately larger than
     any one release. The failure mode is treating it as a backlog to
-    burn down: 0.5.0’s cap is 13 verbs (§3), and §10’s only
-    0.5.0-eligible item is the S-sized `emoji_identical()` in §10.1.
-    Everything else is scheduled in §9 or later.
+    burn down: 0.5.0’s cap is 6 verbs (§3.1, not §3’s superseded 13),
+    and §10’s only 0.5.0-eligible item is the S-sized
+    `emoji_identical()` in §10.1. Everything else is scheduled in §9 or
+    later.
 8.  **Forensic misuse (§10.1) is the sharpest new misuse risk.** A user
     who reads “emoji forensics” support as “tidyEmoji can tell me what
     the sender saw” will be wrong, and may be wrong in a legal filing.
@@ -4909,7 +4934,7 @@ with §10.6.
 **Effort** M – the work is in the internals (the long-form contract)
 plus tests that a tally and its expanded text give identical scores.
 **Risk** low. **Recommend for 0.6.0** and do not squeeze it into 0.5.0’s
-13.
+6.
 
 ### 10.3 Mental health and crisis informatics – document, and refuse the lexicon
 
@@ -5737,44 +5762,29 @@ test_that("zero-row and all-NA input are handled, not errored (roadmap S1.5)", {
     expect_no_error(f(na, text))
   }
 })
-
-# Promoted from Part B on 2026-09-17: fixed by 0.4.0's polish pass (S1.11), so
-# these now defend a repair rather than specify one.
-
-test_that("S1.1: rel_position is grapheme-based, so a final emoji reports 1.0", {
-  d <- tibble::tibble(text = c(
-    "hi \U0001F600",                                   # 1 codepoint
-    "hi \U0001F1FA\U0001F1F8",                         # 2 codepoints, was 0.750
-    "hi \U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"  # 7, was 0.333
-  ))
-  expect_equal(emoji_position(d, text)$.emoji_rel_position, c(1, 1, 1))
-})
-
-test_that("S1.5: emoji_version_profile() warns on grouped input", {
-  d <- dplyr::group_by(
-    tibble::tibble(grp  = c("a", "a", "b", "b"),
-                   text = c("x \U0001F600", "y \U0001F602",
-                            "p \U0001F1FA\U0001F1F8", "q \U0001F1EF\U0001F1F5")),
-    grp)
-  expect_warning(emoji_version_profile(d, text), "ungrouped|group")
-})
-
-test_that("S1.5: time verbs name `time`, not the internal `var`, when it is missing", {
-  d <- tibble::tibble(text = "hi \U0001F600", when = Sys.Date())
-  expect_error(emoji_trend(d, text), "time")
-  expect_error(emoji_turnover(d, text), "time")
-})
 ```
+
+**Three of Part B’s cases left it on 2026-09-17, and none of them need
+adding here: 0.4.0 both fixed the defect and pinned the fixture.**
+Checked against the installed package and the suite on disk:
+
+| Was Part B | Now | Pinned at |
+|----|----|----|
+| S1.1 grapheme `rel_position` (1, 1, 1) | ✅ passes | `test-regression-0.4.0.R:350` |
+| S1.5 [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md) warns when grouped | ✅ passes | `test-regression-0.4.0.R:291` |
+| S1.5 time verbs name `time` | ✅ passes | `test-regression-0.4.0.R:162` |
 
 ### 12.2 Part B – the defects, written as the target behaviour
 
 *Re-run against the shipped 0.4.0 on 2026-09-17: **three of these now
-pass** and have moved up to Part A (the grapheme fix, the `time`
-message, and
+pass** and have left this block (the grapheme fix, the `time` message,
+and
 [`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)’s
-grouped guard). What is left below still **fails on the current tree**,
-and is the acceptance criteria for §3.1’s 0.5.0 correctness items, in
-the same order as §1.*
+grouped guard). They are not repeated in Part A, because the package’s
+own suite already pins all three: see the table at the end of §12.1.
+What is left below still **fails on the current tree**, and is the
+acceptance criteria for §3.1’s 0.5.0 correctness items, in the same
+order as §1.*
 
 ``` r
 
