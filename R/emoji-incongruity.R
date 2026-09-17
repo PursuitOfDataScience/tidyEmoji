@@ -185,6 +185,20 @@
 #' the data to the scored rows before calling therefore gives the same numbers
 #' as calling on everything.
 #'
+#' That invariance is narrow, and it is worth seeing where it stops. Both
+#' scalings are *relative*, so a gap's size depends on how many scored rows
+#' it was computed over and not only on the two scores. Dropping rows that
+#' were never scored changes nothing, because they were never in the
+#' population; dropping or adding *scored* rows changes every other row's
+#' answer, and so does comparing two corpora of different sizes. The sharpest
+#' case is duplicating a scored corpus exactly, which adds no information
+#' whatsoever and still multiplies every rank gap by `2 * (n - 1) /
+#' (2 * n - 1)`: 0.933 at `n = 8`, 0.995 at `n = 100`, 0.999 at `n = 500`.
+#' (`"zscore"` moves the other way, by `sqrt((2 * n - 1) / (2 * (n - 1)))`,
+#' because `sd()` divides by `n - 1`.) So compare gaps within one call, and
+#' where a number has to travel between corpora use `scale = "none"` with a
+#' text score already on the emoji lexicon's -1 to 1 scale.
+#'
 #' @details
 #' `.emoji_incongruity` is `emoji - text` after scaling, so it is positive when
 #' the emoji is the more positive of the two. `"sign_flip"` is the categorical

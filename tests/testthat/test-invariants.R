@@ -8705,6 +8705,84 @@ test_that("?emoji_density's figures describe the vignette corpus", {
   expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
 })
 
+test_that("duplicating the corpus leaves every rate alone, and scales the gap", {
+  # The strongest no-information transformation there is: every row twice.
+  # Counts double, per-row measures and every share hold still, and PMI is
+  # scale-invariant. The two relative scalings are the documented exception,
+  # and ?emoji_incongruity quotes the exact factor, so check that too rather
+  # than only checking that it moves.
+  skip_if_catalogue_moved()
+  set.seed(5)
+  ref <- asNamespace("tidyEmoji")$emoji_reference()
+  G <- sample(ref$emoji[!is.na(ref$version)], 25L)
+  d <- data.frame(
+    text = c(paste("alpha beta", G), paste("gamma delta", sample(G))),
+    sc = rep(c(0.4, -0.4), each = 25L),
+    when = rep(as.Date(c("2024-01-05", "2024-02-05")), each = 25L),
+    id = rep(1:10, 5L), stringsAsFactors = FALSE
+  )
+  d2 <- rbind(d, d)
+  d2$id <- c(d$id, d$id + 100L)
+  half <- seq_len(nrow(d))
+
+  f1 <- emoji_frequency(d, text); f2 <- emoji_frequency(d2, text)
+  expect_identical(f1$emoji, f2$emoji)
+  expect_identical(f2$n, 2L * f1$n)
+  s1 <- emoji_summary(d, text); s2 <- emoji_summary(d2, text)
+  expect_identical(s2$n_with_emoji, 2L * s1$n_with_emoji)
+  expect_identical(s2$n_total, 2L * s1$n_total)
+
+  for (v in c("emoji_sentiment", "emoji_position", "emoji_density",
+              "emoji_ratio", "emoji_faceness", "emoji_risk",
+              "emoji_token_cost", "emoji_score")) {
+    a <- do.call(v, list(d, rlang::sym("text")))
+    b <- do.call(v, list(d2, rlang::sym("text")))
+    for (cl in setdiff(names(a), names(d))) {
+      expect_equal(a[[cl]], b[[cl]][half], info = paste(v, cl))
+    }
+  }
+
+  # PMI does not move: it is a ratio of probabilities
+  c1 <- emoji_collocations(d, text, min_n = 1L)
+  c2 <- emoji_collocations(d2, text, min_n = 1L)
+  m <- match(paste(c1$emoji, c1$word), paste(c2$emoji, c2$word))
+  expect_false(anyNA(m))
+  expect_identical(c2$n[m], 2L * c1$n)
+  expect_equal(c2$pmi[m], c1$pmi)
+
+  # dfm cells and every documented share hold still
+  m1 <- emoji_dfm(d, text); m2 <- emoji_dfm(d2, text)
+  expect_identical(names(m1), names(m2))
+  expect_identical(nrow(m2), 2L * nrow(m1))
+  expect_equal(as.matrix(m1[, -1L]), as.matrix(m2[half, -1L]))
+  t1 <- emoji_trend(d, text, when, top_n = NULL)
+  t2 <- emoji_trend(d2, text, when, top_n = NULL)
+  mm <- match(paste(t1$.period, t1$emoji), paste(t2$.period, t2$emoji))
+  expect_identical(t2$n[mm], 2L * t1$n)
+  expect_equal(t2$share[mm], t1$share)
+  q1 <- emoji_seasonality(d, text, when)
+  q2 <- emoji_seasonality(d2, text, when)
+  expect_equal(q1$share, q2$share)
+  expect_equal(q1$emoji_per_text, q2$emoji_per_text)
+  v1 <- emoji_version_profile(d, text); v2 <- emoji_version_profile(d2, text)
+  expect_equal(v1$share_types, v2$share_types)
+  expect_equal(v1$share_tokens, v2$share_tokens)
+
+  # the documented exception, to the factor the help page quotes
+  for (sc in c("rank", "zscore")) {
+    a <- emoji_incongruity(d, text, sc, scale = sc)$.emoji_incongruity
+    b <- emoji_incongruity(d2, text, sc, scale = sc)$.emoji_incongruity[half]
+    ok <- !is.na(a) & a != 0
+    expect_gt(sum(ok), 0L)
+    n <- sum(!is.na(a))
+    want <- if (sc == "rank") 2 * (n - 1) / (2 * n - 1) else
+      sqrt((2 * n - 1) / (2 * (n - 1)))
+    expect_equal(b[ok] / a[ok], rep(want, sum(ok)), info = sc)
+  }
+  expect_match(rd_flat("emoji_incongruity"),
+               "multiplies every rank gap by", fixed = TRUE)
+})
+
 test_that("every documented sort actually orders the output it describes", {
   # Round 110, same lens as ?top_n_emojis: a @return that names a sort key
   # but not enough of them, so the reader cannot predict the order the code

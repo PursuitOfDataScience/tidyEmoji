@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are ninety-six of them, and
+test that was passing for the wrong reason. There are ninety-seven of them, and
 reading just those leads gives the release without the verification detail.
-Not all ninety-six changed observable behaviour: several record a test that
+Not all ninety-seven changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,24 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **`?emoji_incongruity`'s invariance claim reads as more than it holds.**
+  The page says the two scalings are computed over the rows the comparison is
+  defined on, so rows with no scorable emoji cannot move the answer, and
+  subsetting to the scored rows before calling gives the same numbers. Both
+  are true, and both are easy to read as "the gap is a property of the two
+  scores". It is not: `"rank"` and `"zscore"` are relative, so a gap's size
+  depends on how many scored rows it was computed over. The sharpest case is
+  duplicating a scored corpus exactly, which adds no information whatsoever
+  and still multiplies every rank gap by `2 * (n - 1) / (2 * n - 1)` (0.933
+  at `n = 8`, 0.995 at `n = 100`, 0.999 at `n = 500`) and every z-scored one
+  by `sqrt((2 * n - 1) / (2 * (n - 1)))`, because `sd()` divides by `n - 1`.
+  The page now says where the invariance stops, and what to reach for when a
+  number has to travel between corpora. Found by a sweep that runs every verb
+  on a corpus and on the same corpus with every row repeated: counts must
+  double, per-row measures and every documented `share` must not move, and
+  `emoji_collocations()`'s PMI must not either, being a ratio of
+  probabilities. Everything else in that sweep already held, and all of it is
+  now pinned, the scaling factors included.
 * **Six help pages named a sort key but not enough of them to order the
   output.** Every verb here sorts deterministically, and had been pinned as
   doing so, but a reader following the `@return` could not predict the
