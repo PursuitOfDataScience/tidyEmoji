@@ -50,9 +50,12 @@ release and kept slipping.
   before timing, reports seconds per verb per corpus size, and flags any verb
   whose cost grows faster than its row count.
 * Coverage, now that there is a job to report it, is **98.71%** of the
-  package's own code, measured by `covr::package_coverage()` on this suite. The
-  thinnest files are `emoji-sentiment.R` at 95.0%, `emoji-emotion.R` at 95.5%
-  and `emoji-engine.R` at 96.6%; fifteen of the twenty are at 100%.
+  package's own code, measured by `covr::package_coverage()` on this suite and
+  confirmed by the first CI run. The thinnest files are `emoji-sentiment.R` at
+  95.0%, `emoji-emotion.R` at 95.5% and `emoji-engine.R` at 96.6%; fifteen of
+  the twenty are at 100%. The job enforces a 95% floor of its own, because
+  codecov now refuses tokenless uploads and a job whose only output is an
+  upload nobody accepts is a job that reports success for nothing.
 * Continuous integration gained three things: a coverage job, a weekly job that
   spell-checks and URL-checks the built documentation, and a collation matrix
   that runs the suite under `LC_COLLATE=C` and `en_US.UTF-8`. The last one

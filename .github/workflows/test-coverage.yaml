@@ -40,6 +40,15 @@ jobs:
           )
           print(cov)
           covr::to_cobertura(cov)
+          # The upload below needs a CODECOV_TOKEN secret and is allowed to
+          # fail without one, so the number has to mean something here too or
+          # this job reports success while publishing nothing. 95 is a floor,
+          # not a target: the suite has been above 98% since 0.4.0.
+          pct <- covr::percent_coverage(cov)
+          cat(sprintf("total coverage: %.2f%%\n", pct))
+          if (pct < 95) {
+            stop(sprintf("coverage fell to %.2f%%, below the 95%% floor", pct))
+          }
         shell: Rscript {0}
 
       # Tokenless upload works for public repositories and is allowed to fail:

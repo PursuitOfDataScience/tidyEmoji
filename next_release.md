@@ -3844,11 +3844,14 @@ Carried-forward debts to pay *during* 0.5.0 rather than defer again:
       reproduces here is this host's rather than the package's: R's libcurl
       cannot verify `clarin.si`, while `curl` on the same box gets the
       documented `302` from `hdl.handle.net`. That is why the job runs on a
-      hosted runner. **No coverage badge yet** -- one that reads "unknown" until the
-      first upload lands is worse than none. The job's own command was run here before
-      committing it: `covr::package_coverage()` completes on this suite and
-      reports **98.71%**, and `covr::to_cobertura()` writes the report the
-      upload step expects, so the job is not being added on faith.
+      hosted runner. **Coverage is measured but not published**: the first CI
+      run reported 98.71%, identical to the local figure, and the codecov
+      upload was refused with "Token required", since tokenless upload is no
+      longer allowed. The upload step stays (it works the moment a
+      `CODECOV_TOKEN` secret exists) but the job no longer depends on it: it
+      prints the total and fails below a 95% floor, so it means something
+      today. No badge until an upload lands, because one that reads "unknown"
+      is worse than none.
 - [x] **Baseline measured 2026-08-30** (below), and **committed 2026-09-17 as
       `data-raw/benchmark.R`**, so it runs release over release instead of
       being re-derived. It warms the lazy-loaded reference table first: without
