@@ -2056,7 +2056,9 @@ test_that("the declared R minimum is one the package can actually be installed o
   # the package cannot keep: install.packages() serves only current versions,
   # so the resolver fetches a dplyr/tidyr that refuses to install and the user
   # gets an opaque dependency failure rather than a clear R-version message.
-  # CI cannot catch this -- its oldest job is oldrel-1, far above the floor.
+  # CI has an R 4.1 job now, so it does exercise the floor, but only with
+  # whatever binaries that runner resolves on the day; this reads the floors
+  # the installed dependencies actually declare, which is the promise.
   skip_on_cran()
   r_floor <- function(p) {
     d <- tryCatch(utils::packageDescription(p), error = function(e) NULL)
@@ -8850,6 +8852,39 @@ test_that("the four time verbs agree that an undated row contributes nothing", {
                   "emoji_adoption_lag")) {
     expect_match(rd_flat(topic), "missing or unparseable", info = topic)
   }
+})
+
+test_that("cran-comments.md counts the CI flavours the workflow defines", {
+  # The matrix gained an R 4.1 job, to build against the declared floor, and
+  # cran-comments.md went on saying "five flavours" and listing the other
+  # five. That is the one file a reviewer reads to learn what was tested, so
+  # the count is coupled to the workflow here rather than to memory. The
+  # workflow is build-ignored, so this runs from the source tree only.
+  wf <- testthat::test_path("..", "..", ".github", "workflows",
+                            "R-CMD-check.yaml")
+  f <- testthat::test_path("..", "..", "cran-comments.md")
+  skip_if(!file.exists(wf) || !file.exists(f), "workflow not available")
+  jobs <- grep("^\\s*-\\s*\\{os:", readLines(wf, warn = FALSE), value = TRUE)
+  expect_gt(length(jobs), 1L)
+  txt <- paste(readLines(f, warn = FALSE), collapse = " ")
+  words <- c("two", "three", "four", "five", "six", "seven", "eight", "nine",
+             "ten")
+  names(words) <- as.character(2:10)
+  key <- as.character(length(jobs))
+  skip_if(!key %in% names(words),
+          paste("no spelled form recorded for", length(jobs)))
+  expect_true(grepl(paste(words[[key]], "GitHub Actions flavours"), txt,
+                    fixed = TRUE),
+              info = paste("cran-comments.md should say", words[[key]],
+                           "GitHub Actions flavours"))
+  # and every runner the matrix names is named there too
+  for (os in unique(sub('.*os:\\s*([^,]+),.*', "\\1", jobs))) {
+    short <- sub("-latest$", "", os)
+    expect_true(grepl(short, txt, ignore.case = TRUE), info = os)
+  }
+  # the floor job in particular, since it is the one that earns its place
+  expect_true(any(grepl("r: '4.1'", jobs, fixed = TRUE)))
+  expect_true(grepl("R 4.1", txt, fixed = TRUE))
 })
 
 test_that("every figure an Rd references is actually shipped", {

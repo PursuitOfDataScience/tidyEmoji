@@ -122,7 +122,7 @@ read with `utils::read.csv()`, and the nine plotting chunks are gated on a
 
 ## R CMD check results
 
-On the five GitHub Actions flavours: 0 errors | 0 warnings | 0 notes.
+On the six GitHub Actions flavours: 0 errors | 0 warnings | 0 notes.
 On our own machine: 0 errors | 1 warning | 3 notes, all four host artefacts,
 itemised below.
 
@@ -131,14 +131,16 @@ and the difference is entirely our host's missing tooling.
 
 That is not an assertion about our own machine. Every flavour of the GitHub
 Actions matrix reports `Status: OK` for the commit submitted here: macOS
-(R 4.6.1), Windows (R 4.6.1), and Ubuntu on R-release (4.6.1), R-devel and
-R-oldrel-1 (4.5.3). All five build the vignette and run the full `testthat`
-suite.
+(R 4.6.1), Windows (R 4.6.1), and Ubuntu on R-release (4.6.1), R-devel,
+R-oldrel-1 (4.5.3) and R 4.1 (4.1.3). All six build the vignette and run the
+full `testthat` suite. The last of those is there because `oldrel-1` sits far
+above the declared floor of R 4.1.0, so without it the minimum this package
+promises was never actually built against.
 
 Locally, a full `R CMD check --as-cran` with the remote incoming checks
 *enabled* (`_R_CHECK_CRAN_INCOMING_REMOTE_=true`) reports 1 WARNING and 3
 NOTEs, and all four are artefacts of this host rather than the package: no
-`qpdf`, no `tidy`, an unverifiable system clock, and the URL below. The five
+`qpdf`, no `tidy`, an unverifiable system clock, and the URL below. The six
 clean flavours above are the evidence for that reading, rather than our word
 for it -- none of the four reproduces anywhere the host is not ours. The
 substantive checks all pass locally too: installation, examples, the
