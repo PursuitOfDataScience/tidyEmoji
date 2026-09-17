@@ -10,8 +10,12 @@
 #   Rscript data-raw/benchmark.R 1000 5000    # your own sizes
 #
 # Interpretation: the shape matters more than the seconds, which are host
-# specific. Scaling should stay linear in rows. If a verb starts growing faster
-# than the row count, that is the finding, not the absolute time.
+# specific. There are two axes and a verb has to stay linear in both. Cost
+# should grow no faster than the row count, and -- at a fixed total number of
+# emoji -- it should not move at all when those emoji are packed into fewer,
+# denser rows. A verb that fails the first is quadratic in the corpus; one
+# that fails the second is quadratic within a row, which the row axis cannot
+# see. Either is the finding, not the absolute time.
 
 library(tidyEmoji)
 
@@ -25,8 +29,9 @@ make_corpus <- function(n, seed = 20260917) {
   set.seed(seed)
   glyphs <- c("\U0001f600", "\U0001f602", "\U0001f60d", "\U0001f621",
               "\U0001f389", "\U0001f44d", "\U0001f44d\U0001f3fd",
-              "\U0001f1fa\U0001f1f8", "❤️",
-              "\U0001f468‍\U0001f469‍\U0001f467‍\U0001f466")
+              "\U0001f1fa\U0001f1f8", "\u2764\ufe0f",
+              paste0("\U0001f468\u200d\U0001f469\u200d",
+                     "\U0001f467\u200d\U0001f466"))
   words <- c("great", "awful", "shipped", "late", "again", "thanks", "broken",
              "love", "the", "best", "worst", "today", "never", "works")
   vapply(seq_len(n), function(i) {
@@ -93,6 +98,41 @@ for (nm in names(verbs)) {
   cat(sprintf("  %-20s %.1fx%s\n", nm, ratio,
               if (!is.na(ratio) && ratio > max(sizes) / min(sizes) * 1.5)
                 "   <- superlinear, investigate" else ""))
+}
+
+# The second axis: emoji *per row*, at a fixed row count.
+#
+# Everything above scales the corpus in rows, and make_corpus() caps a row at
+# three emoji, so a verb that is quadratic in the emoji within one row scales
+# perfectly linearly here and looks healthy. emoji_context() was exactly that
+# for three releases -- 3200 emoji in one row cost 7.1s against 0.28s for the
+# same 3200 spread over 320 rows -- and this script, which exists to catch it,
+# could not see it. A chat or reaction corpus is full of emoji-dense rows, so
+# this axis is not a synthetic worry.
+#
+# Held at a constant *total* emoji count, so a verb linear in the emoji it
+# sees should take the same time in every column, and the ratio below is the
+# regression signal rather than the seconds.
+cat("\nEmoji per row, at a constant", format(3200L, big.mark = ","),
+    "emoji in total:\n")
+dense_k <- c(1L, 10L, 100L, 1600L)
+dense <- lapply(dense_k, function(k) {
+  data.frame(text = rep(strrep("\U0001f600", k), 3200L %/% k),
+             stringsAsFactors = FALSE)
+})
+cat("| Verb | ", paste(sprintf("%d/row", dense_k), collapse = " | "),
+    " | worst/best |\n", sep = "")
+cat("|---|", paste(rep("---", length(dense_k) + 1L), collapse = "|"), "|\n",
+    sep = "")
+for (nm in names(verbs)) {
+  el <- vapply(dense, function(d) system.time(verbs[[nm]](d))[["elapsed"]],
+               numeric(1))
+  ratio <- if (min(el) > 0) max(el) / min(el) else NA_real_
+  cat(sprintf("| `%s()` | %s | %s |\n", nm,
+              paste(sprintf("%.2f", el), collapse = " | "),
+              if (is.na(ratio)) "-" else
+                sprintf("%.1fx%s", ratio,
+                        if (ratio > 4) "  <- quadratic in emoji per row" else "")))
 }
 
 invisible(res)

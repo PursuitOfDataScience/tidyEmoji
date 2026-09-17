@@ -9,3 +9,4 @@ README.html
 *.Rcheck/
 tidyEmoji.Rcheck/
 tidyEmoji_*.tar.gz
+next_release.md

@@ -87,6 +87,77 @@
   }
 }
 
+# Per-row index for the context windows: the masked row as code points, plus
+# the boundaries of its whitespace-delimited tokens and, for `unit = "char"`,
+# the nearest non-whitespace position on either side of every offset.
+#
+# The bounded slice above keeps the *tokenising* cheap, but not the cutting:
+# substr() on a multi-byte string rescans from the first byte to reach a
+# character offset, so answering k occurrences still costs O(k * L). And on a
+# row whose masked text is all spaces -- which is what a row of nothing but
+# emoji becomes -- no slice ever yields a token, so the budget doubles up to
+# the whole side every time and the verb is fully quadratic. That is the shape
+# a chat or reaction corpus is full of, the same family of rows
+# emoji_ratio()'s `.emoji_only` exists to find: 3200 emoji in one row took
+# 7.1s, against 0.28s for the same 3200 spread over 320 rows.
+#
+# Building this once per row makes every window an index lookup. It is exact
+# rather than an approximation of the slice path: emoji spans are masked to
+# spaces, so the answers are identical by construction, and the substring path
+# is still there for a row utf8ToInt() cannot represent.
+.emoji_row_index <- function(s) {
+  cp <- tryCatch(utf8ToInt(s), error = function(e) NA_integer_)
+  if (anyNA(cp)) return(NULL)
+  nz <- !(cp %in% .emoji_ws_cps)
+  # a token is a maximal run of non-whitespace; diff() of the padded run marks
+  # where each one opens and closes
+  d <- diff(c(FALSE, nz, FALSE))
+  # cummax() over the non-whitespace offsets gives, at every position, the
+  # nearest non-whitespace at or before it (0 when there is none); the
+  # reversed pass gives the nearest at or after it (length + 1 when none).
+  n <- length(cp)
+  idx <- seq_len(n)
+  prev_nz <- cummax(ifelse(nz, idx, 0L))
+  next_nz <- rev(cummin(rev(ifelse(nz, idx, n + 1L))))
+  list(cp = cp, n = n,
+       start = which(d == 1L), end = which(d == -1L) - 1L,
+       prev_nz = prev_nz, next_nz = next_nz)
+}
+
+# The window on one side of an emoji, answered from .emoji_row_index().
+#
+# `from`/`to` bound the side, exactly as they do for .emoji_window_at(), and
+# the result matches what that function returns for the same arguments. Tokens
+# overlapping the bound are clamped to it rather than dropped, which is what
+# splitting the slice itself did.
+.emoji_window_indexed <- function(ix, from, to, window, unit, side) {
+  if (from > to || window < 1L) return("")
+  take <- function(a, b) intToUtf8(ix$cp[a:b])
+  if (unit == "char") {
+    if (side == "left") {
+      e <- ix$prev_nz[to]
+      if (e < from) return("")
+      return(take(max(from, e - window + 1L), e))
+    }
+    b <- ix$next_nz[from]
+    if (b > to) return("")
+    return(take(b, min(to, b + window - 1L)))
+  }
+  # word: the tokens overlapping [from, to] are contiguous, so binary search
+  # for the two ends rather than scanning every token for every occurrence
+  i0 <- findInterval(from - 1L, ix$end) + 1L
+  i1 <- findInterval(to, ix$start)
+  if (i0 > i1) return("")
+  sel <- if (side == "left") {
+    seq.int(max(i0, i1 - window + 1L), i1)
+  } else {
+    seq.int(i0, min(i1, i0 + window - 1L))
+  }
+  paste(vapply(sel, function(j) {
+    take(max(ix$start[j], from), min(ix$end[j], to))
+  }, character(1)), collapse = " ")
+}
+
 #' The text around each emoji occurrence
 #'
 #' `emoji_context()` returns one row per emoji occurrence with a window of the
@@ -158,14 +229,36 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
   right <- character(nrow(occ))
   if (nrow(occ)) {
     len <- nchar(masked)
-    for (i in seq_len(nrow(occ))) {
-      r <- occ$.row_number[i]
-      left[i] <- .emoji_window_at(
-        masked[r], 1L, occ$.position[i] - 1L, window, unit, "left"
-      )
-      right[i] <- .emoji_window_at(
-        masked[r], occ$.end[i] + 1L, len[r], window, unit, "right"
-      )
+    rows <- occ$.row_number
+    starts <- occ$.position
+    ends <- occ$.end
+    # One index per row holding more than one emoji, shared by every
+    # occurrence in it. A row holding a single occurrence keeps the substring
+    # path: the index is several vectorised passes over the row against the
+    # two substr() calls it would replace, so it only starts paying from the
+    # second occurrence on. Measured crossover is exactly there -- at one
+    # occurrence per row the index costs 1.4x, at two it saves 1.3x, and it
+    # goes on saving from there.
+    dense <- which(tabulate(rows, nbins = length(masked)) > 1L)
+    index <- vector("list", length(masked))
+    index[dense] <- lapply(masked[dense], .emoji_row_index)
+    for (i in seq_along(rows)) {
+      r <- rows[i]
+      ix <- index[[r]]
+      if (is.null(ix)) {
+        # Either the row holds one occurrence, or utf8ToInt() cannot
+        # represent it (a latin1-marked string, say). Cut it instead, which
+        # is what .emoji_slice() falls back to for the second of those.
+        left[i] <- .emoji_window_at(masked[r], 1L, starts[i] - 1L,
+                                    window, unit, "left")
+        right[i] <- .emoji_window_at(masked[r], ends[i] + 1L, len[r],
+                                     window, unit, "right")
+      } else {
+        left[i] <- .emoji_window_indexed(ix, 1L, starts[i] - 1L,
+                                         window, unit, "left")
+        right[i] <- .emoji_window_indexed(ix, ends[i] + 1L, ix$n,
+                                          window, unit, "right")
+      }
     }
   }
 

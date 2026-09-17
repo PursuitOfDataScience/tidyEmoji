@@ -1,11 +1,37 @@
 # tidyEmoji 0.5.0
 
-Nothing user-visible yet. 0.4.0 reached CRAN on 2026-09-17; this section
-collects changes for the next release as they land.
+No new verbs and no behaviour changes: every verb returns exactly what it
+returned in 0.4.0. One of them returns it a great deal faster, and the rest of
+the release is documentation and the infrastructure that checks it.
 
 The bundled crosswalks track **Unicode emoji 16.0**, via `emoji` 16.0.0.
 Re-generating them from `data-raw/crosswalks.R` against that release reproduces
 the shipped data exactly, so the catalogue is current.
+
+## Improvements and fixes
+
+* **`emoji_context()` was still quadratic in the emoji per row, and
+  `emoji_collocations()` inherited it.** 0.4.0 bounded the *tokenising* to the
+  window, which was half the cost. The other half is that `substr()` on a
+  multi-byte string rescans from its first byte to reach a character offset,
+  so cutting one window still cost as much as the text before it; and on a row
+  whose masked text is all spaces -- which is what a row of nothing but emoji
+  becomes -- no bounded slice ever yields a token, so the budget doubled up to
+  the whole side for every occurrence. That is the shape a chat or reaction
+  corpus is full of, the same family of rows `emoji_ratio()`'s `.emoji_only`
+  exists to find.
+
+  Each row now gets one index of its code points and token boundaries, and
+  every window is read off it. **3200 emoji in one row went from 7.1s to
+  0.11s**, and the verb is now flat in the emoji per row: the same 3200
+  spread over 320 rows costs 0.11s too, where the two differed by 26x before.
+  A realistic mixed row is 2.9x faster and `unit = "char"` 2.5x. A row holding
+  a single emoji keeps the old path, which is still the cheaper of the two
+  there, so nothing regresses on a corpus of short texts.
+
+  The output is unchanged, and checked to be: byte-identical on 13977
+  occurrences across eight `window`/`unit` combinations, punctuation,
+  no-break and ideographic spaces, ZWJ sequences and keycaps included.
 
 ## Verified, no change needed
 
@@ -250,13 +276,13 @@ are worth the same prominence because both meant something was unverified.
   punctuation stripped but internal punctuation and digits kept, and a word
   counted once per occurrence however often it repeats in the window. No
   defect was found in either; both are now pinned.
-* Pinned the version cluster's behaviour against a **future \pkg{emoji}
+* Pinned the version cluster's behaviour against a **future `emoji`
   release**, the one way this package can break without anything here
   changing. `emoji_version_profile()` and `emoji_adoption_lag()` read the
   introducing `version` out of the installed reference table and join it to a
   release-date table kept in tidyEmoji's own source; the day Unicode 18 ships,
   that label will not be in the table. `R CMD check` cannot reveal this,
-  because it runs against today's \pkg{emoji}. Injecting `18.0`, the
+  because it runs against today's `emoji`. Injecting `18.0`, the
   data-file spelling `E18.0`, an absurd `99.9` and a missing version now
   confirms all four degrade rather than fail: the glyph keeps its row, its
   `release_date` and `lag_days` are `NA` instead of invented, `share_tokens`
@@ -432,7 +458,7 @@ are worth the same prominence because both meant something was unverified.
 * **`emoji_provenance()` mis-described its own headline number.**
   `n_emoji` was documented as "the size of the detectable emoji set" but
   reports `nrow(emoji_reference())` -- rows of the reference table, which are
-  *spellings*. With \pkg{emoji} 16.0.0 that is 5042 rows carrying only 3790
+  *spellings*. With `emoji` 16.0.0 that is 5042 rows carrying only 3790
   distinct code-point keys, because an emoji whose presentation can be
   selected appears both with and without `U+FE0F`, and 212 of the 5042 are
   not detectable in text as written. This is a function built to be pasted
@@ -590,7 +616,7 @@ are worth the same prominence because both meant something was unverified.
   with no emoji, and a row whose every emoji the recode cannot type -- and the
   page documented only the first. The recode maps the ten Unicode groups the
   catalogue currently uses and starts from `NA`, so a glyph in a group added
-  to Unicode after your \pkg{emoji} package was built has no type. It is the
+  to Unicode after your `emoji` package was built has no type. It is the
   same conflation [emoji_categorize()] already describes for
   `.emoji_category`, and the fix is the same: say both, and say how to tell
   them apart -- [emoji_faceness()]'s `.emoji_n_typed` is `NA` when the row had
@@ -630,7 +656,7 @@ are worth the same prominence because both meant something was unverified.
   edit to the surrounding prose could have turned a correct page into a red
   test. The pass count is unchanged by the conversion, which is the point.
 
-* **The suite's dependency on one \pkg{emoji} release was undeclared and
+* **The suite's dependency on one `emoji` release was undeclared and
   unexplained.** About seventy counts derived from the catalogue are pinned
   here -- 5042 rows, 3790 distinct keys, 969 lexicon rows, 736/233, 212
   undetectable spellings, 1252 carrying `U+FE0F`, 216, 200 -- deliberately,
@@ -645,10 +671,10 @@ are worth the same prominence because both meant something was unverified.
   the cause is legible, rather than seventy that are not.
 * Declared `emoji (>= 16.0.0)`, which had no version floor at all. The other
   floors in `DESCRIPTION` are keyed to *arguments* the code calls, which is
-  why \pkg{emoji} was not among them -- tidyEmoji reads its data, not its
+  why `emoji` was not among them -- tidyEmoji reads its data, not its
   functions. The reason it needs one is different and just as real: every
   catalogue figure in the documentation describes a single release, and an
-  older \pkg{emoji} has fewer rows, so those figures would simply be wrong.
+  older `emoji` has fewer rows, so those figures would simply be wrong.
   The floor, the version the help pages name and the pinned counts are now
   governed by one constant and asserted to agree.
 
@@ -695,7 +721,7 @@ are worth the same prominence because both meant something was unverified.
   `category_unicode_crosswalk$unicodes` 10, summing to the 6890 it quotes --
   and no other column in any bundled dataset carries a marked string, as it
   claims. Against a live CRAN index: still no reverse dependencies, the
-  published version is still 0.3.0, and \pkg{emoji} is still 16.0.0, which
+  published version is still 0.3.0, and `emoji` is still 16.0.0, which
   confirms the version floor added above is satisfiable and that the
   documented catalogue figures describe the release CRAN currently ships. The
   package count was refreshed from 24,744 to 24,748.
@@ -980,7 +1006,7 @@ are worth the same prominence because both meant something was unverified.
   difference between two false alarms and a clean answer.
 * That check is deliberately *not* in the test suite. Adding it raised a
   second `R CMD check` WARNING -- "'::' or ':::' import not declared from
-  'pkgdown'" -- and the only way to clear it is to declare \pkg{pkgdown} in
+  'pkgdown'" -- and the only way to clear it is to declare `pkgdown` in
   `Suggests`, which would make every CRAN check machine install a heavy
   dependency for a test that can never run there: `_pkgdown.yml` is
   build-ignored, so the test would skip in the tarball every time. The site
@@ -1270,7 +1296,7 @@ are worth the same prominence because both meant something was unverified.
 * **The introduction vignette could not be built without its Suggests
   packages, so `R CMD build` failed outright on a library tree lacking one.**
   It read its example corpus with `readr::read_csv()` and drew its charts with
-  \pkg{ggplot2}, \pkg{forcats} and \pkg{stringr}, all unconditionally --
+  `ggplot2`, `forcats` and `stringr`, all unconditionally --
   optional dependencies used as if they were required. Verified by building on
   an R 4.6.0 tree with neither 'readr' nor 'forcats': `Error: Vignette
   re-building failed`. The corpus is now read with `utils::read.csv()` wrapped
@@ -1359,7 +1385,7 @@ are worth the same prominence because both meant something was unverified.
   `edit(vignette("introduction", package = "tidyEmoji"))` opens -- calls
   `ggplot()` unconditionally, while `library(ggplot2)` above it stays behind
   the `requireNamespace()` gate. Sourcing it on an installation without
-  \pkg{ggplot2}, \pkg{forcats} and \pkg{stringr} therefore fails partway
+  `ggplot2`, `forcats` and `stringr` therefore fails partway
   through, which is exactly the situation the gate was written to survive.
   The vignette now says which half of the script runs on the declared
   dependencies alone and what to install for the rest, and a test holds that
@@ -1638,12 +1664,12 @@ are worth the same prominence because both meant something was unverified.
   dataset's `@source` names the `data-raw/` script that builds it and the
   vignette says they "are regenerated from the current Unicode emoji list by
   the scripts in `data-raw/`", but nothing had ever re-run them. All four
-  reproduce their `.rda` byte-for-byte against \pkg{emoji} 16.0.0:
+  reproduce their `.rda` byte-for-byte against `emoji` 16.0.0:
   `emoji_unicode_crosswalk` (5761 rows), `category_unicode_crosswalk` (10),
   `emoji_sentiment_lexicon` (969) and `emoji_emotion_lexicon` (150). The two
   crosswalks derive purely from `emoji::emojis`, so a `skip_on_cran()` test now
   rebuilds them and requires an exact match -- which will also flag the
-  datasets as stale the next time \pkg{emoji} ships new glyphs.
+  datasets as stale the next time `emoji` ships new glyphs.
 * `data-raw/emoji_emotion_lexicon.R` cited `next_release.md §4.1` for why the
   lexicon is keyed on a selector-stripped code point. That file is a planning
   document rewritten each release, and §4.1 is now about skin-tone modifiers,
@@ -2130,7 +2156,7 @@ are worth the same prominence because both meant something was unverified.
   different reasons: the row has no emoji, or the row's emoji are not in the
   reference table. The second case is real and grows with every Unicode
   release -- detection is grapheme-aware, so a zero-width-joiner sequence newer
-  than your installed \pkg{emoji} is found as one emoji but cannot be
+  than your installed `emoji` is found as one emoji but cannot be
   categorised -- and those rows vanished from the result. 0.2.1 fixed one
   instance of this (a `U+FE0F`-qualified heart went missing) by repairing that
   particular join; the conflation behind it survived. The filter is now on

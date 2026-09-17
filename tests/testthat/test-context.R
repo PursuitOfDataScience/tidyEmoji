@@ -172,3 +172,71 @@ test_that(".position means a code-point offset here and an emoji index there", {
                fixed = TRUE)
   expect_match(rd_flat("emoji_ngrams"), "within the row's emoji", fixed = TRUE)
 })
+
+test_that("the indexed window path answers exactly what cutting the text did", {
+  # emoji_context() used to cut the masked text once per occurrence with
+  # substr(), which rescans a multi-byte string from its first byte, so the
+  # verb was quadratic in the emoji per row -- 3200 emoji in one row cost
+  # 7.1s against 0.28s for the same 3200 spread over 320 rows. Each row now
+  # gets one index and every window is read off it.
+  #
+  # The risk in that change is not speed, it is a window that quietly differs
+  # on an input nobody thought of, so the two paths are pinned to each other
+  # here rather than the new one being pinned to hand-written expectations.
+  # A timing assertion would be flaky on a shared runner; this is exact.
+  ns <- asNamespace("tidyEmoji")
+  window_at <- ns$.emoji_window_at
+  window_indexed <- ns$.emoji_window_indexed
+  row_index <- ns$.emoji_row_index
+
+  fam <- paste0("\U0001f468\u200d\U0001f469\u200d",
+                "\U0001f467\u200d\U0001f466")
+  emo <- c(grin, cry, fam, "\U0001f44d\U0001f3fd", "\U0001f1fa\U0001f1f8",
+           "1\ufe0f\u20e3", "\u2764\ufe0f")
+  # the separators matter as much as the glyphs: the no-break and ideographic
+  # spaces are whitespace to this package and not to iswspace() everywhere,
+  # and a zero-width space is deliberately not whitespace at all
+  seps <- c("", " ", "  ", "\t", "\u00a0", "\u3000", "\u200b", "\n")
+  words <- c("the", "caf\u00e9", "\u4f60\u597d", "re-do", "x.y", "!!!", "a")
+
+  set.seed(20260917)
+  txt <- vapply(seq_len(400), function(i) {
+    paste(sample(c(emo, words), sample(0:10, 1L), replace = TRUE),
+          collapse = sample(seps, 1L))
+  }, character(1))
+  # and the shapes the random corpus will not reliably produce
+  txt <- c(txt, "", " ", grin, strrep(grin, 25L), paste0("w", grin, "w"),
+           paste0("  ", grin, "  "), paste0(grin, " \u00a0\u3000 x"),
+           paste0("x\u200b", grin), paste0("\t", grin, "\t"))
+
+  locs <- ns$.emoji_locations(txt)
+  masked <- ns$.emoji_mask(txt, locs)
+  occ <- ns$.emoji_occurrences(txt)
+  len <- nchar(masked)
+  expect_gt(nrow(occ), 500L)
+
+  index <- lapply(masked, row_index)
+  # every row here is valid UTF-8, so the index path must be available for
+  # all of them; a NULL would silently turn this into a no-op
+  expect_false(any(vapply(index, is.null, logical(1))))
+
+  for (unit in c("word", "char")) {
+    for (window in c(0L, 1L, 2L, 5L, 13L)) {
+      cut_l <- ind_l <- cut_r <- ind_r <- character(nrow(occ))
+      for (i in seq_len(nrow(occ))) {
+        r <- occ$.row_number[i]
+        ix <- index[[r]]
+        from_r <- occ$.end[i] + 1L
+        cut_l[i] <- window_at(masked[r], 1L, occ$.position[i] - 1L,
+                              window, unit, "left")
+        ind_l[i] <- window_indexed(ix, 1L, occ$.position[i] - 1L,
+                                   window, unit, "left")
+        cut_r[i] <- window_at(masked[r], from_r, len[r], window, unit, "right")
+        ind_r[i] <- window_indexed(ix, from_r, ix$n, window, unit, "right")
+      }
+      info <- paste(unit, window)
+      expect_identical(ind_l, cut_l, info = info)
+      expect_identical(ind_r, cut_r, info = info)
+    }
+  }
+})

@@ -1,19 +1,34 @@
 ## Submission notes
 
-*Skeleton for the next submission, opened 2026-09-17 after 0.4.0 was accepted.
-Fill in the two TODO sections before submitting; everything below them is
-carried forward because the test suite derives it and will fail if it goes
-stale. The 0.4.0 text is in git history (`git show v0.4.0:cran-comments.md`)
-if a paragraph is worth reusing.*
+This is a **maintenance release**. The previous CRAN version, 0.4.0, was
+published on 2026-09-17.
 
-**TODO before submitting.** In this order:
-
-* What kind of release this is, and the previous CRAN version with its
-  publication date.
-* The new verbs and the behaviour changes a user could notice, each in one
-  sentence, pointing at NEWS.md for the detail.
-* Whether dependencies, bundled data or the licence changed.
-* Anything a CRAN reviewer flagged last time, and how it was addressed.
+* **No new exported functions, and no behaviour changes.** Every verb returns
+  what it returned in 0.4.0. The one change a user can observe is speed:
+  `emoji_context()` was quadratic in the emoji per row, and
+  `emoji_collocations()` inherited it, so a row of 3200 emoji cost 7.1s
+  against 0.28s for the same 3200 spread over 320 rows. Each row now gets one
+  index of its code points and token boundaries instead of being cut once per
+  occurrence. The output is byte-identical, checked across eight
+  `window`/`unit` combinations. See NEWS.md.
+* **One new vignette**, `reversible-preprocessing`, and documentation
+  additions to the introduction vignette and four help pages. No Rd content
+  was removed.
+* **Dependencies:** `spelling` added to Suggests, and the declared `testthat`
+  minimum raised from `>= 3.0.0` to `>= 3.1.5`, which is the release that
+  added the `expect_no_error()` and `expect_no_warning()` the suite has used
+  since 0.4.0. Imports are unchanged.
+* **Bundled data and licence are unchanged**, and the crosswalks still
+  reproduce exactly from `data-raw/crosswalks.R` against `emoji` 16.0.0.
+* **Nothing was flagged by a reviewer on the 0.4.0 submission**, so there is
+  no carried-over correction. The single URL note this check produces is the
+  one discussed below, and it predates that submission.
+* **On `Days since last update: 0`.** The incoming check will report this,
+  and it is accurate: 0.4.0 was published the same day. The performance
+  defect above was found immediately after it shipped, on a corpus shape the
+  benchmark script could not see, and it is the reason for the short
+  interval rather than an oversight. We are happy to hold the submission if
+  the timing is unwelcome.
 
 ## Test environments
 
@@ -34,12 +49,23 @@ run that has happened for this version.*
 
 ## R CMD check results
 
-**TODO: fill in from an actual run.** Report per environment rather than as one
-headline, and separate the package's own results from this host's artefacts.
-The four that recur on our machine, and are not the package, are: no `qpdf`,
-no `tidy`, an unverifiable system clock, and the URL discussed below. The PDF
-reference manual is only built locally, so the local run is the one that covers
-it: do not skip it.
+Reported per environment rather than as one headline, and separating the
+package's own results from this host's artefacts. The four that recur on our
+machine, and are not the package, are: no `qpdf`, no `tidy`, an unverifiable
+system clock, and the URL discussed below. The PDF reference manual is only
+built locally, so the local run is the one that covers it: do not skip it.
+
+* **Local, R 4.4.1 on Linux, `R CMD check --as-cran` with
+  `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four
+  are the host artefacts above -- no `qpdf`, no `tidy`, the unverifiable
+  clock, and the CLARIN.SI redirect target. **Zero from the package.** The
+  suite runs 14736 assertions with 0 failures and the 17 skips inventoried
+  below, and the PDF reference manual builds.
+
+**Still to run before submitting**: R 4.1.0 and R 4.6.0 locally, the
+`LC_ALL=C` end-to-end check, the six GitHub Actions flavours with the two
+collation jobs, and win-builder on R-devel and R-release. Record each result
+here as it comes back rather than carrying this paragraph forward.
 
 ## The skip inventory
 

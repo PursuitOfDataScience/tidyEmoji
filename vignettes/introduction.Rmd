@@ -94,7 +94,7 @@ script `knitr` tangles out of it, the one
 `eval` option is a build-time instruction and is not part of the extracted
 code, so `introduction.R` calls `ggplot()` unconditionally. Everything in it
 that uses tidyEmoji alone runs against the package's declared dependencies;
-install \pkg{ggplot2}, \pkg{forcats} and \pkg{stringr} if you want to run
+install `ggplot2`, `forcats` and `stringr` if you want to run
 the whole file.
 
 ## Example data
