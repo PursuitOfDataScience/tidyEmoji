@@ -32,7 +32,16 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \item{window}{Size of the context window on each side, in tokens
 (\code{unit = "word"}) or characters (\code{unit = "char"}). Default \code{5}.}
 
-\item{unit}{\code{"word"} (default) or \code{"char"}.}
+\item{unit}{\code{"word"} (default) or \code{"char"}. "Character" means \emph{code
+point}, the unit \code{\link[=nchar]{nchar()}} and \code{\link[=substr]{substr()}} count and the one
+\code{\link[=emoji_density]{emoji_density()}} and \code{\link[=emoji_ratio]{emoji_ratio()}} measure in. A character window can
+therefore begin or end part-way through a grapheme cluster: where an \code{e}
+carries a combining acute (\verb{U+0065 U+0301}), \code{window = 1} returns the
+bare \code{U+0301}, a diacritic with nothing to sit on. Emoji themselves are
+safe from this, being masked out whole (see Details), and so is
+\code{unit = "word"}. If the window is going to be read by a person rather
+than tokenised, ask for words, or for a few more characters than you
+need.}
 
 \item{keep_text}{If \code{TRUE}, also return the row's original text column.
 Default \code{FALSE}.}
@@ -57,7 +66,7 @@ Windows are taken from the text with \emph{all} emoji blanked out, so a
 neighbouring emoji never lands in a context window and character offsets stay
 exact. With \code{unit = "word"} a token is a maximal run of non-whitespace
 characters, the same definition \code{\link[=emoji_density]{emoji_density()}} uses; with \code{unit = "char"}
-the window is a literal character count after trimming the whitespace next
+the window is a literal code-point count after trimming the whitespace next
 to the emoji.
 
 Tokenisation stops there on purpose. If you need stemming, stopword removal

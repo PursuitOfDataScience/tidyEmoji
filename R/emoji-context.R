@@ -99,7 +99,7 @@
 #' neighbouring emoji never lands in a context window and character offsets stay
 #' exact. With `unit = "word"` a token is a maximal run of non-whitespace
 #' characters, the same definition [emoji_density()] uses; with `unit = "char"`
-#' the window is a literal character count after trimming the whitespace next
+#' the window is a literal code-point count after trimming the whitespace next
 #' to the emoji.
 #'
 #' Tokenisation stops there on purpose. If you need stemming, stopword removal
@@ -109,7 +109,16 @@
 #' @inheritParams emoji_summary
 #' @param window Size of the context window on each side, in tokens
 #'   (`unit = "word"`) or characters (`unit = "char"`). Default `5`.
-#' @param unit `"word"` (default) or `"char"`.
+#' @param unit `"word"` (default) or `"char"`. "Character" means *code
+#'   point*, the unit [nchar()] and [substr()] count and the one
+#'   [emoji_density()] and [emoji_ratio()] measure in. A character window can
+#'   therefore begin or end part-way through a grapheme cluster: where an `e`
+#'   carries a combining acute (`U+0065 U+0301`), `window = 1` returns the
+#'   bare `U+0301`, a diacritic with nothing to sit on. Emoji themselves are
+#'   safe from this, being masked out whole (see Details), and so is
+#'   `unit = "word"`. If the window is going to be read by a person rather
+#'   than tokenised, ask for words, or for a few more characters than you
+#'   need.
 #' @param keep_text If `TRUE`, also return the row's original text column.
 #'   Default `FALSE`.
 #' @return A tibble with one row per emoji occurrence, in reading order, and

@@ -109,9 +109,9 @@ is worth as much to the next maintainer as knowing what moved.
 
 Entries whose first sentence is **bold** are the ones where something was
 actually wrong and got fixed -- in the package, in its documentation, or in a
-test that was passing for the wrong reason. There are one hundred and six of them, and
+test that was passing for the wrong reason. There are one hundred and seven of them, and
 reading just those leads gives the release without the verification detail.
-Not all one hundred and six changed observable behaviour: several record a test that
+Not all one hundred and seven changed observable behaviour: several record a test that
 could not have failed, or a figure the documentation quoted incorrectly, which
 are worth the same prominence because both meant something was unverified.
 
@@ -1242,6 +1242,17 @@ are worth the same prominence because both meant something was unverified.
   `.emoji_rel_position`: "grep for other `nchar()` uses on user text". All
   thirteen are now accounted for -- four feed a documented user-facing figure,
   nine are internal offsets.
+* **`emoji_context(unit = "char")` can return half a grapheme, and did not
+  say so.** "Character" there means code point, the unit `nchar()` and
+  `substr()` count, so a window can begin or end part-way through a cluster:
+  where an `e` carries a combining acute (`U+0065 U+0301`), `window = 1`
+  hands back the bare `U+0301`, a diacritic with nothing to sit on.
+  `?emoji_density` and `?emoji_ratio` both spell the code-point basis out
+  already; this is the verb where it shows up in the *output* rather than
+  only in a denominator, and it was the one that did not mention it. The
+  `unit` argument now says it, names that case, and points at the two ways
+  round it (a word window, or a couple of characters more than you need).
+  Emoji are not affected, being masked out whole before the window is cut.
 * **The README comparison would have failed on the declared R minimum, for a
   reason outside the package.** It re-renders `README.Rmd` and compares every
   `#>` line byte for byte, normalising the three ASCII markers `testthat`

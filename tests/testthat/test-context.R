@@ -104,3 +104,36 @@ test_that("emoji_collocations returns a typed empty tibble when it can", {
   bare <- emoji_collocations(data.frame(text = grin), text, min_n = 1)
   expect_equal(nrow(bare), 0L)
 })
+
+test_that("a char window counts code points, so it can split a grapheme", {
+  # ?emoji_context's `unit` now says so, and this is the case it names: an
+  # `e` carrying a combining acute is two code points, so window = 1 hands
+  # back the accent on its own. emoji_density() and emoji_ratio() document
+  # the same code-point basis; this verb is the one where it shows up in the
+  # output rather than only in a denominator.
+  glyph <- "\U0001F600"
+  txt <- paste0("caf", "e\u0301", " ", glyph)
+  expect_identical(utf8ToInt(substr(txt, 4, 5)), c(0x65L, 0x301L))
+  left <- function(w) {
+    emoji_context(data.frame(text = txt, stringsAsFactors = FALSE), text,
+                  window = w, unit = "char")$.emoji_context_left
+  }
+  expect_identical(utf8ToInt(left(1L)), 0x301L)
+  expect_identical(utf8ToInt(left(2L)), c(0x65L, 0x301L))
+  expect_identical(left(5L), "caf\u0065\u0301")
+  # a word window never splits one
+  wordy <- emoji_context(data.frame(text = txt, stringsAsFactors = FALSE),
+                         text, window = 1L, unit = "word")$.emoji_context_left
+  expect_identical(wordy, "caf\u0065\u0301")
+  # and an emoji is masked whole, so it is never the thing that gets split
+  fam <- "\U0001F468\u200D\U0001F469\u200D\U0001F467"
+  both <- emoji_context(
+    data.frame(text = paste0(fam, glyph), stringsAsFactors = FALSE), text,
+    window = 3L, unit = "char")
+  expect_true(all(!nzchar(both$.emoji_context_left)))
+  rd <- rd_flat("emoji_context")
+  expect_match(rd, "bare \\code{U+0301}", fixed = TRUE)
+  expect_match(rd, "begin or end part-way through a grapheme cluster",
+               fixed = TRUE)
+  expect_match(rd, "literal code-point count", fixed = TRUE)
+})
