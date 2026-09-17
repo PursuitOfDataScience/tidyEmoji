@@ -13,8 +13,10 @@ emoji_unicode_version()
 
 ## Value
 
-A single string such as `"15.1"`, or `NA` if the reference table carries
-no usable version information.
+A single string, `"16.0"` with emoji 16.0.0, or `NA` if the reference
+table carries no usable version information. It reports the catalogue
+you have installed rather than anything about tidyEmoji, so it moves
+when you upgrade that package and not when you upgrade this one.
 
 ## See also
 
