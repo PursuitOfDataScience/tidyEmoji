@@ -62,11 +62,20 @@ reproduces the shipped data exactly, so the catalogue is current.
   [`tolower()`](https://rdrr.io/r/base/chartr.html)’s locale rules could
   not reach it, but the table covered only ASCII and Latin – what the
   *catalogue* needs, where this verb folds the user’s text. The table
-  now covers every script with a 1:1 lower-case mapping, 1383 pairs in
-  all, derived from [`tolower()`](https://rdrr.io/r/base/chartr.html)
-  rather than written by hand and reproducing it exactly in a UTF-8
-  session. The fold is also faster than before, because it now tests for
-  a non-ASCII byte and uses a 26-pair table when there is none.
+  now covers every script in the Basic Multilingual Plane with a 1:1
+  lower-case mapping, 1158 pairs in all, derived from
+  [`tolower()`](https://rdrr.io/r/base/chartr.html) rather than written
+  by hand and reproducing it exactly in a UTF-8 session. The fold is
+  also faster than before, because it now tests for a non-ASCII byte and
+  uses a 26-pair table when there is none.
+
+  It stops at the Basic Multilingual Plane on purpose: `wchar_t` is 16
+  bits on Windows, so [`chartr()`](https://rdrr.io/r/base/chartr.html)
+  and [`tolower()`](https://rdrr.io/r/base/chartr.html) work on UTF-16
+  code units there and mangle a character outside it. Astral scripts are
+  left to the trailing
+  [`tolower()`](https://rdrr.io/r/base/chartr.html), exactly as before
+  this table existed.
 
   Multi-character mappings stay absent: the German sharp s and the Greek
   iota-subscript capitals lower-case to more than one code point, which
