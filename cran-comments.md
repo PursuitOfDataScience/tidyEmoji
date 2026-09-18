@@ -60,7 +60,7 @@ built locally, so the local run is the one that covers it: do not skip it.
   `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four
   are the host artefacts above -- no `qpdf`, no `tidy`, the unverifiable
   clock, and the CLARIN.SI redirect target. **Zero from the package.** The
-  suite runs 15124 assertions with 0 failures and the 18 skips inventoried
+  suite runs 15126 assertions with 0 failures and the 18 skips inventoried
   below, and the PDF reference manual builds.
 
 * **Local, R 4.1.0 on Linux, the declared minimum:** the suite runs clean,

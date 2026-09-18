@@ -2667,7 +2667,7 @@ test_that("the fold covers every script with a 1:1 lowercase mapping", {
     list(c(0x0393, 0x03A3, 0x0398, 0x03A9), c(0x03B3, 0x03C3, 0x03B8, 0x03C9)),
     list(c(0x0531, 0x0532), c(0x0561, 0x0562)),
     list(c(0x1EBE, 0x1ED8), c(0x1EBF, 0x1ED9)),
-    list(c(0x1C90, 0x1C91), c(0x10D0, 0x10D1)),
+    list(c(0x1C90, 0x1C91), c(0x10D0, 0x10D1)),   # Georgian Mtavruli, BMP
     list(c(0x2C80, 0x2C82), c(0x2C81, 0x2C83)),
     list(c(0x13A0, 0x13A1), c(0xAB70, 0xAB71)),
     list(c(0xFF21, 0xFF22), c(0xFF41, 0xFF42))
@@ -2678,7 +2678,20 @@ test_that("the fold covers every script with a 1:1 lowercase mapping", {
   }
   # the table is the size the comment claims, so a truncated one fails here
   # rather than silently folding less
-  expect_identical(nchar(tidyEmoji:::.emoji_fold_upper), 1383L)
+  expect_identical(nchar(tidyEmoji:::.emoji_fold_upper), 1158L)
+
+  # And nothing in it may sit above U+FFFF. `wchar_t` is 16 bits on
+  # Windows, so chartr() and tolower() both work on UTF-16 code units there
+  # and mangle an astral character: a version of this table carrying the
+  # Deseret, Osage, Old Hungarian, Warang Citi, Medefaidrin and Adlam pairs
+  # returned each of those ranges as one code point repeated on
+  # windows-latest, while passing on Linux and macOS. This is the assertion
+  # that would have caught it before the push.
+  # expect_lte() takes no info=, so say which table in the assertion itself
+  for (tb in c(".emoji_fold_upper", ".emoji_fold_lower")) {
+    cps <- utf8ToInt(get(tb, envir = asNamespace("tidyEmoji")))
+    expect_true(max(cps) <= 0xFFFF, info = tb)
+  }
   # multi-character mappings are deliberately absent: the sharp s and the
   # Greek iota-subscript capitals lowercase to more than one code point, which
   # chartr() cannot express, so they are left alone in every locale
