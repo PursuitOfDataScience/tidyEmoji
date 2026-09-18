@@ -42,8 +42,20 @@ make_corpus <- function(n, seed = 20260917) {
   }, character(1))
 }
 
-# One row per (verb, size). Timed with elapsed seconds from system.time(), which
-# is what a user waits; user+sys would hide any parallel or I/O cost.
+# Elapsed seconds from system.time(), which is what a user waits; user+sys
+# would hide any parallel or I/O cost. Repeated, taking the minimum, because
+# the usage note above advertises small sizes and at 200 rows a single reading
+# is mostly scheduler noise -- it reported 400 rows as *faster* than 200.
+#
+# Note the argument is a function, not an expression: `min(replicate(3,
+# system.time(e)))` times a promise, which is forced on the first pass and
+# cached, so passes 2 and 3 measure nothing and the minimum is 0.
+timeit <- function(f, d, times = 3L) {
+  min(vapply(seq_len(times), function(i) system.time(f(d))[["elapsed"]],
+             numeric(1)))
+}
+
+# One row per (verb, size).
 verbs <- list(
   emoji_summary      = function(d) emoji_summary(d, text),
   emoji_frequency    = function(d) emoji_frequency(d, text),
@@ -68,7 +80,7 @@ results <- list()
 for (n in sizes) {
   d <- data.frame(text = make_corpus(n), stringsAsFactors = FALSE)
   for (nm in names(verbs)) {
-    el <- system.time(verbs[[nm]](d))[["elapsed"]]
+    el <- timeit(verbs[[nm]], d)
     results[[length(results) + 1L]] <-
       data.frame(verb = nm, n = n, elapsed = el, stringsAsFactors = FALSE)
   }
@@ -111,8 +123,16 @@ for (nm in names(verbs)) {
 # this axis is not a synthetic worry.
 #
 # Held at a constant *total* emoji count, so a verb linear in the emoji it
-# sees should take the same time in every column, and the ratio below is the
-# regression signal rather than the seconds.
+# sees should take the same time in every column.
+#
+# The ratio has to be directional, which the first version of this got wrong:
+# it reported max/min, and the maximum is almost always the *1 per row*
+# column, because that corpus has 3200 rows against the dense one's 2. So it
+# measured per-row overhead and labelled it "quadratic in emoji per row",
+# which is the opposite end of the axis. Every verb scored 1.7x to 3.8x on a
+# healthy build for that reason alone. Compare the densest column against the
+# cheapest instead: that ratio only grows when packing the same emoji into
+# fewer rows costs more, which is the defect this axis exists to find.
 cat("\nEmoji per row, at a constant", format(3200L, big.mark = ","),
     "emoji in total:\n")
 dense_k <- c(1L, 10L, 100L, 1600L)
@@ -121,13 +141,13 @@ dense <- lapply(dense_k, function(k) {
              stringsAsFactors = FALSE)
 })
 cat("| Verb | ", paste(sprintf("%d/row", dense_k), collapse = " | "),
-    " | worst/best |\n", sep = "")
+    " | densest/cheapest |\n", sep = "")
 cat("|---|", paste(rep("---", length(dense_k) + 1L), collapse = "|"), "|\n",
     sep = "")
 for (nm in names(verbs)) {
-  el <- vapply(dense, function(d) system.time(verbs[[nm]](d))[["elapsed"]],
-               numeric(1))
-  ratio <- if (min(el) > 0) max(el) / min(el) else NA_real_
+  el <- vapply(dense, function(d) timeit(verbs[[nm]], d), numeric(1))
+  densest <- el[length(el)]
+  ratio <- if (min(el) > 0) densest / min(el) else NA_real_
   cat(sprintf("| `%s()` | %s | %s |\n", nm,
               paste(sprintf("%.2f", el), collapse = " | "),
               if (is.na(ratio)) "-" else

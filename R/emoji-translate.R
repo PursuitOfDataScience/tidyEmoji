@@ -90,7 +90,6 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   if (!length(glyphs)) return(str)
   if (is.null(locs) || nrow(locs) == 0L) return(str)
   bp <- locs[, "start"]
-  ep <- locs[, "end"]
   # unknown emoji keep their glyph rather than vanishing
   rpls <- ifelse(is.na(replacements), glyphs, replacements)
   # Splice: gap + replacement + gap + ... + gap. .emoji_gaps() cuts every

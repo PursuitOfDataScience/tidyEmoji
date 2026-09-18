@@ -97,6 +97,11 @@ that uses tidyEmoji alone runs against the package's declared dependencies;
 install `ggplot2`, `forcats` and `stringr` if you want to run
 the whole file.
 
+That describes the script you get from an installed package, because the
+tarball is built on a machine that has all three. The gate is evaluated when
+the vignette is built, so if you rebuild it yourself without them, `knitr`
+comments those chunks out of the tangled script rather than emitting them.
+
 ## Example data
 
 Throughout this vignette we use a sample of text collected in Atlanta,

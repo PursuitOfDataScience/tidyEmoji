@@ -63,11 +63,9 @@ jobs:
   # collation, and that promise has been broken twice: emoji_to_text()'s
   # shortcode choice in 0.3.0 and emoji_dfm(doc_id =)'s row order in 0.4.0.
   # Both times a plain-locale check was green. This job varies LC_COLLATE and
-  # nothing else.
-  #
-  # LC_ALL=C would be the obvious thing to write and is a trap: it changes
-  # LC_CTYPE too, which mangles the UTF-8 in the test files themselves, so the
-  # fixtures break before any package code runs and every verb looks broken.
+  # nothing else, so a failure here names collation rather than leaving you to
+  # work out which part of the locale moved. The `ctype` job below covers the
+  # other half.
   collation:
     runs-on: ubuntu-latest
 
@@ -126,5 +124,62 @@ jobs:
         shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: false
+
+  # The other half of the locale, and the one that has actually cost us bugs.
+  # LC_COLLATE above holds LC_CTYPE at UTF-8 deliberately, so until now nothing
+  # in this matrix varied LC_CTYPE at all -- and three defects have come from
+  # that axis, each a documented answer that moved with the session rather than
+  # with the data: tolower() in the case fold, iswspace() behind the whitespace
+  # class, and "[[:alnum:]]" in emoji_collocations()'s word trim. All three
+  # were green on every flavour here.
+  #
+  # LC_ALL=C is the right thing to run and not the trap it looks like. The
+  # suite is written for it: the four tests that measure R's own
+  # transliteration rather than the package stand down behind
+  # skip_if_not_utf8(), and the other 14000-odd assertions run. Measured
+  # locally, examples and vignette rebuild included.
+  #
+  # LC_ALL is set on the two steps that need it rather than on the job, so
+  # dependency installation still runs in the runner's own locale.
+  ctype:
+    runs-on: ubuntu-latest
+
+    name: ubuntu-latest (release, LC_ALL=C)
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      # A job that silently stayed UTF-8 would report a pass for the one thing
+      # it exists to check, so fail loudly instead.
+      - name: Confirm the session really is not UTF-8
+        env:
+          LC_ALL: C
+        run: |
+          cat("LC_CTYPE:", Sys.getlocale("LC_CTYPE"), "\n")
+          if (isTRUE(l10n_info()[["UTF-8"]])) {
+            stop("LC_ALL=C did not take effect: this job would test nothing.")
+          }
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          LC_ALL: C
         with:
           upload-snapshots: false

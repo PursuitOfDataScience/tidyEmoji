@@ -105,6 +105,14 @@
 # rather than an approximation of the slice path: emoji spans are masked to
 # spaces, so the answers are identical by construction, and the substring path
 # is still there for a row utf8ToInt() cannot represent.
+#
+# That last guard is belt and braces rather than a case anyone can construct.
+# It was written for "a latin1-marked row", which does not work: latin1 has no
+# emoji in it, so marking a string latin1 turns the glyph's bytes into
+# mojibake and .emoji_locations() then finds nothing to index. Reaching here
+# needs a row holding two detectable emoji that utf8ToInt() still refuses, and
+# detection itself needs valid UTF-8, so the two conditions do not meet.
+# Line coverage reports it unreached, correctly.
 .emoji_row_index <- function(s) {
   cp <- tryCatch(utf8ToInt(s), error = function(e) NA_integer_)
   if (anyNA(cp)) return(NULL)
@@ -246,9 +254,10 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
       r <- rows[i]
       ix <- index[[r]]
       if (is.null(ix)) {
-        # Either the row holds one occurrence, or utf8ToInt() cannot
-        # represent it (a latin1-marked string, say). Cut it instead, which
-        # is what .emoji_slice() falls back to for the second of those.
+        # In practice: the row holds a single occurrence, so no index was
+        # built for it. In principle also a row utf8ToInt() cannot represent,
+        # which is the unreachable half discussed above. Cut the text
+        # instead, as .emoji_slice() does.
         left[i] <- .emoji_window_at(masked[r], 1L, starts[i] - 1L,
                                     window, unit, "left")
         right[i] <- .emoji_window_at(masked[r], ends[i] + 1L, len[r],
@@ -292,10 +301,14 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #' @details
 #' Each emoji occurrence contributes its context window (see
 #' [emoji_context()]). A word is counted once per occurrence however often it
-#' repeats inside that window. Words are lower-cased and stripped of leading and
-#' trailing punctuation; no stopword list is applied, because which stopwords
-#' are right is a decision for your analysis, not for this package -- filter the
-#' result with \pkg{tidytext}'s `stop_words` if you want one.
+#' repeats inside that window. Words are lower-cased and stripped of leading
+#' and trailing characters that are not letters, digits or combining marks, and
+#' a token left holding no letter and no digit at all is not a word. All three
+#' rules read Unicode's own tables rather than the session's locale, so a
+#' corpus in any script gives the same answer wherever it is run. No stopword
+#' list is applied, because which stopwords are right is a decision for your
+#' analysis, not for this package -- filter the result with
+#' \pkg{tidytext}'s `stop_words` if you want one.
 #'
 #' PMI is `log(n(e, w) * N / (n(e) * n(w)))`, with `N` the total number of
 #' emoji-word co-occurrence events. Marginals are computed over *all*
@@ -338,9 +351,7 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
 
   glyph <- emoji_canonical(ctx$.emoji)
   words <- lapply(ctx$.emoji_context, function(s) {
-    w <- .emoji_words(.emoji_fold(s))
-    w <- gsub("^[^[:alnum:]]+|[^[:alnum:]]+$", "", w)
-    unique(w[nzchar(w)])
+    unique(.emoji_trim_words(.emoji_words(.emoji_fold(s))))
   })
   if (!sum(lengths(words))) return(empty)
 

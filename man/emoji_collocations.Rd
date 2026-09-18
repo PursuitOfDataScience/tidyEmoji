@@ -55,10 +55,14 @@ baggage.
 \details{
 Each emoji occurrence contributes its context window (see
 \code{\link[=emoji_context]{emoji_context()}}). A word is counted once per occurrence however often it
-repeats inside that window. Words are lower-cased and stripped of leading and
-trailing punctuation; no stopword list is applied, because which stopwords
-are right is a decision for your analysis, not for this package -- filter the
-result with \pkg{tidytext}'s \code{stop_words} if you want one.
+repeats inside that window. Words are lower-cased and stripped of leading
+and trailing characters that are not letters, digits or combining marks, and
+a token left holding no letter and no digit at all is not a word. All three
+rules read Unicode's own tables rather than the session's locale, so a
+corpus in any script gives the same answer wherever it is run. No stopword
+list is applied, because which stopwords are right is a decision for your
+analysis, not for this package -- filter the result with
+\pkg{tidytext}'s \code{stop_words} if you want one.
 
 PMI is \code{log(n(e, w) * N / (n(e) * n(w)))}, with \code{N} the total number of
 emoji-word co-occurrence events. Marginals are computed over \emph{all}

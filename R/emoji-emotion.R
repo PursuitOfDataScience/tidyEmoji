@@ -92,10 +92,13 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
              "'emotag1200' here."),
       lexicon), call. = FALSE)
   } else {
-    stop(paste0(
-      "`emoji_emotion()` requires an emotion lexicon: 'emotag1200', a ",
-      "registered emotion lexicon, or a data frame with emotion columns."
-    ), call. = FALSE)
+    # Unreachable for the same reason as emoji_sentiment()'s fall-through: the
+    # custom case is unwrapped to a data frame above, so the three branches
+    # cover everything .emoji_lexicon_lookup() can answer with. Kept as a net
+    # for a fourth type, and worded for whoever adds one.
+    stop(sprintf(
+      "Internal: `lexicon` resolved to an unhandled type, \"%s\".",
+      as.character(lex$type)[1L]), call. = FALSE)
   }
   dims <- colnames(emap)
 

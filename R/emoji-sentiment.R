@@ -73,8 +73,6 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     # well. emoji_score() and emoji_emotion() already branch in this order.
     if (is.data.frame(lex)) {
       score <- .emoji_lexicon_record(lex, arg = "lexicon")
-    } else if (identical(lex$type, "sentiment")) {
-      score <- emoji_sentiment_map()
     } else if (identical(lex$type, "custom")) {
       score <- .emoji_lexicon_record(lex$tbl, arg = "lexicon")
     } else if (identical(lex$type, "emotion")) {
@@ -93,8 +91,16 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
                "dimensions as a single number."),
         lexicon, lexicon), call. = FALSE)
     } else {
-      stop("`lexicon` must be 'novak2015', a registered lexicon, or a data frame.",
-           call. = FALSE)
+      # Unreachable, and deliberately kept: .emoji_lexicon_lookup() answers
+      # with a data frame or one of three types, and `is_novak` above has
+      # already absorbed "sentiment", so the three branches over it are
+      # exhaustive. A fourth type added to the lookup would otherwise fall
+      # through here silently, which is why this names the type rather than
+      # offering the caller advice they cannot act on. The vocabulary is
+      # pinned by a test, so this should never be what tells anyone.
+      stop(sprintf(
+        "Internal: `lexicon` resolved to an unhandled type, \"%s\".",
+        as.character(lex$type)[1L]), call. = FALSE)
     }
   }
 

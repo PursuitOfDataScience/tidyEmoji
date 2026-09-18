@@ -44,7 +44,8 @@ run that has happened for this version.*
   - windows-latest: R-release
 * GitHub Actions, additionally: two collation jobs running the same check with
   `LC_COLLATE` set to `C` and to `en_US.UTF-8` and nothing else varied, a
-  weekly URL and spelling job, and a coverage job
+  `ctype` job running it under `LC_ALL=C`, a weekly URL and spelling job, and
+  a coverage job
 * win-builder: R-devel and R-release
 
 ## R CMD check results
@@ -59,17 +60,58 @@ built locally, so the local run is the one that covers it: do not skip it.
   `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four
   are the host artefacts above -- no `qpdf`, no `tidy`, the unverifiable
   clock, and the CLARIN.SI redirect target. **Zero from the package.** The
-  suite runs 14736 assertions with 0 failures and the 17 skips inventoried
+  suite runs 15124 assertions with 0 failures and the 18 skips inventoried
   below, and the PDF reference manual builds.
 
-**Still to run before submitting**: R 4.1.0 and R 4.6.0 locally, the
-`LC_ALL=C` end-to-end check, the six GitHub Actions flavours with the two
-collation jobs, and win-builder on R-devel and R-release. Record each result
-here as it comes back rather than carrying this paragraph forward.
+* **Local, R 4.1.0 on Linux, the declared minimum:** the suite runs clean,
+  0 failures, 9 skips. Seven are the acceptance tests for verbs not yet
+  written, one is the tangled vignette script (not installed from a source
+  tree), and one is the `readr (>= 2.0.0)` gate, that tree carrying 1.4.0.
+* **Local, R 4.6.0 on Linux:** the suite runs clean there too, 0 failures and
+  the same 9 skips. That tree genuinely lacks `spelling`, `readr` and
+  `forcats`, so it is also where the missing-Suggests path can be exercised
+  for real rather than simulated: with `_R_CHECK_FORCE_SUGGESTS_=false` the
+  check is **2 NOTEs** (the URL below and the missing `tidy`) with 0 test
+  failures and 14984 assertions. Two of the four artefacts this machine
+  reports do not arise there at all, because it has `qpdf` and a verifiable
+  clock, which is the clearest demonstration available that those two are the
+  host rather than the package.
+
+* **Local, R 4.4.1, the same check end to end under `LC_ALL=C`**, examples,
+  vignette rebuild and tests included: the same 1 WARNING and 3 NOTEs, the
+  same four host artefacts, 0 test failures. Three tests stand down in a
+  non-UTF-8 session, each because it measures R's own transliteration rather
+  than the package, and each says so.
+
+  Separately from the check, 108 verb calls covering every exported verb on
+  the bundled corpus, on a fourteen-row multi-script fixture and on
+  single-value inputs were captured under `en_US.UTF-8` and under `LC_ALL=C`
+  and compared: **108 of 108 identical**. The same 108 against 0.4.0 differ
+  in exactly the three `emoji_collocations()` calls the NEWS describes, with
+  no call gaining or losing an error.
+* **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
+  across the help pages, both vignettes, README.md and NEWS.md, with the 170
+  entries in `inst/WORDLIST`.
+* **URLs**: `urlchecker::url_check()` resolves 12 of the 13 addresses in the
+  package. The thirteenth is the CLARIN.SI handle discussed below, and it
+  fails here for the same certificate reason the check reports.
+* **Declared dependency floors are real ones.** Checked against the source
+  tarballs of the declared versions rather than the installed ones: every
+  `dplyr::`, `tidyr::` and `lifecycle::` function the package calls is
+  exported by dplyr 1.1.0, tidyr 1.3.0 and lifecycle 1.0.3, and every named
+  argument it passes to a callee without `...` is a formal there, which
+  covers `lifecycle::deprecate_soft(env=, user_env=)`, the pair the floor was
+  raised for. `rlang` and `tibble` carry no floor; the eight functions used
+  from them are present as far back as rlang 1.0.0 and tibble 3.0.0.
+
+**Still to run before submitting**: the six GitHub Actions flavours with the
+two collation jobs and the `ctype` job, and win-builder on R-devel and
+R-release. Record each result here as it comes back rather than carrying this
+paragraph forward.
 
 ## The skip inventory
 
-Run as CRAN runs it, **seventeen** tests skip on R 4.4.1, and none of them is a
+Run as CRAN runs it, **eighteen** tests skip on R 4.4.1, and none of them is a
 test that might fail.
 
 * **seven are `skip_on_cran()`**: they read the checking machine rather than
@@ -79,20 +121,24 @@ test that might fail.
   crosswalks, `README.Rmd` for re-rendering it, and this file twice for its own
   claims), and one asserting the installed `emoji` release is the exact one the
   documented catalogue figures came from.
-* **Three stand down because the tarball does not carry the file they read**,
+* **Four stand down because the tarball does not carry the file they read**,
   and each says which file. Their messages are, on one line each so they stay
   greppable:
   `README sources not available`
   `package sources not available; scanned the namespace instead`
   `workflow not available`
-  The second scans the installed namespace instead, and the third is coupled to
-  `.github/`, which is build-ignored.
+  The first accounts for two of the four: one compares `README.md` against
+  `README.Rmd`'s prose, the other runs every chunk of `README.Rmd`, and
+  `README.Rmd` is build-ignored. The second scans the installed namespace
+  instead, and the third is coupled to `.github/`, also build-ignored.
 * **Seven are acceptance tests for verbs the next release will add**, each
   naming its target: `emoji_country()`, `emoji_skin_tone()`,
   `emoji_coverage()`, `emoji_keywords()`, `as_emoji_canonical()`,
   `emoji_identical()` and a `presentation =` argument. They live in
-  `test-regression-0.5.0.R` so the specification sits where it will run, and
-  they stand down by name until the verb exists rather than failing.
+  `test-acceptance-pending.R`, deliberately not named for a version, so the
+  specification sits where it will run and does not have to be re-labelled at
+  every release; they stand down by name until the verb exists rather than
+  failing.
 
 Count this from the run rather than copying the number forward: it changes
 whenever a verb lands or a test is added.

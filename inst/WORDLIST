@@ -9,6 +9,7 @@ BPE
 catalogue's
 chainable
 check's
+CJK
 CLARIN
 CMD
 codecov
@@ -27,6 +28,7 @@ d'Ivoire
 dataset's
 defaultless
 demojize
+Devanagari
 dfm's
 dingbat
 dingbats
@@ -87,6 +89,7 @@ novak
 oldrel
 pandoc
 parseable
+PCRE
 pkg
 pkgdown
 PLoS
@@ -142,7 +145,6 @@ tiebreak
 timestamp's
 timezone
 timezones
-tokenless
 txet
 typable
 Türkiye

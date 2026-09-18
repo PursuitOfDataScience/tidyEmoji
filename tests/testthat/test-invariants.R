@@ -2643,6 +2643,88 @@ test_that(".emoji_fold does not depend on the locale being UTF-8 either", {
   l <- strsplit(lo, "")[[1]]
   expect_false(any(u == l))
   expect_length(intersect(u, l), 0L)
+  # no source appears twice, or chartr() would be honouring whichever copy it
+  # reached last
+  expect_false(any(duplicated(u)))
+  # every target is already lowercase, so the tolower() that runs after
+  # chartr() cannot move it again
+  expect_identical(tolower(lo), lo)
+})
+
+test_that("the fold covers every script with a 1:1 lowercase mapping", {
+  # The Latin table above is what the *catalogue* needs, and that was the wrong
+  # scope: emoji_collocations() folds the user's text, which can be in any
+  # script. Under a C LC_CTYPE tolower() leaves every non-ASCII letter exactly
+  # as it found it, so a Cyrillic or Greek word counted as two collocates in a
+  # C session and one in a UTF-8 session. Fixtures are built with intToUtf8()
+  # rather than \uXXXX escapes, which make parse() warn in a C locale.
+  f <- tidyEmoji:::.emoji_fold
+  cases <- list(
+    # Cyrillic, Greek (including final-sigma-adjacent capitals), Armenian,
+    # Vietnamese (Latin Extended Additional), Georgian Mtavruli, Coptic,
+    # Cherokee, and fullwidth Latin
+    list(c(0x041F, 0x0420, 0x0418, 0x0412), c(0x043F, 0x0440, 0x0438, 0x0432)),
+    list(c(0x0393, 0x03A3, 0x0398, 0x03A9), c(0x03B3, 0x03C3, 0x03B8, 0x03C9)),
+    list(c(0x0531, 0x0532), c(0x0561, 0x0562)),
+    list(c(0x1EBE, 0x1ED8), c(0x1EBF, 0x1ED9)),
+    list(c(0x1C90, 0x1C91), c(0x10D0, 0x10D1)),
+    list(c(0x2C80, 0x2C82), c(0x2C81, 0x2C83)),
+    list(c(0x13A0, 0x13A1), c(0xAB70, 0xAB71)),
+    list(c(0xFF21, 0xFF22), c(0xFF41, 0xFF42))
+  )
+  for (k in cases) {
+    expect_identical(f(intToUtf8(k[[1]])), intToUtf8(k[[2]]),
+                     info = sprintf("U+%04X", k[[1]][1]))
+  }
+  # the table is the size the comment claims, so a truncated one fails here
+  # rather than silently folding less
+  expect_identical(nchar(tidyEmoji:::.emoji_fold_upper), 1383L)
+  # multi-character mappings are deliberately absent: the sharp s and the
+  # Greek iota-subscript capitals lowercase to more than one code point, which
+  # chartr() cannot express, so they are left alone in every locale
+  for (cp in c(0x1E9E, 0x1FBC)) {
+    expect_identical(nchar(f(intToUtf8(cp))), 1L, info = sprintf("U+%04X", cp))
+  }
+
+  # The ASCII fast path is an optimisation, so pin it against the
+  # unconditional fold rather than against hand-written expectations. It
+  # exists because chartr() rebuilds its translation table on every call at a
+  # cost in the length of `old`: the 1383-pair table made ?emoji_search's
+  # example nine times slower and earned an R CMD check NOTE. A-Z being the
+  # only ASCII source, the branch it skips cannot matter -- but that is an
+  # argument, and this is a measurement.
+  up <- tidyEmoji:::.emoji_fold_upper
+  lo <- tidyEmoji:::.emoji_fold_lower
+  unconditional <- function(x) tolower(chartr(up, lo, x))
+  e <- emoji::emojis
+  probe <- c(e$name, unlist(e$keywords), unlist(e$aliases),
+             intToUtf8(c(0x041F, 0x0420)), intToUtf8(c(0x0393, 0x03A3)),
+             "MiXeD", "ABC", "", NA_character_)
+  expect_gt(length(probe), 20000L)
+  expect_identical(f(probe), unconditional(probe))
+  # a vector that is part ASCII and part not takes both branches in one call,
+  # and element by element must give the same answer as in a batch
+  mixed <- c("ABC", intToUtf8(0x041F), "def", intToUtf8(0x0393), NA_character_)
+  expect_identical(f(mixed), unconditional(mixed))
+  expect_identical(vapply(mixed, f, character(1), USE.NAMES = FALSE),
+                   unconditional(mixed))
+  expect_identical(f(character(0)), character(0))
+})
+
+test_that("emoji_collocations() folds non-Latin case in any locale", {
+  A <- "\U0001F602"
+  # "PRIVET" and "privet" in Cyrillic, which must be one collocate
+  hi_up <- intToUtf8(c(0x041F, 0x0420, 0x0418, 0x0412, 0x0415, 0x0422))
+  hi_lo <- intToUtf8(c(0x043F, 0x0440, 0x0438, 0x0432, 0x0435, 0x0442))
+  d <- data.frame(text = c(paste(hi_up, A), paste(hi_lo, A)),
+                  stringsAsFactors = FALSE)
+  here <- emoji_collocations(d, text, min_n = 1)
+  expect_identical(here$word, hi_lo)
+  expect_identical(here$n, 2L)
+  expect_identical(with_ctype("C", emoji_collocations(d, text, min_n = 1)),
+                   here)
+  # not vacuous: the two spellings really do differ
+  expect_false(identical(hi_up, hi_lo))
 })
 
 test_that("emoji_search() is case-insensitive for accented names in any locale", {
@@ -2872,6 +2954,393 @@ test_that("emoji_collocations() unifies case the same way in every locale", {
   expect_identical(there, here)
 })
 
+test_that("emoji_collocations() keeps a non-ASCII word in every locale", {
+  # The case fold was only half of it. The same verb trimmed leading and
+  # trailing punctuation off each word with "[[:alnum:]]", which resolves
+  # through the C library too, so under a C LC_CTYPE nothing outside ASCII is
+  # alphanumeric: the accented word below lost its accent and the Hebrew and
+  # CJK ones were trimmed away to nothing and then dropped for being empty.
+  # A corpus in any non-Latin script reported no collocations at all.
+  #
+  # Built with intToUtf8() rather than written as \uXXXX escapes: an escape
+  # anywhere in a test source makes parse() warn in a C locale, before any
+  # test runs.
+  A <- "\U0001F602"
+  cafe   <- intToUtf8(c(0x63, 0x61, 0x66, 0xE9))
+  shalom <- intToUtf8(c(0x05E9, 0x05DC, 0x05D5, 0x05B4, 0x05DD))
+  nihao  <- intToUtf8(c(0x4F60, 0x597D))
+  d <- data.frame(text = paste0(cafe, ", ", shalom, " (", nihao, ") ", A),
+                  stringsAsFactors = FALSE)
+  here <- emoji_collocations(d, text, min_n = 1)
+  # the value, not just the cross-locale agreement: a class that answered the
+  # same wrong way in both locales would pass an identity check
+  expect_setequal(here$word, c(cafe, shalom, nihao))
+  expect_identical(with_ctype("C", emoji_collocations(d, text, min_n = 1)),
+                   here)
+
+  # and the helper on its own, which is where the rule lives. Mutation testing
+  # found two of these cases missing: the first fixture had no token ending in
+  # a combining mark and none holding a digit, so dropping \p{M} or \p{N}
+  # from the class changed nothing any assertion could see.
+  trim <- tidyEmoji:::.emoji_trim_words
+  # a Thai syllable whose *last* code point is a vowel sign (Mn), and a Latin
+  # e carrying a combining acute: both end in a mark, which is what makes
+  # \p{M} load-bearing rather than decorative
+  thai_mark <- intToUtf8(c(0x0E2A, 0x0E31))
+  e_acute <- intToUtf8(c(0x65, 0x0301))
+  probe <- c(paste0("(", cafe, ")"), paste0(shalom, ","), nihao,
+             paste0("[", thai_mark, "]"), paste0(e_acute, "."),
+             "2024,", "(100%)", intToUtf8(0xFE0F), "...", "plain.")
+  expect_identical(trim(probe),
+                   c(cafe, shalom, nihao, thai_mark, e_acute, "2024", "100",
+                     "plain"))
+  # each of those four is genuinely at risk: the mark cases end in \p{M} and
+  # the numeric ones hold no letter at all, so neither survives a class that
+  # names only \p{L}
+  expect_match(thai_mark, "[\\p{M}]$", perl = TRUE)
+  expect_match(e_acute, "[\\p{M}]$", perl = TRUE)
+  expect_false(grepl("[\\p{L}]", "2024", perl = TRUE))
+  # a token of nothing but marks is not a word: an orphan U+FE0F beside a
+  # masked glyph is the common case, and the bundled corpus has 15 of them
+  expect_identical(trim(intToUtf8(0xFE0F)), character(0))
+  expect_identical(trim(c("...", "!", intToUtf8(0x0301))), character(0))
+  expect_identical(with_ctype("C", trim(probe)), trim(probe))
+
+  # not vacuous: every fixture word is outside ASCII, which is precisely what
+  # a locale-dependent class stops recognising
+  expect_false(any(grepl("^[ -~]+$", c(cafe, shalom, nihao))))
+})
+
+test_that("a row-dropping verb treats a grouping as dplyr::filter does", {
+  # A group can be emptied by a verb that drops rows, and then a downstream
+  # summarise() silently loses it. That is correct -- it is what
+  # dplyr::filter() does -- but only if `.drop = FALSE` still means what the
+  # caller asked, because that is how a user says "keep the empty groups".
+  # Re-grouping with defaults would discard the choice without a word.
+  #
+  # The reference is dplyr::filter() itself rather than a hand-written
+  # expectation, so the contract is "behaves like the verb users already
+  # know" rather than a number someone chose.
+  A <- "\U0001F600"; B <- "\U0001F602"
+  mk <- function(drop) dplyr::group_by(
+    tibble::tibble(grp = factor(c("a", "a", "b", "b")),
+                   text = c(paste("x", A), paste("y", B),
+                            "no emoji", "none either")),
+    grp, .drop = drop)
+  droppers <- list(filter = function(d) emoji_filter(d, text),
+                   categorize = function(d) emoji_categorize(d, text),
+                   tokens = function(d) emoji_tokens(d, text))
+  for (drop in c(TRUE, FALSE)) {
+    g <- mk(drop)
+    expect_identical(dplyr::n_groups(g), 2L, info = drop)
+    ref <- dplyr::filter(g, grepl("x|y", text))
+    ref_n <- nrow(dplyr::summarise(ref, n = dplyr::n(), .groups = "drop"))
+    for (nm in names(droppers)) {
+      out <- suppressWarnings(droppers[[nm]](g))
+      lbl <- paste(nm, drop)
+      expect_true(dplyr::is_grouped_df(out), info = lbl)
+      expect_identical(dplyr::group_vars(out), "grp", info = lbl)
+      expect_identical(dplyr::n_groups(out), dplyr::n_groups(ref), info = lbl)
+      expect_identical(
+        nrow(dplyr::summarise(out, n = dplyr::n(), .groups = "drop")),
+        ref_n, info = lbl)
+    }
+  }
+  # the two settings really do differ, or the loop above tests one thing twice
+  expect_identical(dplyr::n_groups(dplyr::filter(mk(TRUE),
+                                                 grepl("x|y", text))), 1L)
+  expect_identical(dplyr::n_groups(dplyr::filter(mk(FALSE),
+                                                 grepl("x|y", text))), 2L)
+})
+
+test_that("a row-preserving verb answers from its own row alone", {
+  # Round 118 pinned additivity for the aggregators: counts add across a
+  # corpus split. This is the other half, for the verbs that answer per row:
+  # a row's values must not move because of what else is in the call. The
+  # failure it guards against is the shape that produced the `.emoji_sentiment`
+  # standard-error bug and the `Inf` in `text_score` bug -- one row reaching
+  # into another's answer.
+  skip_if_catalogue_moved()
+  A <- "\U0001F600"; B <- "\U0001F602"; C <- "\U0001F621"
+  D <- "\U0001F60D"; E <- "\U0001F622"
+  # The two halves must differ in their *emoji* content, not just in the text
+  # score. A first draft varied only `sc`, which left both halves with
+  # identical emoji columns -- so a verb that centred a score on the corpus
+  # mean gave the same answer either way and the mutation testing this test
+  # survived. Same symmetric-fixture trap as `emoji_turnover()`'s `n_new`.
+  mk <- function(glyphs, off) data.frame(
+    text = rep(c(paste("a", glyphs[1], glyphs[2]), paste("b", glyphs[3]),
+                 "plain", paste("c", glyphs[1], glyphs[3]),
+                 paste("d", glyphs[2], glyphs[2])), length.out = 40),
+    sc = rep(c(0.9, -0.5, 0, 0.2, -0.9), length.out = 40) + off,
+    stringsAsFactors = FALSE)
+  first <- mk(c(A, B, C), 0)
+  second <- mk(c(D, E, A), 0.05)
+  both <- rbind(first, second)
+  # and they really are different, or the point above is lost again
+  expect_false(identical(sort(unlist(tidyEmoji:::emoji_glyph_list(first$text))),
+                         sort(unlist(tidyEmoji:::emoji_glyph_list(second$text)))))
+  expect_false(isTRUE(all.equal(
+    emoji_sentiment(first, text)$.emoji_sentiment,
+    emoji_sentiment(second, text)$.emoji_sentiment)))
+  rownames(first) <- NULL; rownames(both) <- NULL
+  n1 <- nrow(first)
+
+  local_verbs <- list(
+    position = function(d) emoji_position(d, text),
+    sentiment = function(d) emoji_sentiment(d, text),
+    sentiment_se = function(d) emoji_sentiment(d, text, se = TRUE),
+    emotion = function(d) emoji_emotion(d, text),
+    emotion_label = function(d) emoji_emotion_label(d, text),
+    score = function(d) emoji_score(d, text),
+    risk = function(d) emoji_risk(d, text),
+    density = function(d) emoji_density(d, text),
+    ratio = function(d) emoji_ratio(d, text),
+    token_cost = function(d) emoji_token_cost(d, text),
+    type = function(d) emoji_type(d, text),
+    to_text = function(d) emoji_to_text(d, text, format = "shortcode"),
+    sanitize = function(d) emoji_sanitize(d, text, policy = "strip"),
+    incongruity_none = function(d)
+      emoji_incongruity(d, text, sc, scale = "none")
+  )
+  for (nm in names(local_verbs)) {
+    f <- local_verbs[[nm]]
+    alone <- as.data.frame(suppressWarnings(f(first)))
+    together <- as.data.frame(suppressWarnings(f(both)))
+    expect_identical(nrow(alone), n1, info = nm)
+    expect_identical(nrow(together), nrow(both), info = nm)
+    head_together <- together[seq_len(n1), , drop = FALSE]
+    rownames(head_together) <- NULL
+    expect_equal(alone, head_together, info = nm)
+  }
+
+  # `emoji_dfm()` is local in the columns the two calls share and gains one
+  # for every glyph only the second half carries, so compare the shared
+  # columns and assert the extra ones really appeared.
+  d1 <- as.data.frame(emoji_dfm(first, text))
+  d2 <- as.data.frame(emoji_dfm(both, text))[seq_len(n1), , drop = FALSE]
+  rownames(d2) <- NULL
+  shared <- intersect(names(d1), names(d2))
+  expect_gt(length(shared), 3L)
+  expect_equal(d1[shared], d2[shared])
+  expect_gt(length(setdiff(names(d2), names(d1))), 0L)
+  # and the columns the second half added are all zero for the first half's
+  # rows, which is what "local" means for a wide format
+  for (cn in setdiff(names(d2), names(d1))) {
+    expect_true(all(d2[[cn]] == 0L), info = cn)
+  }
+
+  # The two relative scalings are the documented exception: `?emoji_incongruity`
+  # says adding scored rows "changes every other row's answer". Assert that
+  # they really do differ, or this exclusion would quietly become a claim that
+  # they are local after all.
+  for (sc in c("rank", "zscore")) {
+    alone <- suppressWarnings(emoji_incongruity(first, text, sc,
+                                                scale = sc))$.emoji_incongruity
+    together <- suppressWarnings(emoji_incongruity(both, text, sc,
+                                                   scale = sc))$.emoji_incongruity
+    expect_false(isTRUE(all.equal(alone, together[seq_len(n1)])), info = sc)
+  }
+})
+
+test_that("an aggregator's answer does not depend on input row order", {
+  # Round 110 pinned that the documented *sorts* are stable under a
+  # permutation of the input. This is the stronger question it did not ask:
+  # whether row order leaks into the values at all. It only holds
+  # unconditionally for the verbs whose output carries none of the caller's
+  # columns -- `emoji_filter()`, `emoji_tokens()` and `emoji_categorize()`
+  # legitimately follow the input's order because they hand its rows back, and
+  # `emoji_dfm()` keyed on nothing legitimately renumbers `.row_number`.
+  skip_if_catalogue_moved()
+  A <- "\U0001F600"; B <- "\U0001F602"; C <- "\U0001F60D"
+  set.seed(4)
+  d <- data.frame(
+    text = rep(c(paste("a", A, B), paste("b", C), "plain",
+                 paste("c", A, C, B), paste("d", B)), length.out = 120),
+    when = as.Date("2024-01-01") + rep(c(0, 40, 80, 200, 300),
+                                       length.out = 120),
+    sc = rep(c(0.9, -0.5, 0, 0.2, -0.9), length.out = 120),
+    doc = rep(1:6, length.out = 120),
+    stringsAsFactors = FALSE)
+
+  aggregators <- list(
+    frequency = function(x) emoji_frequency(x, text),
+    pairs = function(x) emoji_pairs(x, text),
+    pairs_doc = function(x) emoji_pairs(x, text, doc_id = doc),
+    cooccurrence = function(x) emoji_cooccurrence(x, text),
+    collocations = function(x) emoji_collocations(x, text, min_n = 1),
+    ngrams_count = function(x) emoji_frequency(emoji_tokens(x, text), .emoji),
+    trend = function(x) emoji_trend(x, text, when, top_n = NULL),
+    seasonality = function(x) emoji_seasonality(x, text, when),
+    turnover = function(x) emoji_turnover(x, text, when),
+    adoption = function(x) emoji_adoption_lag(x, text, when),
+    version_profile = function(x) emoji_version_profile(x, text),
+    top_n = function(x) top_n_emojis(x, text),
+    summary = function(x) emoji_summary(x, text),
+    incongruity_profile = function(x)
+      emoji_incongruity_profile(x, text, sc, scale = "none", min_n = 1),
+    dfm_doc = function(x) emoji_dfm(x, text, doc_id = doc)
+  )
+
+  perm <- sample(nrow(d))
+  shuffled <- d[perm, , drop = FALSE]
+  rownames(shuffled) <- NULL
+  # the permutation must actually move rows, or every comparison is trivial
+  expect_false(identical(perm, seq_len(nrow(d))))
+
+  for (nm in names(aggregators)) {
+    f <- aggregators[[nm]]
+    a <- as.data.frame(suppressWarnings(f(d)))
+    b <- as.data.frame(suppressWarnings(f(shuffled)))
+    # `doc_id` row order is documented as first appearance, so sort both by
+    # the key before comparing; everything else must match as it stands
+    if (nm %in% c("dfm_doc", "pairs_doc")) {
+      a <- a[do.call(order, unname(as.list(a))), , drop = FALSE]
+      b <- b[do.call(order, unname(as.list(b))), , drop = FALSE]
+      rownames(a) <- NULL; rownames(b) <- NULL
+    }
+    expect_equal(a, b, info = nm)
+    expect_gt(nrow(a), 0L)
+  }
+})
+
+test_that("a test comparing catalogue figures to a help page is gated", {
+  # `emoji` has no upper bound in DESCRIPTION, so any test that derives a
+  # number from the catalogue and then requires an Rd page to state it turns
+  # red the day a new catalogue ships. skip_if_catalogue_moved() is the
+  # answer; remembering to call it is not, so scan for the shape instead.
+  #
+  # Match bare symbols rather than "name(": the test this guard was written
+  # for aliases `read_rd <- rd_text` and then calls the alias, which a scan
+  # keyed on "rd_text(" walks straight past. Comments are stripped first, so a
+  # figure merely discussed in prose does not count.
+  files <- list.files(testthat::test_path("."), pattern = "^test.*[.]R$",
+                      full.names = TRUE)
+  skip_if(length(files) == 0L, "test sources not available")
+  cat_src <- c("emoji_reference", "emoji::emojis", ".emoji_ref_keys")
+  doc_src <- c("rd_text", "rd_flat", "rd_all", "Rd_db")
+  # Exempt by name, with the reason. test-emotion.R reaches the catalogue only
+  # to look a glyph up by key; the figures it holds the help page to (150
+  # rows, 3 ties) come from the bundled emotion lexicon, which ships frozen
+  # and does not move when `emoji` does.
+  exempt <- "a row with no dominant emotion is NA, not the first Plutchik name"
+  offenders <- character(0)
+  for (f in files) {
+    exprs <- tryCatch(suppressWarnings(parse(f, keep.source = TRUE)),
+                      error = function(e) NULL)
+    if (is.null(exprs)) next
+    src <- attr(exprs, "srcref")
+    for (i in seq_along(exprs)) {
+      e <- exprs[[i]]
+      if (!(is.call(e) && identical(e[[1L]], quote(test_that)))) next
+      nm <- as.character(e[[2L]])
+      if (nm %in% exempt) next
+      txt <- paste(as.character(src[[i]]), collapse = "\n")
+      live <- paste(sub("#.*$", "", strsplit(txt, "\n")[[1L]]), collapse = "\n")
+      if (grepl("skip_if_catalogue_moved", live, fixed = TRUE)) next
+      has_cat <- any(vapply(cat_src, function(w)
+        grepl(w, live, fixed = TRUE), logical(1)))
+      has_doc <- any(vapply(doc_src, function(w)
+        grepl(w, live, fixed = TRUE), logical(1)))
+      if (has_cat && has_doc) offenders <- c(offenders, paste0(basename(f),
+                                                               ": ", nm))
+    }
+  }
+  expect_identical(offenders, character(0))
+
+  # not inert: the scan really reads the sources, the gate really is in use,
+  # and the exempt test really is still there to be exempted
+  expect_gt(length(files), 5L)
+  all_src <- paste(unlist(lapply(files, readLines, warn = FALSE)),
+                   collapse = "\n")
+  expect_gt(length(gregexpr("skip_if_catalogue_moved", all_src,
+                            fixed = TRUE)[[1L]]), 20L)
+  expect_true(grepl(exempt, all_src, fixed = TRUE))
+})
+
+test_that("the word trim holds its properties over random input", {
+  # Value assertions elsewhere pin what the trim returns for a handful of
+  # fixtures. These are the properties that must hold for anything, checked
+  # over a corpus built to mix every category the rule names: letters, digits,
+  # combining marks, punctuation, symbols and several scripts.
+  #
+  # The trim was also differentially tested against ICU (via stringi, a
+  # different Unicode engine from the PCRE the package uses) over 6007 of
+  # these strings, agreeing exactly. That comparison is not shipped, because
+  # stringi is not a dependency and adding one for a test would be the wrong
+  # trade; these three properties need nothing beyond base R.
+  trim <- tidyEmoji:::.emoji_trim_words
+  pool <- c(
+    intToUtf8(97:122, multiple = TRUE), intToUtf8(48:57, multiple = TRUE),
+    # accented Latin, then marks, then Hebrew/Arabic/Thai/Devanagari/CJK/
+    # Greek/Cyrillic, then numeric oddities outside Nd
+    intToUtf8(c(0x00E9, 0x00FC, 0x00DF, 0x0142, 0x0219), multiple = TRUE),
+    intToUtf8(c(0x0301, 0x0308, 0x05B4, 0x0651, 0x0E31, 0x093E, 0xFE0F),
+              multiple = TRUE),
+    intToUtf8(c(0x05D0, 0x0627, 0x0E01, 0x0915, 0x4F60, 0x03B1, 0x0431),
+              multiple = TRUE),
+    intToUtf8(c(0x00B2, 0x2160, 0x0660), multiple = TRUE),
+    strsplit("!?.,;:()[]{}'-_/@#$%^&*+=<>|~", "")[[1L]],
+    intToUtf8(c(0x2014, 0x201C, 0x00A1, 0x20AC, 0x2713, 0x266A),
+              multiple = TRUE))
+  set.seed(20260918)
+  words <- vapply(seq_len(1500), function(i)
+    paste(sample(pool, sample(1:9, 1L), replace = TRUE), collapse = ""),
+    character(1))
+  words <- c(words, "", " ", "a", "1", intToUtf8(0x0301), "...", "a.b")
+  got <- trim(words)
+
+  # 1. every survivor holds a letter or a digit, which is the drop rule
+  expect_true(all(grepl("[\\p{L}\\p{N}]", got, perl = TRUE)))
+  # 2. no survivor still begins or ends with something the trim strips
+  expect_false(any(grepl("^[^\\p{L}\\p{N}\\p{M}]|[^\\p{L}\\p{N}\\p{M}]$",
+                         got, perl = TRUE)))
+  # 3. trimming a trimmed word changes nothing
+  expect_identical(trim(got), got)
+  # and the same three under a C LC_CTYPE, since that is the whole point
+  expect_identical(with_ctype("C", trim(words)), got)
+
+  # the corpus has teeth: it really does contain all three kinds of token
+  expect_gt(length(got), 100L)
+  expect_lt(length(got), length(words))
+  expect_true(any(grepl("[^ -~]", got)))
+})
+
+test_that("no answer bottoms out in a locale-dependent regex class", {
+  # Three bugs, three rounds, one shape: tolower() in the case fold,
+  # iswspace() behind "\\s" and "[[:space:]]", and "[[:alnum:]]" in the word
+  # trim. All three are C-library predicates, so the same pattern matches
+  # different characters on different machines and a documented answer moves
+  # with the session rather than with the data. Everything the package needs
+  # is available either as an explicit code-point set or as a PCRE \\p{...}
+  # property, which reads Unicode's own tables.
+  #
+  # Scan the character constants as well as the function bodies: two of the
+  # three patterns live in a constant, which pkg_code_text() cannot see.
+  ns <- asNamespace("tidyEmoji")
+  consts <- unlist(lapply(ls(ns, all.names = TRUE), function(n) {
+    v <- tryCatch(get(n, envir = ns), error = function(e) NULL)
+    if (is.character(v) && length(v)) {
+      stats::setNames(as.character(v), rep(n, length(v)))
+    }
+  }))
+  code <- c(pkg_code_text(), consts)
+  banned <- c("[:alnum:]", "[:alpha:]", "[:space:]", "[:blank:]", "[:punct:]",
+              "[:upper:]", "[:lower:]", "[:graph:]", "[:print:]",
+              "\\w", "\\W", "\\s", "\\S", "\\b", "\\B")
+  # one assertion per pattern naming its offenders, as the LC_TIME guard does
+  offenders <- function(pat) {
+    unique(names(code)[grepl(pat, code, fixed = TRUE)])
+  }
+  for (b in banned) expect_identical(offenders(b), character(0), info = b)
+
+  # and the guard is not inert: it saw the constants, and the explicit
+  # alternatives it permits are genuinely in use
+  expect_gt(length(code), 150L)
+  expect_true(".emoji_ws" %in% names(consts))
+  expect_gt(length(offenders("\\p{L}")), 0L)
+})
+
 test_that("nothing in R/ folds case with tolower() outside .emoji_fold", {
   files <- list.files("../../R", pattern = "[.]R$", full.names = TRUE)
   if (!length(files)) {
@@ -2886,18 +3355,34 @@ test_that("nothing in R/ folds case with tolower() outside .emoji_fold", {
                      character(0))
     skip("package sources not available; scanned the namespace instead")
   }
+  # Attribute each hit to the function it sits in, and allow the same names the
+  # namespace branch above allows. The old version allowed a *line* that also
+  # said chartr(), which was the same thing only while .emoji_fold() was a
+  # one-liner: splitting it so the trailing tolower() has its own line made
+  # this guard fire on the one call it exists to permit.
+  allowed <- c(".emoji_fold", "emoji_search", ".emoji_type_of",
+               "emoji_collocations")
   offenders <- character(0)
   for (f in files) {
     lines <- readLines(f, warn = FALSE)
     code <- lines[!grepl("^\\s*#", lines)]
+    defs <- grep("^[.A-Za-z][.A-Za-z0-9_]* *<- *function", code)
+    owner <- function(i) {
+      before <- defs[defs <= i]
+      if (!length(before)) return(NA_character_)
+      sub(" *<-.*$", "", code[max(before)])
+    }
     hits <- grep("tolower\\(|toupper\\(|casefold\\(|ignore\\.case", code)
     for (i in hits) {
-      # the single legitimate call is the one inside .emoji_fold()
-      if (grepl("chartr", code[i], fixed = TRUE)) next
+      if (isTRUE(owner(i) %in% allowed)) next
       offenders <- c(offenders, paste0(basename(f), ": ", trimws(code[i])))
     }
   }
   expect_identical(offenders, character(0))
+  # not inert: the permitted calls are really there, so a rename that orphaned
+  # the whitelist would show up as an offender rather than as silence
+  expect_gt(length(grep("tolower\\(", readLines(
+    file.path(dirname(files[1]), "emoji-engine.R"), warn = FALSE))), 0L)
 })
 
 # ---------------------------------------------------------------------------
@@ -3523,6 +4008,13 @@ test_that("the documented round-trip byte share is the catalogue's", {
 })
 
 test_that("the help pages state the overlap figures the data gives", {
+  # Every figure below is derived from the *live* catalogue and then required
+  # of a help page, so all of them move the day `emoji` ships a new release --
+  # and DESCRIPTION sets no upper bound on it. Without this gate that is a
+  # simultaneous failure on every CRAN flavour, for a cause the maintainer
+  # cannot schedule, which is the exact hazard skip_if_catalogue_moved()
+  # exists for. It was the one test of this shape that had been missed.
+  skip_if_catalogue_moved()
   read_rd <- rd_text
 
   ref <- tidyEmoji:::emoji_reference()
@@ -4858,6 +5350,87 @@ test_that("every exported help topic offers a route onward", {
   }
 })
 
+test_that("the README's chunks all run, including the unevaluated ones", {
+  # Four lines of the README shipped broken. Two named `posts`, an object the
+  # README never defines, and two read `reviews$text_score`, a column
+  # `reviews` does not have -- so a reader pasting them got
+  # "object 'posts' not found". Nothing noticed because the chunks carry
+  # `eval = FALSE`: knitr never runs them, and the render test compares output
+  # that was never produced. Same shape as the tangled vignette script, which
+  # was also shipped code nobody had executed.
+  #
+  # Every chunk runs here, in document order, into one environment. That is
+  # exactly what a reader working down the page has, so an unevaluated chunk
+  # may rely on an evaluated one above it and on nothing else.
+  skip_if_not_installed("knitr")
+  path <- pkg_text_file("README.Rmd")
+  skip_if(is.na(path), "README sources not available")
+  lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
+  opens <- grep("^```[{]r", lines)
+  closes <- grep("^```$", lines)
+  expect_gt(length(opens), 4L)
+
+  env <- new.env(parent = globalenv())
+  n_uneval <- 0L
+  for (i in seq_along(opens)) {
+    a <- opens[i]
+    b <- closes[closes > a][1L]
+    expect_false(is.na(b), info = paste("unclosed chunk at line", a))
+    if (grepl("eval *= *FALSE", lines[a])) n_uneval <- n_uneval + 1L
+    # b == a + 1L is an empty chunk, and seq.int() counts *downwards* when
+    # its bound is below its start, which would hand parse() the closing
+    # fence. Skip instead.
+    code <- if (b > a + 1L) lines[seq.int(a + 1L, b - 1L)] else character(0)
+    # expect_no_error() takes no info=, and which chunk failed is the only
+    # useful thing to report, so capture the message and assert on that
+    err <- tryCatch({ eval(parse(text = code), envir = env); NULL },
+                    error = function(e) conditionMessage(e))
+    expect_null(err, info = paste0("line ", a, ": ", lines[a]))
+  }
+  # the unevaluated chunks are the whole point, so fail rather than pass
+  # vacuously if they are ever made evaluated or removed
+  expect_gt(n_uneval, 0L)
+  # and the objects the unevaluated chunks lean on really were built, so the
+  # loop was not quietly skipping the interesting half
+  expect_true(all(c("reviews", "posts", "scored") %in% ls(env)))
+})
+
+test_that("every vignette chunk parses, including the unevaluated ones", {
+  # knitr renders an `eval = FALSE` chunk holding a syntax error without a
+  # word of complaint -- measured, not assumed -- so R CMD check's vignette
+  # rebuild is no guard at all for code that is only ever displayed. The
+  # README's chunks are executed by the test above; the introduction
+  # vignette's one unevaluated chunk cannot be, since it needs tidytext and
+  # sentimentr and neither is a dependency, so require at least that it
+  # parses. Shipped code that is not even syntactically valid is the floor.
+  vigs <- c("introduction", "reversible-preprocessing")
+  n_chunks <- 0L
+  n_uneval <- 0L
+  for (v in vigs) {
+    path <- pkg_text_file(paste0("vignettes/", v, ".Rmd"),
+                          paste0("doc/", v, ".Rmd"))
+    skip_if(is.na(path), paste(v, "vignette source not available"))
+    lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
+    opens <- grep("^```[{]r", lines)
+    closes <- grep("^```$", lines)
+    expect_gt(length(opens), 0L)
+    for (a in opens) {
+      b <- closes[closes > a][1L]
+      expect_false(is.na(b), info = paste(v, "unclosed chunk at line", a))
+      if (grepl("eval *= *FALSE", lines[a])) n_uneval <- n_uneval + 1L
+      n_chunks <- n_chunks + 1L
+      code <- if (b > a + 1L) lines[seq.int(a + 1L, b - 1L)] else character(0)
+      err <- tryCatch({ parse(text = code); NULL },
+                      error = function(e) conditionMessage(e))
+      expect_null(err, info = paste0(v, " line ", a))
+    }
+  }
+  expect_gt(n_chunks, 20L)
+  # the unevaluated chunk is what this test exists for, so do not let it pass
+  # vacuously if that chunk is ever made evaluated or dropped
+  expect_gt(n_uneval, 0L)
+})
+
 test_that("README.md has not drifted from README.Rmd's prose", {
   # NEWS says README.md "cannot drift from its source unnoticed", which was
   # only true while someone remembered to re-knit. Rendering here would need
@@ -5679,6 +6252,99 @@ test_that("a lexicon error names the argument the caller typed", {
   }
 })
 
+test_that("no test appends to an outer accumulator with `<-`", {
+  # The third vacuity sweep, and it exists because of a real near-miss: the
+  # AST guard on stop() messages was written with
+  # `offenders <- c(offenders, ...)` inside its walk() helper, where the
+  # counter beside it correctly said `n_stops <<- n_stops + 1L`. The local
+  # assignment is discarded on return, so the guard walked all 63 stop()
+  # calls and could not report one of them. The count looking right is what
+  # made it convincing.
+  #
+  # The shape to catch is a *self-append* to a name the enclosing function
+  # does not own: `nm <- c(nm, ...)` inside a function() that never
+  # initialises `nm`. Building a purely local vector that way is fine and
+  # common, so the rule has to be about ownership, not about the append.
+  files <- list.files(testthat::test_path("."), pattern = "^test.*[.]R$",
+                      full.names = TRUE)
+  skip_if(length(files) == 0L, "test sources not available")
+  empty_sym <- function(e, i) {
+    is.symbol(e[[i]]) && !nzchar(as.character(e[[i]]))
+  }
+  # Is this assignment a self-append, `nm <- c(nm, ...)`?
+  self_append <- function(e) {
+    if (!(is.call(e) && length(e) == 3L && is.symbol(e[[2L]]))) return(FALSE)
+    nm <- as.character(e[[2L]])
+    rhs <- e[[3L]]
+    if (!(is.call(rhs) && identical(rhs[[1L]], quote(c)))) return(FALSE)
+    any(vapply(seq_along(rhs), function(k) {
+      !empty_sym(rhs, k) && is.symbol(rhs[[k]]) &&
+        identical(as.character(rhs[[k]]), nm)
+    }, logical(1)))
+  }
+  # Names this expression assigns to, not descending into nested functions.
+  # A self-append is excluded deliberately: `out <- c(out, x)` presupposes
+  # `out` rather than establishing it, and counting it as ownership makes the
+  # rule circular -- the first version of this guard did exactly that and so
+  # could never flag the bug it was written for.
+  owned <- function(e, acc = character(0)) {
+    if (!is.call(e)) return(acc)
+    if (identical(e[[1L]], quote(`function`))) return(acc)
+    if (length(e) == 3L && is.symbol(e[[2L]]) && !self_append(e) &&
+        (identical(e[[1L]], quote(`<-`)) || identical(e[[1L]], quote(`=`)))) {
+      acc <- c(acc, as.character(e[[2L]]))
+    }
+    for (i in seq_along(e)) {
+      if (empty_sym(e, i)) next
+      if (is.call(e[[i]])) acc <- owned(e[[i]], acc)
+    }
+    acc
+  }
+  offenders <- character(0)
+  # `own` is reset at every function boundary to that function's own locals
+  # and formals, not accumulated from outer ones: an inner function appending
+  # to a name an *outer* function owns is discarded just the same. And the
+  # rule fires only inside a function -- a self-append at the top level of a
+  # test block is ordinary vector building and perfectly correct.
+  walk <- function(e, own, where, in_fun = FALSE) {
+    if (!is.call(e)) return(invisible(NULL))
+    if (identical(e[[1L]], quote(`function`))) {
+      body_e <- e[[3L]]
+      own <- unique(c(owned(body_e), names(as.list(e[[2L]]))))
+      for (i in seq_along(e)) {
+        if (empty_sym(e, i)) next
+        if (is.call(e[[i]])) walk(e[[i]], own, where, TRUE)
+      }
+      return(invisible(NULL))
+    }
+    # a self-append to a name the enclosing function does not own
+    if (in_fun && identical(e[[1L]], quote(`<-`)) && self_append(e) &&
+        !as.character(e[[2L]]) %in% own) {
+      offenders <<- c(offenders, paste0(where, ": ", deparse(e)[1L]))
+    }
+    for (i in seq_along(e)) {
+      if (empty_sym(e, i)) next
+      if (is.call(e[[i]])) walk(e[[i]], own, where, in_fun)
+    }
+    invisible(NULL)
+  }
+  n_funs <- 0L
+  for (f in files) {
+    ex <- tryCatch(suppressWarnings(parse(f)), error = function(e) NULL)
+    if (is.null(ex)) next
+    for (e in ex) {
+      if (!(is.call(e) && identical(e[[1L]], quote(test_that)))) next
+      n_funs <- n_funs + 1L
+      walk(e[[3L]], character(0), paste0(basename(f), " / ",
+                                         as.character(e[[2L]])))
+    }
+  }
+  expect_identical(offenders, character(0))
+  # and the scan is live: it read every block, and this very assertion is one
+  # of the "collection is empty" shapes it exists to protect
+  expect_gt(n_funs, 400L)
+})
+
 test_that("no stop() message names an argument no function has", {
   # The general form: a message that quotes `x` in backticks should be
   # quoting something a caller can type. Helpers parameterise this through
@@ -5692,26 +6358,64 @@ test_that("no stop() message names an argument no function has", {
   typeable <- c(typeable, "emoji", "key", "sentiment_score", "%s", "{x}",
                 "emotag1200", "novak2015")
 
-  code <- pkg_code_text()
+  # Two more the AST walk below surfaced, both from messages the old regex
+  # never reached. `NA` is quoted as a *value* ("a key of `NA`"), not as an
+  # argument name. `check.names` is a real argument a caller can type, to
+  # read.csv() rather than to this package: the duplicate-column message
+  # points at it because that is the setting which produced the duplicate.
+  typeable <- c(typeable, "NA", "check.names")
+
+  # Walk the AST rather than matching stop(...) with a regex. The regex this
+  # replaces allowed one level of nesting, so it saw only 36 of the 63 stop()
+  # calls in the package: every `stop(sprintf(paste0(...)))` was skipped
+  # silently, and the messages it skipped are the ones that quote `NA`. A
+  # guard that inspects 57% of its subject and reports nothing is the shape
+  # this suite keeps finding.
+  quoted_in <- function(e, acc = character(0)) {
+    if (is.character(e)) {
+      return(c(acc, unlist(regmatches(e, gregexpr("`[^`]+`", e)))))
+    }
+    if (!is.call(e)) return(acc)
+    for (i in seq_along(e)) {
+      # the empty symbol of `x[, 1]` must be tested inline
+      if (is.symbol(e[[i]]) && !nzchar(as.character(e[[i]]))) next
+      acc <- quoted_in(e[[i]], acc)
+    }
+    acc
+  }
+  n_stops <- 0L
   offenders <- character(0)
-  for (fn in names(code)) {
-    calls <- unlist(regmatches(code[[fn]],
-      gregexpr("stop\\((?:[^()]|\\([^()]*\\))*\\)", code[[fn]])))
-    for (cl in calls) {
-      lits <- unlist(regmatches(cl, gregexpr('"(?:[^"\\\\]|\\\\.)*"', cl)))
-      quoted <- unlist(regmatches(paste(lits, collapse = " "),
-        gregexpr("`[^`]+`", paste(lits, collapse = " "))))
-      quoted <- gsub("`", "", quoted)
+  walk <- function(e, fn) {
+    if (!is.call(e)) return(invisible(NULL))
+    if (identical(e[[1L]], quote(stop))) {
+      n_stops <<- n_stops + 1L
+      quoted <- gsub("`", "", quoted_in(e))
       # a message may quote an argument *with* its value -- `se = TRUE`,
       # `period = "hour"` -- which is still naming something a caller types
       quoted <- trimws(sub("\\s*=.*$", "", quoted))
       bad <- setdiff(quoted, typeable)
-      if (length(bad)) {
-        offenders <- c(offenders, paste0(fn, ": ", paste(bad, collapse = ", ")))
-      }
+      # `<<-`, not `<-`: an ordinary assignment here writes to walk()'s own
+      # frame and is discarded on return, which made this guard count 63
+      # stop() calls and report none of their offenders. `n_stops` was
+      # already `<<-`, so the count looked right while the check was inert.
+      if (length(bad)) offenders <<- c(offenders,
+        paste0(fn, ": ", paste(bad, collapse = ", ")))
     }
+    for (i in seq_along(e)) {
+      if (is.symbol(e[[i]]) && !nzchar(as.character(e[[i]]))) next
+      if (is.call(e[[i]])) walk(e[[i]], fn)
+    }
+    invisible(NULL)
+  }
+  ns <- asNamespace("tidyEmoji")
+  for (nm in ls(ns, all.names = TRUE)) {
+    f <- tryCatch(get(nm, envir = ns), error = function(e) NULL)
+    if (!is.function(f) || is.null(body(f))) next
+    walk(body(f), nm)
   }
   expect_identical(offenders, character(0))
+  # and it really did see all of them, not the 36 the regex could reach
+  expect_gt(n_stops, 55L)
 })
 
 # ---------------------------------------------------------------------------
@@ -6264,6 +6968,43 @@ test_that("the column guards accept every legitimate atomic class", {
   # an integer score is numeric and works
   d$i <- 1:2
   expect_s3_class(emoji_incongruity(d, text, i, scale = "none"), "tbl_df")
+})
+
+test_that("a list column is refused for every column argument", {
+  # .emoji_col() gained this guard after a list `doc_id` was grouped by its
+  # *deparsed R source*, so two different ids that deparse alike merged into
+  # one document. The fix was right and nothing ever fired it: line coverage
+  # named the stop() as unreached, which is the "correct assertion over a
+  # fixture that cannot fail" shape. Drive all four column arguments.
+  A <- "\U0001F600"
+  d <- data.frame(text = rep(paste("a", A), 2L), stringsAsFactors = FALSE)
+  d$lst <- list(1:2, 3:4)
+  cases <- list(
+    list(quote(emoji_dfm(d, text, doc_id = lst)), "doc_id"),
+    list(quote(emoji_pairs(d, text, doc_id = lst)), "doc_id"),
+    list(quote(emoji_trend(d, text, lst)), "time"),
+    list(quote(emoji_incongruity(d, text, lst, scale = "none")), "text_score")
+  )
+  for (cs in cases) {
+    lbl <- deparse(cs[[1L]])[1L]
+    msg <- tryCatch(suppressWarnings(eval(cs[[1L]])),
+                    error = function(e) conditionMessage(e))
+    expect_true(grepl("must be an atomic column", msg, fixed = TRUE),
+                info = lbl)
+    # the message has to name the argument, the column and the class, or the
+    # caller cannot tell which of the four to fix
+    expect_true(grepl(paste0("`", cs[[2L]], "` must be"), msg, fixed = TRUE),
+                info = lbl)
+    expect_true(grepl("`lst` is a list column", msg, fixed = TRUE), info = lbl)
+  }
+  # a data-frame column is a list as well, and is named as what it is
+  d$df <- data.frame(a = 1:2, b = 3:4)
+  msg <- tryCatch(suppressWarnings(emoji_dfm(d, text, doc_id = df)),
+                  error = function(e) conditionMessage(e))
+  expect_true(grepl("`df` is a data.frame column", msg, fixed = TRUE))
+  # not vacuous: the same verbs take the same columns happily when atomic
+  d$ok <- c(1L, 2L)
+  expect_s3_class(emoji_dfm(d, text, doc_id = ok), "tbl_df")
 })
 
 
@@ -6851,6 +7592,31 @@ test_that("two lexicon rows for one emoji must agree on the score", {
   # and the row order really did decide it, which is why this is a defect
   swapped <- dis[c(2L, 1L, 3L), ]
   expect_error(emoji_score(d, text, lexicon = swapped), "more than one score")
+  # The emotion path checks the same thing over a *matrix* of dimensions, and
+  # that branch of .emoji_check_dup_keys() was the one nothing reached: line
+  # coverage named it, which is what coverage is for. A disagreement in any
+  # single dimension has to be enough, so drive the first and the last of the
+  # eight rather than only one -- a loop that stopped a column short would
+  # otherwise pass.
+  dims <- tidyEmoji:::emoji_emotion_dims()
+  agree_mat <- data.frame(emoji = c(H, HQ, B))
+  for (dm in dims) agree_mat[[dm]] <- c(0.4, 0.4, 0.1)
+  expect_no_error(emoji_emotion(d, text, lexicon = agree_mat))
+  for (dm in c(dims[1L], dims[length(dims)])) {
+    bad_mat <- agree_mat
+    bad_mat[[dm]] <- c(0.4, 0.9, 0.1)
+    expect_error(emoji_emotion(d, text, lexicon = bad_mat),
+                 "more than one score", info = dm)
+    expect_error(emoji_emotion(d, text, lexicon = bad_mat), "2764", info = dm)
+  }
+  # and an NA against a value is not a disagreement here either, matching the
+  # vector branch above
+  na_mat <- agree_mat
+  na_mat[[dims[1L]]] <- c(0.4, NA, 0.1)
+  expect_no_error(emoji_emotion(d, text, lexicon = na_mat))
+  # the fixture has all eight dimensions, or "first and last" is one column
+  expect_length(dims, 8L)
+
   # neither bundled lexicon has a duplicated key at all, so the guard cannot
   # reach them
   E <- asNamespace("tidyEmoji")
@@ -6858,6 +7624,50 @@ test_that("two lexicon rows for one emoji must agree on the score", {
     tb <- get(nm, envir = asNamespace("tidyEmoji"))
     expect_identical(anyDuplicated(E$emoji_key(tb$emoji)), 0L, info = nm)
   }
+})
+
+test_that("the lexicon dispatch handles every type the lookup can mint", {
+  # emoji_sentiment() and emoji_emotion() both end in an `else` that nothing
+  # can reach, kept as a net for a type added later. A net is only worth
+  # having if nothing grows a fourth type past the branches above it, so pin
+  # the vocabulary at its single minting site rather than trusting the
+  # comment. emoji_sentiment() also carried a second dead branch, a duplicate
+  # of its own `is_novak` test, now gone.
+  local_clean_registry()
+  lookup <- tidyEmoji:::.emoji_lexicon_lookup
+  reserved <- tidyEmoji:::.emoji_reserved_lexicons()
+  expect_setequal(vapply(reserved, function(nm) lookup(nm)$type, character(1)),
+                  c("sentiment", "emotion"))
+  A <- "\U0001F600"
+  register_emoji_lexicon("dispatch_probe",
+                         data.frame(emoji = A, score = 0.5))
+  expect_identical(lookup("dispatch_probe")$type, "custom")
+  # the minting site names exactly those three, so a fourth cannot arrive
+  # without this failing
+  src <- paste(deparse(lookup), collapse = " ")
+  expect_setequal(unique(regmatches(src, gregexpr('type = "[a-z]+"', src))[[1]]),
+                  c('type = "sentiment"', 'type = "emotion"',
+                    'type = "custom"'))
+  # and each of the three reaches a real branch in both verbs: its own is
+  # accepted, the other's is refused by name, neither falls through
+  d <- tibble::tibble(text = paste("hi", A))
+  expect_no_error(emoji_sentiment(d, text, lexicon = "novak2015"))
+  expect_no_error(emoji_sentiment(d, text, lexicon = "dispatch_probe"))
+  expect_error(emoji_sentiment(d, text, lexicon = "emotag1200"),
+               "is an emotion lexicon")
+  expect_no_error(emoji_emotion(d, text, lexicon = "emotag1200"))
+  expect_error(emoji_emotion(d, text, lexicon = "novak2015"),
+               "is a sentiment lexicon")
+  # an unknown name never gets as far as either dispatch
+  expect_error(emoji_sentiment(d, text, lexicon = "nope"), "Unknown lexicon")
+  expect_error(emoji_emotion(d, text, lexicon = "nope"), "Unknown lexicon")
+  # no caller can produce the fall-through message, which is the claim the
+  # comments beside it make
+  expect_false(any(grepl("Internal:", vapply(
+    list(function() emoji_sentiment(d, text, lexicon = "emotag1200"),
+         function() emoji_emotion(d, text, lexicon = "novak2015"),
+         function() emoji_sentiment(d, text, lexicon = "nope")),
+    function(f) tryCatch({ f(); "" }, error = conditionMessage), character(1)))))
 })
 
 test_that("`by` must name a single column", {
@@ -8915,6 +9725,22 @@ test_that("cran-comments.md counts the CI flavours the workflow defines", {
   # the floor job in particular, since it is the one that earns its place
   expect_true(any(grepl("r: '4.1'", jobs, fixed = TRUE)))
   expect_true(grepl("R 4.1", txt, fixed = TRUE))
+
+  # The matrix is not the whole workflow. The count above covers the `- {os:}`
+  # entries and said nothing about the jobs beside them, so a job could be
+  # added or dropped without the file a reviewer reads noticing -- which is
+  # how the `ctype` job's predecessor comment came to claim the opposite of
+  # what the job does. Couple every top-level job name instead.
+  lines <- readLines(wf, warn = FALSE)
+  at <- grep("^jobs:", lines)
+  expect_length(at, 1L)
+  names_at <- grep("^  [A-Za-z][A-Za-z0-9_-]*:\\s*$",
+                   lines[at:length(lines)], value = TRUE)
+  job_names <- trimws(sub(":\\s*$", "", names_at))
+  expect_gt(length(job_names), 1L)
+  for (j in setdiff(job_names, "R-CMD-check")) {
+    expect_true(grepl(j, txt, fixed = TRUE), info = j)
+  }
 })
 
 test_that("every figure an Rd references is actually shipped", {
@@ -8965,24 +9791,43 @@ test_that("every figure an Rd references is actually shipped", {
 })
 
 test_that("the tangled vignette script matches what the vignette says of it", {
-  # A chunk's `eval` option is a build-time instruction and does not survive
-  # into the script knitr tangles, so introduction.R calls ggplot()
-  # unconditionally while the vignette's own charts are gated. The vignette
-  # now says so; this holds the claim to the file.
+  # A chunk's `eval` option is a build-time instruction, so what lands in
+  # introduction.R depends on what was installed when the vignette was built,
+  # and there are two shapes. With ggplot2, forcats and stringr present --
+  # which is how the tarball that goes to CRAN is made -- `has_plot_pkgs` is
+  # TRUE and the ggplot() calls tangle out as live, ungated code: that is the
+  # file a user who installed the package opens, and the claim the vignette
+  # makes about it. With one of the three missing, knitr comments the chunk
+  # out instead.
+  #
+  # This asserted the first shape unconditionally, which made a noSuggests
+  # check fail on a machine that had done nothing wrong -- found by running
+  # `_R_CHECK_FORCE_SUGGESTS_=false R CMD check` on R 4.6.0, the one tree here
+  # that genuinely lacks a Suggests package. Handle both shapes; everything
+  # below the branch holds either way.
   path <- system.file("doc", "introduction.R", package = "tidyEmoji")
   skip_if(!nzchar(path) || !file.exists(path),
           "tangled vignette script not installed")
   script <- readLines(path, warn = FALSE, encoding = "UTF-8")
   code <- script[!grepl("^\\s*(#|$)", script)]
 
-  # library(ggplot2) is conditional, and the ggplot() calls are not
+  # library(ggplot2) is conditional in both shapes, and the eval option
+  # survives only as a comment in both
   expect_true(any(grepl("if (has_plot_pkgs) library(ggplot2)", code,
                         fixed = TRUE)))
-  plots <- grep("ggplot(", code, fixed = TRUE)
-  expect_gt(length(plots), 0L)
-  expect_false(any(grepl("if (has_plot_pkgs)", code[plots], fixed = TRUE)))
-  # the eval option survives only as a comment, which is why
   expect_true(any(grepl("^## ----eval = has_plot_pkgs", script)))
+
+  plots <- grep("ggplot(", code, fixed = TRUE)
+  if (length(plots)) {
+    # built with the plotting packages: the calls are live and ungated
+    expect_false(any(grepl("if (has_plot_pkgs)", code[plots], fixed = TRUE)))
+  } else {
+    # built without them: the chunks are commented out, so the script is inert
+    # rather than truncated. Assert that rather than nothing, or this branch
+    # would pass on a script that had simply lost its charts.
+    expect_true(any(grepl("^#+\\s+ggplot\\(", script)))
+    expect_gt(sum(grepl("^#+\\s+ggplot\\(", script)), 5L)
+  }
 
   # and the corpus is read the way the vignette says, so the non-plotting
   # half really does run on the declared dependencies alone
@@ -9374,6 +10219,32 @@ test_that("the four documented figures no test had ever held to hold", {
                "\\code{\"16.0\"} with \\pkg{emoji} 16.0.0", fixed = TRUE)
 })
 
+test_that("the bundled corpus carries no direct identifiers", {
+  # inst/extdata/ata_tweets.csv is 2000 entries of real social-media text and
+  # it ships with the package. Whoever assembled it stripped the direct
+  # identifiers -- there is not one @handle, retweet marker, email address or
+  # long numeric id in it -- and that is a property of shipped human text
+  # worth failing on rather than rediscovering. Swapping in a corpus that had
+  # not been scrubbed would otherwise pass every other test in this suite.
+  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
+  skip_if_not(file.exists(path), "bundled corpus not available")
+  x <- utils::read.csv(path, stringsAsFactors = FALSE,
+                       encoding = "UTF-8")$full_text
+  expect_length(x, 2000L)
+  expect_identical(sum(grepl("@[A-Za-z0-9_]{2,}", x)), 0L)
+  expect_identical(sum(grepl("^RT[ :]", x)), 0L)
+  expect_identical(
+    sum(grepl("[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}", x)), 0L)
+  # a run of nine or more digits is the shape of a status or account id
+  expect_identical(sum(grepl("[0-9]{9,}", x)), 0L)
+  # what it does carry, so the assertions above are not vacuous on an empty
+  # or truncated file: shortened links in a handful of rows, and hashtags
+  expect_identical(sum(grepl("https?://", x)), 8L)
+  expect_gt(sum(grepl("#[A-Za-z][A-Za-z0-9_]+", x)), 50L)
+  # and emoji, which is the reason it is here at all
+  expect_gt(sum(lengths(tidyEmoji:::emoji_glyph_list(x)) > 0L), 500L)
+})
+
 test_that("the vignette's 373-of-2000 figure and its zero-mean check hold", {
   # "Only 373 of these 2000 tweets qualify" and "on the rank scale the mean
   # gap over the scored rows is exactly zero, so a non-zero mean means your
@@ -9398,6 +10269,65 @@ test_that("the vignette's 373-of-2000 figure and its zero-mean check hold", {
     expect_identical(sum(!is.na(gap)), 373L)
     expect_equal(mean(gap, na.rm = TRUE), 0)
   }
+})
+
+test_that("the reversible-preprocessing vignette's figures hold", {
+  skip_if_catalogue_moved()
+  vig <- pkg_text_file("vignettes/reversible-preprocessing.Rmd",
+                       "doc/reversible-preprocessing.Rmd")
+  skip_if(is.na(vig), "reversible-preprocessing vignette not available")
+  txt <- paste(readLines(vig, warn = FALSE, encoding = "UTF-8"),
+               collapse = " ")
+
+  # The disagreement figures. These were the first prose in this article that
+  # no test derived, and the pair was wrong: it read "0.50 against 0.76",
+  # which is the *top tercile's* mean beside the below-0.5 group's, two
+  # different splits. The split is named in the prose now, so state it here
+  # as well and derive both means from it.
+  a <- emoji_ambiguity()
+  m <- merge(a[c("emoji", "ambiguity")],
+             emoji_sentiment_lexicon[c("emoji", "sentiment_score")],
+             by = "emoji")
+  s <- abs(m$sentiment_score)
+  strong <- s >= 0.5
+  expect_identical(sum(strong), 374L)
+  expect_identical(sum(!strong), 595L)
+  expect_equal(round(stats::cor(m$ambiguity, s), 2), -0.31)
+  expect_equal(round(mean(m$ambiguity[strong]), 2), 0.53)
+  expect_equal(round(mean(m$ambiguity[!strong]), 2), 0.76)
+  # the two groups really do differ, or the sentence has nothing to report
+  expect_gt(mean(m$ambiguity[!strong]) - mean(m$ambiguity[strong]), 0.1)
+  expect_match(txt, "correlates -0.31 with the absolute sentiment score",
+               fixed = TRUE)
+  expect_match(txt, "averages 0.53 over the", fixed = TRUE)
+  expect_match(txt, "374 glyphs scoring", fixed = TRUE)
+  expect_match(txt, "against 0.76 over the other", fixed = TRUE)
+
+  # the token-cost figures the prose quotes out of its own first chunk
+  awk <- tibble::tibble(text = c(
+    "ship it \U0001F600 today",
+    paste("the whole",
+          intToUtf8(c(0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F467, 0x200D,
+                      0x1F466)), "came"),
+    paste("step", intToUtf8(c(0x31, 0xFE0F, 0x20E3)), "first")))
+  tc <- emoji_token_cost(awk, text)
+  expect_equal(as.numeric(tc$.emoji_codepoints), c(1, 7, 3))
+  expect_equal(as.numeric(tc$.emoji_token_estimate), c(2, 13, 4))
+  expect_match(txt, "2 for a plain smiley, 13 for a family", fixed = TRUE)
+  expect_match(txt, "the family is seven code points and the keycap is three",
+               fixed = TRUE)
+
+  # and the claim the article makes about its own last table: "shortcode"
+  # clears this corpus, which the policy does not guarantee in general -- a
+  # glyph it cannot name is left in place. The prose now says so; pin that the
+  # corpus really is the clean case, so the sentence is not describing a
+  # different corpus.
+  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
+  skip_if_not(file.exists(path), "vignette corpus not available")
+  d <- utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8")
+  expect_identical(sum(emoji_token_cost(d, full_text)$.emoji_n), 900L)
+  san <- emoji_sanitize(d, full_text, policy = "shortcode")
+  expect_identical(sum(emoji_token_cost(san, full_text)$.emoji_n), 0L)
 })
 
 

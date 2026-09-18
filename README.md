@@ -26,9 +26,10 @@ including grapheme-aware detection so skin-tone modifiers (👍🏽) and
 multi-person sequences (👨‍👩‍👧‍👦) are treated as a single emoji rather than
 being split apart.
 
-New in 0.4.0: how much annotators *disagreed* about an emoji, the words
-around each occurrence, emoji use over time, text-emoji sentiment
-mismatch, and explicit emoji policies for language-model pipelines.
+It also answers the questions a count cannot: how much annotators
+*disagreed* about an emoji, what words surround each occurrence, how
+emoji use moves over time, where the text and the emoji disagree, and
+which emoji policy a language-model pipeline applied.
 
 ## Installation
 
@@ -222,6 +223,10 @@ follow usage and vocabulary churn, while `emoji_version_profile()` and
 new a corpus’s repertoire is.
 
 ``` r
+# the time verbs need a date column, so give the reviews one
+posts <- reviews %>%
+  mutate(posted_at = as.Date("2024-01-01") + c(0, 40, 80, 200, 300))
+
 reviews %>% emoji_context(text, window = 5)
 reviews %>% emoji_collocations(text, min_n = 2)
 posts %>% emoji_trend(text, posted_at, by = "month")
@@ -236,8 +241,12 @@ emoji half and the arithmetic; you bring the text score from tidytext,
 sentimentr or a model, and say how the two were made comparable.
 
 ``` r
-reviews %>% emoji_incongruity(text, text_score, scale = "rank")
-reviews %>% emoji_incongruity_profile(text, text_score, scale = "rank")
+# text_score is the half you bring; any scorer will do
+scored <- reviews %>% mutate(text_score = c(0.9, -0.8, 0, 0.1, 0.7))
+
+scored %>% emoji_incongruity(text, text_score, scale = "rank")
+scored %>% emoji_incongruity_profile(text, text_score, scale = "rank",
+                                     min_n = 1)   # default 5 needs more rows
 ```
 
 ### Emoji in language-model pipelines

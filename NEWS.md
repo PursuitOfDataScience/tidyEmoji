@@ -1,8 +1,9 @@
 # tidyEmoji 0.5.0
 
-No new verbs and no behaviour changes: every verb returns exactly what it
-returned in 0.4.0. One of them returns it a great deal faster, and the rest of
-the release is documentation and the infrastructure that checks it.
+No new verbs. In a UTF-8 session every verb but one returns exactly what it
+returned in 0.4.0: one returns it a great deal faster, and one answered a
+non-Latin-script corpus wrongly in a non-UTF-8 locale and now does not. The
+rest of the release is documentation and the infrastructure that checks it.
 
 The bundled crosswalks track **Unicode emoji 16.0**, via `emoji` 16.0.0.
 Re-generating them from `data-raw/crosswalks.R` against that release reproduces
@@ -16,55 +17,93 @@ the shipped data exactly, so the catalogue is current.
   multi-byte string rescans from its first byte to reach a character offset,
   so cutting one window still cost as much as the text before it; and on a row
   whose masked text is all spaces -- which is what a row of nothing but emoji
-  becomes -- no bounded slice ever yields a token, so the budget doubled up to
-  the whole side for every occurrence. That is the shape a chat or reaction
-  corpus is full of, the same family of rows `emoji_ratio()`'s `.emoji_only`
-  exists to find.
+  becomes -- no bounded slice ever yields a token. That is the shape a chat or
+  reaction corpus is full of.
 
   Each row now gets one index of its code points and token boundaries, and
-  every window is read off it. **3200 emoji in one row went from 7.1s to
-  0.11s**, and the verb is now flat in the emoji per row: the same 3200
-  spread over 320 rows costs 0.11s too, where the two differed by 26x before.
-  A realistic mixed row is 2.9x faster and `unit = "char"` 2.5x. A row holding
-  a single emoji keeps the old path, which is still the cheaper of the two
-  there, so nothing regresses on a corpus of short texts.
+  every window is read off it. **3200 emoji in one row went from 7.1s to about
+  a tenth of a second**, and the verb is flat in the emoji per row: the same
+  3200 spread over 320 rows costs the same tenth, where the two were more than
+  twenty times apart before. A realistic mixed row and `unit = "char"` are
+  each around three times faster. A row holding a single emoji keeps the old
+  path, which is still cheaper there, so nothing regresses on short texts.
 
   The output is unchanged, and checked to be: byte-identical on 13977
   occurrences across eight `window`/`unit` combinations, punctuation,
   no-break and ideographic spaces, ZWJ sequences and keycaps included.
 
+* **`emoji_collocations()` reported no collocations at all for a
+  non-Latin-script corpus in a non-UTF-8 locale.** It trimmed leading and
+  trailing punctuation off each context word with `[[:alnum:]]`, which
+  resolves through the C library: under `LC_CTYPE=C` nothing outside ASCII is
+  alphanumeric, so a Hebrew, Arabic, Thai, Devanagari or CJK word was trimmed
+  away to nothing and then dropped for being empty, and "cafe" spelled with an
+  acute came back as `caf`. The same corpus reported its collocations normally
+  in a UTF-8 session, which is what kept this out of sight: the answer moved
+  with the session rather than with the data.
+
+  The trim now reads Unicode's own tables through PCRE properties, and a token
+  holding no letter and no digit is not a word. Byte-identical to 0.4.0 on the
+  bundled corpus in a UTF-8 locale, and identical between `en_US.UTF-8` and
+  `LC_ALL=C`. One deliberate difference: a superscript digit is now kept,
+  where `[[:alnum:]]` cut it.
+
+* **The same verb counted two spellings of a Cyrillic or Greek word as two
+  words in a non-UTF-8 locale.** Its case fold used an explicit `chartr()`
+  table precisely so `tolower()`'s locale rules could not reach it, but the
+  table covered only ASCII and Latin -- what the *catalogue* needs, where this
+  verb folds the user's text. The table now covers every script with a 1:1
+  lower-case mapping, 1383 pairs in all, derived from `tolower()` rather than
+  written by hand and reproducing it exactly in a UTF-8 session. The fold is
+  also faster than before, because it now tests for a non-ASCII byte and uses
+  a 26-pair table when there is none.
+
+  Multi-character mappings stay absent: the German sharp s and the Greek
+  iota-subscript capitals lower-case to more than one code point, which
+  `chartr()` cannot express and `tolower()` does not do either.
+
+That is three bugs of one shape, after `tolower()` in the fold and
+`iswspace()` in the whitespace class, so a test now scans the package for
+every locale-dependent regex class rather than waiting for a fourth.
+
 ## Verified, no change needed
 
 * `emoji_categorize()` and `emoji_ngrams()` were the last two verbs the
-  pre-release audit listed as pooling grouped data silently. Measured against
-  0.4.0: neither does. `emoji_categorize()` is row-preserving and carries the
-  grouping through untouched (same values as ungrouped input, `grouped_df`
-  preserved), and `emoji_ngrams()` returns one row per n-gram occurrence keyed
-  by `.row_number` without carrying user columns, so there is no grouping for
-  it to ignore. Both are now pinned by tests rather than left as a suspicion.
+  pre-release audit listed as pooling grouped data silently. Neither does.
+  `emoji_categorize()` answers per row and carries the grouping through
+  untouched, so a grouping cannot change what it returns; it drops the rows
+  with no emoji, as its `@return` says, which is not pooling because dropping
+  a row cannot merge two groups. `emoji_ngrams()` returns one row per n-gram
+  occurrence keyed by `.row_number` and carries none of the user's columns, so
+  there is no grouping for it to ignore. Both are pinned by tests now.
 * The help page for `emoji_position()` already states that positions are
-  logical rather than visual order, which the roadmap still carried as owed.
-  A test now holds it there, because it is the sentence a right-to-left corpus
-  depends on.
+  logical rather than visual order. A test now holds it there, because it is
+  the sentence a right-to-left corpus depends on.
 
 ## Documentation
 
-* **New article: `vignette("reversible-preprocessing")`.** The roadmap carried
-  this as the highest-value undocumented capability in the package. It runs
-  the `emoji_sanitize()` loss ladder rather than describing it, shows the
+* **New article: `vignette("reversible-preprocessing")`.** It runs the
+  `emoji_sanitize()` loss ladder rather than describing it, shows the
   shortcode round trip surviving skin tones, flags, ZWJ sequences and keycaps,
   demonstrates that `wrap` is part of the reversibility contract (a wrap
   without colons restores nothing, silently), and shows how to keep the emoji
   signal as feature columns while the text you send to a model holds no emoji.
-  It also makes the detection limitation concrete: a bare `U+2764` carries text
-  presentation, so it is not detected and survives a policy meant to remove it.
+  It also makes the detection limitation concrete: a bare `U+2764` carries
+  text presentation, so it is not detected and survives a policy meant to
+  remove it.
 * The introduction vignette now carries a **real `text_score` recipe** at
   `eval = FALSE`, for tidytext with AFINN and for sentimentr, next to the
-  word-list scorer it uses to stay runnable. `emoji_incongruity()` has always
-  required you to supply the text score, and the promise that any scorer
-  composes was previously only stated.
+  word-list scorer it uses to stay runnable.
 * The introduction's LLM section, the README, `?emoji_sanitize` and
   `?emoji_token_cost` all point at the new article.
+* **Four lines of the README did not run as pasted**, naming an object the
+  README never defines and a column `reviews` does not have. Both blocks are
+  self-contained now, and a test evaluates every README chunk in document
+  order so an unevaluated one can only lean on an evaluated one above it.
+* Several help pages gained a sentence the data supports and they did not:
+  which spelling of an emoji each verb hands back, what
+  `emoji_seasonality()`'s denominator is, and that `emoji_context()`'s
+  character windows are code points and can cut a grapheme.
 
 ## Development infrastructure
 
@@ -72,34 +111,38 @@ None of this changes the package, but all of it was promised in an earlier
 release and kept slipping.
 
 * `data-raw/benchmark.R` makes the timing baseline repeatable instead of a
-  number measured once in a session. It warms the lazy-loaded reference table
-  before timing, reports seconds per verb per corpus size, and flags any verb
-  whose cost grows faster than its row count.
-* Coverage, now that there is a job to report it, is **98.71%** of the
-  package's own code, measured by `covr::package_coverage()` on this suite and
-  confirmed by the first CI run. The thinnest files are `emoji-sentiment.R` at
-  95.0%, `emoji-emotion.R` at 95.5% and `emoji-engine.R` at 96.6%; fifteen of
-  the twenty are at 100%. The job enforces a 95% floor of its own, because
-  codecov now refuses tokenless uploads and a job whose only output is an
-  upload nobody accepts is a job that reports success for nothing.
-* Continuous integration gained three things: a coverage job, a weekly job that
-  spell-checks and URL-checks the built documentation, and a collation matrix
-  that runs the suite under `LC_COLLATE=C` and `en_US.UTF-8`. The last one
-  exists because the "no user-visible ordering depends on collation" invariant
-  has now broken twice, both times with a green plain-locale check. It varies
-  `LC_COLLATE` alone and asserts `LC_CTYPE` stayed UTF-8: `LC_ALL=C` would
-  mangle the UTF-8 in the test files and measure nothing.
+  number measured once in a session, and it grew a second axis that holds the
+  emoji count constant while varying how densely they are packed -- the axis
+  the row-count axis cannot see, and the one the fix above is about. Its ratio
+  now compares the densest corpus against the cheapest, which is the direction
+  the defect moves it; the previous `max / min` was dominated by per-row
+  overhead and scored every verb near its threshold on a healthy build.
+* Coverage, now that there is a job to report it, is **99.30%** of the
+  package's own code. Fourteen of the twenty files are at 100% and the
+  thinnest is `emoji-sentiment.R` at 94.9%, which is why the job's floor is on
+  the total rather than per file. The floor is enforced inside the job because
+  the codecov upload needs a `CODECOV_TOKEN` secret and is allowed to fail
+  without one: a job whose only output is an upload nobody accepted reports
+  success for nothing. Reading the uncovered expressions rather than counting
+  them found three pieces of dead code, now gone.
+* Continuous integration gained a coverage job, a weekly job that
+  spell-checks and URL-checks the built documentation, a collation matrix
+  running the check under `LC_COLLATE=C` and `en_US.UTF-8`, and a job running
+  it under `LC_ALL=C`. Both halves of the locale have cost this package bugs
+  and every one of them was green on every other flavour. Each job refuses to
+  run if the locale it asked for did not take effect.
+* A test asserted one of the two legitimate shapes of the script `knitr`
+  tangles out of the introduction vignette, so a checking machine that merely
+  lacked a Suggests package failed. It recognises both now.
 * `spelling` is wired into `tests/spelling.R` (non-failing, skipped on CRAN)
-  and into the weekly job, where it does fail. One real word,
-  "undercounted", joined `inst/WORDLIST`; the file keeps the order it had
-  rather than being re-sorted.
+  and into the weekly job, where it does fail. The check reports 0 unknown
+  words across the help pages, both vignettes, README.md and NEWS.md;
+  `inst/WORDLIST` is 170 entries.
 * **The declared `testthat` floor was wrong.** DESCRIPTION asked for
   `>= 3.0.0` while the suite has called `expect_no_error()` and
   `expect_no_warning()` since 0.4.0, both of which arrived in 3.1.5. It now
   declares `>= 3.1.5`, and the table in `test-invariants.R` that couples each
-  declared floor to the argument that needs it covers testthat too, so the
-  next such gap fails a test rather than waiting for a flavour that has an old
-  testthat installed.
+  declared floor to the argument needing it covers testthat too.
 
 # tidyEmoji 0.4.0
 

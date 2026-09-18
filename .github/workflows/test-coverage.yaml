@@ -25,7 +25,6 @@ jobs:
         with:
           use-public-rspm: true
 
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr, any::xml2
@@ -51,12 +50,13 @@ jobs:
           }
         shell: Rscript {0}
 
-      # Tokenless upload works for public repositories and is allowed to fail:
-      # a coverage number is worth having, and a red job over a flaky upload is
-      # worse than no job at all.
-      # Pinned to the SHA the r-lib template pins (v7). fail_ci_if_error stays
-      # false deliberately: an upload that fails on a missing token must not
-      # redden the repo, which is the reason this job was deferred three times.
+      # The upload is best-effort and must stay that way. It needs a
+      # CODECOV_TOKEN secret, so it fails whenever that is absent, and
+      # fail_ci_if_error is false deliberately: a red job over an upload
+      # nobody accepted is the reason this job was deferred three times. That
+      # is also why the floor above is enforced here rather than by codecov --
+      # otherwise this job reports success while publishing nothing.
+      # Pinned to the SHA the r-lib template pins (v7).
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
           fail_ci_if_error: false
