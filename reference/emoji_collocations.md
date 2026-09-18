@@ -75,9 +75,13 @@ Each emoji occurrence contributes its context window (see
 [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)).
 A word is counted once per occurrence however often it repeats inside
 that window. Words are lower-cased and stripped of leading and trailing
-punctuation; no stopword list is applied, because which stopwords are
-right is a decision for your analysis, not for this package – filter the
-result with tidytext's `stop_words` if you want one.
+characters that are not letters, digits or combining marks, and a token
+left holding no letter and no digit at all is not a word. All three
+rules read Unicode's own tables rather than the session's locale, so a
+corpus in any script gives the same answer wherever it is run. No
+stopword list is applied, because which stopwords are right is a
+decision for your analysis, not for this package – filter the result
+with tidytext's `stop_words` if you want one.
 
 PMI is `log(n(e, w) * N / (n(e) * n(w)))`, with `N` the total number of
 emoji-word co-occurrence events. Marginals are computed over *all*

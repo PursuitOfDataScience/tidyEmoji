@@ -14,9 +14,9 @@ are not the obvious ones. In the bundled Emoji Sentiment Ranking,
 annotator disagreement runs *against* the strength of the sentiment:
 [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)’s
 entropy correlates -0.31 with the absolute sentiment score, and averages
-0.50 for the strongly valenced glyphs against 0.76 for the middling
-ones. So a sentiment score alone does not tell you which emoji are risky
-to strip.
+0.53 over the 374 glyphs scoring `abs(sentiment_score) >= 0.5` against
+0.76 over the other 595. So a sentiment score alone does not tell you
+which emoji are risky to strip.
 
 Worse, most ways of removing emoji are one-way. If the pipeline has to
 hand text back to a human, show a highlighted excerpt, or reconstruct
@@ -298,12 +298,19 @@ tibble::tibble(
 #> 2 shortcode     0           0          0
 ```
 
-The sanitised column contains no emoji, so its emoji cost is zero by
-construction. That is the saving, but treat the token figures as what
-they are called: `.emoji_token_estimate` is an estimate. Pass your real
-tokeniser through `emoji_token_cost(tokenizer = )` when the number goes
-in a budget, and read `.emoji_bytes` and `.emoji_codepoints` when you
-want a fact rather than a model of one.
+The sanitised column holds no emoji at all, so its emoji cost is zero.
+That is not quite guaranteed, and the bare heart above is the reason:
+`"shortcode"` leaves a glyph it cannot name in place, so a corpus
+carrying a ZWJ sequence too new for the installed catalogue would still
+show a cost here. This one does not, which is worth checking rather than
+assuming. `"strip"` is the policy that clears the column whatever it is
+handed.
+
+Treat the token figures as what they are called: `.emoji_token_estimate`
+is an estimate. Pass your real tokeniser through
+`emoji_token_cost(tokenizer = )` when the number goes in a budget, and
+read `.emoji_bytes` and `.emoji_codepoints` when you want a fact rather
+than a model of one.
 
 ## Which policy, by intent
 

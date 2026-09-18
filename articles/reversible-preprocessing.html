@@ -79,9 +79,10 @@ family), models disambiguate them poorly, and the glyphs readers
 disagree about are not the obvious ones. In the bundled Emoji Sentiment
 Ranking, annotator disagreement runs <em>against</em> the strength of
 the sentiment: <code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>’s entropy correlates -0.31
-with the absolute sentiment score, and averages 0.50 for the strongly
-valenced glyphs against 0.76 for the middling ones. So a sentiment score
-alone does not tell you which emoji are risky to strip.</p>
+with the absolute sentiment score, and averages 0.53 over the 374 glyphs
+scoring <code>abs(sentiment_score) &gt;= 0.5</code> against 0.76 over
+the other 595. So a sentiment score alone does not tell you which emoji
+are risky to strip.</p>
 <p>Worse, most ways of removing emoji are one-way. If the pipeline has
 to hand text back to a human, show a highlighted excerpt, or reconstruct
 what was sent, a stripped emoji is gone.</p>
@@ -327,11 +328,17 @@ prompt recovers.</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> original    900        <span style="text-decoration: underline;">4</span>437       <span style="text-decoration: underline;">2</span>245</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> shortcode     0           0          0</span></span></code></pre></div>
-<p>The sanitised column contains no emoji, so its emoji cost is zero by
-construction. That is the saving, but treat the token figures as what
-they are called: <code>.emoji_token_estimate</code> is an estimate. Pass
-your real tokeniser through <code>emoji_token_cost(tokenizer = )</code>
-when the number goes in a budget, and read <code>.emoji_bytes</code> and
+<p>The sanitised column holds no emoji at all, so its emoji cost is
+zero. That is not quite guaranteed, and the bare heart above is the
+reason: <code>"shortcode"</code> leaves a glyph it cannot name in place,
+so a corpus carrying a ZWJ sequence too new for the installed catalogue
+would still show a cost here. This one does not, which is worth checking
+rather than assuming. <code>"strip"</code> is the policy that clears the
+column whatever it is handed.</p>
+<p>Treat the token figures as what they are called:
+<code>.emoji_token_estimate</code> is an estimate. Pass your real
+tokeniser through <code>emoji_token_cost(tokenizer = )</code> when the
+number goes in a budget, and read <code>.emoji_bytes</code> and
 <code>.emoji_codepoints</code> when you want a fact rather than a model
 of one.</p>
 </div>
