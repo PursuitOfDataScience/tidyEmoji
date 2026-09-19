@@ -130,6 +130,16 @@ to the emoji.</p>
 <p>Tokenisation stops there on purpose. If you need stemming, stopword removal
 or sentence splitting, pass the result to <span class="pkg">tokenizers</span> or <span class="pkg">tidytext</span>
 rather than expecting this verb to grow a tokeniser.</p>
+<p><strong>Whitespace tokenisation has one consequence worth stating outright, because
+it is invisible in the output.</strong> A script that does not put spaces between
+words (Chinese, Japanese, Thai, Khmer, Lao, Burmese) has no whitespace for a
+token to end at, so a whole clause arrives as a single token and
+<code>window = 5</code> reaches five clauses rather than five words. This is not
+something the result can be passed to a tokeniser to repair: segmentation has
+to happen <em>before</em> the text reaches this verb, by inserting the spaces (with
+<span class="pkg">tokenizers</span>, <code>jiebaR</code> or ICU) into the column you pass in. For a quick
+look without that, <code>unit = "char"</code> sidesteps the question entirely and is the
+better default on such text.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

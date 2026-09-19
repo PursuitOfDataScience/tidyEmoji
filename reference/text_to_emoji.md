@@ -55,6 +55,18 @@ colons used for other purposes – clock times, URLs, ratios, ordinary
 punctuation – cannot swallow a following shortcode:
 `"meet at 10:30 :wave:"` still emojizes the wave.
 
+**The converse is a limitation, not a feature.** This verb cannot tell a
+token
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+or
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+wrote from one the text always held, so it emojizes both. Text that
+arrives with literal shortcode tokens in it – a Slack, Discord or GitHub
+export – therefore gains emoji it never contained, silently, and any
+count taken afterwards is inflated. See
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+for the worked cases and the check.
+
 **The round trip recovers the emoji, not necessarily the same bytes.**
 Like the vector helpers, both directions resolve through `emoji_key()`,
 which ignores `U+FE0F`, so an unqualified glyph and its fully-qualified

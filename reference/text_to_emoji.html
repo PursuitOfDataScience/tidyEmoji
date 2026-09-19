@@ -92,6 +92,12 @@ or <code>-</code>, and a closing colon. Restricting the token this way means col
 used for other purposes – clock times, URLs, ratios, ordinary punctuation
 – cannot swallow a following shortcode: <code>"meet at 10:30 :wave:"</code> still
 emojizes the wave.</p>
+<p><strong>The converse is a limitation, not a feature.</strong> This verb cannot tell a
+token <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code> or <code><a href="emoji_to_text.html">emoji_to_text()</a></code> wrote from one the text always
+held, so it emojizes both. Text that arrives with literal shortcode tokens in
+it – a Slack, Discord or GitHub export – therefore gains emoji it never
+contained, silently, and any count taken afterwards is inflated. See
+<code><a href="emoji_sanitize.html">emoji_sanitize()</a></code> for the worked cases and the check.</p>
 <p><strong>The round trip recovers the emoji, not necessarily the same bytes.</strong> Like
 the vector helpers, both directions resolve through <code>emoji_key()</code>,
 which ignores <code>U+FE0F</code>, so an unqualified glyph and its fully-qualified form

@@ -127,6 +127,16 @@ co-occurrences before <code>min_n</code> filters the rows, so a rare pairing is 
 against the full corpus rather than against the surviving subset.</p>
 <p>Glyphs are canonicalised through the package's codepoint key, so qualified
 and unqualified forms of the same emoji share one row.</p>
+<p><strong>On a script without spaces between words this verb cannot find a
+collocation at all, and it will not say so.</strong> Its tokens are the
+whitespace-delimited ones of <code><a href="emoji_context.html">emoji_context()</a></code>, so a Chinese, Japanese, Thai,
+Khmer, Lao or Burmese clause is one token: three rows of Chinese reading
+"the weather is good today", "my mood is good today" and "going to Beijing
+tomorrow" yield three tokens, each a whole clause, each with <code>n = 1</code>, and
+nothing clears <code>min_n</code>. The same three sentences in English yield <code>good</code>,
+<code>is</code> and <code>today</code> at <code>n = 2</code>. Segment the column before it reaches this verb
+(see <code><a href="emoji_context.html">emoji_context()</a></code>); <code>min_n</code> cannot rescue a vocabulary in which every
+type occurs once.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

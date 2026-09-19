@@ -91,6 +91,19 @@ scored against the full corpus rather than against the surviving subset.
 Glyphs are canonicalised through the package's codepoint key, so
 qualified and unqualified forms of the same emoji share one row.
 
+**On a script without spaces between words this verb cannot find a
+collocation at all, and it will not say so.** Its tokens are the
+whitespace-delimited ones of
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md),
+so a Chinese, Japanese, Thai, Khmer, Lao or Burmese clause is one token:
+three rows of Chinese reading "the weather is good today", "my mood is
+good today" and "going to Beijing tomorrow" yield three tokens, each a
+whole clause, each with `n = 1`, and nothing clears `min_n`. The same
+three sentences in English yield `good`, `is` and `today` at `n = 2`.
+Segment the column before it reaches this verb (see
+[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md));
+`min_n` cannot rescue a vocabulary in which every type occurs once.
+
 ## See also
 
 [`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)

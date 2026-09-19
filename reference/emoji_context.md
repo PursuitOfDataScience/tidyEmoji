@@ -99,6 +99,17 @@ Tokenisation stops there on purpose. If you need stemming, stopword
 removal or sentence splitting, pass the result to tokenizers or tidytext
 rather than expecting this verb to grow a tokeniser.
 
+**Whitespace tokenisation has one consequence worth stating outright,
+because it is invisible in the output.** A script that does not put
+spaces between words (Chinese, Japanese, Thai, Khmer, Lao, Burmese) has
+no whitespace for a token to end at, so a whole clause arrives as a
+single token and `window = 5` reaches five clauses rather than five
+words. This is not something the result can be passed to a tokeniser to
+repair: segmentation has to happen *before* the text reaches this verb,
+by inserting the spaces (with tokenizers, `jiebaR` or ICU) into the
+column you pass in. For a quick look without that, `unit = "char"`
+sidesteps the question entirely and is the better default on such text.
+
 ## See also
 
 [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
