@@ -3,14 +3,20 @@
 This is a **maintenance release**. The previous CRAN version, 0.4.0, was
 published on 2026-09-17.
 
-* **No new exported functions, and no behaviour changes.** Every verb returns
-  what it returned in 0.4.0. The one change a user can observe is speed:
+* **No new exported functions, and no change to what any verb returns.** Every
+  verb returns what it returned in 0.4.0. Two things a user can observe did
+  change, and neither is a return value. The first is speed:
   `emoji_context()` was quadratic in the emoji per row, and
   `emoji_collocations()` inherited it, so a row of 3200 emoji cost 7.1s
   against 0.28s for the same 3200 spread over 320 rows. Each row now gets one
   index of its code points and token boundaries instead of being cut once per
   occurrence. The output is byte-identical, checked across eight
-  `window`/`unit` combinations. See NEWS.md.
+  `window`/`unit` combinations. The second is one error message: a data frame
+  carrying the same column name twice used to fail with tibble's own wording,
+  which named an argument (`.name_repair`) that no verb here has and never said
+  which verb raised it. It now gets an authored message, worded like the
+  existing guard on a duplicated *text* column. No input that worked before
+  fails now, and no input that failed before succeeds. See NEWS.md.
 * **One new vignette**, `reversible-preprocessing`, and documentation
   additions to the introduction vignette and four help pages. No Rd content
   was removed.
@@ -23,12 +29,12 @@ published on 2026-09-17.
 * **Nothing was flagged by a reviewer on the 0.4.0 submission**, so there is
   no carried-over correction. The single URL note this check produces is the
   one discussed below, and it predates that submission.
-* **On `Days since last update: 0`.** The incoming check will report this,
-  and it is accurate: 0.4.0 was published the same day. The performance
-  defect above was found immediately after it shipped, on a corpus shape the
-  benchmark script could not see, and it is the reason for the short
-  interval rather than an oversight. We are happy to hold the submission if
-  the timing is unwelcome.
+* **On `Days since last update`.** The incoming check will report a small
+  number, and it is accurate: 0.4.0 was published on 2026-09-17. The
+  performance defect above was found immediately after it shipped, on a corpus
+  shape the benchmark script could not see, and it is the reason for the short
+  interval rather than an oversight. We are happy to hold the submission if the
+  timing is unwelcome.
 
 ## Test environments
 
@@ -60,8 +66,12 @@ built locally, so the local run is the one that covers it: do not skip it.
   `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four
   are the host artefacts above -- no `qpdf`, no `tidy`, the unverifiable
   clock, and the CLARIN.SI redirect target. **Zero from the package.** The
-  suite runs 15126 assertions with 0 failures and the 18 skips inventoried
-  below, and the PDF reference manual builds.
+  suite runs 15154 assertions with 0 failures and the 18 skips inventoried
+  below, and the PDF reference manual builds. (Run from the source tree with
+  `NOT_CRAN=true` the same suite reports 15270 assertions and 8 skips: ten of
+  the eighteen stand down only because the run is a CRAN one, or for want of a
+  file the tarball does not carry, and those ten contribute the 116-assertion
+  difference. The figure above is the one this bullet's own environment prints.)
 
 * **Local, R 4.1.0 on Linux, the declared minimum:** the suite runs clean,
   0 failures, 9 skips. Seven are the acceptance tests for verbs not yet
@@ -90,7 +100,7 @@ built locally, so the local run is the one that covers it: do not skip it.
   in exactly the three `emoji_collocations()` calls the NEWS describes, with
   no call gaining or losing an error.
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
-  across the help pages, both vignettes, README.md and NEWS.md, with the 170
+  across the help pages, both vignettes, README.md and NEWS.md, with the 167
   entries in `inst/WORDLIST`.
 * **URLs**: `urlchecker::url_check()` resolves 12 of the 13 addresses in the
   package. The thirteenth is the CLARIN.SI handle discussed below, and it

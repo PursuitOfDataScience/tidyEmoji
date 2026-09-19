@@ -105,3 +105,89 @@ test_that("?emoji_position states that positions are logical, not visual", {
   expect_match(txt, "(storage) order", fixed = TRUE)
   expect_match(txt, "not visual order", fixed = TRUE)
 })
+
+
+# ---------------------------------------------------------------------------
+# The shortcode round trip is faithful only when the text held no shortcode
+# tokens of its own. text_to_emoji() cannot tell a token emoji_sanitize()
+# wrote from one that was always there, so a Slack or GitHub export where
+# people type `:thumbsup:` gains emoji it never contained. The behaviour is
+# correct and unavoidable given the design; what was missing was any statement
+# of it, in a help page that enumerates every other way the round trip can
+# fail. Pinned from both sides: the inflation, and the sentence.
+# ---------------------------------------------------------------------------
+
+test_that("a pre-existing shortcode token inflates the count by one, once", {
+  d <- tibble::tibble(text = c("nice work :thumbsup:",
+                               paste("nice work :thumbsup:", smile)))
+  before <- emoji_density(d, text)$.emoji_n
+  back <- text_to_emoji(emoji_sanitize(d, text, policy = "shortcode"), text)
+  after <- emoji_density(back, text)$.emoji_n
+  expect_equal(before, c(0L, 1L))
+  expect_equal(after, c(1L, 2L))
+  # bounded at one pass: by now the token is a glyph, so nothing else changes
+  again <- text_to_emoji(emoji_sanitize(back, text, policy = "shortcode"), text)
+  expect_identical(again$text, back$text)
+})
+
+test_that("colons that are not shortcode-shaped survive the round trip", {
+  d <- tibble::tibble(text = c("meet at 10:30", "ratio 3:4", "http://x.org/a"))
+  back <- text_to_emoji(emoji_sanitize(d, text, policy = "shortcode"), text)
+  expect_identical(back$text, d$text)
+  expect_equal(emoji_density(back, text)$.emoji_n, c(0L, 0L, 0L))
+})
+
+test_that("?emoji_sanitize states the assumption about the input text", {
+  txt <- rd_flat("emoji_sanitize")
+  skip_if(is.na(txt), "emoji_sanitize help topic not available")
+  expect_match(txt, "cannot tell a", fixed = TRUE)
+  expect_match(txt, "token this verb wrote from one the text already", fixed = TRUE)
+})
+
+test_that("?text_to_emoji states the same limitation from its own side", {
+  txt <- rd_flat("text_to_emoji")
+  skip_if(is.na(txt), "text_to_emoji help topic not available")
+  expect_match(txt, "The converse is a limitation, not a feature", fixed = TRUE)
+})
+
+
+# ---------------------------------------------------------------------------
+# Whitespace tokenisation and scriptio continua. 0.5.0 fixed the character
+# class that dropped non-Latin context words, which makes a CJK corpus a
+# supported input; what it does not do is segment one. A Chinese clause has no
+# whitespace, so it arrives as one token and emoji_collocations() finds nothing
+# at all. Correct, silent, and now stated on both help pages.
+# ---------------------------------------------------------------------------
+
+test_that("an unsegmented script yields one token per clause", {
+  zh <- tibble::tibble(text = c(
+    paste0(intToUtf8(c(0x4ECA, 0x5929, 0x5929, 0x6C14, 0x5F88, 0x597D)), smile),
+    paste0(intToUtf8(c(0x4ECA, 0x5929, 0x5FC3, 0x60C5, 0x5F88, 0x597D)), smile),
+    paste0(intToUtf8(c(0x660E, 0x5929, 0x53BB, 0x5317, 0x4EAC)), smile)))
+  en <- tibble::tibble(text = c(
+    paste("the weather is good today", smile),
+    paste("my mood is good today", smile),
+    paste("going to beijing tomorrow", smile)))
+  cz <- emoji_collocations(zh, text, min_n = 1)
+  ce <- emoji_collocations(en, text, min_n = 1)
+  # every Chinese "word" is a whole clause, so every type occurs exactly once
+  expect_equal(nrow(cz), 3L)
+  expect_true(all(cz$n == 1L))
+  # the same three sentences in English do produce repeated collocates
+  expect_true(any(ce$n > 1L))
+  # so the default min_n cannot clear anything on the Chinese corpus
+  expect_equal(nrow(emoji_collocations(zh, text)), 0L)
+  # unit = "char" is the documented way round it
+  ctx <- emoji_context(zh, text, window = 3, unit = "char")
+  expect_equal(nrow(ctx), 3L)
+  expect_true(all(nzchar(ctx$.emoji_context_left)))
+})
+
+test_that("both help pages state the scriptio continua consequence", {
+  cx <- rd_flat("emoji_context")
+  skip_if(is.na(cx), "emoji_context help topic not available")
+  expect_match(cx, "does not put spaces between", fixed = TRUE)
+  cl <- rd_flat("emoji_collocations")
+  skip_if(is.na(cl), "emoji_collocations help topic not available")
+  expect_match(cl, "cannot find a collocation at all", fixed = TRUE)
+})

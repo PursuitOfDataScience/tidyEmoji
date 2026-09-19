@@ -1371,8 +1371,33 @@ emoji_emotion_dims <- function() {
 # straight back both preserves the grouping and skips a copy; anything else is
 # converted as before. The cross-row aggregators do not use this -- they build
 # a fresh tibble and warn that groups are ignored.
+# A base data.frame may carry duplicate column names; a tibble may not.
+# .emoji_col_name() already rejects the dangerous case, where the *text* column
+# is the duplicated one and `[[` would silently read whichever came first. This
+# is the benign remainder: a duplicate somewhere else in the frame, which only
+# matters because the verbs that add columns return a tibble. Left to tibble it
+# failed with "Use `.name_repair` to specify repair", naming an argument no verb
+# here has and an internal, repaired_names(), the user cannot reach, and never
+# naming the verb. Raised here instead, because this is the single place a
+# user's frame becomes a tibble, so one message serves every verb that preserves
+# the input columns. Worded like its sibling above on purpose: same problem,
+# same remedy.
 .emoji_as_tibble <- function(data) {
-  if (inherits(data, "tbl_df")) data else tibble::as_tibble(data)
+  if (inherits(data, "tbl_df")) return(data)
+  nms <- names(data)
+  if (!is.null(nms)) {
+    dup <- unique(nms[duplicated(nms)])
+    if (length(dup)) {
+      stop(sprintf(
+        paste0("`data` carries %d column names more than once (%s), and the ",
+               "columns this verb adds are returned as a tibble, which cannot ",
+               "hold a name twice. Give the columns distinct names -- ",
+               "read.csv() does that for you without `check.names = FALSE`."),
+        length(dup), paste(sprintf("`%s`", dup), collapse = ", ")
+      ), call. = FALSE)
+    }
+  }
+  tibble::as_tibble(data)
 }
 
 # Re-derive the group indices after a verb has rewritten column `changed`.

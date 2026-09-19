@@ -141,6 +141,32 @@ a further round trip keeps adding to them.
 Change \code{wrap} for readability by all means, but not on a column you intend
 to restore.
 
+\strong{The default \code{wrap} also assumes something about the input text, and this is
+the one failure mode that choosing it does not remove.} \code{\link[=text_to_emoji]{text_to_emoji()}}
+cannot tell a \verb{:shortcode:} token this verb wrote from one the text already
+held, so a corpus that arrives with literal shortcode tokens in it gains an
+emoji where it had none. That is not a corner case: it is how people type in
+the Slack, Discord and GitHub exports the LLM-preprocessing workflow is aimed
+at.
+\itemize{
+\item \code{"nice work :thumbsup:"} sanitises unchanged, and restores as
+\code{"nice work "} plus \verb{U+1F44D}. Emoji count 0 before the round trip, 1
+after.
+\item It compounds with real emoji rather than replacing them:
+\code{"nice work :thumbsup:"} followed by \verb{U+1F600} restores with two emoji.
+\item The damage is bounded at one pass. A second round trip changes nothing,
+because by then the token is a glyph.
+}
+
+The colon hazards \code{\link[=text_to_emoji]{text_to_emoji()}} \emph{does} handle are the ones that are not
+shortcode-shaped: a clock time (\code{"meet at 10:30"}) and a ratio
+(\code{"ratio 3:4"}) both survive untouched, because the token it matches is a
+colon, alias characters, and a closing colon. So the contract is precise:
+the round trip restores the original text exactly when the only
+\verb{:shortcode:}-shaped tokens in it are the ones this verb wrote. If your text
+may hold real ones, compare \code{emoji_density()}'s \code{.emoji_n} before and after,
+which is the cheapest way to see the inflation.
+
 Unicode also lists shorter spellings of the same emoji, with the \code{U+FE0F}
 presentation selectors omitted. Feed one of those in and the round trip
 returns the \emph{canonical} spelling instead: \verb{U+270C} comes back as

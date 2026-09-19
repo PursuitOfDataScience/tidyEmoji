@@ -185,6 +185,17 @@
 #' or sentence splitting, pass the result to \pkg{tokenizers} or \pkg{tidytext}
 #' rather than expecting this verb to grow a tokeniser.
 #'
+#' **Whitespace tokenisation has one consequence worth stating outright, because
+#' it is invisible in the output.** A script that does not put spaces between
+#' words (Chinese, Japanese, Thai, Khmer, Lao, Burmese) has no whitespace for a
+#' token to end at, so a whole clause arrives as a single token and
+#' `window = 5` reaches five clauses rather than five words. This is not
+#' something the result can be passed to a tokeniser to repair: segmentation has
+#' to happen *before* the text reaches this verb, by inserting the spaces (with
+#' \pkg{tokenizers}, `jiebaR` or ICU) into the column you pass in. For a quick
+#' look without that, `unit = "char"` sidesteps the question entirely and is the
+#' better default on such text.
+#'
 #' @inheritParams emoji_summary
 #' @param window Size of the context window on each side, in tokens
 #'   (`unit = "word"`) or characters (`unit = "char"`). Default `5`.
@@ -317,6 +328,17 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #'
 #' Glyphs are canonicalised through the package's codepoint key, so qualified
 #' and unqualified forms of the same emoji share one row.
+#'
+#' **On a script without spaces between words this verb cannot find a
+#' collocation at all, and it will not say so.** Its tokens are the
+#' whitespace-delimited ones of [emoji_context()], so a Chinese, Japanese, Thai,
+#' Khmer, Lao or Burmese clause is one token: three rows of Chinese reading
+#' "the weather is good today", "my mood is good today" and "going to Beijing
+#' tomorrow" yield three tokens, each a whole clause, each with `n = 1`, and
+#' nothing clears `min_n`. The same three sentences in English yield `good`,
+#' `is` and `today` at `n = 2`. Segment the column before it reaches this verb
+#' (see [emoji_context()]); `min_n` cannot rescue a vocabulary in which every
+#' type occurs once.
 #'
 #' @inheritParams emoji_summary
 #' @param window Context window on each side, in words. Default `5`.

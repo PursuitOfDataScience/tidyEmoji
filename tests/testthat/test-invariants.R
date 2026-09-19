@@ -8837,6 +8837,17 @@ test_that("cran-comments.md's own figures match the package", {
     expect_true(grepl(gsub('"', "", m), txt, fixed = TRUE), info = m)
   }
 
+  # the WORDLIST size, derived rather than asserted. It was written as 170
+  # when the file held 166: the same drift this test exists to stop, in the
+  # one file whose whole purpose is claims a reviewer can reproduce.
+  wl <- testthat::test_path("..", "..", "inst", "WORDLIST")
+  if (file.exists(wl)) {
+    n_wl <- length(readLines(wl, warn = FALSE))
+    expect_true(grepl(paste0("\\b", n_wl, "\\b[[:space:]]+entries in"), txt),
+                info = paste("cran-comments.md should say", n_wl,
+                             "entries in inst/WORDLIST"))
+  }
+
   # the marked-UTF-8 breakdown, derived from the data it describes
   ns <- asNamespace("tidyEmoji")
   marked <- function(nm, col) {
@@ -10472,4 +10483,37 @@ test_that("package code and examples depend only on Imports", {
     }
   }
   expect_identical(offenders, character())
+})
+
+
+# ---------------------------------------------------------------------------
+# inst/CITATION derives the year precisely so a release slipping past New Year
+# cannot make it wrong, and then hardcoded the version, which had already
+# slipped a release (it said 0.4.0 while the package was 0.5.0). Nothing about
+# citing a package fails loudly, so the drift needs a test rather than a reader.
+# ---------------------------------------------------------------------------
+
+test_that("the citation tracks the package version and hardcodes none", {
+  cit <- utils::citation("tidyEmoji")
+  expect_gte(length(cit), 1L)
+  note <- cit[[1]]$note
+  expect_match(note, as.character(utils::packageVersion("tidyEmoji")),
+               fixed = TRUE)
+  f <- system.file("CITATION", package = "tidyEmoji")
+  skip_if(!nzchar(f), "CITATION not available")
+  src <- readLines(f, warn = FALSE)
+  # no quoted x.y.z literal anywhere: the version and the year are both derived
+  expect_identical(
+    grep('"[0-9]+[.][0-9]+([.][0-9]+)?"', src, value = TRUE),
+    character()
+  )
+})
+
+test_that("the citation still renders when meta is unavailable", {
+  f <- system.file("CITATION", package = "tidyEmoji")
+  skip_if(!nzchar(f), "CITATION not available")
+  # how the file is read when sourced outside an installed package
+  e <- new.env(parent = globalenv())
+  assign("meta", NULL, envir = e)
+  expect_no_error(eval(parse(f), envir = e))
 })

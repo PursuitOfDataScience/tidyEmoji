@@ -72,6 +72,23 @@ That is three bugs of one shape, after `tolower()` in the fold and
 `iswspace()` in the whitespace class, so a test now scans the package for
 every locale-dependent regex class rather than waiting for a fourth.
 
+* **A data frame with duplicate column names failed with tibble's message
+  rather than one of ours.** A base `data.frame` may carry two columns of the
+  same name; a tibble may not, and the verbs that add columns return a tibble.
+  The conversion failed with "Column name `a` must not be duplicated. Use
+  `.name_repair` to specify repair", which names an argument no verb in this
+  package has and an internal, `repaired_names()`, the user cannot reach, and
+  never says which verb raised it. It was the one error here that did not tell
+  the user what to do. 0.4.0 had already fixed the dangerous half of this, where
+  the duplicated column is the *text* column and `[[` would silently read
+  whichever came first; what was left was the benign half, which matters only
+  because the verbs that add columns return a tibble. The check now happens
+  where the frame becomes a tibble, so one message serves every affected verb,
+  and it is worded like its sibling: same problem, same remedy. The verbs that
+  build their own output (`emoji_summary()`, `emoji_frequency()`,
+  `emoji_dfm()` and the rest) never had the problem and still accept such a
+  frame.
+
 ## Verified, no change needed
 
 * `emoji_categorize()` and `emoji_ngrams()` were the last two verbs the
@@ -110,8 +127,61 @@ every locale-dependent regex class rather than waiting for a fourth.
   which spelling of an emoji each verb hands back, what
   `emoji_seasonality()`'s denominator is, and that `emoji_context()`'s
   character windows are code points and can cut a grapheme.
+* **`emoji_collocations()` cannot find a collocation in an unsegmented script,
+  and said nothing about it.** 0.5.0 fixed the character class that dropped
+  non-Latin context words, which makes a Chinese, Japanese, Thai, Khmer, Lao or
+  Burmese corpus a supported input. What the verb does not do is *segment* one:
+  its tokens are runs of non-whitespace, so a clause in such a script is a
+  single token. Measured: three rows of Chinese meaning "the weather is good
+  today", "my mood is good today" and "going to Beijing tomorrow" yield three
+  tokens, each a whole clause, each with `n = 1`, so nothing clears the default
+  `min_n` and the result is empty. The same three sentences in English yield
+  `good`, `is` and `today` at `n = 2`. Both help pages now say so, and say that
+  the segmentation has to happen before the text reaches the verb, since the
+  result cannot be passed to a tokeniser to repair it. `emoji_context()`'s
+  `unit = "char"` sidesteps the question and is the better default on such
+  text.
+* **The shortcode round trip had one unstated assumption, and it is the one
+  that bites a real corpus.** `?emoji_sanitize` enumerates every way the round
+  trip can fail through `wrap`, and said nothing about the input text:
+  `text_to_emoji()` cannot tell a `:shortcode:` token the sanitiser wrote from
+  one the text always held, so a Slack, Discord or GitHub export where people
+  type `:thumbsup:` comes back with an emoji it never contained. The count
+  moves with it, from 0 to 1 on `"nice work :thumbsup:"`, and it compounds
+  with real emoji rather than replacing them. The damage is bounded at one
+  pass, and the colon shapes that are not shortcodes (`"meet at 10:30"`,
+  `"ratio 3:4"`) were already safe and stay so. Both help pages now state it
+  from their own side, and four tests pin the inflation and the sentences.
 
 ## Development infrastructure
+
+* **`man/` is now verified to be what roxygen2 generates.** 0.4.0's help pages
+  were produced by a stand-in converter because no R was available in the
+  authoring environment, which left "re-run the real thing and commit the
+  difference" outstanding for two releases. Running roxygen2 7.3.2 over the
+  tree reproduces **49 of the 51 `.Rd` files byte for byte and `NAMESPACE`
+  exactly**; the only two that differ are the two edited in this release. The
+  debt is discharged rather than carried again.
+* **`inst/CITATION` hardcoded a version fallback that had already slipped a
+  release.** The file derives the publication year rather than writing it out,
+  with a comment explaining that a fixed year "goes stale silently the first
+  time the release slips past New Year". The same reasoning applies to the
+  version, which was written out as `"0.4.0"` while the package was 0.5.0. It is
+  now derived from the installed package, with no version literal left in the
+  file, and two tests hold it there: one that the cited version matches
+  `packageVersion()`, one that the file still renders when `meta` is
+  unavailable. `citation("tidyEmoji")` was already correct in normal use, since
+  the fallback only fires when `meta` is missing; this removes the trap rather
+  than a visible defect.
+* **`cran-comments.md` had gone stale on one of its own figures**, claiming 170
+  entries in `inst/WORDLIST` where the file holds 166. It is the one file in the
+  repo whose entire purpose is claims a reviewer can reproduce, so the count is
+  now derived in `test-invariants.R` alongside the marked-UTF-8 breakdown and
+  the skip inventory, and cannot drift again unnoticed.
+* The package is now **pure ASCII in `R/`, `man/` and `tests/`**. One comment
+  in `test-regression-0.2.1.R` held the last non-ASCII byte in the suite, in a
+  cross-reference to a planning document that is not shipped and no longer has
+  the section it named. The comment now describes the defect each block pins.
 
 None of this changes the package, but all of it was promised in an earlier
 release and kept slipping.

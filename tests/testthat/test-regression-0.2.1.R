@@ -1,8 +1,11 @@
-# Regression tests for the 0.2.1 correctness patch
-# See next_release.md §4 for the full audit.
+# Regression tests for the 0.2.1 correctness patch.
+#
+# Each block names the defect it pins rather than a section of a planning
+# document: the audit these came from is not shipped with the package, so a
+# reference to it is unreadable from an installed copy.
 
 # ---------------------------------------------------------------------------
-# 4.1: Key-normalisation asymmetry
+# Key-normalisation asymmetry
 # ---------------------------------------------------------------------------
 
 test_that("emoji_tokens resolves qualified emoji (U+FE0F) to non-NA name/category", {
@@ -31,7 +34,7 @@ test_that("top_n_emojis(duplicated = TRUE) keeps qualified emoji via key join", 
 })
 
 # ---------------------------------------------------------------------------
-# 4.2: Unified detection: summary/filter agree with extraction verbs
+# Unified detection: summary/filter agree with extraction verbs
 # ---------------------------------------------------------------------------
 
 test_that("emoji_summary and emoji_tokens agree on what 'has an emoji' means", {
@@ -43,7 +46,7 @@ test_that("emoji_summary and emoji_tokens agree on what 'has an emoji' means", {
 })
 
 # ---------------------------------------------------------------------------
-# 4.3: Grouped data frames warn
+# Grouped data frames warn
 # ---------------------------------------------------------------------------
 
 test_that("emoji_summary warns when given a grouped data frame", {
@@ -65,7 +68,7 @@ test_that("top_n_emojis warns when given a grouped data frame", {
 })
 
 # ---------------------------------------------------------------------------
-# 4.6: top_n_emojis n semantics and tie-breaking
+# top_n_emojis n semantics and tie-breaking
 # ---------------------------------------------------------------------------
 
 test_that("top_n_emojis n counts distinct emoji, not rows in duplicated mode", {
@@ -111,7 +114,7 @@ test_that("grouped top_n_emojis warns only once (not via emoji_frequency too)", 
 
 
 # ---------------------------------------------------------------------------
-# 4.7: emoji_sentiment gains .emoji_n_scored
+# emoji_sentiment gains .emoji_n_scored
 # ---------------------------------------------------------------------------
 
 test_that("emoji_sentiment reports .emoji_n and .emoji_n_scored", {
@@ -123,7 +126,7 @@ test_that("emoji_sentiment reports .emoji_n and .emoji_n_scored", {
 })
 
 # ---------------------------------------------------------------------------
-# 4.10: .row_number naming (was row_number)
+# .row_number naming (was row_number)
 # ---------------------------------------------------------------------------
 
 test_that("emoji_extract_unnest uses .row_number (dotted) to avoid collision", {

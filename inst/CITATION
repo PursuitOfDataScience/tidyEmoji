@@ -2,7 +2,13 @@ if (!exists("meta") || is.null(meta)) {
   meta <- utils::packageDescription("tidyEmoji")
 }
 ver <- meta$Version
-if (is.null(ver)) ver <- "0.4.0"
+# Derived for the same reason the year below is: a hardcoded version is wrong
+# the moment the next release opens, and nothing about citing the package would
+# fail loudly enough to notice. This literal had already slipped a release.
+if (is.null(ver)) {
+  ver <- tryCatch(as.character(utils::packageVersion("tidyEmoji")),
+                  error = function(e) NULL)
+}
 # Derived, not hardcoded: CRAN stamps Date/Publication at publication, so an
 # installed copy cites the year it was actually published. A hardcoded year
 # goes stale silently the first time the release slips past New Year.
@@ -22,7 +28,7 @@ bibentry(
   title    = "{tidyEmoji}: Discover, Count, Categorise, Score, Translate and Relate Emoji in Text",
   author   = person(given = "Youzhi", family = "Yu"),
   year     = yr,
-  note     = paste("R package version", ver),
+  note     = if (is.null(ver)) "R package" else paste("R package version", ver),
   url      = "https://pursuitofdatascience.github.io/tidyEmoji/"
 )
 
