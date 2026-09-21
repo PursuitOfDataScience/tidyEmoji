@@ -8,6 +8,7 @@
 [![R-CMD-check](https://github.com/PursuitOfDataScience/tidyEmoji/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PursuitOfDataScience/tidyEmoji/actions)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidyEmoji)](https://CRAN.R-project.org/package=tidyEmoji)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/tidyEmoji)](https://CRAN.R-project.org/package=tidyEmoji)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 <!-- badges: end -->
