@@ -1,0 +1,14 @@
+# Actions are referenced by tag (@v2, @v6), and a tag is a movable pointer:
+# whoever owns the action repo can repoint it at any commit, which then runs
+# with this repo's token. Dependabot is the half of the fix that can be
+# automated. It opens a PR with the changelog when an action releases, which
+# is also what keeps a SHA pin current once the refs here are pinned.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"

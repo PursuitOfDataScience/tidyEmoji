@@ -1,20 +1,29 @@
-# The two checks that go stale on their own rather than when the code changes:
-# a URL that rots, and a typo that reaches a help page. Both are cheap, neither
-# belongs in the per-push matrix, so they run weekly and on demand.
+# The checks that go stale on their own rather than when the code changes: a
+# URL that rots, a typo that reaches a help page, an emoji catalogue that falls
+# behind Unicode, and a CRAN flavour that breaks on a machine we do not own.
+# None of them belong in the per-push matrix, so they run weekly and on demand.
 #
 # Note on running them locally: on this cluster's login nodes R's libcurl
 # cannot verify clarin.si (the CA bundle predates the issuing root), and other
 # third-party academic hosts time out intermittently under the parallel
 # checker. Both are the host's problem rather than the package's, which is the
 # whole reason this job runs on a hosted runner.
+#
+# Scheduled at an odd minute away from the top of the hour: GitHub queues the
+# schedule event on a shared pool and :00 is where every repo on the platform
+# piles up. An hour and a half after R-CMD-check so the two do not compete.
 on:
   schedule:
-    - cron: '30 6 * * 1'
+    - cron: '47 8 * * 1'
   workflow_dispatch:
 
 name: checks
 
 permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   urls:
@@ -31,9 +40,36 @@ jobs:
           extra-packages: any::urlchecker
       - name: Check every URL in DESCRIPTION, Rd, vignettes and CITATION
         run: |
-          res <- urlchecker::url_check(".")
+          res <- as.data.frame(urlchecker::url_check("."))
           print(res)
-          if (NROW(res)) stop("URLs need attention: see the table above.")
+
+          # A URL that has moved or gone is ours to fix. A host that failed to
+          # answer inside the five seconds urlchecker allows is not, and
+          # failing on it teaches us to ignore this job: see the note at the
+          # top of the file, and the CLARIN.SI redirect target that has now
+          # timed out on both a login node and a hosted runner. Demote the
+          # connection-level failures only, so 404s and moved URLs still stop
+          # the build. TLS failures stay fatal because a hosted runner has a
+          # current CA bundle, which makes a certificate error the site's.
+          transient <- grepl(
+            paste(
+              "Timeout was reached", "Could not resolve host",
+              "Failed to connect", "Connection refused",
+              "Connection reset", "Operation timed out",
+              sep = "|"
+            ),
+            res$Message
+          )
+
+          if (any(transient)) {
+            message("Unreachable hosts, not failing the job:")
+            print(res[transient, c("URL", "From", "Message")])
+          }
+
+          hard <- res[!transient, , drop = FALSE]
+          if (NROW(hard)) stop("URLs need attention: see the table above.")
+
+          cat("No URL needs attention.\n")
         shell: Rscript {0}
 
   spelling:
@@ -56,4 +92,126 @@ jobs:
           if (NROW(res)) {
             stop("Unknown words: fix them, or add the real ones to inst/WORDLIST.")
           }
+        shell: Rscript {0}
+
+  catalogue:
+    # The one kind of staleness the test suite structurally cannot see. Our
+    # tests compare our code against our own bundled data, both frozen in the
+    # repo, so the comparison is self-consistent and can never fail because
+    # upstream moved. DESCRIPTION asks for emoji (>= 16.0.0), a floor rather
+    # than a pin, so every run already installs whatever CRAN serves today
+    # while data/*.rda stays at whatever version last regenerated it. Nothing
+    # else in CI compares the two.
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::emoji, any::dplyr, any::tidyr, local::.
+      - name: Bundled catalogue is current with the installed {emoji}
+        run: |
+          sets <- c("emoji_unicode_crosswalk", "category_unicode_crosswalk")
+          paths <- file.path("data", paste0(sets, ".rda"))
+
+          shipped <- new.env()
+          for (p in paths) load(p, envir = shipped)
+
+          # Regenerates data/*.rda in place from emoji::emojis.
+          source("data-raw/crosswalks.R")
+
+          fresh <- new.env()
+          for (p in paths) load(p, envir = fresh)
+
+          # Compare content, not bytes: xz compression and R's serialiser are
+          # free to differ run to run, so a byte diff would cry wolf.
+          norm <- function(d) {
+            d <- d[do.call(order, d), , drop = FALSE]
+            rownames(d) <- NULL
+            d
+          }
+
+          drift <- character()
+          for (nm in sets) {
+            a <- norm(get(nm, shipped))
+            b <- norm(get(nm, fresh))
+            if (!identical(a, b)) {
+              drift <- c(drift, sprintf(
+                "  %s: %d rows shipped, %d rows regenerated", nm, nrow(a), nrow(b)
+              ))
+            }
+          }
+
+          ver <- as.character(packageVersion("emoji"))
+          if (length(drift)) {
+            cat(drift, sep = "\n")
+            stop(
+              "The bundled catalogue is behind {emoji} ", ver, ".\n",
+              "Re-run data-raw/crosswalks.R, then update the counts the help ",
+              "pages and vignettes state by hand. The data and the figures ",
+              "describing it have drifted apart before, which is why this ",
+              "job reports rather than committing the regenerated data."
+            )
+          }
+          cat("Catalogue matches {emoji} ", ver, ".\n", sep = "")
+        shell: Rscript {0}
+
+  cran:
+    # CRAN rebuilds the published package daily on flavours we cannot run here
+    # (Debian clang, Fedora gcc, macOS x86_64), and only emails the maintainer
+    # when the package is close to being archived. Without this job the window
+    # between "a flavour went red" and "you have two weeks" is invisible.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Every CRAN check flavour is OK
+        run: |
+          pkg <- read.dcf("DESCRIPTION", "Package")[[1]]
+          url <- sprintf(
+            "https://cran.r-project.org/web/checks/check_results_%s.html", pkg
+          )
+
+          html <- tryCatch(
+            paste(readLines(url, warn = FALSE), collapse = " "),
+            error = function(e) {
+              stop("Could not read ", url, ": ", conditionMessage(e))
+            }
+          )
+
+          rows <- regmatches(html, gregexpr("<tr>.*?</tr>", html))[[1]]
+          cells <- lapply(rows, function(r) {
+            td <- regmatches(r, gregexpr("<t[dh][^>]*>.*?</t[dh]>", r))[[1]]
+            trimws(gsub("<[^>]*>", "", td))
+          })
+          cells <- Filter(function(x) length(x) >= 6, cells)
+
+          if (length(cells) < 2) {
+            stop(
+              "No flavour table found at ", url, ". Either ", pkg,
+              " is not on CRAN yet or the page layout changed."
+            )
+          }
+
+          tab <- do.call(rbind, lapply(cells[-1], function(x) {
+            x[c(1, 2, length(x) - 1)]
+          }))
+          colnames(tab) <- c("Flavor", "Version", "Status")
+          tab <- as.data.frame(tab, stringsAsFactors = FALSE)
+          print(tab)
+
+          bad <- tab[tab$Status != "OK", , drop = FALSE]
+          if (NROW(bad)) {
+            stop(
+              NROW(bad), " of ", nrow(tab), " CRAN flavours are not OK. ",
+              "See ", url
+            )
+          }
+          cat("All ", nrow(tab), " CRAN flavours OK.\n", sep = "")
         shell: Rscript {0}
