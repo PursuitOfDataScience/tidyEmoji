@@ -70,9 +70,9 @@ built locally, so the local run is the one that covers it: do not skip it.
   `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four
   are the host artefacts above -- no `qpdf`, no `tidy`, the unverifiable
   clock, and the CLARIN.SI redirect target. **Zero from the package.** The
-  suite runs 16148 assertions with 0 failures and the 19 skips inventoried
+  suite runs 16150 assertions with 0 failures and the 19 skips inventoried
   below, and the PDF reference manual builds. (Run from the source tree with
-  `NOT_CRAN=true` the same suite reports 16267 assertions and 8 skips. Twelve
+  `NOT_CRAN=true` the same suite reports 16269 assertions and 8 skips. Twelve
   of the nineteen stand down only because the run is a CRAN one, or for want
   of a file the tarball does not carry, and one test goes the other way: the
   tangled vignette script exists only in a package installed from the
@@ -88,14 +88,14 @@ built locally, so the local run is the one that covers it: do not skip it.
   `forcats`, so it is also where the missing-Suggests path can be exercised
   for real rather than simulated: with `_R_CHECK_FORCE_SUGGESTS_=false` the
   check is **2 NOTEs** (the URL below and the missing `tidy`) with 0 test
-  failures and 16144 assertions. Two of the four artefacts this machine
+  failures and 16146 assertions. Two of the four artefacts this machine
   reports do not arise there at all, because it has `qpdf` and a verifiable
   clock, which is the clearest demonstration available that those two are the
   host rather than the package.
 
 * **Local, R 4.4.1, the same check end to end under `LC_ALL=C`**, examples,
   vignette rebuild and tests included: the same 1 WARNING and 3 NOTEs, the
-  same four host artefacts, 0 test failures and 16142 assertions. Three tests
+  same four host artefacts, 0 test failures and 16144 assertions. Three tests
   stand down in a non-UTF-8 session, each because it measures R's own
   transliteration or case mapping rather than the package, and each says so.
   One of the three is already a `skip_on_cran()`, so the check prints 21 skips

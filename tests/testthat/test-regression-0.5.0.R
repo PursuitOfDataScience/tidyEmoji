@@ -243,6 +243,21 @@ test_that("a registered lexicon is read through the column it was registered wit
   expect_match(rd, "whose score is fixed", fixed = TRUE)
 })
 
+test_that("a lexicon keyed by its `key` column alone still resolves", {
+  # Registered lexicons now resolve through their own glyph column, so the
+  # `key` fallback is left serving the case it is documented for: a table
+  # carrying only the code-point key, as ?register_emoji_lexicon returns it
+  # and ?emoji_emotion_lexicon ships it.
+  df <- data.frame(text = c(paste("great", grin), paste("bad", rage), "none"))
+  k <- asNamespace("tidyEmoji")$emoji_key(c(grin, rage))
+  expect_equal(emoji_score(df, text,
+                           lexicon = data.frame(key = k, score = c(0.9, -0.8))
+                           )$.emoji_score, c(0.9, -0.8, NA))
+  expect_equal(emoji_emotion(df, text,
+                             lexicon = data.frame(key = k, joy = c(0.7, 0.1))
+                             )$.emoji_joy, c(0.7, 0.1, NA))
+})
+
 test_that("two agreeing rows for one key score alike whichever comes first", {
   # The duplicate-key check ignores NA, since an NA is no score and cannot
   # contradict one, but the lookup read the first row of the key: the
@@ -413,12 +428,15 @@ test_that("?emoji_trend keeps the `share` paragraph out of the list above it", {
 })
 
 test_that("no roxygen list item swallows the paragraph after it", {
+  # Decide by the .R files found, not by the directory: under covr the tests
+  # run from a copy where ../../R exists and holds the lazy-load database, so
+  # a directory check passed and the scan then had nothing to read.
   src <- testthat::test_path("..", "..", "R")
-  skip_if(!dir.exists(src), "roxygen sources not available")
+  files <- list.files(src, pattern = "[.]R$", full.names = TRUE)
+  skip_if(!length(files), "roxygen sources not available")
+  expect_gt(length(files), 10L)
   item <- "^#' (\\* |- |[0-9]+\\. )"
   offenders <- character(0)
-  files <- list.files(src, pattern = "[.]R$", full.names = TRUE)
-  expect_gt(length(files), 10L)
   for (f in files) {
     l <- readLines(f, warn = FALSE)
     in_item <- FALSE

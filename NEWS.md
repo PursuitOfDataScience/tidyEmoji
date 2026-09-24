@@ -301,9 +301,9 @@ release and kept slipping.
   now compares the densest corpus against the cheapest, which is the direction
   the defect moves it; the previous `max / min` was dominated by per-row
   overhead and scored every verb near its threshold on a healthy build.
-* Coverage, now that there is a job to report it, is **99.30%** of the
+* Coverage, now that there is a job to report it, is **99.31%** of the
   package's own code. Fourteen of the twenty files are at 100% and the
-  thinnest is `emoji-sentiment.R` at 94.9%, which is why the job's floor is on
+  thinnest is `emoji-translate.R` at 97.2%, which is why the job's floor is on
   the total rather than per file. The floor is enforced inside the job because
   the codecov upload needs a `CODECOV_TOKEN` secret and is allowed to fail
   without one: a job whose only output is an upload nobody accepted reports
