@@ -122,10 +122,12 @@ worth knowing which you are getting before joining two of them on
 
 - [`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)
   – every level of the cycle unconditionally, whether or not the data
-  reaches it. `share` is the emoji's count divided by all emoji tokens
-  in the same period, which is what makes periods with different volumes
-  comparable. `top_n` selects the emoji to follow, ranked over the whole
-  corpus by `measure`, and the selected set is the same in every period.
+  reaches it.
+
+`share` is the emoji's count divided by all emoji tokens in the same
+period, which is what makes periods with different volumes comparable.
+`top_n` selects the emoji to follow, ranked over the whole corpus by
+`measure`, and the selected set is the same in every period.
 
 Rows whose time is missing or unparseable contribute nothing. Glyphs are
 canonicalised through the package's codepoint key, so qualified and

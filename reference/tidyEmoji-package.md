@@ -180,11 +180,13 @@ verb, so a corpus statistic can be inflated by them:
   [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
   and a node in
   [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md).
-  Only 262 of the pairs are real: `subgroup` is `"country-flag"` for 259
-  rows of the reference table and `"subdivision-flag"` for 3, so you can
-  filter against that set –
+  Only 259 of the 676 possible pairs are real, the rows of the reference
+  table whose `subgroup` is `"country-flag"`; its three
+  `"subdivision-flag"` rows are tag sequences, not pairs. A pair outside
+  that set is in no catalogue, so
   [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
-  carries `group`, and
+  reports it with `group = NA` as well as `name = NA`, which is the way
+  to filter it out, and
   [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
   reports which catalogue you have.
 

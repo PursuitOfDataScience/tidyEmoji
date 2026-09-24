@@ -1484,8 +1484,10 @@ tidyEmoji ships four datasets, each documented with its own help page:
 - **`category_unicode_crosswalk`**: one row per Unicode category,
   listing its emoji.
 
-These are regenerated from the current Unicode emoji list by the scripts
-in the package’s `data-raw/` directory.
+The two crosswalks are regenerated from the `emoji` package’s catalogue,
+and the two lexicons from their published sources, by the scripts in the
+`data-raw/` directory of the package’s source repository. That directory
+is not part of the installed package.
 
 ## References
 

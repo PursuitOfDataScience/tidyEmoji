@@ -133,9 +133,13 @@ does scores <code>1</code>.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Incongruity is a property of a row, so every emoji in a row is credited with
-that row's gap. A glyph that habitually shares a message with a genuinely
-incongruent one will therefore inherit some of its score; read <code>n</code> alongside
-<code>flip_rate</code> before drawing conclusions from a handful of occurrences.</p>
+that row's gap: every emoji the row was <em>scored on</em>, that is. With
+<code>where = "final"</code> that is the trailing run alone, and an emoji earlier in the
+text played no part in the row's score, so it is neither credited with the
+gap nor counted in <code>n</code>. A glyph that habitually shares a message with a
+genuinely incongruent one will therefore inherit some of its score; read <code>n</code>
+alongside <code>flip_rate</code> before drawing conclusions from a handful of
+occurrences.</p>
 <p>Glyphs are canonicalised through the package's codepoint key, so two
 spellings of one emoji make one row rather than two; see
 <em>Which spelling comes back</em> in <a href="tidyEmoji-package.html">tidyEmoji</a>.</p>

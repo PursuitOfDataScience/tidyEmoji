@@ -148,11 +148,12 @@ verb, so a corpus statistic can be inflated by them:</p><ul><li><p><strong>An in
 one grapheme cluster, so <code>U+1F1FD U+1F1FD</code> is read as a single emoji even
 though no country has that code. It appears in <code><a href="emoji_frequency.html">emoji_frequency()</a></code> with
 <code>name = NA</code>, gets a column in <code><a href="emoji_dfm.html">emoji_dfm()</a></code> and a node in
-<code><a href="emoji_pairs.html">emoji_pairs()</a></code>. Only 262 of the pairs are real: <code>subgroup</code> is
-<code>"country-flag"</code> for 259 rows of the reference table and
-<code>"subdivision-flag"</code> for 3, so you can filter against that set –
-<code><a href="emoji_frequency.html">emoji_frequency()</a></code> carries <code>group</code>, and <code><a href="emoji_provenance.html">emoji_provenance()</a></code> reports
-which catalogue you have.</p></li>
+<code><a href="emoji_pairs.html">emoji_pairs()</a></code>. Only 259 of the 676 possible pairs are real, the rows
+of the reference table whose <code>subgroup</code> is <code>"country-flag"</code>; its three
+<code>"subdivision-flag"</code> rows are tag sequences, not pairs. A pair outside
+that set is in no catalogue, so <code><a href="emoji_frequency.html">emoji_frequency()</a></code> reports it with
+<code>group = NA</code> as well as <code>name = NA</code>, which is the way to filter it out,
+and <code><a href="emoji_provenance.html">emoji_provenance()</a></code> reports which catalogue you have.</p></li>
 <li><p><strong>An orphan skin-tone modifier or hair component.</strong> A modifier applied to
 a base that cannot take one, as in <code>U+1F600 U+1F3FB</code>, leaves the swatch
 standing alone – and because the Component group is in the reference

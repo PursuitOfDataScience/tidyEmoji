@@ -8,7 +8,7 @@ drops anything non-ASCII, and the decision never appears in the methods
 section.
 
 It is a consequential choice. An emoji is two or more tokens rather than
-one character (measured below: 2 for a plain smiley, 13 for a family),
+one character (estimated below: 2 for a plain smiley, 13 for a family),
 models disambiguate them poorly, and the glyphs readers disagree about
 are not the obvious ones. In the bundled Emoji Sentiment Ranking,
 annotator disagreement runs *against* the strength of the sentiment:
@@ -299,12 +299,13 @@ tibble::tibble(
 ```
 
 The sanitised column holds no emoji at all, so its emoji cost is zero.
-That is not quite guaranteed, and the bare heart above is the reason:
-`"shortcode"` leaves a glyph it cannot name in place, so a corpus
-carrying a ZWJ sequence too new for the installed catalogue would still
-show a cost here. This one does not, which is worth checking rather than
-assuming. `"strip"` is the policy that clears the column whatever it is
-handed.
+That is not quite guaranteed: `"shortcode"` leaves a glyph it cannot
+name in place, so a corpus carrying a ZWJ sequence too new for the
+installed catalogue would still show a cost here. This one does not,
+which is worth checking rather than assuming. `"strip"` is the policy
+that clears the column whatever it is handed. (The bare heart above is a
+different case: it is never detected, so it costs nothing here and
+passes through every policy untouched.)
 
 Treat the token figures as what they are called: `.emoji_token_estimate`
 is an estimate. Pass your real tokeniser through

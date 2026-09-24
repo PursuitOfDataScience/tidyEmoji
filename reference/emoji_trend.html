@@ -146,12 +146,12 @@ knowing which you are getting before joining two of them on <code>.period</code>
 <li><p><code><a href="emoji_turnover.html">emoji_turnover()</a></code> – every period containing at least one dated row,
 including emoji-free ones, which report <code>n_types = 0</code>.</p></li>
 <li><p><code><a href="emoji_seasonality.html">emoji_seasonality()</a></code> – every level of the cycle unconditionally, whether
-or not the data reaches it.
-<code>share</code> is the emoji's count divided by all emoji tokens in the same period,
+or not the data reaches it.</p></li>
+</ul><p><code>share</code> is the emoji's count divided by all emoji tokens in the same period,
 which is what makes periods with different volumes comparable. <code>top_n</code>
 selects the emoji to follow, ranked over the whole corpus by <code>measure</code>, and
-the selected set is the same in every period.</p></li>
-</ul><p>Rows whose time is missing or unparseable contribute nothing. Glyphs are
+the selected set is the same in every period.</p>
+<p>Rows whose time is missing or unparseable contribute nothing. Glyphs are
 canonicalised through the package's codepoint key, so qualified and
 unqualified forms share one series.</p>
     </div>

@@ -73,13 +73,15 @@ emoji_score(data, text, lexicon = "novak2015", by = "emoji", score = NULL)
 
   Glyph column name when `lexicon` is a data frame, as a single string.
   Default `"emoji"`. Ignored when `lexicon` names a bundled or
-  registered lexicon, which carries its own key.
+  registered lexicon, which carries its own key: a registered one is
+  read through the column it was registered with.
 
 - score:
 
-  Score column name when `lexicon` is a data frame. If `NULL`,
-  `"sentiment_score"` then `"score"` are tried. Ignored, like `by`, when
-  `lexicon` is a name rather than a table.
+  Score column name, as a single string, when `lexicon` is a data frame
+  or names a registered lexicon. If `NULL`, `"sentiment_score"` then
+  `"score"` are tried. Ignored when `lexicon` names a bundled lexicon,
+  whose score is fixed.
 
 ## Value
 

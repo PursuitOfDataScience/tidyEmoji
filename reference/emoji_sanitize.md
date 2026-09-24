@@ -83,13 +83,15 @@ The policies:
 
 - `"strip"` deletes the emoji. Because deleting a glyph can leave two
   spaces where there was one, `strip` also collapses runs of spaces and
-  tabs and trims the ends – the only policy that touches anything but
-  the emoji. Removing a span makes its two neighbours adjacent, and on
-  malformed input those two can spell an emoji the original text did not
-  contain (a bare `U+2603` beside an orphan `U+FE0F` becomes the
-  qualified snowman), so `strip` repeats until there is nothing left to
-  remove. It is the one policy whose result is emoji-free whatever you
-  hand it.
+  tabs and trims whitespace off both ends, using Unicode's `White_Space`
+  set as the rest of the package does, so a no-break or ideographic
+  space left at an end goes too. It is the only policy that touches
+  anything but the emoji. Removing a span makes its two neighbours
+  adjacent, and on malformed input those two can spell an emoji the
+  original text did not contain (a bare `U+2603` beside an orphan
+  `U+FE0F` becomes the qualified snowman), so `strip` repeats until
+  there is nothing left to remove. It is the one policy whose result is
+  emoji-free whatever you hand it.
 
 - `"name"` and `"shortcode"` substitute the Unicode name ("grinning
   face") or the GitHub-style alias (":grinning:"), exactly as

@@ -1,8 +1,9 @@
 # List bundled emoji lexicons
 
 `emoji_lexicons()` returns a tibble describing the lexicons bundled with
-tidyEmoji and any user-registered ones: their name, type (sentiment or
-emotion), dimensions, number of emoji, source and licence.
+tidyEmoji and any user-registered ones: their name, type (`"sentiment"`
+or `"emotion"` for the bundled two, `"custom"` for a registered one),
+dimensions, size, source and licence.
 
 ## Usage
 
@@ -14,6 +15,11 @@ emoji_lexicons()
 
 A tibble with columns `name`, `type`, `dimensions`, `n`, `source`,
 `licence`.
+
+`dimensions` lists the columns a lexicon can be scored on. For a
+registered lexicon those are its numeric or logical columns other than
+the glyph column and `key`, so a text column carried along for reference
+is not listed.
 
 `n` is the lexicon's **row count**. For the two bundled ones that is
 also the number of emoji they score, 969 and 150, because each has one
