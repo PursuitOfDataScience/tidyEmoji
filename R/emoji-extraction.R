@@ -61,7 +61,7 @@ emoji_extract_unnest <- function(data, text) {
     # key is redundant today. It is stated anyway: the row order of this verb
     # is part of its contract, and it should not depend on count() continuing
     # to sort.
-    dplyr::arrange(.row_number, .emoji_unicode)
+    .emoji_arrange(.row_number, .emoji_unicode)
 }
 
 

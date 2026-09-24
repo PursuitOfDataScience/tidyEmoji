@@ -16,11 +16,20 @@ yr <- meta$`Date/Publication`
 if (is.null(yr)) yr <- meta$Date
 yr <- if (!is.null(yr)) sub("-.*", "", yr) else format(Sys.Date(), "%Y")
 
+# Every export that reads a bundled lexicon's scores is named, and a test
+# derives that list from the namespace's own call graph, so a verb that starts
+# reading one cannot be missed here. The header used to name three of the nine
+# sentiment verbs and one of the three emotion ones.
 citHeader(paste(
   "To cite tidyEmoji in publications, cite the package.",
-  "If you used emoji_sentiment(), emoji_ambiguity() or emoji_risk(),",
-  "also cite Kralj Novak et al. (2015);",
-  "if you used emoji_emotion(), also cite Shoeb & de Melo (2020)."
+  "If your analysis used the bundled sentiment lexicon, also cite",
+  "Kralj Novak et al. (2015): that is emoji_sentiment(), emoji_score() with",
+  "its default lexicon, the sentiment column of emoji_tokens(),",
+  "emoji_incongruity(), emoji_congruence(), emoji_incongruity_profile(),",
+  "emoji_ambiguity(), emoji_risk() and emoji_flag_ambiguous().",
+  "If it used the bundled emotion lexicon, also cite Shoeb & de Melo (2020):",
+  "that is emoji_emotion(), emoji_emotion_label() and",
+  "emoji_score(lexicon = \"emotag1200\")."
 ))
 
 bibentry(

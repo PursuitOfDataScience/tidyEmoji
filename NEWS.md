@@ -1,9 +1,15 @@
 # tidyEmoji 0.5.0
 
-No new verbs. In a UTF-8 session every verb but one returns exactly what it
-returned in 0.4.0: one returns it a great deal faster, and one answered a
-non-Latin-script corpus wrongly in a non-UTF-8 locale and now does not. The
-rest of the release is documentation and the infrastructure that checks it.
+No new verbs. `emoji_context()` returns its answers a great deal faster, and
+`emoji_collocations()`, which answered a non-Latin-script corpus wrongly in a
+non-UTF-8 locale, now answers it the same in every locale. A source reading
+before submission then found eleven smaller defects, each a wrong,
+order-dependent or crashing answer on an input the documentation already
+covered: a user-supplied lexicon, a one-row input, a count past integer range,
+`where = "final"` in the incongruity profile, trailing Unicode whitespace under
+`policy = "strip"`, and the C-locale order under one `dplyr` option. They are
+listed below, each with a test. The rest of the release is documentation and
+the infrastructure that checks it.
 
 The bundled crosswalks track **Unicode emoji 16.0**, via `emoji` 16.0.0.
 Re-generating them from `data-raw/crosswalks.R` against that release reproduces
@@ -89,6 +95,83 @@ every locale-dependent regex class rather than waiting for a fourth.
   `emoji_dfm()` and the rest) never had the problem and still accept such a
   frame.
 
+* **`emoji_incongruity_profile(where = "final")` credited glyphs a row was
+  never scored on.** With `where = "final"` a row is scored on the run of
+  emoji that ends it, but the profile gave the row's gap to every emoji in the
+  row and counted all of them in `n`, its "scored occurrences". A glyph that
+  opened messages and never closed one could top the table on gaps computed
+  without it. Only the glyphs a row was scored on are credited now, and
+  `where = "all"` is unchanged.
+
+* **A registered lexicon could be read through the wrong column.** The
+  scoring verbs keyed a registered table on their own `by`, which defaults to
+  `"emoji"`, so a lexicon registered with `by = "glyph"` that also carried a
+  column named `emoji` (a label, say) was keyed on the label and scored
+  nothing, silently, in `emoji_score()`, `emoji_sentiment()` and
+  `emoji_emotion()`. A registered lexicon is now always read through the
+  column it was registered with, which is what `?emoji_score` already
+  promised. The same page said `score` is ignored for a registered lexicon;
+  it is honoured, as the page's own error advice assumed, and now says so.
+
+* **Two rows for one emoji, one scored and one `NA`, gave an answer that
+  depended on their order.** A lexicon may list both spellings of an emoji
+  when they agree, and the duplicate check ignores `NA` while comparing, but
+  the lookup read whichever row came first: the qualified heart scored 0.5 or
+  nothing depending on which spelling sat on top. Each emoji now takes its
+  non-`NA` value (per dimension, for an emotion lexicon), so row order cannot
+  matter. A real disagreement is still refused.
+
+* **`emoji_emotion()` counted an emoji as scored when it had nothing to be
+  scored on.** A custom lexicon row whose every dimension was `NA`, or whose
+  only value was infinite and dropped with a warning that the emoji "count as
+  unscored", still counted towards `.emoji_n_scored` while every score in the
+  row stayed `NA`. It no longer does, which matches what `emoji_score()` and
+  `emoji_sentiment()` report for the same table.
+
+* **`emoji_emotion_label()` could label a row from a column it never
+  computed.** It picked the `.emoji_<emotion>` columns out of its result by
+  name, which also caught any the input still carried from an earlier call,
+  so `emoji_emotion(df, text) |> emoji_emotion_label(text, lexicon = own)`
+  with `own` scoring only `joy` came back "fear" from the bundled profile.
+  The label is now taken from exactly the dimensions the call scored.
+
+* **`emoji_emotion()` named its columns on a one-row input.** Each of the
+  eight `.emoji_<emotion>` columns came back as a named vector (`joy = 0.69`)
+  on a single row and as a plain one on any other number of rows, because R
+  keeps a dimension name when a one-row matrix drops to a vector. The test
+  that checks every verb for named columns only ever used four rows; it now
+  runs on zero, one, two and four.
+
+* **A count past integer range crashed three verbs.**
+  `emoji_ngrams(n = 1e10)`, `emoji_context(window = 1e10)` and
+  `emoji_collocations(window = 1e10)` passed validation and then failed on R's
+  "NAs introduced by coercion to integer range", and a `window` of `1e9`,
+  which stays in range, still overflowed the window arithmetic. A large count
+  now means "all of it": no n-gram is longer than any row, and the window
+  covers the whole text.
+
+* **`emoji_sanitize(policy = "strip")` trimmed only ASCII whitespace off the
+  ends.** It trimmed with `trimws()`, whose default set is ASCII, so a row
+  ending in an emoji and an ideographic space came back with a trailing space
+  and the ideographic one. The ends are now trimmed with the package's own
+  whitespace set, the one `?emoji_ratio` describes and every other verb
+  splits and tests text with.
+
+* **The C-locale order the help pages promise now holds under
+  `options(dplyr.legacy_locale = TRUE)`.** Eleven verbs sort their glyphs or
+  words through `dplyr::arrange()`, which follows that global option into the
+  session's collation; with it set, under an English locale, every one of
+  them returned its ties in a different order. They now ask for the C locale
+  explicitly.
+
+* **`emoji_score()` did not validate `score`.** A vector reached an internal
+  `%in%` and failed as R's "the condition has length > 1", naming neither the
+  argument nor the verb. It is now refused like every other string argument.
+
+* **`emoji_lexicons()` listed a registered lexicon's text columns among its
+  `dimensions`**, columns `emoji_score(score = )` then refuses. Only the
+  numeric and logical columns are listed now.
+
 ## Verified, no change needed
 
 * `emoji_categorize()` and `emoji_ngrams()` were the last two verbs the
@@ -152,6 +235,31 @@ every locale-dependent regex class rather than waiting for a fourth.
   pass, and the colon shapes that are not shortcodes (`"meet at 10:30"`,
   `"ratio 3:4"`) were already safe and stay so. Both help pages now state it
   from their own side, and four tests pin the inflation and the sentences.
+* **`?emoji_trend` rendered its definition of `share` as part of a list
+  item.** The Markdown that roxygen renders folds an unindented line directly
+  after a list item into the item, so the paragraph defining `share` appeared
+  as the tail of the `emoji_seasonality()` bullet. It is its own paragraph
+  again, and a test scans every roxygen block for the same shape.
+* `?tidyEmoji` said 262 of the regional-indicator pairs are real flags, and
+  the figure is 259. The page had counted in the three subdivision flags
+  (England, Scotland, Wales), which are tag sequences rather than pairs, and
+  the test pinning it summed the two subgroups without asking which rows are
+  pairs.
+* `?emoji_unicode_releases` described the emoji series as starting at 1.0,
+  while its own table begins at 0.6 and 0.7, the labels Unicode gives the
+  emoji of Unicode 6.0 and 7.0.
+* `?emoji_lexicons` gave `type` as sentiment or emotion, where a registered
+  lexicon reports `"custom"`, and now says which columns `dimensions` lists.
+* **`citation("tidyEmoji")` asked for the sentiment lexicon to be cited by
+  users of three of the nine verbs that read it**, and the emotion lexicon by
+  users of one of three. The header now names every one, and a test derives
+  the list from the package's own call graph.
+* The reversible-preprocessing article called the token estimate "measured",
+  and gave the undetected bare heart as the reason `"shortcode"` can leave an
+  emoji behind, when the reason is a glyph too new to name. The introduction
+  said the four datasets are regenerated "from the current Unicode emoji
+  list"; only the two crosswalks are, and the scripts live in the source
+  repository rather than in the installed package.
 
 ## Development infrastructure
 
@@ -213,7 +321,7 @@ release and kept slipping.
 * `spelling` is wired into `tests/spelling.R` (non-failing, skipped on CRAN)
   and into the weekly job, where it does fail. The check reports 0 unknown
   words across the help pages, both vignettes, README.md and NEWS.md;
-  `inst/WORDLIST` is 170 entries.
+  `inst/WORDLIST` is 167 entries.
 * **The declared `testthat` floor was wrong.** DESCRIPTION asked for
   `>= 3.0.0` while the suite has called `expect_no_error()` and
   `expect_no_warning()` since 0.4.0, both of which arrived in 3.1.5. It now

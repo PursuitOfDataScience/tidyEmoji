@@ -2169,33 +2169,48 @@ test_that("no verb returns a column carrying element names", {
       "zz_test_lex",
       data.frame(emoji = c(A, B), score = c(0.9, -0.9), stringsAsFactors = FALSE)
     )
-    d <- data.frame(
+    d4 <- data.frame(
       id = 1:4, text = c(paste("a", A), paste(A, B), "plain", NA_character_),
       sc = c(0.5, -0.5, 0, 0.1), when = as.Date("2020-01-01") + 0:3,
       stringsAsFactors = FALSE
     )
-    outs <- list(
-      emoji_sentiment(d, text), emoji_score(d, text), emoji_emotion(d, text),
-      emoji_risk(d, text), emoji_type(d, text), emoji_faceness(d, text),
-      emoji_summary(d, text), emoji_frequency(d, text), emoji_tokens(d, text),
-      emoji_dfm(d, text, id), emoji_pairs(d, text, doc_id = id),
-      emoji_ngrams(d, text), emoji_context(d, text),
-      emoji_collocations(d, text), emoji_categorize(d, text),
-      emoji_to_text(d, text), text_to_emoji(d, text), emoji_sanitize(d, text),
-      emoji_position(d, text), emoji_ratio(d, text), emoji_density(d, text),
-      emoji_token_cost(d, text), emoji_extract_nest(d, text),
-      emoji_extract_unnest(d, text), emoji_filter(d, text),
-      emoji_version_profile(d, text), emoji_unicode_releases(),
-      emoji_trend(d, text, when), emoji_turnover(d, text, when),
-      emoji_seasonality(d, text, when), emoji_adoption_lag(d, text, when),
-      emoji_cooccurrence(d, text, doc_id = id),
-      emoji_search("cat"), emoji_lexicons(), emoji_provenance(),
-      top_n_emojis(d, text), emoji_flag_ambiguous(d, text), emoji_ambiguity()
-    )
-    for (i in seq_along(outs)) {
-      for (cc in names(outs[[i]])) {
-        expect_null(names(outs[[i]][[cc]]),
-                    info = paste("output", i, "column", cc))
+    # Every row count, not one. On a single row R drops a 1 x k matrix to a
+    # length-one vector and keeps the surviving dimname, which is how all
+    # eight of emoji_emotion()'s columns came back named on one row and plain
+    # on four. The four-row fixture this test used to have alone could never
+    # show it.
+    for (d in list(d4, d4[1, , drop = FALSE], d4[2, , drop = FALSE],
+                   d4[0, , drop = FALSE])) {
+      outs <- list(
+        emoji_sentiment(d, text), emoji_score(d, text), emoji_emotion(d, text),
+        emoji_emotion(d, text, long = TRUE), emoji_emotion_label(d, text),
+        emoji_sentiment(d, text, se = TRUE),
+        emoji_score(d, text, lexicon = "emotag1200"),
+        emoji_incongruity(d, text, sc, scale = "rank"),
+        emoji_congruence(d, text, sc, scale = "none", where = "final"),
+        emoji_incongruity_profile(d, text, sc, scale = "none", min_n = 0),
+        emoji_seasonality(d, text, when, period = "weekday"),
+        emoji_risk(d, text), emoji_type(d, text), emoji_faceness(d, text),
+        emoji_summary(d, text), emoji_frequency(d, text), emoji_tokens(d, text),
+        emoji_dfm(d, text, id), emoji_pairs(d, text, doc_id = id),
+        emoji_ngrams(d, text), emoji_context(d, text),
+        emoji_collocations(d, text), emoji_categorize(d, text),
+        emoji_to_text(d, text), text_to_emoji(d, text), emoji_sanitize(d, text),
+        emoji_position(d, text), emoji_ratio(d, text), emoji_density(d, text),
+        emoji_token_cost(d, text), emoji_extract_nest(d, text),
+        emoji_extract_unnest(d, text), emoji_filter(d, text),
+        emoji_version_profile(d, text), emoji_unicode_releases(),
+        emoji_trend(d, text, when), emoji_turnover(d, text, when),
+        emoji_seasonality(d, text, when), emoji_adoption_lag(d, text, when),
+        emoji_cooccurrence(d, text, doc_id = id),
+        emoji_search("cat"), emoji_lexicons(), emoji_provenance(),
+        top_n_emojis(d, text), emoji_flag_ambiguous(d, text), emoji_ambiguity()
+      )
+      for (i in seq_along(outs)) {
+        for (cc in names(outs[[i]])) {
+          expect_null(names(outs[[i]][[cc]]),
+                      info = paste(nrow(d), "rows, output", i, "column", cc))
+        }
       }
     }
   })
@@ -5064,8 +5079,9 @@ test_that("the declared dependency floors cover the arguments the code uses", {
 
 test_that("the bundled crosswalks are what data-raw/crosswalks.R produces", {
   # Every dataset's @source names the data-raw script that builds it, and the
-  # vignette says the datasets "are regenerated from the current Unicode emoji
-  # list by the scripts in data-raw/". Nothing checked that. The two crosswalks
+  # vignette says the crosswalks "are regenerated from the `emoji` package's
+  # catalogue ... by the scripts in the `data-raw/` directory". Nothing checked
+  # that. The two crosswalks
   # derive purely from emoji::emojis, so they can be rebuilt here; the two
   # lexicons need the network and are verified out of band.
   skip_on_cran()
@@ -8830,9 +8846,11 @@ test_that("cran-comments.md's own figures match the package", {
   # skip_on_cran() and cannot be counted from the sources, so the file names
   # each of their messages instead and this holds it to the ones that exist.
   standdown <- unique(unlist(regmatches(lines, gregexpr(
-    '"(README sources not available|package sources not available[^"]*|workflow not available)"',
+    paste0('"(README sources not available|package sources not ',
+           'available[^"]*|workflow not available|roxygen sources not ',
+           'available)"'),
     lines))))
-  expect_gte(length(standdown), 3L)
+  expect_gte(length(standdown), 4L)
   for (m in standdown) {
     expect_true(grepl(gsub('"', "", m), txt, fixed = TRUE), info = m)
   }
@@ -10195,14 +10213,23 @@ test_that("the four documented figures no test had ever held to hold", {
   ref <- asNamespace("tidyEmoji")$emoji_reference()
   e <- emoji::emojis
 
-  # ?tidyEmoji: "Only 262 of the pairs are real: `subgroup` is "country-flag"
-  # for 259 rows of the reference table and "subdivision-flag" for 3"
+  # ?tidyEmoji: "Only 259 of the 676 possible pairs are real, the rows of the
+  # reference table whose `subgroup` is "country-flag"; its three
+  # "subdivision-flag" rows are tag sequences, not pairs". The page used to
+  # say 262 by adding those three in, and this test summed the two subgroups
+  # without ever asking which rows are regional-indicator pairs.
+  is_ri_pair <- vapply(e$emoji, function(s) {
+    cp <- utf8ToInt(s)
+    length(cp) == 2L && all(cp >= 0x1F1E6 & cp <= 0x1F1FF)
+  }, logical(1), USE.NAMES = FALSE)
+  expect_identical(sum(is_ri_pair), 259L)
+  expect_identical(unique(e$subgroup[is_ri_pair]), "country-flag")
   expect_identical(sum(e$subgroup == "country-flag"), 259L)
   expect_identical(sum(e$subgroup == "subdivision-flag"), 3L)
-  expect_identical(
-    sum(e$subgroup %in% c("country-flag", "subdivision-flag")), 262L)
+  expect_false(any(is_ri_pair[e$subgroup == "subdivision-flag"]))
   pkg <- rd_flat("tidyEmoji-package")
-  expect_match(pkg, "Only 262 of the pairs are real", fixed = TRUE)
+  expect_match(pkg, "Only 259 of the 676 possible pairs are real",
+               fixed = TRUE)
 
   # ?emoji_to_text: "returns an identical code-point key for all 5042 entries
   # and identical bytes for 79% of them. The other 1040 differ by U+FE0F
@@ -10215,9 +10242,14 @@ test_that("the four documented figures no test had ever held to hold", {
   differ <- back != ref$emoji
   expect_identical(sum(differ), 1040L)
   expect_equal(round(100 * mean(!differ)), 79)
+  # cp[cp != 0xFE0F], not setdiff(): setdiff() also drops repeated code
+  # points, so two ZWJ sequences with the same set of code points in another
+  # order or multiplicity would have compared equal
   drop_fe0f <- function(x) {
-    vapply(x, function(s) intToUtf8(setdiff(utf8ToInt(s), 0xFE0F)),
-           character(1), USE.NAMES = FALSE)
+    vapply(x, function(s) {
+      cp <- utf8ToInt(s)
+      intToUtf8(cp[cp != 0xFE0F])
+    }, character(1), USE.NAMES = FALSE)
   }
   expect_identical(drop_fe0f(back[differ]), drop_fe0f(ref$emoji[differ]))
   twice <- text_to_emoji(

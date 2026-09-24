@@ -75,7 +75,7 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
   pair_list <- lapply(docs, function(g) {
     u <- unique(g)
     if (length(u) < 2L) return(NULL)
-    # radix = C-locale ordering, matching dplyr::arrange() below, so which
+    # radix = C-locale ordering, matching .emoji_arrange() below, so which
     # glyph lands in item1 does not depend on the session's collation
     if (!directed) u <- sort(u, method = "radix")
     # all index pairs i < j; for directed input, u is in first-appearance
@@ -92,9 +92,9 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
   out <- tibble::tibble(item1 = m[, 1L], item2 = m[, 2L]) %>%
     dplyr::count(item1, item2, name = "n")
   if (isTRUE(sort)) {
-    out <- dplyr::arrange(out, dplyr::desc(n), item1, item2)
+    out <- .emoji_arrange(out, dplyr::desc(n), item1, item2)
   } else {
-    out <- dplyr::arrange(out, item1, item2)
+    out <- .emoji_arrange(out, item1, item2)
   }
   out
 }
@@ -150,9 +150,9 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
         dplyr::count(item1, item2, name = "n")
       out <- dplyr::bind_rows(out, diag_tbl)
       out <- if (isTRUE(sort)) {
-        dplyr::arrange(out, dplyr::desc(n), item1, item2)
+        .emoji_arrange(out, dplyr::desc(n), item1, item2)
       } else {
-        dplyr::arrange(out, item1, item2)
+        .emoji_arrange(out, item1, item2)
       }
     }
   }
@@ -195,7 +195,12 @@ emoji_ngrams <- function(data, text, n = 2, sep = " ") {
     stop("`n` must be a single finite whole number >= 1.", call. = FALSE)
   }
   .emoji_check_string(sep, "sep")
-  n <- as.integer(n)
+  # A finite whole number past integer range is a valid "longer than any row"
+  # and must give no n-grams, not NA: as.integer() of it warned "NAs
+  # introduced by coercion to integer range" and the row loop then died on
+  # "missing value where TRUE/FALSE needed". No row holds more emoji than
+  # that, so capping it changes no answer.
+  n <- as.integer(min(n, .Machine$integer.max))
   lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   lst <- lapply(lst, emoji_canonical)
 

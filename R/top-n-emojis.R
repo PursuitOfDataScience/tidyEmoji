@@ -26,7 +26,7 @@ emoji_frequency <- function(data, text) {
   counts <- tibble::tibble(emoji = glyphs) %>%
     dplyr::count(emoji, name = "n") %>%
     # stable secondary sort key so ties don't depend on input order
-    dplyr::arrange(dplyr::desc(n), emoji)
+    .emoji_arrange(dplyr::desc(n), emoji)
   ref <- emoji_reference()
   idx <- match(emoji_key(counts$emoji), ref$key)
   counts$name      <- ref$name[idx]
@@ -138,7 +138,7 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
         emoji_category = group,
         n              = n
       ) %>%
-      dplyr::arrange(dplyr::desc(n), unicode)
+      .emoji_arrange(dplyr::desc(n), unicode)
   } else {
     out <- freq_head %>%
       dplyr::transmute(emoji_name = shortcode, unicode = emoji,

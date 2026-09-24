@@ -127,11 +127,12 @@ verb, so a corpus statistic can be inflated by them:
 one grapheme cluster, so \verb{U+1F1FD U+1F1FD} is read as a single emoji even
 though no country has that code. It appears in \code{\link[=emoji_frequency]{emoji_frequency()}} with
 \code{name = NA}, gets a column in \code{\link[=emoji_dfm]{emoji_dfm()}} and a node in
-\code{\link[=emoji_pairs]{emoji_pairs()}}. Only 262 of the pairs are real: \code{subgroup} is
-\code{"country-flag"} for 259 rows of the reference table and
-\code{"subdivision-flag"} for 3, so you can filter against that set --
-\code{\link[=emoji_frequency]{emoji_frequency()}} carries \code{group}, and \code{\link[=emoji_provenance]{emoji_provenance()}} reports
-which catalogue you have.
+\code{\link[=emoji_pairs]{emoji_pairs()}}. Only 259 of the 676 possible pairs are real, the rows
+of the reference table whose \code{subgroup} is \code{"country-flag"}; its three
+\code{"subdivision-flag"} rows are tag sequences, not pairs. A pair outside
+that set is in no catalogue, so \code{\link[=emoji_frequency]{emoji_frequency()}} reports it with
+\code{group = NA} as well as \code{name = NA}, which is the way to filter it out,
+and \code{\link[=emoji_provenance]{emoji_provenance()}} reports which catalogue you have.
 \item \strong{An orphan skin-tone modifier or hair component.} A modifier applied to
 a base that cannot take one, as in \verb{U+1F600 U+1F3FB}, leaves the swatch
 standing alone -- and because the Component group is in the reference

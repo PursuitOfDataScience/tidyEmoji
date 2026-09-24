@@ -61,7 +61,8 @@
 .emoji_window_at <- function(s, from, to, window, unit, side) {
   if (from > to) return("")
   span <- to - from + 1L
-  need <- 4L * window + 16L
+  # double, not integer: the budget doubles below and must not overflow
+  need <- 4 * window + 16
   repeat {
     full <- need >= span
     if (full) {
@@ -83,7 +84,7 @@
       nchar(out) >= window
     }
     if (enough) return(out)
-    need <- need * 2L
+    need <- need * 2
   }
 }
 
@@ -236,12 +237,20 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
   if (!.emoji_is_count(window)) {
     stop("`window` must be a single finite whole number >= 0.", call. = FALSE)
   }
-  window <- as.integer(window)
+  # A validated window past integer range became NA here, with R's coercion
+  # warning, and one big enough to stay in range still overflowed the window
+  # arithmetic below (`4L * window`, `b + window - 1L`) and died on "missing
+  # value where TRUE/FALSE needed". `window = 1e9` is a reasonable way to ask
+  # for the whole text. No side of an emoji can hold more tokens or code
+  # points than the longest text has code points, so capping the window there
+  # changes no answer and keeps every sum in range.
+  window <- as.integer(min(window, .Machine$integer.max))
   col_name <- .emoji_col_name(data, {{ text }})
   v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
   locs <- .emoji_locations(v)
   masked <- .emoji_mask(v, locs)
+  window <- min(window, max(c(0L, nchar(masked))))
 
   occ <- .emoji_occurrences(v)
   left <- character(nrow(occ))
@@ -392,8 +401,8 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
   out <- counts[counts$n >= min_n, , drop = FALSE]
   out <- out[c("emoji", "word", "n", "pmi")]
   if (measure == "pmi") {
-    dplyr::arrange(out, dplyr::desc(pmi), dplyr::desc(n), emoji, word)
+    .emoji_arrange(out, dplyr::desc(pmi), dplyr::desc(n), emoji, word)
   } else {
-    dplyr::arrange(out, dplyr::desc(n), dplyr::desc(pmi), emoji, word)
+    .emoji_arrange(out, dplyr::desc(n), dplyr::desc(pmi), emoji, word)
   }
 }

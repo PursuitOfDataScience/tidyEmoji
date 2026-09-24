@@ -1,11 +1,17 @@
 #' List bundled emoji lexicons
 #'
 #' `emoji_lexicons()` returns a tibble describing the lexicons bundled with
-#' tidyEmoji and any user-registered ones: their name, type (sentiment or
-#' emotion), dimensions, number of emoji, source and licence.
+#' tidyEmoji and any user-registered ones: their name, type (`"sentiment"` or
+#' `"emotion"` for the bundled two, `"custom"` for a registered one),
+#' dimensions, size, source and licence.
 #'
 #' @return A tibble with columns `name`, `type`, `dimensions`, `n`, `source`,
 #'   `licence`.
+#'
+#'   `dimensions` lists the columns a lexicon can be scored on. For a
+#'   registered lexicon those are its numeric or logical columns other than
+#'   the glyph column and `key`, so a text column carried along for reference
+#'   is not listed.
 #'
 #'   `n` is the lexicon's **row count**. For the two bundled ones that is
 #'   also the number of emoji they score, 969 and 150, because each has one
@@ -42,9 +48,14 @@ emoji_lexicons <- function() {
       # `emoji_lexicons()$n` printed a stray name header as a result.
       dimensions = I(unname(lapply(reg, function(x) {
         # drop the glyph column (whatever it was called at registration), the
-        # normalised key and any label column -- they are not score dimensions
-        setdiff(names(x), c(attr(x, "tidyEmoji_by") %||% "emoji",
-                            "emoji", "key", "name"))
+        # normalised key and any label column, none of which is a score
+        # dimension, and any column that is not a number. A registered
+        # table's `note` or `source` column used to be listed here as a
+        # dimension, one that `emoji_score(score = )` then refuses.
+        cand <- setdiff(names(x), c(.emoji_registered_by(x),
+                                    "emoji", "key", "name"))
+        cand[vapply(x[cand], function(v) is.numeric(v) || is.logical(v),
+                    logical(1))]
       }))),
       n = unname(vapply(reg, nrow, integer(1))),
       source = "user-registered",
@@ -188,10 +199,12 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
 #'   reason the score column must be.
 #' @param by Glyph column name when `lexicon` is a data frame, as a single
 #'   string. Default `"emoji"`. Ignored when `lexicon` names a bundled or
-#'   registered lexicon, which carries its own key.
-#' @param score Score column name when `lexicon` is a data frame. If `NULL`,
-#'   `"sentiment_score"` then `"score"` are tried. Ignored, like `by`, when
-#'   `lexicon` is a name rather than a table.
+#'   registered lexicon, which carries its own key: a registered one is read
+#'   through the column it was registered with.
+#' @param score Score column name, as a single string, when `lexicon` is a
+#'   data frame or names a registered lexicon. If `NULL`, `"sentiment_score"`
+#'   then `"score"` are tried. Ignored when `lexicon` names a bundled lexicon,
+#'   whose score is fixed.
 #' @return `data`, as a tibble, with `.emoji_n` (total emoji),
 #'   `.emoji_n_scored` (emoji found in the lexicon) and `.emoji_score`
 #'   (per-row mean) added, in that order -- the same order
@@ -248,8 +261,10 @@ emoji_score <- function(data, text, lexicon = "novak2015", by = "emoji",
       m <- emoji_emotion_map()
       score_map <- rowMeans(m, na.rm = TRUE)
     } else {
-      rec <- .emoji_lexicon_record(lex$tbl, by = by, score = score,
-                                   arg = "lexicon")
+      # A registered table is keyed on the column it was registered with, not
+      # on this call's `by`, which is documented as ignored here.
+      rec <- .emoji_lexicon_record(lex$tbl, by = .emoji_registered_by(lex$tbl),
+                                   score = score, arg = "lexicon")
       score_map <- rec
     }
   }

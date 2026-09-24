@@ -47,11 +47,13 @@ reason the score column must be.}
 
 \item{by}{Glyph column name when \code{lexicon} is a data frame, as a single
 string. Default \code{"emoji"}. Ignored when \code{lexicon} names a bundled or
-registered lexicon, which carries its own key.}
+registered lexicon, which carries its own key: a registered one is read
+through the column it was registered with.}
 
-\item{score}{Score column name when \code{lexicon} is a data frame. If \code{NULL},
-\code{"sentiment_score"} then \code{"score"} are tried. Ignored, like \code{by}, when
-\code{lexicon} is a name rather than a table.}
+\item{score}{Score column name, as a single string, when \code{lexicon} is a
+data frame or names a registered lexicon. If \code{NULL}, \code{"sentiment_score"}
+then \code{"score"} are tried. Ignored when \code{lexicon} names a bundled lexicon,
+whose score is fixed.}
 }
 \value{
 \code{data}, as a tibble, with \code{.emoji_n} (total emoji),

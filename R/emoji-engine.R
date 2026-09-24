@@ -459,7 +459,8 @@ emoji_reference <- function() {
 # The only ASCII source in the whole table is A-Z, so no pair beyond the first
 # 26 can touch a string that is pure ASCII -- which the catalogue almost
 # entirely is. So test for a non-ASCII byte first and, when there is none,
-# build the 26-pair table instead of the 1383-pair one. Verified byte for byte
+# build the 26-pair table instead of the full one (1158 pairs since the astral
+# ones were dropped; see above). Verified byte for byte
 # against the unconditional fold over all 21511 catalogue strings plus Greek,
 # Cyrillic, mixed-script and accented probes. It is faster than the 226-pair
 # table this replaced, not merely as fast: 5042 calls went 0.30s to 0.12s.
@@ -1024,6 +1025,10 @@ emoji_emotion_dims <- function() {
   if (!is.data.frame(tbl)) {
     stop(sprintf("`%s` must be a data frame.", arg), call. = FALSE)
   }
+  # `score` reaches `%in%` below, so a vector made the guard a length-2
+  # condition and R answered "the condition has length > 1", naming neither
+  # this argument nor the verb. `by` had the same hole.
+  if (!is.null(score)) .emoji_check_string(score, "score")
   keys <- .emoji_lexicon_keys(tbl, by, arg = arg)
   if (is.null(score)) {
     # heuristic: prefer 'sentiment_score', then 'score'
@@ -1072,8 +1077,52 @@ emoji_emotion_dims <- function() {
   s <- .emoji_drop_nonfinite(s, arg)
   keep <- !is.na(keys) & keys != ""
   .emoji_check_dup_keys(keys, s, arg)
-  out <- stats::setNames(s, keys)
-  out[keep]
+  .emoji_collapse_keys(stats::setNames(s, keys)[keep])
+}
+
+# One value per code-point key, whatever order the caller's rows are in.
+#
+# .emoji_check_dup_keys() refuses two rows that give one emoji different
+# scores, and it ignores NA while comparing, since an NA is no score and so
+# cannot contradict one. The lookup, though, reads the *first* row of a key.
+# So a table listing the bare U+2764 with NA and the qualified heart with 0.5
+# scored the heart when the qualified row came first and left it unscored
+# when the bare one did: the row order was choosing the answer, which is the
+# one thing the duplicate check exists to stop. Each key now takes its non-NA
+# value (per column, for an emotion matrix), and the check guarantees there is
+# at most one. A table without repeated keys, which includes both bundled
+# lexicons, is returned untouched.
+.emoji_collapse_keys <- function(values) {
+  if (is.matrix(values)) {
+    k <- rownames(values)
+    if (!anyDuplicated(k)) return(values)
+    u <- unique(k)
+    out <- matrix(NA_real_, nrow = length(u), ncol = ncol(values),
+                  dimnames = list(u, colnames(values)))
+    for (j in seq_len(ncol(values))) {
+      v <- values[, j]
+      ok <- !is.na(v)
+      out[, j] <- v[ok][match(u, k[ok])]
+    }
+    return(out)
+  }
+  if (!anyDuplicated(names(values))) return(values)
+  # radix order is stable, so this only moves the NA entries behind the rest
+  values <- values[order(is.na(values), method = "radix")]
+  values[!duplicated(names(values))]
+}
+
+# The glyph column a registered lexicon was keyed on.
+#
+# The scoring verbs used to read a registered table through their *own* `by`,
+# which defaults to "emoji". So a lexicon registered with `by = "glyph"` that
+# also carried an unrelated `emoji` column (a name, a description) was
+# keyed on that column instead, and every score came back NA without a word.
+# register_emoji_lexicon() records the column it keyed on; this reads it back,
+# which is also what makes `?emoji_score`'s "`by` is ignored for a registered
+# lexicon" true.
+.emoji_registered_by <- function(tbl) {
+  attr(tbl, "tidyEmoji_by", exact = TRUE) %||% "emoji"
 }
 
 # Normalised join keys for a lexicon table: prefer the glyph column `by`, and
@@ -1138,6 +1187,20 @@ emoji_emotion_dims <- function() {
     ans <- list(type = "custom", tbl = reg[[lexicon]])
   }
   ans
+}
+
+# dplyr::arrange() in the C locale, always.
+#
+# arrange() sorts character keys in the C locale by default, but
+# `options(dplyr.legacy_locale = TRUE)` switches it to the session's
+# collation, and that option is global. A user who set it for an older script
+# got every glyph-ordered result here (the ties in emoji_frequency(), the
+# items of emoji_pairs(), the words of emoji_collocations() and eight more) in
+# a different order under en_US than under C, while the help pages promise
+# the C locale. Naming the locale makes that promise independent of the
+# option, and dplyr (>= 1.1.0), the declared floor, has the argument.
+.emoji_arrange <- function(.data, ...) {
+  dplyr::arrange(.data, ..., .locale = "C")
 }
 
 # Convenience for `%||%` operator without importing rlang.
@@ -1298,20 +1361,6 @@ emoji_emotion_dims <- function() {
   v
 }
 
-# The text column as a character vector -- the form nearly every verb wants.
-#
-# as.character() is what lets a factor column work, and it is harmless on a
-# numeric, Date or logical one (no emoji, so every answer is NA). On a *list*
-# column it is not harmless: it deparses, so a column holding
-# `list(c("a", "<U+1F600>"))` was read as the source text `c("a",
-# "<U+1F600>")`, the emoji inside that was counted, and the row came back with
-# a real-looking sentiment the user's data never contained. A data-frame column
-# deparses the same way.
-#
-# The length check catches the other shape: a matrix column has one element per
-# cell, not per row, so a two-column matrix gave `emoji_sentiment()` and
-# `emoji_tokens()` an internal tibble error naming a variable from this
-# package's own source, while `emoji_frequency()` silently counted every cell.
 # Refuse a "bytes"-encoded character vector -------------------------------
 # A string declared with Encoding() == "bytes" is a bag of bytes R will not
 # interpret as characters: nchar(type = "chars"), gsub(), tolower() and
@@ -1342,6 +1391,20 @@ emoji_emotion_dims <- function() {
   invisible(v)
 }
 
+# The text column as a character vector -- the form nearly every verb wants.
+#
+# as.character() is what lets a factor column work, and it is harmless on a
+# numeric, Date or logical one (no emoji, so every answer is NA). On a *list*
+# column it is not harmless: it deparses, so a column holding
+# `list(c("a", "<U+1F600>"))` was read as the source text `c("a",
+# "<U+1F600>")`, the emoji inside that was counted, and the row came back with
+# a real-looking sentiment the user's data never contained. A data-frame column
+# deparses the same way.
+#
+# The length check catches the other shape: a matrix column has one element per
+# cell, not per row, so a two-column matrix gave `emoji_sentiment()` and
+# `emoji_tokens()` an internal tibble error naming a variable from this
+# package's own source, while `emoji_frequency()` silently counted every cell.
 .emoji_text_col <- function(data, text, arg = "text") {
   nm <- .emoji_col_name(data, {{ text }}, arg = arg)
   # Before .emoji_col()'s length check, because a data-frame column's length()
@@ -1489,10 +1552,6 @@ emoji_emotion_dims <- function() {
   invisible(x)
 }
 
-# Validate a TRUE/FALSE argument. isTRUE() quietly treats every non-TRUE value
-# as FALSE, so an unchecked flag turns a typo into a different, silently wrong
-# answer instead of an error -- the same failure mode as an unvalidated `n` or
-# a `wrap` template with no placeholder.
 # match.arg() that names the argument -------------------------------------
 # match.arg() reports its own formal, so every one of the package's enum
 # arguments answered a typo with "'arg' should be one of ..." or "'arg' must
@@ -1525,6 +1584,10 @@ emoji_emotion_dims <- function() {
   choices[[i]]
 }
 
+# Validate a TRUE/FALSE argument. isTRUE() quietly treats every non-TRUE value
+# as FALSE, so an unchecked flag turns a typo into a different, silently wrong
+# answer instead of an error -- the same failure mode as an unvalidated `n` or
+# a `wrap` template with no placeholder.
 .emoji_check_flag <- function(x, arg) {
   if (!is.logical(x) || length(x) != 1L || is.na(x)) {
     stop(sprintf("`%s` must be TRUE or FALSE.", arg), call. = FALSE)

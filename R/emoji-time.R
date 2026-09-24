@@ -132,9 +132,11 @@
 #' @details
 #' Two numbering series exist and both turn up in emoji reference data. The
 #' Unicode Emoji series (`series = "emoji"`) runs 1.0, 2.0, ... 5.0 and then
-#' jumps to 11.0 to line up with the Unicode version; the Unicode series
-#' (`series = "unicode"`) covers the 6.0-10.0 releases that added emoji before
-#' the alignment. The two do not collide, so `version` is a unique key.
+#' jumps to 11.0 to line up with the Unicode version. It also carries 0.6 and
+#' 0.7, the labels UTS #51 gives the emoji that Unicode 6.0 and 7.0 introduced,
+#' dated to those two releases. The Unicode series (`series = "unicode"`)
+#' covers the 6.0-10.0 releases that added emoji before the alignment. The two
+#' do not collide, so `version` is a unique key.
 #'
 #' The table is kept in code rather than as a bundled `.rda`: it is a few dozen
 #' rows, it changes only when Unicode ships, and keeping it beside the verbs
@@ -222,6 +224,7 @@ emoji_unicode_version <- function() {
 #'   including emoji-free ones, which report `n_types = 0`.
 #' * [emoji_seasonality()] -- every level of the cycle unconditionally, whether
 #'   or not the data reaches it.
+#'
 #' `share` is the emoji's count divided by all emoji tokens in the same period,
 #' which is what makes periods with different volumes comparable. `top_n`
 #' selects the emoji to follow, ranked over the whole corpus by `measure`, and
@@ -337,9 +340,9 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
   out$name <- ref$name[match(emoji_key(out$emoji), ref$key)]
   out <- out[c(".period", "emoji", "name", "n", "share")]
   if (measure == "n") {
-    dplyr::arrange(out, .period, dplyr::desc(n), emoji)
+    .emoji_arrange(out, .period, dplyr::desc(n), emoji)
   } else {
-    dplyr::arrange(out, .period, dplyr::desc(share), emoji)
+    .emoji_arrange(out, .period, dplyr::desc(share), emoji)
   }
 }
 
@@ -584,7 +587,7 @@ emoji_adoption_lag <- function(data, text, time) {
     first_seen = first_seen,
     lag_days = as.integer(first_seen - release_date)
   )
-  dplyr::arrange(out, dplyr::desc(n), emoji)
+  .emoji_arrange(out, dplyr::desc(n), emoji)
 }
 
 

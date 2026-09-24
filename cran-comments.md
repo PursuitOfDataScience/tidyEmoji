@@ -3,20 +3,24 @@
 This is a **maintenance release**. The previous CRAN version, 0.4.0, was
 published on 2026-09-17.
 
-* **No new exported functions, and no change to what any verb returns.** Every
-  verb returns what it returned in 0.4.0. Two things a user can observe did
-  change, and neither is a return value. The first is speed:
-  `emoji_context()` was quadratic in the emoji per row, and
-  `emoji_collocations()` inherited it, so a row of 3200 emoji cost 7.1s
-  against 0.28s for the same 3200 spread over 320 rows. Each row now gets one
-  index of its code points and token boundaries instead of being cut once per
-  occurrence. The output is byte-identical, checked across eight
-  `window`/`unit` combinations. The second is one error message: a data frame
-  carrying the same column name twice used to fail with tibble's own wording,
-  which named an argument (`.name_repair`) that no verb here has and never said
-  which verb raised it. It now gets an authored message, worded like the
-  existing guard on a duplicated *text* column. No input that worked before
-  fails now, and no input that failed before succeeds. See NEWS.md.
+* **No new exported functions.** What a user can observe changing comes in
+  four parts, all in NEWS.md. The first is speed: `emoji_context()` was
+  quadratic in the emoji per row, and `emoji_collocations()` inherited it, so
+  a row of 3200 emoji cost 7.1s against 0.28s for the same 3200 spread over
+  320 rows. Each row now gets one index of its code points and token
+  boundaries instead of being cut once per occurrence, and the output is
+  byte-identical, checked across eight `window`/`unit` combinations. The
+  second is `emoji_collocations()` on a non-Latin-script corpus, which it
+  answered wrongly in a non-UTF-8 locale and now answers the same in every
+  locale. The third is eleven smaller defects a source reading found before
+  submission, each a wrong, order-dependent or crashing answer on an input
+  the documentation already covered, each fixed with a test. The fourth is
+  one error message: a data frame carrying the same column name twice used to
+  fail with tibble's own wording, which named an argument (`.name_repair`)
+  that no verb here has, and now gets an authored one. No input that worked
+  before fails now. The only inputs that failed before and succeed now are
+  counts past integer range (`emoji_ngrams(n = 1e10)`, a `window` of `1e10`),
+  which now mean "all of it".
 * **One new vignette**, `reversible-preprocessing`, and documentation
   additions to the introduction vignette and four help pages. No Rd content
   was removed.
@@ -66,12 +70,14 @@ built locally, so the local run is the one that covers it: do not skip it.
   `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four
   are the host artefacts above -- no `qpdf`, no `tidy`, the unverifiable
   clock, and the CLARIN.SI redirect target. **Zero from the package.** The
-  suite runs 15154 assertions with 0 failures and the 18 skips inventoried
+  suite runs 16148 assertions with 0 failures and the 19 skips inventoried
   below, and the PDF reference manual builds. (Run from the source tree with
-  `NOT_CRAN=true` the same suite reports 15270 assertions and 8 skips: ten of
-  the eighteen stand down only because the run is a CRAN one, or for want of a
-  file the tarball does not carry, and those ten contribute the 116-assertion
-  difference. The figure above is the one this bullet's own environment prints.)
+  `NOT_CRAN=true` the same suite reports 16267 assertions and 8 skips. Twelve
+  of the nineteen stand down only because the run is a CRAN one, or for want
+  of a file the tarball does not carry, and one test goes the other way: the
+  tangled vignette script exists only in a package installed from the
+  tarball. The 119-assertion difference is theirs, net. The figure above is
+  the one this bullet's own environment prints.)
 
 * **Local, R 4.1.0 on Linux, the declared minimum:** the suite runs clean,
   0 failures, 9 skips. Seven are the acceptance tests for verbs not yet
@@ -82,23 +88,27 @@ built locally, so the local run is the one that covers it: do not skip it.
   `forcats`, so it is also where the missing-Suggests path can be exercised
   for real rather than simulated: with `_R_CHECK_FORCE_SUGGESTS_=false` the
   check is **2 NOTEs** (the URL below and the missing `tidy`) with 0 test
-  failures and 14984 assertions. Two of the four artefacts this machine
+  failures and 16144 assertions. Two of the four artefacts this machine
   reports do not arise there at all, because it has `qpdf` and a verifiable
   clock, which is the clearest demonstration available that those two are the
   host rather than the package.
 
 * **Local, R 4.4.1, the same check end to end under `LC_ALL=C`**, examples,
   vignette rebuild and tests included: the same 1 WARNING and 3 NOTEs, the
-  same four host artefacts, 0 test failures. Three tests stand down in a
-  non-UTF-8 session, each because it measures R's own transliteration rather
-  than the package, and each says so.
+  same four host artefacts, 0 test failures and 16142 assertions. Three tests
+  stand down in a non-UTF-8 session, each because it measures R's own
+  transliteration or case mapping rather than the package, and each says so.
+  One of the three is already a `skip_on_cran()`, so the check prints 21 skips
+  where a UTF-8 run prints 19.
 
-  Separately from the check, 108 verb calls covering every exported verb on
-  the bundled corpus, on a fourteen-row multi-script fixture and on
-  single-value inputs were captured under `en_US.UTF-8` and under `LC_ALL=C`
-  and compared: **108 of 108 identical**. The same 108 against 0.4.0 differ
-  in exactly the three `emoji_collocations()` calls the NEWS describes, with
-  no call gaining or losing an error.
+  Separately from the check, 110 verb calls covering every exported verb on
+  the bundled corpus and on an eleven-row multi-script fixture were captured
+  under `en_US.UTF-8` and under `LC_ALL=C`, each proved to have run rather
+  than errored, and compared: **110 of 110 identical**. The same 110 against
+  0.4.0 differ in exactly the calls NEWS.md describes: the
+  `emoji_collocations()` fix (two calls in UTF-8, four under `LC_ALL=C`),
+  `emoji_incongruity_profile(where = "final")`, and `policy = "strip"` on a
+  row ending in an ideographic space. No call gains or loses an error.
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, both vignettes, README.md and NEWS.md, with the 167
   entries in `inst/WORDLIST`.
@@ -121,7 +131,7 @@ paragraph forward.
 
 ## The skip inventory
 
-Run as CRAN runs it, **eighteen** tests skip on R 4.4.1, and none of them is a
+Run as CRAN runs it, **nineteen** tests skip on R 4.4.1, and none of them is a
 test that might fail.
 
 * **seven are `skip_on_cran()`**: they read the checking machine rather than
@@ -131,16 +141,19 @@ test that might fail.
   crosswalks, `README.Rmd` for re-rendering it, and this file twice for its own
   claims), and one asserting the installed `emoji` release is the exact one the
   documented catalogue figures came from.
-* **Four stand down because the tarball does not carry the file they read**,
+* **Five stand down because the tarball does not carry the file they read**,
   and each says which file. Their messages are, on one line each so they stay
   greppable:
   `README sources not available`
   `package sources not available; scanned the namespace instead`
   `workflow not available`
-  The first accounts for two of the four: one compares `README.md` against
+  `roxygen sources not available`
+  The first accounts for two of the five: one compares `README.md` against
   `README.Rmd`'s prose, the other runs every chunk of `README.Rmd`, and
   `README.Rmd` is build-ignored. The second scans the installed namespace
-  instead, and the third is coupled to `.github/`, also build-ignored.
+  instead, the third is coupled to `.github/`, also build-ignored, and the
+  fourth reads the roxygen comments in `R/`, which an installed package
+  keeps only as the rendered help pages.
 * **Seven are acceptance tests for verbs the next release will add**, each
   naming its target: `emoji_country()`, `emoji_skin_tone()`,
   `emoji_coverage()`, `emoji_keywords()`, `as_emoji_canonical()`,

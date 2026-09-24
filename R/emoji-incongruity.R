@@ -344,9 +344,13 @@ emoji_congruence <- function(data, text, text_score,
 #'
 #' @details
 #' Incongruity is a property of a row, so every emoji in a row is credited with
-#' that row's gap. A glyph that habitually shares a message with a genuinely
-#' incongruent one will therefore inherit some of its score; read `n` alongside
-#' `flip_rate` before drawing conclusions from a handful of occurrences.
+#' that row's gap: every emoji the row was *scored on*, that is. With
+#' `where = "final"` that is the trailing run alone, and an emoji earlier in the
+#' text played no part in the row's score, so it is neither credited with the
+#' gap nor counted in `n`. A glyph that habitually shares a message with a
+#' genuinely incongruent one will therefore inherit some of its score; read `n`
+#' alongside `flip_rate` before drawing conclusions from a handful of
+#' occurrences.
 #'
 #' Glyphs are canonicalised through the package's codepoint key, so two
 #' spellings of one emoji make one row rather than two; see
@@ -387,8 +391,16 @@ emoji_incongruity_profile <- function(data, text, text_score,
                                     method = method, scale = scale,
                                     where = where, threshold = threshold,
                                     threshold_supplied = !missing(threshold))
-  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
-                emoji_canonical)
+  # Credit each row's gap to the glyphs it was computed from. Under
+  # `where = "final"` only the trailing run is scored, and crediting every
+  # glyph in the row counted a mid-sentence emoji among the "scored
+  # occurrences" in `n`, and gave it the gap, on rows where it had played no
+  # part in the score. `where` is already validated by the call above.
+  where <- .emoji_match_arg(where, c("all", "final"), "where")
+  v <- .emoji_text_col(data, {{ text }})
+  v[is.na(v)] <- ""
+  used <- if (where == "final") .emoji_final_glyphs(v) else emoji_glyph_list(v)
+  lst <- lapply(used, emoji_canonical)
   n_per_row <- lengths(lst)
   glyphs <- unlist(lst, use.names = FALSE)
   gap <- rep(scored$.emoji_incongruity, n_per_row)
@@ -422,5 +434,5 @@ emoji_incongruity_profile <- function(data, text, text_score,
   )
   out$flip_rate <- out$n_flips / out$n
   out <- out[out$n >= min_n, , drop = FALSE]
-  dplyr::arrange(out, dplyr::desc(flip_rate), dplyr::desc(n), emoji)
+  .emoji_arrange(out, dplyr::desc(flip_rate), dplyr::desc(n), emoji)
 }

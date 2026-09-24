@@ -52,6 +52,16 @@
 #' @export
 emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
   .emoji_check_flag(long, "long")
+  .emoji_emotion_impl(data, {{ text }}, lexicon = lexicon, long = long)$out
+}
+
+# The body of emoji_emotion(), handing back the dimensions it scored as well
+# as the result. emoji_emotion_label() has to know exactly which
+# `.emoji_<emotion>` columns *this call* wrote: it used to pick them out of the
+# result by name, which also caught any that `data` still carried from an
+# earlier call, so a custom lexicon scoring only `joy` was labelled "fear" from
+# a stale `.emoji_fear` it never computed.
+.emoji_emotion_impl <- function(data, text, lexicon, long) {
   lex <- .emoji_lexicon_lookup(lexicon)
   if (is.list(lex) && !is.data.frame(lex) && identical(lex$type, "custom")) {
     lex <- lex$tbl
@@ -70,7 +80,10 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
     .emoji_check_value_cols(lex, dims_avail, "lexicon")
     emap <- .emoji_drop_nonfinite(as.matrix(lex[, dims_avail, drop = FALSE]),
                                   "lexicon")
-    keys <- .emoji_lexicon_keys(lex, arg = "lexicon")
+    # a registered table through the column it was registered with, as in
+    # emoji_score(); a plain data frame through `emoji`, falling back to `key`
+    keys <- .emoji_lexicon_keys(lex, by = .emoji_registered_by(lex),
+                                arg = "lexicon")
     # The same duplicate-key refusal emoji_score()/emoji_sentiment() make via
     # .emoji_lexicon_record(). Duplicate rownames are legal, and the lookup
     # below silently takes the *first* match, so a lexicon listing both
@@ -78,7 +91,13 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
     # changed when the caller reordered their own table. One table, one
     # answer, whichever verb reads it.
     .emoji_check_dup_keys(keys, emap, arg = "lexicon")
-    rownames(emap) <- keys
+    # A row whose glyph yields no key can never be matched, so it goes; then
+    # one row per key, taking each dimension's non-NA value, so the answer
+    # does not depend on which of two agreeing rows comes first.
+    ok <- !is.na(keys) & nzchar(keys)
+    emap <- emap[ok, , drop = FALSE]
+    rownames(emap) <- keys[ok]
+    emap <- .emoji_collapse_keys(emap)
   } else if (identical(lex$type, "emotion")) {
     emap <- emoji_emotion_map()
   } else if (identical(lex$type, "sentiment")) {
@@ -101,17 +120,23 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
       as.character(lex$type)[1L]), call. = FALSE)
   }
   dims <- colnames(emap)
+  # The keys an emoji can actually be scored on. A lexicon row with no usable
+  # value in any dimension (all NA, or a value that was infinite and has just
+  # been dropped) is in the table but scores nothing, so an emoji matching it
+  # is not scored: the rule the sentiment path already followed, and the one
+  # .emoji_drop_nonfinite()'s warning states. It used to count towards
+  # `.emoji_n_scored` here while every score in the row stayed NA.
+  scorable <- rownames(emap)[rowSums(!is.na(emap)) > 0L]
 
   lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
 
-    # Per-row mean over each emotion, over the emoji found in the lexicon.
-  valid_keys <- rownames(emap)
+  # Per-row mean over each emotion, over the emoji the lexicon can score.
   row_means <- vapply(lst, function(g) {
     if (!length(g)) return(rep(NA_real_, length(dims)))
     keys <- key_lookup[g]
-    keys <- keys[!is.na(keys) & keys %in% valid_keys]
+    keys <- keys[!is.na(keys) & keys %in% scorable]
     if (!length(keys)) return(rep(NA_real_, length(dims)))
     sub <- emap[keys, , drop = FALSE]
     m <- colMeans(sub, na.rm = TRUE)
@@ -131,8 +156,7 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
   n_total <- as.integer(lengths(lst))
   n_scored <- vapply(lst, function(g) {
     if (!length(g)) return(NA_integer_)
-    keys <- key_lookup[g]
-    sum(keys %in% rownames(emap))
+    sum(key_lookup[g] %in% scorable)
   }, integer(1))
 
   out <- .emoji_as_tibble(data)
@@ -146,13 +170,17 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
     out$.emoji_emotion <- rep(dims, times = n_row)
     out$.emoji_score <- as.numeric(t(row_means))
   } else {
+    # unname(): on a one-row input `row_means[, em]` drops a 1 x k matrix to
+    # length one, and R then keeps the column's dimname, so every emotion
+    # column of a single-row result came back as a vector named "joy",
+    # "fear", ... where every other row count gave a plain one
     for (em in dims) {
-      out[[paste0(".emoji_", em)]] <- row_means[, em]
+      out[[paste0(".emoji_", em)]] <- unname(row_means[, em])
     }
     out$.emoji_n <- n_total
     out$.emoji_n_scored <- n_scored
   }
-  out
+  list(out = out, dims = dims)
 }
 
 
@@ -199,10 +227,14 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #' emoji_emotion_label(df, text)
 #' @export
 emoji_emotion_label <- function(data, text, lexicon = "emotag1200") {
-  em <- emoji_emotion(data, {{ text }}, lexicon = lexicon, long = FALSE)
-  # a custom lexicon may supply only a subset of the eight emotions
-  cols <- intersect(paste0(".emoji_", emoji_emotion_dims()), names(em))
-  dims <- sub("^\\.emoji_", "", cols)
+  res <- .emoji_emotion_impl(data, {{ text }}, lexicon = lexicon, long = FALSE)
+  em <- res$out
+  # The dimensions this call scored, in Plutchik order; a custom lexicon may
+  # supply only a subset of the eight. Taken from the scoring itself rather
+  # than from the names of `em`, which also holds any `.emoji_*` emotion
+  # column `data` arrived with.
+  dims <- res$dims
+  cols <- paste0(".emoji_", dims)
   mat <- as.matrix(em[, cols, drop = FALSE])
   # break ties in Plutchik order (first max wins via ties.method="first").
   # max.col() answers NA_integer_ for any row holding an NA -- ?max.col states

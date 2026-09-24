@@ -74,7 +74,9 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     if (is.data.frame(lex)) {
       score <- .emoji_lexicon_record(lex, arg = "lexicon")
     } else if (identical(lex$type, "custom")) {
-      score <- .emoji_lexicon_record(lex$tbl, arg = "lexicon")
+      score <- .emoji_lexicon_record(lex$tbl,
+                                     by = .emoji_registered_by(lex$tbl),
+                                     arg = "lexicon")
     } else if (identical(lex$type, "emotion")) {
       # The only input that reaches here: a bundled *emotion* lexicon. The old
       # message said `lexicon` "must be 'novak2015', a registered lexicon, or
@@ -149,12 +151,14 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
       s <- se_map[k]
       keep <- !is.na(s)
       if (!any(keep)) return(NA_real_)
-      # weights over the scored occurrences, pooled per distinct key
+      # weights over the scored occurrences, pooled per distinct key. Counted
+      # with tabulate(match()) rather than table(), so the counts and the
+      # sigmas are aligned by construction instead of by two sorts that
+      # have to agree on the session's collation.
       kk <- k[keep]
       ss <- s[keep]
-      # table() names sort, so align sigma the same way
-      uk <- sort(unique(kk))
-      n_i <- as.integer(table(kk))
+      uk <- unique(kk)
+      n_i <- tabulate(match(kk, uk), nbins = length(uk))
       sig <- ss[match(uk, kk)]
       w <- n_i / sum(n_i)
       sqrt(sum(w^2 * sig^2))

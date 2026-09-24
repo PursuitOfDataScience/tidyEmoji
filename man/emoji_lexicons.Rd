@@ -10,6 +10,11 @@ emoji_lexicons()
 A tibble with columns \code{name}, \code{type}, \code{dimensions}, \code{n}, \code{source},
 \code{licence}.
 
+\code{dimensions} lists the columns a lexicon can be scored on. For a
+registered lexicon those are its numeric or logical columns other than
+the glyph column and \code{key}, so a text column carried along for reference
+is not listed.
+
 \code{n} is the lexicon's \strong{row count}. For the two bundled ones that is
 also the number of emoji they score, 969 and 150, because each has one
 row per code-point key. A registered lexicon need not: two spellings of
@@ -20,8 +25,9 @@ emoji, the same distinction \code{\link[=emoji_provenance]{emoji_provenance()}} 
 }
 \description{
 \code{emoji_lexicons()} returns a tibble describing the lexicons bundled with
-tidyEmoji and any user-registered ones: their name, type (sentiment or
-emotion), dimensions, number of emoji, source and licence.
+tidyEmoji and any user-registered ones: their name, type (\code{"sentiment"} or
+\code{"emotion"} for the bundled two, \code{"custom"} for a registered one),
+dimensions, size, source and licence.
 }
 \examples{
 emoji_lexicons()

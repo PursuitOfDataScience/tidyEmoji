@@ -71,9 +71,13 @@ markers in your corpus.
 }
 \details{
 Incongruity is a property of a row, so every emoji in a row is credited with
-that row's gap. A glyph that habitually shares a message with a genuinely
-incongruent one will therefore inherit some of its score; read \code{n} alongside
-\code{flip_rate} before drawing conclusions from a handful of occurrences.
+that row's gap: every emoji the row was \emph{scored on}, that is. With
+\code{where = "final"} that is the trailing run alone, and an emoji earlier in the
+text played no part in the row's score, so it is neither credited with the
+gap nor counted in \code{n}. A glyph that habitually shares a message with a
+genuinely incongruent one will therefore inherit some of its score; read \code{n}
+alongside \code{flip_rate} before drawing conclusions from a handful of
+occurrences.
 
 Glyphs are canonicalised through the package's codepoint key, so two
 spellings of one emoji make one row rather than two; see

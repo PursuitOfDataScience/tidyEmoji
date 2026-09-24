@@ -114,11 +114,12 @@
 #'   one grapheme cluster, so `U+1F1FD U+1F1FD` is read as a single emoji even
 #'   though no country has that code. It appears in [emoji_frequency()] with
 #'   `name = NA`, gets a column in [emoji_dfm()] and a node in
-#'   [emoji_pairs()]. Only 262 of the pairs are real: `subgroup` is
-#'   `"country-flag"` for 259 rows of the reference table and
-#'   `"subdivision-flag"` for 3, so you can filter against that set --
-#'   [emoji_frequency()] carries `group`, and [emoji_provenance()] reports
-#'   which catalogue you have.
+#'   [emoji_pairs()]. Only 259 of the 676 possible pairs are real, the rows
+#'   of the reference table whose `subgroup` is `"country-flag"`; its three
+#'   `"subdivision-flag"` rows are tag sequences, not pairs. A pair outside
+#'   that set is in no catalogue, so [emoji_frequency()] reports it with
+#'   `group = NA` as well as `name = NA`, which is the way to filter it out,
+#'   and [emoji_provenance()] reports which catalogue you have.
 #' * **An orphan skin-tone modifier or hair component.** A modifier applied to
 #'   a base that cannot take one, as in `U+1F600 U+1F3FB`, leaves the swatch
 #'   standing alone -- and because the Component group is in the reference

@@ -61,7 +61,9 @@ comparison, and it means the policy argument can stay in the script even
 when the answer is "do nothing".
 \item \code{"strip"} deletes the emoji. Because deleting a glyph can leave two spaces
 where there was one, \code{strip} also collapses runs of spaces and tabs and
-trims the ends -- the only policy that touches anything but the emoji.
+trims whitespace off both ends, using Unicode's \code{White_Space} set as the
+rest of the package does, so a no-break or ideographic space left at an
+end goes too. It is the only policy that touches anything but the emoji.
 Removing a span makes its two neighbours adjacent, and on malformed
 input those two can spell an emoji the original text did not contain (a
 bare \code{U+2603} beside an orphan \code{U+FE0F} becomes the qualified snowman),

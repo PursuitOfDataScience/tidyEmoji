@@ -22,9 +22,11 @@ date, and hence into a time axis.
 \details{
 Two numbering series exist and both turn up in emoji reference data. The
 Unicode Emoji series (\code{series = "emoji"}) runs 1.0, 2.0, ... 5.0 and then
-jumps to 11.0 to line up with the Unicode version; the Unicode series
-(\code{series = "unicode"}) covers the 6.0-10.0 releases that added emoji before
-the alignment. The two do not collide, so \code{version} is a unique key.
+jumps to 11.0 to line up with the Unicode version. It also carries 0.6 and
+0.7, the labels UTS #51 gives the emoji that Unicode 6.0 and 7.0 introduced,
+dated to those two releases. The Unicode series (\code{series = "unicode"})
+covers the 6.0-10.0 releases that added emoji before the alignment. The two
+do not collide, so \code{version} is a unique key.
 
 The table is kept in code rather than as a bundled \code{.rda}: it is a few dozen
 rows, it changes only when Unicode ships, and keeping it beside the verbs

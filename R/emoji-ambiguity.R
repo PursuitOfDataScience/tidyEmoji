@@ -193,7 +193,7 @@ emoji_ambiguity <- function(x = NULL, measure = "entropy") {
     rank = as.integer(rank(-amb, na.last = "keep", ties.method = "min"))
   )
   if (is.null(x)) {
-    return(dplyr::arrange(out, rank, emoji))
+    return(.emoji_arrange(out, rank, emoji))
   }
   # index columns rather than rows: an unknown glyph gives NA statistics
   # without relying on NA row subscripts
@@ -345,7 +345,7 @@ emoji_flag_ambiguous <- function(data, text, top_n = 10,
     rank = amb$rank[idx]
   )
   out <- out[!is.na(out$ambiguity), , drop = FALSE]
-  out <- dplyr::arrange(out, dplyr::desc(ambiguity), dplyr::desc(n), emoji)
+  out <- .emoji_arrange(out, dplyr::desc(ambiguity), dplyr::desc(n), emoji)
   if (!is.null(top_n) && is.finite(top_n)) {
     out <- utils::head(out, top_n)
   }
