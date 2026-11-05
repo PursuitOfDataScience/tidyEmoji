@@ -4,7 +4,7 @@
 \alias{emoji_emotion_label}
 \title{The dominant emoji emotion per row}
 \usage{
-emoji_emotion_label(data, text, lexicon = "emotag1200")
+emoji_emotion_label(data, text, lexicon = "emotag1200", presentation = "emoji")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -24,6 +24,28 @@ data. What counts as an emoji is the same in every verb; see the
 people, code points that are emoji only when they carry \code{U+FE0F}.}
 
 \item{lexicon}{Passed to \code{\link[=emoji_emotion]{emoji_emotion()}}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 \code{data}, as a tibble, with \code{.emoji_emotion} (the winning emotion, or
@@ -68,3 +90,4 @@ emoji_emotion_label(df, text)
 coverage caveat that applies to both; \link{emoji_emotion_lexicon} for the
 underlying data; \code{\link[=emoji_sentiment]{emoji_sentiment()}} for valence instead of emotion.
 }
+\concept{emotion}

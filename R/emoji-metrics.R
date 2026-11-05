@@ -48,10 +48,13 @@
 #' df <- data.frame(text = c("\U0001f600 leading", "trailing \U0001f600",
 #'                           "none"))
 #' emoji_position(df, text)
+#' @concept position and intensity
+#' @concept LLM output auditing
 #' @export
-emoji_position <- function(data, text) {
+emoji_position <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   v <- .emoji_text_col(data, {{ text }})
-  locs <- .emoji_locations(v)
+  locs <- .emoji_locations(v, presentation)
   n <- vapply(locs, nrow, integer(1))
   len <- nchar(v)
   len[is.na(len)] <- 0L
@@ -110,20 +113,33 @@ emoji_position <- function(data, text) {
 #' density that does not move with an emoji's internal length,
 #' `.emoji_per_token` is immune -- all three examples above give 0.5.
 #'
+#' Both rates ship with the counts they were computed from, `.emoji_n` over
+#' `.emoji_n_char` and over `.emoji_n_token`, so a count model can be fitted to
+#' the counts with the denominator as its exposure, rather than a linear model
+#' to the quotient. See *Rates and their denominators* in [tidyEmoji].
+#'
 #' @inheritParams emoji_summary
-#' @return `data`, as a tibble, with added columns `.emoji_n`,
-#'   `.emoji_per_char` (emoji per character, i.e. per code point, of text) and
-#'   `.emoji_per_token` (emoji per whitespace-delimited token). A token is a
-#'   maximal run of characters outside Unicode's `White_Space` property; see
-#'   [emoji_ratio()] for the exact set, which does not vary with the locale.
+#' @return `data`, as a tibble, with added columns `.emoji_n`, `.emoji_n_char`
+#'   (characters, i.e. code points, of text), `.emoji_n_token`
+#'   (whitespace-delimited tokens), `.emoji_per_char` (emoji per character,
+#'   i.e. per code point: `.emoji_n / .emoji_n_char`) and `.emoji_per_token`
+#'   (`.emoji_n / .emoji_n_token`). A
+#'   token is a maximal run of characters outside Unicode's `White_Space`
+#'   property; see [emoji_ratio()] for the exact set, which does not vary with
+#'   the locale. An `NA` text has `.emoji_n = 0` and `NA` for both
+#'   denominators and both rates, since its length is not known; an empty
+#'   text has denominators of `0` and rates of `NA`.
 #' @seealso [emoji_position()], [emoji_ratio()].
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600", "\U0001f600\U0001f600", "plain"))
 #' emoji_density(df, text)
+#' @concept position and intensity
+#' @concept rates and denominators
 #' @export
-emoji_density <- function(data, text) {
+emoji_density <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   v <- .emoji_text_col(data, {{ text }})
-  n <- lengths(emoji_glyph_list(v))
+  n <- vapply(.emoji_locations(v, presentation), nrow, integer(1))
   n_char <- nchar(v)
   # maximal runs of non-whitespace
   n_token <- vapply(strsplit(.emoji_trimws(v), .emoji_ws), function(t) {
@@ -146,6 +162,8 @@ emoji_density <- function(data, text) {
 
   out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(n)
+  out$.emoji_n_char <- as.integer(n_char)
+  out$.emoji_n_token <- as.integer(n_token)
   out$.emoji_per_char <- per_char
   out$.emoji_per_token <- per_token
   out
@@ -161,11 +179,23 @@ emoji_density <- function(data, text) {
 #'
 #' The ratio is computed over characters (code points), so a multi-code-point
 #' emoji (a ZWJ family, a skin-tone sequence) contributes all of its
-#' characters.
+#' characters. It ships with both of the counts it is the quotient of,
+#' `.emoji_codepoints` and `.emoji_n_char`, and with `.emoji_n`, the number of
+#' emoji those code points make up; see *Rates and their denominators* in
+#' [tidyEmoji].
+#'
+#' A skin-tone swatch or hair component standing alone, or a regional
+#' indicator that spells no flag, is not an emoji (see the *Detection*
+#' section of [tidyEmoji]), so it adds nothing to `.emoji_n` or
+#' `.emoji_codepoints`. It is not text either, so it does not stop a row being
+#' `.emoji_only`: `U+1F600 U+1F3FB` is one emoji, a ratio of `0.5`, and
+#' emoji-only.
 #'
 #' @inheritParams emoji_summary
-#' @return `data`, as a tibble, with added columns `.emoji_ratio` (emoji
-#'   characters / all characters, 0 when there are no emoji) and
+#' @return `data`, as a tibble, with added columns `.emoji_n`,
+#'   `.emoji_codepoints` (code points belonging to emoji), `.emoji_n_char` (all
+#'   code points), `.emoji_ratio` (`.emoji_codepoints / .emoji_n_char`, 0 when
+#'   there are no emoji) and
 #'   `.emoji_only` (`TRUE` when the text contains emoji and nothing else but
 #'   whitespace). "Whitespace" is Unicode's `White_Space` property, written out
 #'   explicitly rather than left to the C library: it includes the no-break
@@ -173,7 +203,8 @@ emoji_density <- function(data, text) {
 #'   excludes the zero-width space `U+200B`, which despite its name Unicode
 #'   does not classify as whitespace. The same set is used everywhere the
 #'   package splits or trims text, and it does not vary with the locale.
-#'   `NA` text gets `NA` in both. Empty text (`""`) has no
+#'   `NA` text gets `NA` in both, and in `.emoji_n_char`, with `0` in the two
+#'   emoji counts. Empty text (`""`) has no
 #'   characters to take a share of, so `.emoji_ratio` is `NA` there too, but
 #'   `.emoji_only` is `FALSE`: an empty string is not a row of emoji.
 #' @seealso [emoji_position()], [emoji_density()]; [emoji_filter()] to keep
@@ -181,11 +212,22 @@ emoji_density <- function(data, text) {
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f389", "half \U0001f600", "no"))
 #' emoji_ratio(df, text)
+#' @concept position and intensity
+#' @concept rates and denominators
 #' @export
-emoji_ratio <- function(data, text) {
+emoji_ratio <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
-  locs <- .emoji_locations(v)
+  sp <- .emoji_spans(v, presentation)
+  # `locs` is the emoji; `spans` adds the components and stray indicators,
+  # which count towards neither the ratio nor .emoji_n but are not text
+  # either, so they do not stop a row being emoji-only.
+  spans <- sp$locs
+  locs <- spans
+  for (i in which(!vapply(sp$kinds, is.null, logical(1)))) {
+    locs[[i]] <- spans[[i]][sp$kinds[[i]] <= 2L, , drop = FALSE]
+  }
   n_char <- nchar(v)
 
   emoji_chars <- vapply(locs, function(m) {
@@ -199,7 +241,7 @@ emoji_ratio <- function(data, text) {
 
   # emoji-only: strip the located emoji, then whitespace; nothing may remain
   residual <- vapply(seq_along(v), function(i) {
-    m <- locs[[i]]
+    m <- spans[[i]]
     s <- v[[i]]
     if (is.na(s)) return(NA_character_)
     if (is.null(m) || nrow(m) == 0L) return(s)
@@ -210,6 +252,9 @@ emoji_ratio <- function(data, text) {
   only[was_na] <- NA
 
   out <- .emoji_as_tibble(data)
+  out$.emoji_n <- vapply(locs, nrow, integer(1))
+  out$.emoji_codepoints <- as.integer(emoji_chars)
+  out$.emoji_n_char <- as.integer(n_char)
   out$.emoji_ratio <- ratio
   out$.emoji_only <- only
   out

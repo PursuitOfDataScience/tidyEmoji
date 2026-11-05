@@ -4,7 +4,7 @@
 \alias{emoji_summary}
 \title{Summarise emoji presence in a text column}
 \usage{
-emoji_summary(data, text)
+emoji_summary(data, text, presentation = "emoji")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -22,10 +22,41 @@ deparses it and the emoji found would be in the code rather than in your
 data. What counts as an emoji is the same in every verb; see the
 \emph{Detection} section of \link{tidyEmoji} for the one case that surprises
 people, code points that are emoji only when they carry \code{U+FE0F}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A one-row tibble with columns \code{n_with_emoji} (entries containing at
-least one emoji) and \code{n_total} (all entries).
+least one emoji), \code{n_total} (all entries), \code{n_orphan_components}
+and \code{n_invalid_flags}. The last two count \emph{glyphs}, not entries: the
+emoji material the text holds that is not an emoji, and so is in no other
+count. \code{n_orphan_components} is the skin-tone swatches and hair
+components standing alone, as in \verb{U+1F600 U+1F3FB}, where the tone
+follows a base that cannot take one; \code{n_invalid_flags} is the runs of
+regional indicators that spell no country, such as \verb{U+1F1FD U+1F1FD}
+("XX") or a lone indicator. Both were counted as emoji before 0.6.0, so
+they are what to look at when a corpus reports fewer emoji than it used
+to. See the \emph{Detection} section of \link{tidyEmoji}.
 }
 \description{
 \code{emoji_summary()} reports how many entries in a text column contain at least
@@ -37,7 +68,15 @@ df <- data.frame(text = c("I love R \U0001f600",
                           "no emoji here",
                           "flags \U0001f3c1\U0001f600"))
 emoji_summary(df, text)
+
+# a bare heart is an emoji only under presentation = "any"
+hearts <- data.frame(text = c("I \u2764 R", "I \u2764\ufe0f R"))
+emoji_summary(hearts, text)
+emoji_summary(hearts, text, presentation = "any")
 }
 \seealso{
-\code{\link[=emoji_filter]{emoji_filter()}} to keep the emoji-bearing rows themselves.
+\code{\link[=emoji_filter]{emoji_filter()}} to keep the emoji-bearing rows themselves;
+\code{\link[=emoji_coverage]{emoji_coverage()}} for what a lexicon can score of them.
 }
+\concept{detection}
+\concept{reporting}

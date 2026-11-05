@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. 'tidyEmoji' extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a 'tidyverse' workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) \doi{10.1371/journal.pone.0144296}, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb & de Melo (2020) \url{https://aclanthology.org/2020.emnlp-main.720/}, released under the MIT licence.
+A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. 'tidyEmoji' extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a 'tidyverse' workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. Its emoji catalogue is the Unicode emoji test data, bundled and current to Emoji 18.0, so it can also say what a glyph is, map flag emoji to ISO 3166 codes, report how much of a corpus each lexicon can score, and read reaction tallies as well as text. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) \doi{10.1371/journal.pone.0144296}, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb & de Melo (2020) \url{https://aclanthology.org/2020.emnlp-main.720/}, released under the MIT licence.
 }
 \section{Output and naming contract}{
 
@@ -70,10 +70,34 @@ So \code{emoji_sentiment()} followed by \code{emoji_emotion()} leaves a
 adding the second, or keep the two tables apart.
 
 \code{group} always refers to the Unicode top-level category (the term used by
-the underlying \code{emoji::emojis} table). Every glyph-to-metadata join is
-normalised through a codepoint key that strips the \code{U+FE0F} variation
-selector, so qualified and unqualified emoji forms resolve identically in
-every verb.
+Unicode's own \code{emoji-test.txt}, which the catalogue is built from). Every
+glyph-to-metadata join is normalised through a codepoint key that strips
+the \code{U+FE0F} variation selector, so qualified and unqualified emoji forms
+resolve identically in every verb.
+}
+
+\section{Rates and their denominators}{
+
+\strong{Every rate tidyEmoji returns ships with the numerator and the denominator
+it was computed from}, so a user can fit a count model (a Poisson or
+negative binomial regression of the count with the denominator as its
+exposure) instead of a linear model on a ratio. \code{\link[=emoji_ratio]{emoji_ratio()}} returns
+\code{.emoji_codepoints} and \code{.emoji_n_char} beside \code{.emoji_ratio},
+\code{\link[=emoji_density]{emoji_density()}} returns \code{.emoji_n_char} and \code{.emoji_n_token} beside its
+two densities, \code{\link[=emoji_trend]{emoji_trend()}} returns \code{n_period} beside \code{share}, and
+\code{\link[=emoji_coverage]{emoji_coverage()}} returns the counts beside both coverages. Where a table
+already carries every count a share is built from, as
+\code{\link[=emoji_seasonality]{emoji_seasonality()}} and \code{\link[=emoji_version_profile]{emoji_version_profile()}} do, the denominator is
+the column's total.
+
+This matters more than it sounds. Emoji counts are compositional (shares
+of a document's total) and heavily zero-inflated, and the log-ratio
+transforms compositional analysis depends on are undefined at zero, so a
+bare quotient pushes the analyst into the modelling error. tidyEmoji
+offers no \code{clr} or \code{ilr} transform, because zero replacement is a
+methodological choice that belongs to the analysis (\pkg{compositions} and
+\pkg{zCompositions} make it properly), but it returns what such a choice
+needs. A new verb is held to the same rule.
 }
 
 \section{Detection}{
@@ -82,16 +106,25 @@ Detection is grapheme-aware: a skin-tone modifier or a zero-width-joiner
 sequence (a family, a couple, a profession) stays intact as one emoji, and
 every verb asks the same question, so counts agree across the package.
 
+\strong{What counts as an emoji is decided by the catalogue}, Unicode's own
+\code{emoji-test.txt} for the version \code{\link[=emoji_unicode_version]{emoji_unicode_version()}} reports, bundled
+with the package. \code{\link[=emoji_properties]{emoji_properties()}} shows what it records about any
+glyph. Until 0.6.0 the catalogue was the table inside the \pkg{emoji}
+package, which stayed at Emoji 16.0 through two Unicode releases, so the
+182 emoji added in 17.0 and 18.0 were invisible; they are detected now. A
+corpus re-run under 0.6.0 can therefore report more emoji than it did, and
+because of the two repairs below, it can also report fewer.
+
 There is one systematic exclusion, and it is worth knowing before you read
 a count. Some code points are emoji only in their \emph{emoji-presentation} form,
 that is only when the variation selector \code{U+FE0F} is present. The
 best-known is the heart: \verb{U+2764 U+FE0F} is detected, the bare \code{U+2764} is
-not, and several keyboards emit the bare form. Across the reference
-catalogue 1252 emoji carry \code{U+FE0F}, and 216 of those become undetectable
-if it is dropped -- in the bundled sentiment lexicon, 57 of the scorable
-glyphs. Counted the other way round, 212 of the catalogue's 5042 rows are
-spellings that are themselves undetectable; the two figures measure
-different things and both are right.
+not, and several keyboards emit the bare form. Across the catalogue 1272
+spellings carry \code{U+FE0F}, and 216 of those become undetectable if it is
+dropped: in the bundled sentiment lexicon, 57 of the scorable glyphs.
+Counted the other way round, 212 of the catalogue's 5244 spellings are
+themselves undetectable; the two figures measure different things and both
+are right.
 
 The selector does not always go at the end. For 200 of those 212 it does,
 so appending \code{U+FE0F} is what makes them detectable. The exceptions are the
@@ -101,50 +134,55 @@ keycap mark \code{U+20E3} -- where the selector belongs \emph{between} the two:
 Inserting \code{U+FE0F} after the first code point is the rule that repairs all
 212.
 
-The default does not match the bare forms, and that is deliberate rather
-than an oversight: the same set contains \verb{U+00A9}, \verb{U+00AE} and \code{U+2122}, so
-matching them unqualified would count the copyright sign in a legal footer
-as emoji use. Detection is the only thing affected -- the join is not. Every
-glyph-to-metadata lookup strips \code{U+FE0F} first, so if you hand a bare
-\code{U+2764} to \code{\link[=as_emoji_name]{as_emoji_name()}}, \code{\link[=emoji_sentiment]{emoji_sentiment()}}'s lexicon or
-\code{\link[=emoji_ambiguity]{emoji_ambiguity()}}, it resolves exactly like the qualified form.
+\strong{\code{presentation = "any"} reads them as they are}, on every verb that
+counts, scores or rewrites emoji, without your having to repair the text:
+all 212 except three. The
+default does not, and that is deliberate rather than an oversight: the
+same set contains \verb{U+00A9}, \verb{U+00AE} and \code{U+2122}, so matching them would
+count the copyright sign in a legal footer as emoji use, which is why
+\code{"any"} leaves those three out. The default stays \code{"emoji"}, because
+widening it would silently recount every corpus already analysed;
+\code{\link[=emoji_coverage]{emoji_coverage()}} reports what the choice adds. Detection is the only
+thing affected; the join is not. Every glyph-to-metadata lookup strips
+\code{U+FE0F} first, so if you hand a bare \code{U+2764} to \code{\link[=as_emoji_name]{as_emoji_name()}},
+\code{\link[=emoji_sentiment]{emoji_sentiment()}}'s lexicon or \code{\link[=emoji_ambiguity]{emoji_ambiguity()}}, it resolves exactly
+like the qualified form.
 
 Joined sequences are unaffected either way. Unicode lists several
 spellings of a zero-width-joiner sequence -- fully qualified, and shorter
 forms with the selectors omitted -- and a shorter one can leave an
 undetectable component in the middle. Detection repairs those: \strong{every
-canonical spelling in the reference table, and all but two of the shorter
-ones, is read as exactly one emoji}, so \verb{U+2764 U+200D U+1F525} is "heart
-on fire" rather than "fire" even with its selectors stripped. The two
-exceptions are spellings in which no component at all is detectable, and
-both have a canonical form that is found.
+fully-qualified and minimally-qualified spelling in the catalogue is read
+as exactly one emoji}, so \verb{U+2764 U+200D U+1F525} is "heart on fire"
+rather than "fire" even with its selectors stripped.
 
-Everything above is about what detection \emph{misses}. It also admits two
-things that are well formed but not emoji, and both flow through every
-verb, so a corpus statistic can be inflated by them:
+Two things are emoji \emph{material} without being emoji, and since 0.6.0 no
+verb counts them:
 \itemize{
-\item \strong{An invalid regional-indicator pair.} Any two regional indicators form
-one grapheme cluster, so \verb{U+1F1FD U+1F1FD} is read as a single emoji even
-though no country has that code. It appears in \code{\link[=emoji_frequency]{emoji_frequency()}} with
-\code{name = NA}, gets a column in \code{\link[=emoji_dfm]{emoji_dfm()}} and a node in
-\code{\link[=emoji_pairs]{emoji_pairs()}}. Only 259 of the 676 possible pairs are real, the rows
-of the reference table whose \code{subgroup} is \code{"country-flag"}; its three
-\code{"subdivision-flag"} rows are tag sequences, not pairs. A pair outside
-that set is in no catalogue, so \code{\link[=emoji_frequency]{emoji_frequency()}} reports it with
-\code{group = NA} as well as \code{name = NA}, which is the way to filter it out,
-and \code{\link[=emoji_provenance]{emoji_provenance()}} reports which catalogue you have.
-\item \strong{An orphan skin-tone modifier or hair component.} A modifier applied to
-a base that cannot take one, as in \verb{U+1F600 U+1F3FB}, leaves the swatch
-standing alone -- and because the Component group is in the reference
-table it comes back \emph{named}, as "light skin tone" in group \code{"Component"},
-not as \code{NA}. \code{\link[=as_emoji_type]{as_emoji_type()}} labels these \code{"component"}, which is the
-way to find and drop them:
-\code{subset(emoji_frequency(df, text), as_emoji_type(emoji) != "component")}.
+\item \strong{A skin-tone swatch or hair component standing alone.} A modifier
+applied to a base that cannot take one, as in \verb{U+1F600 U+1F3FB}, leaves
+the swatch with nothing to modify. That is one emoji, the grinning face,
+and a swatch; until 0.6.0 it was counted as two emoji, the second named
+"light skin tone" in group \code{"Component"}.
+\item \strong{Regional indicators that spell no flag.} Any two regional indicators
+form one grapheme cluster, so \verb{U+1F1FD U+1F1FD} ("XX") used to be read
+as an emoji with no name, as did a lone indicator. Only 259 of the 676
+possible pairs are flags in the catalogue; anything else is not an
+emoji. Subdivision flags are tag sequences, not pairs, and are
+unaffected.
 }
 
-Both are defensible as raw detection and misleading as a corpus statistic,
-which is why they are named here rather than silently filtered: dropping
-them inside the verbs would make the emoji counts disagree with the text.
+Neither is silently discarded. \code{\link[=emoji_summary]{emoji_summary()}} counts both, in
+\code{n_orphan_components} and \code{n_invalid_flags}, so a corpus whose count fell
+can be explained, and \code{\link[=emoji_country]{emoji_country()}} reports a stray pair with its glyph
+and no country code. The verbs that rewrite text treat them as before 0.6.0
+(\code{emoji_sanitize(policy = "strip")} still removes a swatch, and
+\code{\link[=emoji_to_text]{emoji_to_text()}} still names it), because what changed is what is
+\emph{counted}, and a swatch left in a stripped column would still be a swatch.
+
+ASCII emoticons such as \verb{:)} are not emoji and are never detected, so a
+study of the move from emoticons to emoji, which needs both in one
+denominator, has to count the emoticons itself.
 }
 
 \section{Which spelling comes back}{

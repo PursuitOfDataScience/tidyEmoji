@@ -11,6 +11,15 @@
 #' a corpus carries no emotion; see [emoji_emotion_lexicon] for the figure and
 #' its denominator.
 #'
+#' @section Language and culture:
+#' The scores are not language-neutral. The bundled sentiment lexicon was
+#' annotated on tweets in 13 European languages and the emotion lexicon on
+#' English ones, and emoji use differs measurably across languages
+#' (Cross-lingual Variations in Emoji Use, EMNLP 2024), so a glyph's score
+#' describes how those annotators read it. For text from another language
+#' community, register a lexicon built there (see [register_emoji_lexicon()])
+#' and report [emoji_coverage()] beside the result.
+#'
 #' @inheritParams emoji_summary
 #' @param lexicon Lexicon to use. Either a string naming a bundled lexicon
 #'   (`"emotag1200"`, the default), the name of a registered lexicon (see
@@ -49,10 +58,14 @@
 #' df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))
 #' emoji_emotion(df, text)
 #' emoji_emotion(df, text, long = TRUE)
+#' @concept emotion
 #' @export
-emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
+emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE,
+                          presentation = "emoji") {
   .emoji_check_flag(long, "long")
-  .emoji_emotion_impl(data, {{ text }}, lexicon = lexicon, long = long)$out
+  presentation <- .emoji_check_presentation(presentation)
+  .emoji_emotion_impl(data, {{ text }}, lexicon = lexicon, long = long,
+                      presentation = presentation)$out
 }
 
 # The body of emoji_emotion(), handing back the dimensions it scored as well
@@ -61,7 +74,8 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 # result by name, which also caught any that `data` still carried from an
 # earlier call, so a custom lexicon scoring only `joy` was labelled "fear" from
 # a stale `.emoji_fear` it never computed.
-.emoji_emotion_impl <- function(data, text, lexicon, long) {
+.emoji_emotion_impl <- function(data, text, lexicon, long,
+                                presentation = "emoji") {
   lex <- .emoji_lexicon_lookup(lexicon)
   if (is.list(lex) && !is.data.frame(lex) && identical(lex$type, "custom")) {
     lex <- lex$tbl
@@ -128,7 +142,7 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
   # `.emoji_n_scored` here while every score in the row stayed NA.
   scorable <- rownames(emap)[rowSums(!is.na(emap)) > 0L]
 
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
 
@@ -225,9 +239,13 @@ emoji_emotion <- function(data, text, lexicon = "emotag1200", long = FALSE) {
 #' @examples
 #' df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))
 #' emoji_emotion_label(df, text)
+#' @concept emotion
 #' @export
-emoji_emotion_label <- function(data, text, lexicon = "emotag1200") {
-  res <- .emoji_emotion_impl(data, {{ text }}, lexicon = lexicon, long = FALSE)
+emoji_emotion_label <- function(data, text, lexicon = "emotag1200",
+                                presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
+  res <- .emoji_emotion_impl(data, {{ text }}, lexicon = lexicon, long = FALSE,
+                             presentation = presentation)
   em <- res$out
   # The dimensions this call scored, in Plutchik order; a custom lexicon may
   # supply only a subset of the eight. Taken from the scoring itself rather

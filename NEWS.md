@@ -1,3 +1,217 @@
+# tidyEmoji 0.6.0
+
+**The catalogue is now Unicode's own, current to Emoji 18.0, and the package
+says exactly what a glyph is and what it could not measure.** Until 0.5.0
+tidyEmoji detected against the table inside the `emoji` package, which has
+stayed at Emoji 16.0 through two Unicode releases, so the 182 emoji added in
+17.0 and 18.0 were not detected at all. The catalogue is now Unicode's
+`emoji-test.txt`, bundled with the package and rebuilt by
+`data-raw/crosswalks.R` when Unicode ships; `emoji` still supplies the
+shortcodes, the keywords and the detection regex. On top of it come ten new
+verbs, two detection repairs, a `presentation` argument on every verb that
+reads text, and association and polarisation measures on three shipped verbs.
+
+**Counts move, in both directions.** A corpus scored under 0.5.0 and again
+under 0.6.0 can report more emoji, because the 17.0 and 18.0 additions are
+now detected, and it can report fewer, because two kinds of emoji material
+are no longer counted as emoji:
+
+* `U+1F600 U+1F3FB`, a grinning face followed by a skin tone it cannot take,
+  was two emoji in 0.5.0 (the second named "light skin tone", in group
+  `"Component"`) and is one emoji in 0.6.0.
+* `U+1F1FD U+1F1FD`, two regional indicators spelling "XX", was one emoji
+  with no name in 0.5.0 and is no emoji in 0.6.0, as is a lone indicator.
+* `U+1FAEA`, distorted face (Emoji 17.0), was nothing in 0.5.0 and is one
+  emoji in 0.6.0.
+
+`emoji_summary()` counts the first two kinds, so a diff between the two
+releases can be explained from the output, and `emoji_provenance()` reports
+the catalogue version and the date of its data file. The corpus behind the
+introduction vignette holds none of the three, so every figure the vignettes
+quote for it is unchanged.
+
+## The catalogue
+
+* **Detection reads Emoji 18.0.** `emoji_unicode_version()` is `"18.0"`,
+  read from the data file's own `# Version:` header when the data is built,
+  because Unicode serves the current file at an unversioned address and the
+  per-version directories stopped at 16.0. The catalogue has 5244 spellings
+  of 3972 emoji. All 3963 fully-qualified and 1029 minimally-qualified
+  spellings are detected as exactly one emoji, and the 182 additions are
+  named, though `emoji` has no shortcodes or keywords for them yet.
+
+  The detector is still `emoji`'s regex, behind a short prefix for the 16
+  code points newer than it (the two 18.0 thumb signs, which also take skin
+  tones, among them). The prefix is derived from the catalogue and the
+  installed regex together, so it can only match where the upstream regex
+  cannot, and an `emoji` release that catches up empties it on its own.
+  Checked: on all 5042 Emoji 16.0 spellings, alone and in context, and on the
+  bundled corpus, the raw matches are byte-identical to 0.5.0's.
+
+* **The switch was proven before it was made.** Built from Unicode's Emoji
+  16.0 file with `emoji` 16.0.0's aliases, the new `data-raw/crosswalks.R`
+  reproduces both shipped crosswalks with `identical()` TRUE. Built from the
+  18.0 file, `emoji_unicode_crosswalk` keeps the same 5761 rows (seven of
+  them in a new order) and `category_unicode_crosswalk` gains the 202 new
+  spellings in their groups and loses none. The input file is committed as
+  `data-raw/emoji-test.txt`, so the build repeats without the network, and a
+  test does exactly that.
+
+* **Three flag names follow CLDR.** "flag: Heard & McDonald Islands",
+  "flag: St. Helena" and "flag: French Southern Territories" are now "flag:
+  Heard Island & McDonald Islands", "flag: St. Helena, Ascension & Tristan
+  da Cunha" and "flag: French Southern and Antarctic Lands". Join on the
+  glyph or the code, not the name.
+
+* **`emoji_unicode_releases()` gains Emoji 18.0**, released 2026-09-16.
+
+* **`emoji_provenance()` gains `unicode_emoji_date`**, the date in the
+  catalogue file's header, beside `unicode_emoji`.
+
+## Two detection repairs
+
+* **A skin-tone or hair component standing alone is no longer an emoji
+  occurrence.** It was counted by every verb, and listed by
+  `emoji_frequency()` and `top_n_emojis()` as an emoji in its own right. The
+  rule is applied once, where detection decides what a match is, so no verb
+  can bring it back. A component inside a sequence, as in a toned thumb or a
+  red-haired person, is part of that emoji as before.
+
+* **Regional indicators that spell no flag are no longer an emoji.** Any
+  well-formed pair used to be read as one, so a stray "XX" turned up in
+  `emoji_frequency()` with every name column `NA`, in `emoji_dfm()` as a
+  column and in `emoji_pairs()` as a node. The 259 country flags of the
+  catalogue are the valid set. Indicators pair from the start of a run, as
+  Unicode says and as a phone displays them.
+
+* **Neither is silently discarded.** `emoji_summary()` gains
+  `n_orphan_components` and `n_invalid_flags`. The verbs that rewrite text
+  treat both exactly as before, because what changed is what is counted:
+  `emoji_sanitize(policy = "strip")` still removes a stray swatch,
+  `emoji_to_text()` still names it, `emoji_context()` masks it out of its
+  windows, `emoji_ratio()` does not let it stop a row being emoji-only, and
+  `emoji_incongruity(where = "final")` still finds the emoji before it.
+
+## `presentation = "any"`
+
+* **Every verb that counts, scores or rewrites emoji takes `presentation`.**
+  The default, `"emoji"`, is the detection every earlier release used and it
+  stays the default. `"any"` also reads the text-presentation spellings Unicode lists,
+  such as the bare heart `U+2764` that several keyboards emit, `U+263A` and a
+  keycap without its selector: 240 of the catalogue's 243 unqualified
+  spellings. The other three are the copyright, registered and trade-mark
+  signs, which are left out so that the copyright line of a legal footer is
+  not emoji use. `"any"` only ever adds occurrences to what `"emoji"` finds.
+  The argument is the last one of every signature, so no positional call
+  written for 0.5.0 changes meaning.
+
+## Rates ship with their denominators
+
+* **`emoji_ratio()` gains `.emoji_n`, `.emoji_codepoints` and
+  `.emoji_n_char`**, the counts `.emoji_ratio` is the quotient of. It
+  returned neither before.
+* **`emoji_density()` gains `.emoji_n_char` and `.emoji_n_token`**, the two
+  denominators of its two densities.
+* **`emoji_trend()` gains `n_period`**, every emoji token in the period, so
+  `share = n / n_period` keeps its base when `top_n` keeps only some emoji.
+* **The principle is written into `?tidyEmoji`**: every rate the package
+  returns ships with its numerator and denominator, so a count model can be
+  fitted instead of a linear model on a ratio. The new columns sit before the
+  rates they explain.
+
+## New verbs
+
+* **`emoji_coverage()`** reports, for every lexicon at once, how much of a
+  corpus it can score: as a share of the emoji occurrences, as a share of the
+  distinct emoji, and as the number of emoji-bearing rows left with no score
+  at all. On the corpus behind the introduction vignette the sentiment
+  lexicon scores 62.8% of the occurrences and 50.8% of the distinct emoji,
+  and 187 of the 560 rows holding an emoji get no `.emoji_sentiment`. It also
+  reports what `presentation = "any"` would add, and how much of that the
+  lexicon could score.
+* **`emoji_properties()`** says what the catalogue records about a glyph: its
+  code points, its qualification status, its name, group, subgroup and emoji
+  version, and whether it takes a skin tone. With no argument it returns the
+  whole catalogue.
+* **`as_emoji_canonical()`** maps every spelling of an emoji to its
+  fully-qualified one, the normalisation the verbs use internally, so a join
+  of your own cannot miss rows over a `U+FE0F`.
+* **`emoji_identical()`** says whether two glyphs are the same emoji and, with
+  `details = TRUE`, how they differ: not at all, in the variation selector,
+  in skin tone, or in the emoji itself. Its help page states the limit a
+  forensic user most needs: code points are not what anyone saw.
+* **`emoji_find()`** returns the emoji whose CLDR keywords carry any (or all)
+  of a set of terms, and **`emoji_keywords()`** returns those keywords in long
+  form, with `NA`, never `""`, for an emoji that has none.
+* **`emoji_country()`** maps the country flags in a text column to ISO 3166-1
+  codes and region names, keeping a stray pair with its glyph and `NA` for
+  the code. **`emoji_subdivision()`** does the same for the tag-sequence
+  flags (`GB-SCT`), and **`emoji_flag()`** converts codes to flags and back.
+* **`emoji_from_counts()`** turns a tally of (item, emoji, count) rows, such
+  as GitHub reactions, into text every other verb reads, so reaction data can
+  be scored, counted and turned into a document-by-emoji matrix. A tally and
+  its expanded text give identical answers, and that identity is tested.
+
+## Measures on shipped verbs
+
+* **`emoji_ambiguity()`, `emoji_risk()` and `emoji_flag_ambiguous()` gain
+  `measure = "polarisation"`.** The annotation classes are ordered, negative
+  to neutral to positive, and the shipped measures are nominal, so entropy
+  and Gini gave a 50/0/50 split exactly the score of a 50/50/0 one although
+  the first is a glyph readers take in opposite directions. Polarisation is
+  the expected distance between two annotations on a -1, 0, 1 scale, the
+  statistic Miller et al. (2016) used, rescaled. Over the whole lexicon it
+  agrees with entropy closely (Spearman 0.96) and parts from it where it
+  matters: the face with open mouth and cold sweat, with 302 annotations,
+  is at rank 6 of 969 by polarisation and at rank 156 by entropy. The default stays
+  `"entropy"`, so no published ranking moves.
+* **`emoji_collocations()` gains the association measures `"ppmi"`,
+  `"dice"`, `"logdice"`, `"llr"` and `"tscore"`** beside `"pmi"` and
+  `"count"`, labelled on its help page as effect sizes or significance
+  measures. PMI ties on 40.6% of the rows of the bundled corpus and favours
+  rare pairs. The default output is unchanged; another measure adds its
+  column and reorders the rows, and never changes the pairs or their `n`.
+* **`emoji_pairs()` gains `measure = "ppmi"`, `"log_odds"` or `"dice"`**,
+  scored over the documents that hold an emoji, so adding emoji-free rows
+  changes nothing. On the bundled corpus 93.9% of the raw edges are seen
+  once, which is why a network needs one of these and a frequency threshold;
+  the new `vignette("emoji-networks")` builds one.
+
+## Lifecycle
+
+* **`emoji_tweets()` now warns** (`lifecycle::deprecate_warn()`), after four
+  releases of soft deprecation, and it will be removed in 0.7.0. Use
+  `emoji_filter()`.
+
+## Documentation
+
+* **Every help page carries research-question keywords** (`\concept{}`), so
+  `help.search("accessibility", package = "tidyEmoji")` finds the verbs for a
+  question, and the introduction vignette opens with an index from questions
+  to verbs.
+* **New vignette, `emoji-networks`**, on association-weighted edges, a
+  frequency threshold and the checks a real network should pass.
+* The introduction vignette gains sections on coverage, the catalogue, flags,
+  tallies, polarisation and association measures, and on auditing the emoji
+  a language model writes, plus a paragraph each on how EmojiSentR and
+  text2emotion differ.
+* `?register_emoji_lexicon` names three sets of arousal norms worth
+  registering (Emoji-SP, Emoji-Dis and the face-emoji norms), all CC BY 4.0
+  on OSF, since neither bundled lexicon has arousal.
+* `?emoji_sanitize` cites the evidence that an unexamined emoji reaching a
+  language model is a measurable risk, and says that the shortcode policy
+  leaves the 182 newest emoji in place, since they have no shortcode yet.
+* `inst/LICENSE.note` carries the Unicode licence for the bundled catalogue.
+
+## Infrastructure
+
+* The weekly `catalogue` job now asks Unicode whether a newer emoji version
+  has shipped, through a canary test that stays out of every other run, and
+  checks the vocabulary columns read from `emoji`.
+* `stringi`, already installed with `emoji`, is now a direct Import: the
+  detector calls it with the extended regex. `igraph` joins Suggests, for the
+  networks vignette.
+
 # tidyEmoji 0.5.0
 
 No new verbs. `emoji_context()` returns its answers a great deal faster, and

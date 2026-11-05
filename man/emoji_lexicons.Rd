@@ -36,3 +36,4 @@ emoji_lexicons()
 \code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}} to add your own;
 \code{\link[=emoji_score]{emoji_score()}} to score text against any lexicon.
 }
+\concept{lexicons}

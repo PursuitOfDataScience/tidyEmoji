@@ -215,8 +215,10 @@ test_that("emoji_token_cost checks what the tokenizer hands back", {
 test_that("emoji_provenance reports one row of versions", {
   out <- emoji_provenance()
   expect_equal(nrow(out), 1L)
-  expect_named(out, c("tidyEmoji", "emoji_pkg", "unicode_emoji", "n_emoji",
+  expect_named(out, c("tidyEmoji", "emoji_pkg", "unicode_emoji",
+                      "unicode_emoji_date", "n_emoji",
                       "sentiment_lexicon", "emotion_lexicon", "R"))
+  expect_s3_class(out$unicode_emoji_date, "Date")
   expect_gt(out$n_emoji, 1000)
   expect_true(grepl("novak2015", out$sentiment_lexicon))
   expect_true(grepl("emotag1200", out$emotion_lexicon))

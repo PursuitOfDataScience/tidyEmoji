@@ -13,8 +13,11 @@
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600\U0001f603", "none"))
 #' emoji_extract_nest(df, text)
+#' @concept detection
+#' @concept extraction
 #' @export
-emoji_extract_nest <- function(data, text) {
+emoji_extract_nest <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   # `[[<-` rather than dplyr::mutate(): mutate() evaluates `{{ text }}` in the
   # data mask, so a missing or misspelled column was not caught by the shared
   # resolver -- emoji_extract_nest(df) returned a bogus empty list-column
@@ -25,7 +28,7 @@ emoji_extract_nest <- function(data, text) {
   # plain data.frame input while the other seventeen returned a tibble --
   # contradicting `?tidyEmoji`'s "every verb returns a tibble". The helper
   # still passes a grouped_df straight through, so grouping survives.
-  glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   out <- .emoji_as_tibble(data)
   out[[".emoji_unicode"]] <- glyphs
   out
@@ -49,9 +52,11 @@ emoji_extract_nest <- function(data, text) {
 #' @examples
 #' df <- data.frame(text = c("hi \U0001f600\U0001f600", "none", "\U0001f44b"))
 #' emoji_extract_unnest(df, text)
+#' @concept extraction
 #' @export
-emoji_extract_unnest <- function(data, text) {
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+emoji_extract_unnest <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   tibble::tibble(
     .row_number    = rep(seq_along(lst), lengths(lst)),
     .emoji_unicode = as.character(unlist(lst, use.names = FALSE))
@@ -83,8 +88,11 @@ emoji_extract_unnest <- function(data, text) {
 #' @examples
 #' df <- data.frame(id = 1:2, text = c("great \U0001f600", "bad \U0001f621"))
 #' emoji_tokens(df, text)
+#' @concept extraction
+#' @concept sentiment
 #' @export
-emoji_tokens <- function(data, text) {
+emoji_tokens <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   # Resolve the column *before* coercing. This verb used to call
   # .emoji_as_tibble() first, and tibble::as_tibble() happily converts a bare
   # list or a character matrix -- so the `is.data.frame(data)` guard every
@@ -92,7 +100,7 @@ emoji_tokens <- function(data, text) {
   # emoji_tokens(list(text = ...)) silently succeeded where the rest of the
   # package errors. NULL, a number, a function and an environment reached
   # dplyr's or R's own internals instead of the package's message.
-  glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  glyphs <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   data <- .emoji_as_tibble(data)
   data$.emoji <- glyphs
   out <- tidyr::unnest(data, ".emoji")

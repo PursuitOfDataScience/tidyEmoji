@@ -14,8 +14,11 @@ A data frame with four columns:
 }
 }
 \source{
-Derived from the \code{emojis} table of the \pkg{emoji} package; rebuilt by
-\code{data-raw/crosswalks.R}.
+The glyphs and categories come from Unicode's \code{emoji-test.txt},
+the catalogue \code{\link[=emoji_properties]{emoji_properties()}} reports, and the names from the
+GitHub-style aliases of the \pkg{emoji} package; rebuilt by
+\code{data-raw/crosswalks.R}. An emoji newer than \pkg{emoji}'s own table has
+no alias, so it is in the catalogue but not in this table.
 }
 \usage{
 emoji_unicode_crosswalk

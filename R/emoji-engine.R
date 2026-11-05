@@ -1,59 +1,94 @@
 # Internal engine -------------------------------------------------------------
 # Shared, cached helpers that power the user-facing verbs. Detection is
 # delegated to {emoji}'s regex, which is fast and grapheme-aware (skin-tone
-# modifiers and ZWJ sequences such as family emoji stay intact), with a
-# post-pass here that re-joins ZWJ sequences the upstream regex does not yet
-# know about (see .emoji_merge_zwj()). Every verb goes through
-# .emoji_locations() / emoji_glyph_list(), so they all agree on what an emoji
-# is. None of the helpers below are exported.
+# modifiers and ZWJ sequences such as family emoji stay intact), extended here
+# with the code points newer than that regex (see .emoji_detect_rx()), with a
+# post-pass that re-joins ZWJ sequences the upstream regex does not yet know
+# about (see .emoji_merge_zwj()), and with the catalogue deciding what a match
+# *is* (see .emoji_spans()). Every verb goes through .emoji_locations() /
+# emoji_glyph_list(), so they all agree on what an emoji is. None of the
+# helpers below are exported.
 
 .tidyEmoji_cache <- new.env(parent = emptyenv())
 
-# One row per emoji glyph, derived from the installed emoji::emojis table.
-# `shortcode` is the first GitHub-style alias (e.g. "grinning" for the glyph
-# that emoji::emojis names "grinning face"). `key` is the codepoint-normalised
-# join key (U+FE0F removed). Cached for the session.
+# One row per emoji spelling, from the bundled catalogue (R/sysdata.rda, built
+# by data-raw/crosswalks.R from Unicode's emoji-test.txt). The catalogue gives
+# the glyph, its qualification `status`, the emoji `version` that introduced
+# it, its CLDR `name`, `group` and `subgroup`. `shortcode` is the first
+# GitHub-style alias, the one piece read from {emoji} at run time (e.g.
+# "grinning" for the glyph Unicode names "grinning face"); a glyph newer than
+# {emoji} has none. `key` is the codepoint-normalised join key (U+FE0F
+# removed). Cached for the session.
 emoji_reference <- function() {
   if (is.null(.tidyEmoji_cache$reference)) {
-    e <- emoji::emojis
+    cat_tbl <- .emoji_catalogue
+    aliases <- .emoji_vocabulary_column(cat_tbl$emoji, "aliases")
     shortcode <- vapply(
-      e$aliases,
+      aliases,
       function(a) if (length(a)) a[[1L]] else NA_character_,
       character(1)
     )
     ref <- tibble::tibble(
-      emoji     = e$emoji,
-      name      = e$name,
+      emoji     = cat_tbl$emoji,
+      name      = cat_tbl$name,
       shortcode = shortcode,
-      group     = e$group,
-      subgroup  = e$subgroup,
-      version   = e$version
+      group     = cat_tbl$group,
+      subgroup  = cat_tbl$subgroup,
+      version   = cat_tbl$version
     )
     ref$key <- emoji_key(ref$emoji)
-    # emoji::emojis records the introducing version on the *unqualified* member
-    # of a variation pair and leaves it NA on the fully-qualified one, so 1252
-    # of 5042 rows -- including everyday glyphs like U+2764 U+FE0F -- arrived
-    # with no version at all and emoji_version_profile() filed them as unknown.
-    # The version belongs to the emoji, not to one spelling of it, so fill it
-    # within each codepoint key. min() is the first version any spelling became
-    # available, which is what "introduced in" means; no key currently holds two
-    # different versions, so this only ever fills gaps.
+    # Until 0.5.0 the reference was emoji::emojis, which records the
+    # introducing version on the *unqualified* member of a variation pair and
+    # leaves it NA on the fully-qualified one, so 1252 of its 5042 rows arrived
+    # with no version at all. emoji-test.txt versions every row, so this fill
+    # is now a no-op; it stays because the version belongs to the emoji, not
+    # to one spelling of it, and a catalogue source that drops one again must
+    # not put the gaps back. min() is the first version any spelling became
+    # available, which is what "introduced in" means.
     ref$version <- .emoji_fill_by_key(ref$version, ref$key)
+    ref$status <- cat_tbl$status
     .tidyEmoji_cache$reference <- ref
     # Whatever is derived from the reference is now stale by construction, so
     # drop it here rather than leaving each consumer to notice. `ref_keys` is
     # the one that matters: the ZWJ repair tests membership in it, so a stale
     # copy changes *detection*, not just metadata. Owning the invalidation in
-    # the one function that writes `reference` is what keeps the three slots
-    # from drifting apart as more derived caches are added.
+    # the one function that writes `reference` is what keeps the slots from
+    # drifting apart as more derived caches are added.
     .emoji_drop_derived_caches()
   }
   .tidyEmoji_cache$reference
 }
 
+# One column of {emoji}'s vocabulary (`keywords` or `aliases`), aligned to
+# `glyphs` by exact spelling: a list with one character vector per glyph,
+# empty where {emoji} does not know the glyph. This is the only place the
+# package reads emoji::emojis, so a change in its shape breaks here, once, and
+# loudly: a column that is missing or no longer a list of strings is an
+# error rather than a column of NA.
+.emoji_vocabulary_column <- function(glyphs, column) {
+  e <- emoji::emojis
+  if (!column %in% names(e) || !is.list(e[[column]]) ||
+      !all(vapply(e[[column]], function(v) is.null(v) || is.character(v),
+                  logical(1)))) {
+    stop(sprintf(
+      paste0("The installed emoji package (%s) no longer has a `%s` list ",
+             "column of strings in emoji::emojis, which tidyEmoji reads its ",
+             "vocabulary from. Please report this at %s."),
+      as.character(utils::packageVersion("emoji")), column,
+      "https://github.com/PursuitOfDataScience/tidyEmoji/issues"
+    ), call. = FALSE)
+  }
+  out <- e[[column]][match(glyphs, e$emoji)]
+  out[vapply(out, is.null, logical(1))] <- list(character(0))
+  out
+}
+
 # The cache slots computed *from* `reference`, in one place. Anything added
 # later that derives from the reference table belongs in this vector.
-.emoji_derived_cache_slots <- function() c("ref_keys", "type")
+.emoji_derived_cache_slots <- function() {
+  c("ref_keys", "type", "detect_rx", "residue", "text_rx", "vocabulary",
+    "by_key", "flags")
+}
 
 .emoji_drop_derived_caches <- function() {
   for (slot in .emoji_derived_cache_slots()) {
@@ -739,19 +774,255 @@ emoji_sentiment_map <- function() {
   cbind(start = as.integer(st), end = as.integer(en))
 }
 
-# Emoji locations per element, as a list of start/end matrices (possibly
-# 0-row). Positions are in characters, matching substr(). This is the single
-# source of truth: emoji_glyph_list() slices the same spans, so extraction and
-# location can never disagree.
-.emoji_locations <- function(x) {
-  x <- as.character(x)
-  x[is.na(x)] <- ""
-  locs <- emoji::emoji_locate_all(x)
+# The detection regex: {emoji}'s own, behind a short prefix for the code
+# points that are newer than it.
+#
+# The catalogue moved to Unicode's emoji-test.txt in 0.6.0, so it knows Emoji
+# 17.0 and 18.0 while emoji::emoji_rx stops at 16.0. Its last two branches only
+# accept a code point it does not list as emoji-presentation when U+FE0F
+# follows, so a bare U+1FAEA (distorted face, E17.0) matched nothing, and
+# U+1FAF9 U+1F3FB (leftwards thumb sign with a tone, E18.0) matched only the
+# tone. A catalogue that names 182 emoji the detector cannot see is worse
+# than either alone.
+#
+# So the prefix is derived from the two, not written by hand: every
+# fully-qualified single code point the upstream regex does not match on its
+# own, every base whose light-skin-tone form it does not match whole, and every
+# code point whose U+FE0F form it does not match. Each alternative starts with
+# one of those code points, so at any position where the upstream regex could
+# match, the prefix fails on its first character and nothing it found before
+# can change. ZWJ sequences need nothing extra: once their parts are found,
+# .emoji_merge_zwj() joins them (people wrestling, E17.0, is two people and a
+# fight cloud). An {emoji} release that catches up empties the prefix on its
+# own, because the derivation asks the installed regex.
+.emoji_detect_rx <- function() {
+  if (is.null(.tidyEmoji_cache$detect_rx)) {
+    .tidyEmoji_cache$detect_rx <-
+      .emoji_build_detect_rx(emoji_reference(), emoji::emoji_rx)
+  }
+  .tidyEmoji_cache$detect_rx
+}
+
+# TRUE where `rx`'s first match covers the whole string.
+.emoji_rx_exact <- function(x, rx) {
+  if (!length(x)) return(logical(0))
+  m <- stringi::stri_locate_first_regex(x, rx)
+  !is.na(m[, 1L]) & m[, 1L] == 1L & m[, 2L] == nchar(x)
+}
+
+# A character class of code points, written as \x{...} escapes so the pattern
+# stays ASCII and the class cannot be misread as a range.
+.emoji_cp_class <- function(cps) {
+  paste0("[", paste(sprintf("\\x{%X}", sort(unique(cps))), collapse = ""), "]")
+}
+
+.emoji_build_detect_rx <- function(ref, upstream) {
+  fq <- ref$emoji[ref$status == "fully-qualified"]
+  cps <- lapply(fq, utf8ToInt)
+  n <- lengths(cps)
+  first <- vapply(cps, function(c) c[[1L]], integer(1))
+  second <- vapply(cps, function(c) if (length(c) > 1L) c[[2L]] else NA_integer_,
+                   integer(1))
+  missed <- function(sel) first[sel][!.emoji_rx_exact(fq[sel], upstream)]
+  pres <- missed(n == 1L)
+  bases <- missed(n == 2L & second %in% 0x1F3FB)
+  textdef <- missed(n == 2L & second %in% 0xFE0F)
+  alts <- c(
+    if (length(bases)) paste0(.emoji_cp_class(bases),
+                              "[\\x{1F3FB}-\\x{1F3FF}]"),
+    if (length(pres)) paste0(.emoji_cp_class(pres), "\\x{FE0F}?"),
+    if (length(textdef)) paste0(.emoji_cp_class(textdef), "\\x{FE0F}")
+  )
+  if (!length(alts)) return(upstream)
+  paste0("(?:", paste(alts, collapse = "|"), ")|", upstream)
+}
+
+# Where the detector matches, before the catalogue has its say: one start/end
+# matrix per element (possibly 0-row), with ZWJ sequences repaired. `x` must
+# already be character with no NA.
+.emoji_matches <- function(x) {
+  locs <- stringi::stri_locate_all_regex(x, .emoji_detect_rx(),
+                                         omit_no_match = TRUE)
   z <- grepl(.emoji_zwj, x, fixed = TRUE)
   if (any(z)) {
     locs[z] <- mapply(.emoji_repair_zwj, locs[z], x[z], SIMPLIFY = FALSE)
   }
   locs
+}
+
+# What a match can turn out to be. Only the first two are emoji occurrences;
+# the other two are emoji *material* the catalogue says is not an emoji on its
+# own, which the counting verbs skip and the verbs that rewrite text treat
+# exactly as before.
+#
+#   1 emoji      a match the default presentation counts
+#   2 text       a text-presentation glyph counted only under
+#                presentation = "any"
+#   3 component  a skin-tone or hair component standing alone (D1)
+#   4 flag       regional indicators that spell no flag (D2)
+.emoji_kind_component <- 3L
+.emoji_kind_flag <- 4L
+
+# The catalogue facts the classification needs, cached: the code-point keys of
+# the nine components, those of the 259 valid country flags, and a class
+# matching any code point that could start either, so a row holding none of
+# them, which is nearly every row, is never looked at twice.
+.emoji_residue <- function() {
+  if (is.null(.tidyEmoji_cache$residue)) {
+    ref <- emoji_reference()
+    comp <- ref$status == "component"
+    ri <- 0x1F1E6:0x1F1FF
+    comp_cps <- unlist(lapply(ref$emoji[comp], utf8ToInt))
+    .tidyEmoji_cache$residue <- list(
+      # exactly one component, with any selectors the key would strip
+      component_rx = paste0("^\\x{FE0F}*", .emoji_cp_class(comp_cps),
+                            "\\x{FE0F}*$"),
+      flags = unique(ref$emoji[ref$subgroup == "country-flag"]),
+      class = .emoji_cp_class(c(comp_cps, ri)),
+      ri_only = "^[\\x{1F1E6}-\\x{1F1FF}]+$"
+    )
+  }
+  .tidyEmoji_cache$residue
+}
+
+# The text-presentation spellings presentation = "any" also reads: every
+# unqualified and minimally-qualified spelling in the catalogue, longest first
+# so a keycap is not read as its bare digit, except the three that are
+# everyday typography rather than emoji. Matching a bare U+00A9 would make the
+# copyright line of a legal footer an emoji occurrence, which is a worse error
+# than the one "any" exists to fix. `class` holds every non-ASCII code point
+# the spellings use; a string with none of them cannot match.
+.emoji_text_exclude <- function() c("A9", "AE", "2122")
+
+.emoji_text_rx <- function() {
+  if (is.null(.tidyEmoji_cache$text_rx)) {
+    ref <- emoji_reference()
+    sel <- ref$status %in% c("unqualified", "minimally-qualified") &
+      !ref$key %in% .emoji_text_exclude()
+    cps <- lapply(ref$emoji[sel], utf8ToInt)
+    cps <- cps[order(-lengths(cps), method = "radix")]
+    alts <- vapply(cps, function(c) {
+      paste(sprintf("\\x{%X}", c), collapse = "")
+    }, character(1))
+    all_cp <- unlist(cps, use.names = FALSE)
+    .tidyEmoji_cache$text_rx <- list(
+      rx = paste(alts, collapse = "|"),
+      class = .emoji_cp_class(all_cp[all_cp > 0x7F])
+    )
+  }
+  .tidyEmoji_cache$text_rx
+}
+
+# Overwrite the characters of `m`'s spans with spaces, keeping every offset.
+# NULL when the string cannot be represented as code points.
+.emoji_blank_spans <- function(s, m) {
+  cp <- tryCatch(utf8ToInt(s), error = function(e) NA_integer_)
+  if (anyNA(cp)) return(NULL)
+  for (r in seq_len(nrow(m))) cp[m[r, "start"]:m[r, "end"]] <- 0x20L
+  intToUtf8(cp)
+}
+
+# Every span the detector found, each with what it is: a list with `locs`,
+# one start/end matrix per element in reading order, and `kinds`, one integer
+# vector per element giving each span's kind (see above), or NULL where every
+# span is an ordinary emoji. That is nearly every element, and is why this
+# costs nothing on text that has no components, no regional indicators and no
+# text-presentation glyphs.
+#
+# D1 and D2 are decided here, once, rather than in each verb, so neither can
+# come back one verb at a time:
+#
+# * A match that is exactly a catalogue component (a skin-tone swatch or a
+#   hair component with nothing to attach to, as in U+1F600 U+1F3FB) is
+#   not an emoji occurrence. Until 0.6.0 it was counted, and came back named
+#   "light skin tone" in group "Component".
+# * A match made only of regional indicators is an occurrence only if it is
+#   one of the catalogue's country flags. U+1F1FD U+1F1FD ("XX") used to be
+#   counted with no name, as did a lone indicator.
+#
+# Both checks run after the ZWJ repair, so a component or an indicator inside
+# a joined sequence is part of that sequence and never looked at.
+.emoji_spans <- function(x, presentation = "emoji") {
+  x <- as.character(x)
+  x[is.na(x)] <- ""
+  locs <- .emoji_matches(x)
+  kinds <- vector("list", length(x))
+  res <- .emoji_residue()
+  # Classified in one vectorised pass over every short span of every row that
+  # could hold a component or an indicator, rather than row by row: the
+  # row-by-row version made .emoji_locations() 2.4 times slower on a corpus
+  # where most rows carry a toned glyph or a flag.
+  cand <- which(stringi::stri_detect_regex(x, res$class))
+  if (length(cand)) {
+    mm <- locs[cand]
+    # a start/end matrix holds two values per row, so lengths() is its row
+    # count without a call per element
+    nr <- lengths(mm) %/% 2L
+    rows <- rep.int(seq_along(cand), nr)
+    both <- do.call(rbind, mm)
+    st <- both[, "start"]
+    en <- both[, "end"]
+    short <- which(en - st <= 1L)
+    k <- rep.int(1L, length(st))
+    if (length(short)) {
+      g <- substring(x[cand][rows[short]], st[short], en[short])
+      k[short[stringi::stri_detect_regex(g, res$component_rx)]] <-
+        .emoji_kind_component
+      k[short[stringi::stri_detect_regex(g, res$ri_only) &
+                !g %in% res$flags]] <- .emoji_kind_flag
+    }
+    odd <- unique(rows[k != 1L])
+    if (length(odd)) {
+      per_row <- split(k, factor(rows, levels = seq_along(cand)))
+      kinds[cand[odd]] <- per_row[odd]
+    }
+  }
+  if (identical(presentation, "any")) {
+    trx <- .emoji_text_rx()
+    for (i in which(stringi::stri_detect_regex(x, trx$class))) {
+      m <- locs[[i]]
+      s <- if (nrow(m)) .emoji_blank_spans(x[[i]], m) else x[[i]]
+      if (is.null(s)) next
+      hit <- stringi::stri_locate_all_regex(s, trx$rx,
+                                            omit_no_match = TRUE)[[1L]]
+      if (!nrow(hit)) next
+      k <- c(kinds[[i]] %||% rep(1L, nrow(m)), rep(2L, nrow(hit)))
+      both <- rbind(m, hit)
+      o <- order(both[, "start"], method = "radix")
+      locs[[i]] <- both[o, , drop = FALSE]
+      kinds[[i]] <- k[o]
+    }
+  }
+  list(locs = locs, kinds = kinds)
+}
+
+# Emoji locations per element, as a list of start/end matrices (possibly
+# 0-row). Positions are in characters, matching substr(). This is the single
+# source of truth: emoji_glyph_list() slices the same spans, so extraction and
+# location can never disagree. Only emoji occurrences are returned; the
+# components and stray regional indicators .emoji_spans() sets aside are not.
+.emoji_locations <- function(x, presentation = "emoji") {
+  sp <- .emoji_spans(x, presentation)
+  locs <- sp$locs
+  for (i in which(lengths(sp$kinds) > 0L)) {
+    locs[[i]] <- locs[[i]][sp$kinds[[i]] <= 2L, , drop = FALSE]
+  }
+  locs
+}
+
+# The spans the text-rewriting verbs act on: every occurrence, plus the
+# components and stray indicators .emoji_locations() leaves out. Deleting,
+# masking or naming a glyph treats a swatch standing alone exactly as it did
+# before 0.6.0 ("strip" still removes it and "name" still says "light skin
+# tone"), because D1 and D2 are about what is *counted*, and a swatch left
+# behind in a stripped column is still a swatch.
+.emoji_all_spans <- function(x, presentation = "emoji") {
+  .emoji_spans(x, presentation)$locs
+}
+
+# Validate a `presentation` argument.
+.emoji_check_presentation <- function(presentation) {
+  .emoji_match_arg(presentation, c("emoji", "any"), "presentation")
 }
 
 # The three rules in order. The second merge pass matters because an extension
@@ -829,27 +1100,27 @@ emoji_sentiment_map <- function() {
 }
 
 # A list, one element per element of `x`, of the emoji glyphs it contains.
-emoji_glyph_list <- function(x) {
+emoji_glyph_list <- function(x, presentation = "emoji") {
   x <- as.character(x)
   x[is.na(x)] <- ""
-  mapply(.emoji_slice, .emoji_locations(x), x,
+  mapply(.emoji_slice, .emoji_locations(x, presentation), x,
          SIMPLIFY = FALSE, USE.NAMES = FALSE)
 }
 
 # Unified detection: TRUE where text contains at least one emoji.
 # All verbs should use this so they agree on "what counts as having an emoji."
-emoji_has <- function(x) {
-  lengths(emoji_glyph_list(x)) > 0L
+emoji_has <- function(x, presentation = "emoji") {
+  lengths(.emoji_locations(x, presentation)) > 0L
 }
 
 # One row per emoji occurrence, in reading order, with the character span it
 # occupies. The long-form counterpart of emoji_glyph_list(): every verb that
 # needs occurrence-level detail (context windows, per-glyph profiles) builds on
 # this so occurrence identity is defined in exactly one place.
-.emoji_occurrences <- function(v) {
+.emoji_occurrences <- function(v, presentation = "emoji") {
   v <- as.character(v)
   v[is.na(v)] <- ""
-  locs <- .emoji_locations(v)
+  locs <- .emoji_locations(v, presentation)
   n <- vapply(locs, nrow, integer(1))
   if (!sum(n)) {
     return(tibble::tibble(.row_number = integer(), .position = integer(),

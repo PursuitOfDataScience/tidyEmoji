@@ -19,6 +19,15 @@
 #' emoji-presentation (qualified) form and it resolves normally. See
 #' [emoji_sentiment_lexicon] for the full picture.
 #'
+#' @section Language and culture:
+#' The scores are not language-neutral. The bundled sentiment lexicon was
+#' annotated on tweets in 13 European languages and the emotion lexicon on
+#' English ones, and emoji use differs measurably across languages
+#' (Cross-lingual Variations in Emoji Use, EMNLP 2024), so a glyph's score
+#' describes how those annotators read it. For text from another language
+#' community, register a lexicon built there (see [register_emoji_lexicon()])
+#' and report [emoji_coverage()] beside the result.
+#'
 #' @inheritParams emoji_summary
 #' @section Uncertainty:
 #' A glyph annotated eight times should not carry the same authority as one
@@ -51,9 +60,12 @@
 #' df <- data.frame(text = c("love it \U0001f60d", "awful \U0001f621", "meh"))
 #' emoji_sentiment(df, text)
 #' emoji_sentiment(df, text, se = TRUE)
+#' @concept sentiment
 #' @export
-emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
+emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE,
+                            presentation = "emoji") {
   .emoji_check_flag(se, "se")
+  presentation <- .emoji_check_presentation(presentation)
   is_novak <- missing(lexicon) ||
     (is.character(lexicon) && length(lexicon) == 1L && !is.na(lexicon) &&
        lexicon %in% c("novak2015", "emoji_sentiment_lexicon", "sentiment"))
@@ -106,7 +118,7 @@ emoji_sentiment <- function(data, text, lexicon = "novak2015", se = FALSE) {
     }
   }
 
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
 
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)

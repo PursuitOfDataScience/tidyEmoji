@@ -58,7 +58,7 @@ the first alias of the emoji's fully-qualified (RGI) form. That is what
 makes it agree with \code{\link[=emoji_to_text]{emoji_to_text()}} and survive a round trip, but it is
 not always the first alias of the glyph you passed in. 344 codepoint keys
 have a different first alias on each of their two spellings, so for 175 of
-the catalogue's 5042 rows the two answers differ:
+the catalogue's 5244 rows the two answers differ:
 \code{as_emoji_shortcode("\\u2764")} is \code{"heart"}, the qualified heart's alias,
 where the bare \code{U+2764} row's own first alias is \code{"red_heart"}.
 
@@ -66,9 +66,13 @@ where the bare \code{U+2764} row's own first alias is \code{"red_heart"}.
 a search result is a row -- so the two verbs can disagree on the same glyph.
 Both resolve back to the same emoji through \code{\link[=text_to_emoji]{text_to_emoji()}}, which reads
 every alias, so where both answer the disagreement is cosmetic. Where they
-differ in substance is the 189 rows that have no alias: \code{\link[=emoji_search]{emoji_search()}}
-reports \code{NA} for those, while \code{as_emoji_shortcode()} still answers for all
-189, having borrowed the alias of the glyph's other spelling.
+differ in substance is the 189 rows of the Emoji 16.0 catalogue that have
+no alias: \code{\link[=emoji_search]{emoji_search()}} reports \code{NA} for those, while
+\code{as_emoji_shortcode()} still answers for all 189, having borrowed the alias
+of the glyph's other spelling. The 202 spellings added in Emoji 17.0 and
+18.0 have no alias on any spelling, since the aliases come from the
+\pkg{emoji} package and it has not caught up, so both return \code{NA} for
+them; they still have a name.
 }
 
 \examples{
@@ -79,3 +83,5 @@ as_emoji(c("grinning", "heart"))
 \seealso{
 \code{\link[=emoji_to_text]{emoji_to_text()}}, \code{\link[=text_to_emoji]{text_to_emoji()}} for the data-frame verbs.
 }
+\concept{accessibility}
+\concept{translation}

@@ -9,7 +9,8 @@ emoji_collocations(
   text,
   window = 5,
   min_n = 3,
-  measure = c("pmi", "count")
+  measure = c("pmi", "count", "ppmi", "dice", "logdice", "llr", "tscore"),
+  presentation = "emoji"
 )
 }
 \arguments{
@@ -34,16 +35,41 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \item{min_n}{Minimum number of co-occurrences for a pair to be reported.
 Default \code{3}.}
 
-\item{measure}{Sort order: \code{"pmi"} (default) or \code{"count"}. Both columns are
-always returned.}
+\item{measure}{The association measure to sort by: \code{"pmi"} (default),
+\code{"count"}, \code{"ppmi"}, \code{"dice"}, \code{"logdice"}, \code{"llr"} or \code{"tscore"}. See
+\emph{Choosing an association measure}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A tibble with columns \code{emoji}, \code{word}, \code{n} (co-occurrences) and
 \code{pmi}, shaped like \code{widyr::pairwise_count()} output so it drops into
-existing tidytext workflows. Rows are sorted by \code{measure} descending,
-then by the other of the two descending, then by the glyph and the word,
-so the order is fully determined. Ties in \code{pmi} are common: every pair
-seen the same number of times with the same marginals scores alike.
+existing tidytext workflows, plus a column named after \code{measure} when it
+is neither \code{"pmi"} nor \code{"count"}. Rows are sorted by \code{measure}
+descending, then by \code{n} descending (by \code{pmi} when \code{measure = "count"}),
+then by the glyph and the word, so the order is fully determined. Ties in
+\code{pmi} are common: every pair seen the same number of times with the same
+marginals scores alike.
 }
 \description{
 \code{emoji_collocations()} counts the words that appear near each emoji across a
@@ -68,6 +94,35 @@ PMI is \code{log(n(e, w) * N / (n(e) * n(w)))}, with \code{N} the total number o
 emoji-word co-occurrence events. Marginals are computed over \emph{all}
 co-occurrences before \code{min_n} filters the rows, so a rare pairing is scored
 against the full corpus rather than against the surviving subset.
+}
+\section{Choosing an association measure}{
+
+PMI alone is a fragile ranking. It favours rare pairs (a word seen once
+beside an emoji seen once scores the maximum), and on a real corpus it
+ties constantly: on the corpus behind the introduction vignette 40.6\% of
+the rows share their PMI with another row. Corpus linguistics answers this
+by choosing the measure for the question, and by knowing which kind of
+question it is. \code{measure} offers the standard ones, all computed from the
+same counts as PMI, with \code{O} the pair's \code{n} and \code{E = n(e) * n(w) / N} the
+count expected by chance:
+\itemize{
+\item \strong{Effect size}, how strongly the two are associated: \code{"pmi"},
+\code{log(O / E)}; \code{"ppmi"}, the same floored at 0; \code{"dice"},
+\code{2 * O / (n(e) + n(w))}, from 0 to 1, which does not favour rare pairs;
+and \code{"logdice"}, \code{14 + log2(dice)}, the lexicographers' rescaling of it,
+at most 14.
+\item \strong{Significance}, how sure the corpus makes you that there is an
+association at all: \code{"llr"}, Dunning's log-likelihood ratio (G-squared)
+over the two-by-two table, negative when the pair occurs less often than
+chance; and \code{"tscore"}, \code{(O - E) / sqrt(O)}. Both grow with the evidence,
+so they favour pairs that are common as well as associated.
+}
+
+The two kinds are not substitutes: a significance measure says a frequent
+pairing is real, an effect size says a rare one is strong. Report the one
+that matches the claim being made. Changing \code{measure} never changes which
+pairs are returned or their \code{n}; it changes the order, and adds the
+measure's column.
 
 Glyphs are canonicalised through the package's codepoint key, so qualified
 and unqualified forms of the same emoji share one row.
@@ -83,6 +138,7 @@ nothing clears \code{min_n}. The same three sentences in English yield \code{goo
 (see \code{\link[=emoji_context]{emoji_context()}}); \code{min_n} cannot rescue a vocabulary in which every
 type occurs once.
 }
+
 \examples{
 df <- data.frame(text = c("cold coffee \U0001f622",
                           "coffee again \U0001f622",
@@ -92,3 +148,5 @@ emoji_collocations(df, text, min_n = 1)
 \seealso{
 \code{\link[=emoji_context]{emoji_context()}} for the occurrence-level windows this aggregates.
 }
+\concept{association measures}
+\concept{context and co-text}

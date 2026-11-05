@@ -9,10 +9,13 @@
 #'   against keywords, name and shortcodes.
 #' @details
 #' `shortcode` is the *matched row's* first alias, and it is `NA` when the
-#' matched spelling has none: 189 of the catalogue's 5042 rows carry no
-#' GitHub-style alias at all, so a search that hits one (7 of the 198 rows
+#' matched spelling has none: 391 of the catalogue's 5244 rows carry no
+#' GitHub-style alias at all, so a search that hits one (9 of the 200 rows
 #' `emoji_search("face")` returns, for instance) has nothing to put in that
-#' column. Use the `emoji` column for those, or [as_emoji_shortcode()], which
+#' column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
+#' \pkg{emoji} package supplying the aliases and keywords does not know yet:
+#' they are found by name, and only by name, because they have no keywords
+#' either. Use the `emoji` column for those, or [as_emoji_shortcode()], which
 #' is keyed on the emoji rather than on the row and so can borrow the alias of
 #' the glyph's other spelling. For the same reason the two can disagree even
 #' when both answer -- see [as_emoji_shortcode()].
@@ -37,6 +40,8 @@
 #' @examples
 #' emoji_search("happy")
 #' emoji_search("heart")
+#' @concept vocabulary
+#' @concept stimulus design
 #' @export
 emoji_search <- function(query) {
   # is.na() has to come before nzchar(): nzchar() defaults to keepNA = FALSE,
@@ -56,7 +61,14 @@ emoji_search <- function(query) {
          "characters. Convert it with iconv() from whatever encoding those ",
          "bytes really are.", call. = FALSE)
   }
-  e <- emoji::emojis
+  # The catalogue for the rows, names and groups, and {emoji} for the
+  # keywords and shortcodes, aligned by spelling: the same split every other
+  # verb uses, so a name found here is the name they report. An emoji newer
+  # than {emoji} is found by its name alone.
+  ref <- emoji_reference()
+  e <- list(emoji = ref$emoji, name = ref$name, group = ref$group,
+            keywords = .emoji_vocabulary_column(ref$emoji, "keywords"),
+            aliases = .emoji_vocabulary_column(ref$emoji, "aliases"))
   pat <- .emoji_fold(query)
 
   # Fixed (non-regex) substring matching on folded text, so queries containing

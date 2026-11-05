@@ -4,7 +4,7 @@
 \alias{emoji_ratio}
 \title{What share of the text is emoji, and is it emoji-only?}
 \usage{
-emoji_ratio(data, text)
+emoji_ratio(data, text, presentation = "emoji")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -22,10 +22,34 @@ deparses it and the emoji found would be in the code rather than in your
 data. What counts as an emoji is the same in every verb; see the
 \emph{Detection} section of \link{tidyEmoji} for the one case that surprises
 people, code points that are emoji only when they carry \code{U+FE0F}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
-\code{data}, as a tibble, with added columns \code{.emoji_ratio} (emoji
-characters / all characters, 0 when there are no emoji) and
+\code{data}, as a tibble, with added columns \code{.emoji_n},
+\code{.emoji_codepoints} (code points belonging to emoji), \code{.emoji_n_char} (all
+code points), \code{.emoji_ratio} (\code{.emoji_codepoints / .emoji_n_char}, 0 when
+there are no emoji) and
 \code{.emoji_only} (\code{TRUE} when the text contains emoji and nothing else but
 whitespace). "Whitespace" is Unicode's \code{White_Space} property, written out
 explicitly rather than left to the C library: it includes the no-break
@@ -33,7 +57,8 @@ spaces \verb{U+00A0} and \verb{U+202F} and the ideographic space \code{U+3000}, 
 excludes the zero-width space \verb{U+200B}, which despite its name Unicode
 does not classify as whitespace. The same set is used everywhere the
 package splits or trims text, and it does not vary with the locale.
-\code{NA} text gets \code{NA} in both. Empty text (\code{""}) has no
+\code{NA} text gets \code{NA} in both, and in \code{.emoji_n_char}, with \code{0} in the two
+emoji counts. Empty text (\code{""}) has no
 characters to take a share of, so \code{.emoji_ratio} is \code{NA} there too, but
 \code{.emoji_only} is \code{FALSE}: an empty string is not a row of emoji.
 }
@@ -46,7 +71,17 @@ in social-media research and a useful filter in practice.
 \details{
 The ratio is computed over characters (code points), so a multi-code-point
 emoji (a ZWJ family, a skin-tone sequence) contributes all of its
-characters.
+characters. It ships with both of the counts it is the quotient of,
+\code{.emoji_codepoints} and \code{.emoji_n_char}, and with \code{.emoji_n}, the number of
+emoji those code points make up; see \emph{Rates and their denominators} in
+\link{tidyEmoji}.
+
+A skin-tone swatch or hair component standing alone, or a regional
+indicator that spells no flag, is not an emoji (see the \emph{Detection}
+section of \link{tidyEmoji}), so it adds nothing to \code{.emoji_n} or
+\code{.emoji_codepoints}. It is not text either, so it does not stop a row being
+\code{.emoji_only}: \verb{U+1F600 U+1F3FB} is one emoji, a ratio of \code{0.5}, and
+emoji-only.
 }
 \examples{
 df <- data.frame(text = c("\U0001f600\U0001f389", "half \U0001f600", "no"))
@@ -56,3 +91,5 @@ emoji_ratio(df, text)
 \code{\link[=emoji_position]{emoji_position()}}, \code{\link[=emoji_density]{emoji_density()}}; \code{\link[=emoji_filter]{emoji_filter()}} to keep
 emoji-bearing rows.
 }
+\concept{position and intensity}
+\concept{rates and denominators}

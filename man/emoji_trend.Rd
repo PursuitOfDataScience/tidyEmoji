@@ -10,7 +10,8 @@ emoji_trend(
   time,
   by = "month",
   top_n = 20,
-  measure = c("n", "share")
+  measure = c("n", "share"),
+  presentation = "emoji"
 )
 }
 \arguments{
@@ -63,10 +64,34 @@ no rows at all.}
 
 \item{measure}{Statistic used to rank emoji for \code{top_n} and to order the rows
 within a period: \code{"n"} (default) or \code{"share"}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A tibble with columns \code{.period} (a \code{Date}, the start of the period),
-\code{emoji}, \code{name}, \code{n} and \code{share}, sorted by \code{.period}, then by \code{measure}
+\code{emoji}, \code{name}, \code{n}, \code{n_period} (every emoji token in the period, the
+denominator of \code{share}, which \code{top_n} would otherwise hide) and \code{share}
+(\code{n / n_period}), sorted by \code{.period}, then by \code{measure}
 descending, then by the glyph, so the order is fully determined. That
 last key matters: within a period the zeros this verb fills in all tie on
 both of the others.
@@ -116,3 +141,5 @@ emoji_trend(df, text, when)
 \code{\link[=emoji_turnover]{emoji_turnover()}} for vocabulary churn, \code{\link[=emoji_seasonality]{emoji_seasonality()}} for
 cyclical patterns.
 }
+\concept{rates and denominators}
+\concept{time series and adoption}

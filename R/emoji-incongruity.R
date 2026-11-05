@@ -35,10 +35,15 @@
 # The trailing run of emoji: the glyphs that end the text, ignoring whitespace
 # between and after them. A text that does not end in an emoji contributes no
 # final glyphs, so it is scored as NA rather than as its mid-sentence emoji.
-.emoji_final_glyphs <- function(v) {
-  locs <- .emoji_locations(v)
+#
+# The run is walked over every span, the components and stray indicators D1
+# and D2 set aside included, and only the emoji in it are returned. A swatch
+# is not an emoji, but it is not text either, so "great U+1F600 U+1F3FB" still
+# ends in the grinning face.
+.emoji_final_glyphs <- function(v, presentation = "emoji") {
+  sp <- .emoji_spans(v, presentation)
   lapply(seq_along(v), function(i) {
-    m <- locs[[i]]
+    m <- sp$locs[[i]]
     if (is.null(m) || nrow(m) == 0L) return(character(0))
     s <- v[[i]]
     # gaps[i] is the text between glyph i - 1 and glyph i; gaps[n + 1] the
@@ -51,14 +56,19 @@
     # walk back over the trailing run of emoji separated only by whitespace
     k <- nrow(m)
     while (k > 1L && blank[k]) k <- k - 1L
-    .emoji_slice(m[seq(k, nrow(m)), , drop = FALSE], s)
+    run <- seq(k, nrow(m))
+    kind <- sp$kinds[[i]]
+    if (!is.null(kind)) run <- run[kind[run] <= 2L]
+    .emoji_slice(m[run, , drop = FALSE], s)
   })
 }
 
 .emoji_incongruity_impl <- function(data, text, text_score, method, scale,
                                     where, threshold,
-                                    threshold_supplied = FALSE) {
+                                    threshold_supplied = FALSE,
+                                    presentation = "emoji") {
   method <- .emoji_match_arg(method, c("difference", "sign_flip"), "method")
+  presentation <- .emoji_check_presentation(presentation)
   # `threshold` has nothing to do under "sign_flip", which reads the polarity
   # flip rather than the size of the gap, so a call giving both had half of it
   # quietly do nothing. That is the absorbed-argument shape the package
@@ -113,13 +123,13 @@
   }
 
   score <- emoji_sentiment_map()
-  lst <- emoji_glyph_list(v)
+  lst <- emoji_glyph_list(v, presentation)
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
 
   # the glyphs actually scored: everything, or only the trailing run. Both the
   # mean and the count come from the same list, so they can never disagree.
-  use <- if (where == "final") .emoji_final_glyphs(v) else lst
+  use <- if (where == "final") .emoji_final_glyphs(v, presentation) else lst
   es <- vapply(use, function(g) {
     if (!length(g)) return(NA_real_)
     s <- score[key_lookup[g]]
@@ -281,11 +291,13 @@
 #' )
 #' emoji_incongruity(df, text, score, scale = "none")
 #' emoji_incongruity(df, text, score, scale = "none", method = "sign_flip")
+#' @concept text-emoji mismatch
+#' @concept sarcasm and irony
 #' @export
 emoji_incongruity <- function(data, text, text_score,
                               method = c("difference", "sign_flip"),
                               scale, where = c("all", "final"),
-                              threshold = 1) {
+                              threshold = 1, presentation = "emoji") {
   if (missing(scale)) {
     stop("`scale` has no default: say how the text score and the emoji score ",
          "were made comparable. Use \"rank\" (both to percentiles, the safest ",
@@ -294,7 +306,8 @@ emoji_incongruity <- function(data, text, text_score,
   }
   .emoji_incongruity_impl(data, {{ text }}, {{ text_score }}, method = method,
                           scale = scale, where = where, threshold = threshold,
-                          threshold_supplied = !missing(threshold))
+                          threshold_supplied = !missing(threshold),
+                          presentation = presentation)
 }
 
 
@@ -315,11 +328,13 @@ emoji_incongruity <- function(data, text, text_score,
 #'   score = c(0.8, -0.9)
 #' )
 #' emoji_congruence(df, text, score, scale = "none")
+#' @concept text-emoji mismatch
+#' @concept marketing and reviews
 #' @export
 emoji_congruence <- function(data, text, text_score,
                              method = c("difference", "sign_flip"),
                              scale, where = c("all", "final"),
-                             threshold = 1) {
+                             threshold = 1, presentation = "emoji") {
   if (missing(scale)) {
     stop("`scale` has no default: say how the text score and the emoji score ",
          "were made comparable. Use \"rank\" (both to percentiles, the safest ",
@@ -329,7 +344,8 @@ emoji_congruence <- function(data, text, text_score,
   out <- .emoji_incongruity_impl(data, {{ text }}, {{ text_score }},
                                  method = method, scale = scale, where = where,
                                  threshold = threshold,
-                                 threshold_supplied = !missing(threshold))
+                                 threshold_supplied = !missing(threshold),
+                                 presentation = presentation)
   out$.emoji_congruent <- !out$.emoji_incongruent
   out
 }
@@ -372,11 +388,13 @@ emoji_congruence <- function(data, text, text_score,
 #'   score = c(0.8, 0.7, -0.9)
 #' )
 #' emoji_incongruity_profile(df, text, score, scale = "none", min_n = 1)
+#' @concept text-emoji mismatch
 #' @export
 emoji_incongruity_profile <- function(data, text, text_score,
                                       method = c("difference", "sign_flip"),
                                       scale, where = c("all", "final"),
-                                      threshold = 1, min_n = 5) {
+                                      threshold = 1, min_n = 5,
+                                      presentation = "emoji") {
   if (missing(scale)) {
     stop("`scale` has no default: say how the text score and the emoji score ",
          "were made comparable. Use \"rank\" (both to percentiles, the safest ",
@@ -390,7 +408,8 @@ emoji_incongruity_profile <- function(data, text, text_score,
   scored <- .emoji_incongruity_impl(data, {{ text }}, {{ text_score }},
                                     method = method, scale = scale,
                                     where = where, threshold = threshold,
-                                    threshold_supplied = !missing(threshold))
+                                    threshold_supplied = !missing(threshold),
+                                    presentation = presentation)
   # Credit each row's gap to the glyphs it was computed from. Under
   # `where = "final"` only the trailing run is scored, and crediting every
   # glyph in the row counted a mid-sentence emoji among the "scored
@@ -399,7 +418,12 @@ emoji_incongruity_profile <- function(data, text, text_score,
   where <- .emoji_match_arg(where, c("all", "final"), "where")
   v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
-  used <- if (where == "final") .emoji_final_glyphs(v) else emoji_glyph_list(v)
+  presentation <- .emoji_check_presentation(presentation)
+  used <- if (where == "final") {
+    .emoji_final_glyphs(v, presentation)
+  } else {
+    emoji_glyph_list(v, presentation)
+  }
   lst <- lapply(used, emoji_canonical)
   n_per_row <- lengths(lst)
   glyphs <- unlist(lst, use.names = FALSE)

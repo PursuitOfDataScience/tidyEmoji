@@ -1,29 +1,156 @@
 # data-raw/crosswalks.R
 # -----------------------------------------------------------------------------
-# Regenerates the two bundled crosswalk datasets that ship with tidyEmoji:
-#   * emoji_unicode_crosswalk   (one row per emoji name / glyph / category)
-#   * category_unicode_crosswalk (one row per category, glyphs collapsed by "|")
+# Builds the emoji catalogue tidyEmoji detects and joins against, and the two
+# crosswalk datasets derived from it:
+#   * R/sysdata.rda              the catalogue itself (.emoji_catalogue) and
+#                                where it came from (.emoji_catalogue_meta)
+#   * emoji_unicode_crosswalk    one row per (shortcode, glyph) pair
+#   * category_unicode_crosswalk one row per category, glyphs collapsed by "|"
 #
-# Source of truth: the `emojis` table from the {emoji} package, which tracks the
-# Unicode emoji list. Re-run this script after upgrading {emoji} to refresh the
-# bundled data for newly released emoji.
+# SOURCE OF TRUTH, decided for 0.6.0 and not to be re-merged:
 #
-#   source("data-raw/crosswalks.R")
+#   the CATALOGUE comes from Unicode's emoji-test.txt: every glyph, its
+#   qualification status, the emoji version that introduced it, its CLDR
+#   short name, its group and its subgroup;
+#
+#   the VOCABULARY comes from the {emoji} package: the CLDR keywords and the
+#   GitHub-style shortcode aliases, which emoji-test.txt does not carry.
+#
+# Until 0.5.0 both came from emoji::emojis, so the catalogue could only be as
+# current as {emoji}, which stayed at Emoji 16.0 through two Unicode releases.
+# Unicode publishes the RGI list at a stable, unversioned URL; reading it here
+# makes every future Unicode release a rerun of this script rather than a wait.
+#
+# Nothing is fetched at build, check, test or run time. This script is run by
+# a human, its input is committed beside it as data-raw/emoji-test.txt, and its
+# output is committed as .rda.
+#
+# Usage, from the package root with the current tidyEmoji installed:
+#
+#   source("data-raw/crosswalks.R")                      # rebuild from the copy
+#   Sys.setenv(TIDYEMOJI_FETCH = "true")                 # refresh the copy from
+#   source("data-raw/crosswalks.R")                      #   Unicode's latest/ first
+#
+# TIDYEMOJI_EMOJI_TEST=<path> builds from another file instead (the 16.0 one,
+# say), which is how the switch from emoji::emojis was shown to reproduce the
+# shipped crosswalks exactly. TIDYEMOJI_WRITE=false builds the objects without
+# writing them, which is what the test suite does.
+#
+# Record the version you GOT, not the one you asked for. From Emoji 17.0 on the
+# per-version directories stopped (/Public/emoji/17.0/ is 404) and only
+# latest/ is maintained, so the URL says nothing about what it served. The
+# version and date are read out of the file's own header instead.
 # -----------------------------------------------------------------------------
 
 library(dplyr)
 library(tidyr)
 
 stopifnot(requireNamespace("emoji", quietly = TRUE))
+
+latest_url <- "https://www.unicode.org/Public/emoji/latest/emoji-test.txt"
+input <- Sys.getenv("TIDYEMOJI_EMOJI_TEST",
+                    file.path("data-raw", "emoji-test.txt"))
+if (identical(tolower(Sys.getenv("TIDYEMOJI_FETCH")), "true")) {
+  utils::download.file(latest_url, input, mode = "wb", quiet = TRUE)
+}
+stopifnot(file.exists(input))
+
+# Parse ------------------------------------------------------------------------
+# A data line is
+#   1F600  ; fully-qualified  # <glyph> E1.0 grinning face
+# under "# group:" and "# subgroup:" headers. The glyph in the comment is
+# checked against the code points, so a file mangled in transit (an editor
+# re-encoding it, a proxy) stops the build instead of shipping.
+lines <- readLines(input, encoding = "UTF-8", warn = FALSE)
+header <- function(field) {
+  hit <- grep(paste0("^# ", field, ":"), lines, value = TRUE)[1L]
+  if (is.na(hit)) stop("emoji-test.txt has no `# ", field, ":` header.")
+  trimws(sub(paste0("^# ", field, ":"), "", hit))
+}
+file_version <- header("Version")
+file_date <- sub(",.*$", "", header("Date"))
+
+rx <- paste0("^([0-9A-F]+(?: [0-9A-F]+)*)\\s*;\\s*",
+             "(component|fully-qualified|minimally-qualified|unqualified)",
+             "\\s*#\\s*(\\S+)\\s+E([0-9]+\\.[0-9]+)\\s+(.+)$")
+group <- subgroup <- NA_character_
+rows <- vector("list", length(lines))
+k <- 0L
+for (ln in lines) {
+  if (startsWith(ln, "# group: ")) {
+    group <- sub("^# group: ", "", ln)
+    next
+  }
+  if (startsWith(ln, "# subgroup: ")) {
+    subgroup <- sub("^# subgroup: ", "", ln)
+    next
+  }
+  if (!grepl("^[0-9A-F]", ln)) next
+  m <- regmatches(ln, regexec(rx, ln, perl = TRUE))[[1L]]
+  if (length(m) != 6L) stop("Cannot parse emoji-test.txt line: ", ln)
+  cps <- strtoi(strsplit(m[2L], " ", fixed = TRUE)[[1L]], 16L)
+  glyph <- intToUtf8(cps)
+  if (!identical(enc2utf8(m[4L]), glyph)) {
+    stop("The glyph does not match its code points on line: ", ln)
+  }
+  k <- k + 1L
+  rows[[k]] <- list(glyph, m[3L], m[5L], m[6L], group, subgroup)
+}
+rows <- rows[seq_len(k)]
+col <- function(j) vapply(rows, `[[`, character(1), j)
+.emoji_catalogue <- tibble::tibble(
+  emoji    = col(1L),
+  status   = col(2L),
+  version  = col(3L),
+  name     = col(4L),
+  group    = col(5L),
+  subgroup = col(6L)
+)
+
+# The file states its own totals; hold the parse to them.
+counts <- table(.emoji_catalogue$status)
+for (s in c("fully-qualified", "minimally-qualified", "unqualified",
+            "component")) {
+  hit <- grep(paste0("^# ", s, " *: *[0-9]+"), lines, value = TRUE)
+  stated <- as.integer(sub(".*: *", "", hit[length(hit)]))
+  if (!identical(as.integer(counts[[s]]), stated)) {
+    stop(sprintf("Parsed %d %s rows; the file states %d.",
+                 as.integer(counts[[s]]), s, stated))
+  }
+}
+stopifnot(!anyDuplicated(.emoji_catalogue$emoji),
+          !anyNA(.emoji_catalogue$group), !anyNA(.emoji_catalogue$subgroup))
+
+# The highest version in the file is the version the header names. If they
+# ever disagree, the header is the one recorded, and this says so.
+top <- max(as.numeric(.emoji_catalogue$version))
+if (!isTRUE(all.equal(top, as.numeric(file_version)))) {
+  warning(sprintf("Header says Emoji %s, newest row is E%s.",
+                  file_version, format(top, nsmall = 1L)))
+}
+
+.emoji_catalogue_meta <- list(
+  emoji_version = file_version,
+  file_date = file_date,
+  source = latest_url,
+  rows = nrow(.emoji_catalogue)
+)
+
+# Vocabulary -------------------------------------------------------------------
+# The GitHub-style aliases, by exact spelling. A glyph newer than {emoji} has
+# none, and keeps none: shortcodes are not invented here.
 emojis <- emoji::emojis
+aliases <- emojis$aliases[match(.emoji_catalogue$emoji, emojis$emoji)]
+aliases[vapply(aliases, is.null, logical(1))] <- list(character(0))
 
 # emoji_unicode_crosswalk -----------------------------------------------------
 # Historically this table has one row per *alias* (GitHub-style shortcode), so a
 # single glyph can appear under several names (e.g. "grinning", "grinning_face").
-emoji_unicode_crosswalk <- emojis %>%
-  transmute(emoji_name = aliases,
-            unicode = emoji,
-            emoji_category = group) %>%
+emoji_unicode_crosswalk <- tibble::tibble(
+  emoji_name = aliases,
+  unicode = .emoji_catalogue$emoji,
+  emoji_category = .emoji_catalogue$group
+) %>%
   tidyr::unnest_longer(emoji_name) %>%
   filter(!is.na(emoji_name), emoji_name != "") %>%
   distinct(emoji_name, unicode, emoji_category) %>%
@@ -40,16 +167,24 @@ emoji_key2 <- function(glyphs) tidyEmoji:::emoji_key(glyphs)
 emoji_unicode_crosswalk$key <- emoji_key2(emoji_unicode_crosswalk$unicode)
 
 # category_unicode_crosswalk --------------------------------------------------
-category_unicode_crosswalk <- emojis %>%
+category_unicode_crosswalk <- .emoji_catalogue %>%
   distinct(group, emoji) %>%
   group_by(category = group) %>%
   summarise(unicodes = paste(emoji, collapse = "|"), .groups = "drop") %>%
   as.data.frame(stringsAsFactors = FALSE)
 
-message("emoji_unicode_crosswalk:   ", nrow(emoji_unicode_crosswalk), " rows")
-message("category_unicode_crosswalk: ", nrow(category_unicode_crosswalk), " rows")
+message("catalogue:                  Emoji ", file_version, " (", file_date,
+        "), ", nrow(.emoji_catalogue), " rows")
+message("emoji_unicode_crosswalk:    ", nrow(emoji_unicode_crosswalk), " rows")
+message("category_unicode_crosswalk: ", nrow(category_unicode_crosswalk),
+        " rows")
 
-save(emoji_unicode_crosswalk,
-     file = "data/emoji_unicode_crosswalk.rda", compress = "xz")
-save(category_unicode_crosswalk,
-     file = "data/category_unicode_crosswalk.rda", compress = "xz")
+if (!identical(tolower(Sys.getenv("TIDYEMOJI_WRITE")), "false")) {
+  save(.emoji_catalogue, .emoji_catalogue_meta,
+       file = file.path("R", "sysdata.rda"), compress = "xz")
+  save(emoji_unicode_crosswalk,
+       file = file.path("data", "emoji_unicode_crosswalk.rda"), compress = "xz")
+  save(category_unicode_crosswalk,
+       file = file.path("data", "category_unicode_crosswalk.rda"),
+       compress = "xz")
+}

@@ -7,21 +7,33 @@
 emoji_unicode_version()
 }
 \value{
-A single string, \code{"16.0"} with \pkg{emoji} 16.0.0, or \code{NA} if the
-reference table carries no usable version information. It reports the
-catalogue you have installed rather than anything about tidyEmoji, so it
-moves when you upgrade that package and not when you upgrade this one.
+A single string, such as \code{"18.0"}.
 }
 \description{
-\code{emoji_unicode_version()} reports the highest emoji version present in the
-reference table tidyEmoji detects against, i.e. how current your installed
-\pkg{emoji} package is. Anything newer than this simply will not be
-recognised as an emoji.
+\code{emoji_unicode_version()} reports the Unicode Emoji version of the catalogue
+tidyEmoji detects and joins against. Anything newer than this simply will
+not be recognised as an emoji.
+}
+\details{
+The catalogue is Unicode's own \code{emoji-test.txt}, bundled with the package
+and rebuilt by \code{data-raw/crosswalks.R} when Unicode ships, so this moves
+when you upgrade tidyEmoji. Until 0.5.0 the catalogue was the one inside the
+\pkg{emoji} package, which stayed at Emoji 16.0 for two Unicode releases.
+The version is read from the file's own \verb{# Version:} header when the data
+is built, not inferred from where it was downloaded: Unicode serves the
+current file at an unversioned address, so the address says nothing about
+what it held. \code{\link[=emoji_provenance]{emoji_provenance()}} adds the file's date.
+
+The shortcodes and keywords still come from \pkg{emoji}, so a glyph newer
+than that package's own catalogue is detected and named but has no
+shortcode and no keywords.
 }
 \examples{
 emoji_unicode_version()
 }
 \seealso{
 \code{\link[=emoji_provenance]{emoji_provenance()}} for the full provenance row;
-\code{\link[=emoji_unicode_releases]{emoji_unicode_releases()}} for release dates.
+\code{\link[=emoji_unicode_releases]{emoji_unicode_releases()}} for release dates; \code{\link[=emoji_properties]{emoji_properties()}} for
+the version of each glyph.
 }
+\concept{provenance and reproducibility}

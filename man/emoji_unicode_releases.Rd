@@ -39,3 +39,5 @@ emoji_unicode_releases()
 \code{\link[=emoji_version_profile]{emoji_version_profile()}} and \code{\link[=emoji_adoption_lag]{emoji_adoption_lag()}}, which join to
 this table; \code{\link[=emoji_unicode_version]{emoji_unicode_version()}} for the version this build reflects.
 }
+\concept{provenance and reproducibility}
+\concept{time series and adoption}

@@ -9,7 +9,8 @@ emoji_turnover(
   text,
   time,
   by = "month",
-  measure = c("jaccard", "new", "lost", "core")
+  measure = c("jaccard", "new", "lost", "core"),
+  presentation = "emoji"
 )
 }
 \arguments{
@@ -58,6 +59,28 @@ own \code{format} first.}
 (\code{"jac"}), duplicates are ignored, and the columns come back in the order
 above whatever order you ask in. A value that matches none of the four is
 an error rather than being dropped.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A tibble with one row per consecutive pair of periods: \code{.period},
@@ -90,3 +113,4 @@ emoji_turnover(df, text, when)
 \seealso{
 \code{\link[=emoji_trend]{emoji_trend()}}, \code{\link[=emoji_version_profile]{emoji_version_profile()}}.
 }
+\concept{time series and adoption}

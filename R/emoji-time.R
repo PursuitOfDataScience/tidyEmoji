@@ -150,20 +150,23 @@
 #'   this table; [emoji_unicode_version()] for the version this build reflects.
 #' @examples
 #' emoji_unicode_releases()
+#' @concept provenance and reproducibility
+#' @concept time series and adoption
 #' @export
 emoji_unicode_releases <- function() {
   version <- c(
     "0.6", "0.7", "1.0", "2.0", "3.0", "4.0", "5.0",
     "11.0", "12.0", "12.1", "13.0", "13.1", "14.0", "15.0", "15.1",
-    "16.0", "17.0",
+    "16.0", "17.0", "18.0",
     "6.0", "6.1", "7.0", "8.0", "9.0", "10.0"
   )
-  series <- c(rep("emoji", 17L), rep("unicode", 6L))
+  series <- c(rep("emoji", 18L), rep("unicode", 6L))
   release_date <- as.Date(c(
     "2010-10-11", "2014-06-16", "2015-06-09", "2015-11-12", "2016-06-21",
     "2016-11-22", "2017-06-20",
     "2018-06-05", "2019-03-05", "2019-10-21", "2020-03-10", "2020-09-15",
     "2021-09-14", "2022-09-13", "2023-09-12", "2024-09-10", "2025-09-09",
+    "2026-09-16",
     "2010-10-11", "2012-01-31", "2014-06-16", "2015-06-17", "2016-06-21",
     "2017-06-20"
   ))
@@ -179,24 +182,34 @@ emoji_unicode_releases <- function() {
 
 #' Which Unicode emoji version does this build reflect?
 #'
-#' `emoji_unicode_version()` reports the highest emoji version present in the
-#' reference table tidyEmoji detects against, i.e. how current your installed
-#' \pkg{emoji} package is. Anything newer than this simply will not be
-#' recognised as an emoji.
+#' `emoji_unicode_version()` reports the Unicode Emoji version of the catalogue
+#' tidyEmoji detects and joins against. Anything newer than this simply will
+#' not be recognised as an emoji.
 #'
-#' @return A single string, `"16.0"` with \pkg{emoji} 16.0.0, or `NA` if the
-#'   reference table carries no usable version information. It reports the
-#'   catalogue you have installed rather than anything about tidyEmoji, so it
-#'   moves when you upgrade that package and not when you upgrade this one.
+#' @details
+#' The catalogue is Unicode's own `emoji-test.txt`, bundled with the package
+#' and rebuilt by `data-raw/crosswalks.R` when Unicode ships, so this moves
+#' when you upgrade tidyEmoji. Until 0.5.0 the catalogue was the one inside the
+#' \pkg{emoji} package, which stayed at Emoji 16.0 for two Unicode releases.
+#' The version is read from the file's own `# Version:` header when the data
+#' is built, not inferred from where it was downloaded: Unicode serves the
+#' current file at an unversioned address, so the address says nothing about
+#' what it held. [emoji_provenance()] adds the file's date.
+#'
+#' The shortcodes and keywords still come from \pkg{emoji}, so a glyph newer
+#' than that package's own catalogue is detected and named but has no
+#' shortcode and no keywords.
+#'
+#' @return A single string, such as `"18.0"`.
 #' @seealso [emoji_provenance()] for the full provenance row;
-#'   [emoji_unicode_releases()] for release dates.
+#'   [emoji_unicode_releases()] for release dates; [emoji_properties()] for
+#'   the version of each glyph.
 #' @examples
 #' emoji_unicode_version()
+#' @concept provenance and reproducibility
 #' @export
 emoji_unicode_version <- function() {
-  v <- .emoji_version_num(emoji_reference()$version)
-  if (all(is.na(v))) return(NA_character_)
-  .emoji_version_label(emoji_reference()$version[which.max(v)])
+  .emoji_catalogue_meta$emoji_version
 }
 
 
@@ -266,7 +279,9 @@ emoji_unicode_version <- function() {
 #' @param measure Statistic used to rank emoji for `top_n` and to order the rows
 #'   within a period: `"n"` (default) or `"share"`.
 #' @return A tibble with columns `.period` (a `Date`, the start of the period),
-#'   `emoji`, `name`, `n` and `share`, sorted by `.period`, then by `measure`
+#'   `emoji`, `name`, `n`, `n_period` (every emoji token in the period, the
+#'   denominator of `share`, which `top_n` would otherwise hide) and `share`
+#'   (`n / n_period`), sorted by `.period`, then by `measure`
 #'   descending, then by the glyph, so the order is fully determined. That
 #'   last key matters: within a period the zeros this verb fills in all tie on
 #'   both of the others.
@@ -278,10 +293,13 @@ emoji_unicode_version <- function() {
 #'   text = c("\U0001f600 hi", "\U0001f600\U0001f602", "\U0001f602 yes")
 #' )
 #' emoji_trend(df, text, when)
+#' @concept time series and adoption
+#' @concept rates and denominators
 #' @export
 emoji_trend <- function(data, text, time, by = "month", top_n = 20,
-                        measure = c("n", "share")) {
+                        measure = c("n", "share"), presentation = "emoji") {
   measure <- .emoji_match_arg(measure, c("n", "share"), "measure")
+  presentation <- .emoji_check_presentation(presentation)
   by <- .emoji_match_arg(by, .emoji_time_buckets(), "by")
   if (!is.null(top_n) && !.emoji_is_count(top_n, finite = FALSE)) {
     stop("`top_n` must be a single non-negative whole number, ",
@@ -290,12 +308,13 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
   .emoji_warn_grouped(data, "emoji_trend", "0.4.0")
   empty <- tibble::tibble(.period = as.Date(character()), emoji = character(),
                           name = character(), n = integer(),
-                          share = numeric())
+                          n_period = integer(), share = numeric())
 
   period <- .emoji_time_bucket(
     .emoji_as_date(.emoji_col(data, {{ time }}, arg = "time")), by
   )
-  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }}),
+                                 presentation),
                 emoji_canonical)
   n_per_row <- lengths(lst)
   glyphs <- unlist(lst, use.names = FALSE)
@@ -335,10 +354,15 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
     paste(pkey, counts$emoji, sep = "\r")
   )
   out$n <- ifelse(is.na(idx), 0L, counts$n[idx])
+  # The denominator of `share`, every emoji token in the period. It has to be
+  # shipped rather than left to sum(n): `top_n` keeps only the followed emoji,
+  # so their counts do not add up to the period's total, and a share whose
+  # base cannot be recovered cannot feed a count model.
+  out$n_period <- as.integer(period_total[as.character(out$.period)])
   out$share <- ifelse(is.na(idx), 0, counts$share[idx])
   ref <- emoji_reference()
   out$name <- ref$name[match(emoji_key(out$emoji), ref$key)]
-  out <- out[c(".period", "emoji", "name", "n", "share")]
+  out <- out[c(".period", "emoji", "name", "n", "n_period", "share")]
   if (measure == "n") {
     .emoji_arrange(out, .period, dplyr::desc(n), emoji)
   } else {
@@ -380,9 +404,12 @@ emoji_trend <- function(data, text, time, by = "month", top_n = 20,
 #'   text = c("\U0001f600\U0001f602", "\U0001f600", "\U0001f389")
 #' )
 #' emoji_turnover(df, text, when)
+#' @concept time series and adoption
 #' @export
 emoji_turnover <- function(data, text, time, by = "month",
-                           measure = c("jaccard", "new", "lost", "core")) {
+                           measure = c("jaccard", "new", "lost", "core"),
+                           presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   # match.arg(several.ok = TRUE) returns the values it recognises and says
   # nothing about the rest, so `measure = c("jaccard", "flip")` produced the
   # jaccard column and swallowed the typo -- the absorbed-argument failure mode
@@ -409,7 +436,8 @@ emoji_turnover <- function(data, text, time, by = "month",
   period <- .emoji_time_bucket(
     .emoji_as_date(.emoji_col(data, {{ time }}, arg = "time")), by
   )
-  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }}),
+                                 presentation),
                 emoji_canonical)
   periods <- sort(unique(period[!is.na(period)]))
   # iterate over indices, not over the Date vector: lapply() strips the class
@@ -462,15 +490,13 @@ emoji_turnover <- function(data, text, time, by = "month",
 #' different here.
 #'
 #' @details
-#' The version comes from the reference table tidyEmoji detects against, so it
-#' is capped by your installed \pkg{emoji} package (see
-#' [emoji_unicode_version()]). Glyphs whose version is unknown -- including any
-#' the reference table does not carry -- are reported in a row with
-#' `version = NA` rather than dropped. That row is rare in practice: the
-#' upstream table records the introducing version on only one spelling of a
-#' variation pair, and tidyEmoji fills it across every spelling sharing a
-#' codepoint key, so a fully-qualified glyph such as `U+2764 U+FE0F` reports the
-#' same version as its unqualified form.
+#' The version comes from the catalogue tidyEmoji detects against, so it is
+#' capped by that catalogue's Unicode version (see [emoji_unicode_version()]).
+#' Glyphs whose version is unknown, which means any the catalogue does not
+#' carry, such as a ZWJ sequence newer than it, are reported in a row with
+#' `version = NA` rather than dropped. Every spelling in the catalogue carries
+#' its emoji's version, so a fully-qualified glyph such as `U+2764 U+FE0F`
+#' reports the same version as its unqualified form.
 #'
 #' The corpus's average vintage is a weighted mean over this table, for example
 #' `with(profile, weighted.mean(version_num, n_tokens, na.rm = TRUE))`.
@@ -486,10 +512,14 @@ emoji_turnover <- function(data, text, time, by = "month",
 #' @examples
 #' df <- data.frame(text = c("\U0001f600 hello", "\U0001f97a nice"))
 #' emoji_version_profile(df, text)
+#' @concept time series and adoption
+#' @concept provenance and reproducibility
 #' @export
-emoji_version_profile <- function(data, text) {
+emoji_version_profile <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   .emoji_warn_grouped(data, "emoji_version_profile", "0.4.0")
-  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }}),
+                                 presentation),
                 emoji_canonical)
   glyphs <- unlist(lst, use.names = FALSE)
   if (!length(glyphs)) {
@@ -553,11 +583,14 @@ emoji_version_profile <- function(data, text) {
 #'   text = c("\U0001f600", "\U0001f97a")
 #' )
 #' emoji_adoption_lag(df, text, when)
+#' @concept time series and adoption
 #' @export
-emoji_adoption_lag <- function(data, text, time) {
+emoji_adoption_lag <- function(data, text, time, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   .emoji_warn_grouped(data, "emoji_adoption_lag", "0.4.0")
   d <- .emoji_as_date(.emoji_col(data, {{ time }}, arg = "time"))
-  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
+  lst <- lapply(emoji_glyph_list(.emoji_text_col(data, {{ text }}),
+                                 presentation),
                 emoji_canonical)
   glyphs <- unlist(lst, use.names = FALSE)
   when <- rep(d, lengths(lst))
@@ -634,10 +667,13 @@ emoji_adoption_lag <- function(data, text, time) {
 #'   text = c("\U0001f600", "\U0001f600\U0001f602", "plain")
 #' )
 #' emoji_seasonality(df, text, when)
+#' @concept time series and adoption
 #' @export
 emoji_seasonality <- function(data, text, time,
-                              period = c("month", "weekday", "hour")) {
+                              period = c("month", "weekday", "hour"),
+                              presentation = "emoji") {
   period <- .emoji_match_arg(period, c("month", "weekday", "hour"), "period")
+  presentation <- .emoji_check_presentation(presentation)
   .emoji_warn_grouped(data, "emoji_seasonality", "0.4.0")
   tv <- .emoji_col(data, {{ time }}, arg = "time")
   if (period == "hour") {
@@ -658,7 +694,10 @@ emoji_seasonality <- function(data, text, time,
     labels <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
   }
 
-  n_per_row <- lengths(emoji_glyph_list(.emoji_text_col(data, {{ text }})))
+  n_per_row <- vapply(
+    .emoji_locations(.emoji_text_col(data, {{ text }}), presentation),
+    nrow, integer(1)
+  )
   total <- sum(n_per_row[!is.na(idx)])
   n_texts <- vapply(levels_i, function(k) sum(!is.na(idx) & idx == k),
                     integer(1))

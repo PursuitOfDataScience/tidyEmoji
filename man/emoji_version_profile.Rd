@@ -4,7 +4,7 @@
 \alias{emoji_version_profile}
 \title{How new is this corpus's emoji repertoire?}
 \usage{
-emoji_version_profile(data, text)
+emoji_version_profile(data, text, presentation = "emoji")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -22,6 +22,28 @@ deparses it and the emoji found would be in the code rather than in your
 data. What counts as an emoji is the same in every verb; see the
 \emph{Detection} section of \link{tidyEmoji} for the one case that surprises
 people, code points that are emoji only when they carry \code{U+FE0F}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A tibble with one row per version, oldest first: \code{version},
@@ -37,15 +59,13 @@ one full of 2023 additions look identical to a frequency table and quite
 different here.
 }
 \details{
-The version comes from the reference table tidyEmoji detects against, so it
-is capped by your installed \pkg{emoji} package (see
-\code{\link[=emoji_unicode_version]{emoji_unicode_version()}}). Glyphs whose version is unknown -- including any
-the reference table does not carry -- are reported in a row with
-\code{version = NA} rather than dropped. That row is rare in practice: the
-upstream table records the introducing version on only one spelling of a
-variation pair, and tidyEmoji fills it across every spelling sharing a
-codepoint key, so a fully-qualified glyph such as \verb{U+2764 U+FE0F} reports the
-same version as its unqualified form.
+The version comes from the catalogue tidyEmoji detects against, so it is
+capped by that catalogue's Unicode version (see \code{\link[=emoji_unicode_version]{emoji_unicode_version()}}).
+Glyphs whose version is unknown, which means any the catalogue does not
+carry, such as a ZWJ sequence newer than it, are reported in a row with
+\code{version = NA} rather than dropped. Every spelling in the catalogue carries
+its emoji's version, so a fully-qualified glyph such as \verb{U+2764 U+FE0F}
+reports the same version as its unqualified form.
 
 The corpus's average vintage is a weighted mean over this table, for example
 \code{with(profile, weighted.mean(version_num, n_tokens, na.rm = TRUE))}.
@@ -58,3 +78,5 @@ emoji_version_profile(df, text)
 \code{\link[=emoji_adoption_lag]{emoji_adoption_lag()}} for how quickly new emoji were picked up;
 \code{\link[=emoji_unicode_releases]{emoji_unicode_releases()}} for the date lookup.
 }
+\concept{provenance and reproducibility}
+\concept{time series and adoption}

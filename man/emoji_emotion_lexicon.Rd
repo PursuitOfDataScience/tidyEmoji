@@ -31,10 +31,12 @@ trust), for the 150 most popular Twitter emoji, from EmoTag1200.
 }
 \section{How much of the catalogue this covers}{
 
-\strong{150 glyphs, about 4\% of the distinct emoji tidyEmoji can detect} (3790
-distinct codepoint keys in the reference table of \pkg{emoji} 16.0.0; see
-\code{\link[=emoji_provenance]{emoji_provenance()}} for the version you have). That is not a defect --
-EmoTag1200 is a carefully annotated 150-glyph resource -- but it is worth
+\strong{150 glyphs, about 4\% of the distinct emoji tidyEmoji can detect} (3972
+distinct codepoint keys in the Emoji 18.0 catalogue, nine of them the
+skin-tone and hair components; see \code{\link[=emoji_provenance]{emoji_provenance()}} for the version
+you have, and \code{\link[=emoji_coverage]{emoji_coverage()}} for the share of \emph{your} corpus it scores,
+which is a different and larger number). That is not a defect, since
+EmoTag1200 is a carefully annotated 150-glyph resource, but it is worth
 knowing \emph{before} concluding that a corpus carries no emotion: a modern
 corpus is mostly post-2018 glyphs that no bundled lexicon has seen.
 \code{\link[=emoji_emotion]{emoji_emotion()}} reports this per row rather than hiding it:

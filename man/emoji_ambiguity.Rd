@@ -12,7 +12,8 @@ emoji_ambiguity(x = NULL, measure = "entropy")
 absent from the lexicon come back with \code{NA} statistics.}
 
 \item{measure}{Which ambiguity statistic to put in the \code{ambiguity} column:
-one of \code{"entropy"} (default), \code{"gini"}, \code{"neutral_share"} or \code{"ci_width"}.}
+one of \code{"entropy"} (default), \code{"gini"}, \code{"polarisation"},
+\code{"neutral_share"} or \code{"ci_width"}.}
 }
 \value{
 A tibble with columns \code{emoji}, \code{key} (the codepoint-normalised join
@@ -35,7 +36,7 @@ collapsed score, so that disagreement can be reported as a number rather
 than described as a caveat.
 }
 \details{
-The four measures are computed from the annotation shares
+The five measures are computed from the annotation shares
 \verb{(p_neg, p_neu, p_pos)}:
 \itemize{
 \item \code{"entropy"} (the default) is Shannon entropy in nats: 0 when the
@@ -43,6 +44,10 @@ annotators were unanimous, \code{log(3)} (about 1.0986) when they split evenly
 three ways.
 \item \code{"gini"} is the Gini impurity, \code{1 - sum(p^2)}: 0 when unanimous, 2/3 at
 maximum disagreement.
+\item \code{"polarisation"} is the expected absolute difference between two
+annotations drawn at random, scoring negative as -1, neutral as 0 and
+positive as 1: 0 when unanimous, 1 when the annotators split evenly
+between the two poles. See \emph{Polarised or merely uncertain?} below.
 \item \code{"neutral_share"} is \code{p_neu} on its own, for the "is this emoji simply
 uninformative?" question.
 \item \code{"ci_width"} is the width of a 95\% Wald interval around the glyph's
@@ -53,6 +58,48 @@ than "how much do readers disagree?".
 
 \code{rank} is always computed over the whole lexicon (1 = most ambiguous), so a
 rank keeps its meaning when \code{x} selects a handful of glyphs.
+}
+\section{Polarised or merely uncertain?}{
+
+The three annotation classes are \strong{ordered} (negative, then neutral, then
+positive), and entropy and Gini impurity are \strong{nominal} statistics that
+ignore the order. So they cannot tell an emoji whose readers split
+between the two poles, the one that causes real miscommunication, from one
+whose readers merely hedged:\tabular{llll}{
+   Annotation split \tab \code{entropy} \tab \code{gini} \tab \code{polarisation} \cr
+   50\% negative, 0\% neutral, 50\% positive \tab 0.693 \tab 0.500 \tab \strong{1.00} \cr
+   50\% negative, 50\% neutral, 0\% positive \tab 0.693 \tab 0.500 \tab \strong{0.50} \cr
+}
+
+
+Identical on both nominal measures, and twice apart on the ordinal one.
+Across the whole lexicon the rankings mostly agree (Spearman 0.96 between
+entropy and polarisation), which is why the difference is easy to miss, and
+they part company exactly where a user looks: the face with open mouth and
+cold sweat, with 302 annotations, is at rank 6 of 969 by polarisation and
+at rank 156 by entropy. The default stays \code{"entropy"}, because changing it would
+silently rewrite every ranking already published with it; ask for
+\code{"polarisation"} when the question is "which emoji will readers take in
+opposite directions?".
+
+\code{"polarisation"} is the statistic Miller et al. (2016) used, rescaled. They
+had each rater score a rendering from -5 to +5 and averaged the absolute
+difference over pairs of raters, so their misconstrual score runs from 0
+to 10 on a scale five times as wide as this one, and averages over pairs
+of \emph{different} raters, which inflates it for small groups by \code{n / (n - 1)}.
+The value here is the large-sample version, computed from the shares like
+entropy and Gini are, so it does not reward thin annotation. For three
+equally spaced classes it coincides with Berry and Mielke's index of
+ordinal variation and with \code{1 - l^2} for Blair and Lacy's \code{l}, so those
+would rank the lexicon identically and are not offered separately. For a
+rating scale wider than three points, \pkg{agrmt} implements them, and
+Leik's D, in general.
+
+The obvious objection to any context-free ambiguity score is that emoji are
+read in context. Miller et al. (2017) tested exactly that, with 2,482
+participants, and found that the surrounding text does not substantially
+reduce the potential for miscommunication. That is the case for reading an
+emoji's disagreement off its annotations at all.
 
 \strong{Read \code{n_annotations} before you read the ranking.} The lexicon's
 annotation counts are wildly uneven -- the median glyph has 18, and 69\% have
@@ -101,6 +148,7 @@ score itself can only run from -1 to 1. All four have 3 annotations. Read
 that as "this score is not known at all" rather than as a width, and filter
 on \code{n_annotations} as above.
 }
+
 \examples{
 head(emoji_ambiguity())
 
@@ -116,9 +164,20 @@ head(emoji_ambiguity(measure = "ci_width"))
 Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L,
 Hecht B (2016). "Blissfully Happy" or "Ready to Fight": Varying
 Interpretations of Emoji. \emph{ICWSM 2016}.
+
+Miller H, Kluver D, Thebault-Spieker J, Terveen L, Hecht B (2017).
+Understanding Emoji Ambiguity in Context: The Role of Text in
+Emoji-Related Miscommunication. \emph{ICWSM 2017}.
+
+Blair J, Lacy MG (2000). Statistics of Ordinal Variation. \emph{Sociological
+Methods & Research} 28(3), 251-280.
+
+Berry KJ, Mielke PW (1992). Assessment of Variation in Ordinal Data.
+\emph{Perceptual and Motor Skills} 74(1), 63-66.
 }
 \seealso{
 \code{\link[=emoji_risk]{emoji_risk()}} for the per-row version, \code{\link[=emoji_flag_ambiguous]{emoji_flag_ambiguous()}}
 for the emoji in your own corpus, and \code{\link[=emoji_sentiment]{emoji_sentiment()}} with
 \code{se = TRUE} for the uncertainty around a score.
 }
+\concept{ambiguity and misinterpretation}

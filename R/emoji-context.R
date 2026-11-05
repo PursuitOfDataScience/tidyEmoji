@@ -229,10 +229,12 @@
 #'                           "no emoji here"))
 #' emoji_context(df, text, window = 2)
 #' emoji_context(df, text, window = 6, unit = "char")
+#' @concept context and co-text
 #' @export
 emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
-                          keep_text = FALSE) {
+                          keep_text = FALSE, presentation = "emoji") {
   unit <- .emoji_match_arg(unit, c("word", "char"), "unit")
+  presentation <- .emoji_check_presentation(presentation)
   .emoji_check_flag(keep_text, "keep_text")
   if (!.emoji_is_count(window)) {
     stop("`window` must be a single finite whole number >= 0.", call. = FALSE)
@@ -248,11 +250,13 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
   col_name <- .emoji_col_name(data, {{ text }})
   v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
-  locs <- .emoji_locations(v)
-  masked <- .emoji_mask(v, locs)
+  # Mask every span, the components and stray indicators D1 and D2 set aside
+  # included: they are not occurrences, so they get no row of their own, but
+  # nor are they words, and a swatch left in a window would be read as one.
+  masked <- .emoji_mask(v, .emoji_all_spans(v, presentation))
   window <- min(window, max(c(0L, nchar(masked))))
 
-  occ <- .emoji_occurrences(v)
+  occ <- .emoji_occurrences(v, presentation)
   left <- character(nrow(occ))
   right <- character(nrow(occ))
   if (nrow(occ)) {
@@ -335,6 +339,33 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #' co-occurrences before `min_n` filters the rows, so a rare pairing is scored
 #' against the full corpus rather than against the surviving subset.
 #'
+#' @section Choosing an association measure:
+#' PMI alone is a fragile ranking. It favours rare pairs (a word seen once
+#' beside an emoji seen once scores the maximum), and on a real corpus it
+#' ties constantly: on the corpus behind the introduction vignette 40.6% of
+#' the rows share their PMI with another row. Corpus linguistics answers this
+#' by choosing the measure for the question, and by knowing which kind of
+#' question it is. `measure` offers the standard ones, all computed from the
+#' same counts as PMI, with `O` the pair's `n` and `E = n(e) * n(w) / N` the
+#' count expected by chance:
+#'
+#' * **Effect size**, how strongly the two are associated: `"pmi"`,
+#'   `log(O / E)`; `"ppmi"`, the same floored at 0; `"dice"`,
+#'   `2 * O / (n(e) + n(w))`, from 0 to 1, which does not favour rare pairs;
+#'   and `"logdice"`, `14 + log2(dice)`, the lexicographers' rescaling of it,
+#'   at most 14.
+#' * **Significance**, how sure the corpus makes you that there is an
+#'   association at all: `"llr"`, Dunning's log-likelihood ratio (G-squared)
+#'   over the two-by-two table, negative when the pair occurs less often than
+#'   chance; and `"tscore"`, `(O - E) / sqrt(O)`. Both grow with the evidence,
+#'   so they favour pairs that are common as well as associated.
+#'
+#' The two kinds are not substitutes: a significance measure says a frequent
+#' pairing is real, an effect size says a rare one is strong. Report the one
+#' that matches the claim being made. Changing `measure` never changes which
+#' pairs are returned or their `n`; it changes the order, and adds the
+#' measure's column.
+#'
 #' Glyphs are canonicalised through the package's codepoint key, so qualified
 #' and unqualified forms of the same emoji share one row.
 #'
@@ -353,31 +384,42 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #' @param window Context window on each side, in words. Default `5`.
 #' @param min_n Minimum number of co-occurrences for a pair to be reported.
 #'   Default `3`.
-#' @param measure Sort order: `"pmi"` (default) or `"count"`. Both columns are
-#'   always returned.
+#' @param measure The association measure to sort by: `"pmi"` (default),
+#'   `"count"`, `"ppmi"`, `"dice"`, `"logdice"`, `"llr"` or `"tscore"`. See
+#'   *Choosing an association measure*.
 #' @return A tibble with columns `emoji`, `word`, `n` (co-occurrences) and
 #'   `pmi`, shaped like `widyr::pairwise_count()` output so it drops into
-#'   existing tidytext workflows. Rows are sorted by `measure` descending,
-#'   then by the other of the two descending, then by the glyph and the word,
-#'   so the order is fully determined. Ties in `pmi` are common: every pair
-#'   seen the same number of times with the same marginals scores alike.
+#'   existing tidytext workflows, plus a column named after `measure` when it
+#'   is neither `"pmi"` nor `"count"`. Rows are sorted by `measure`
+#'   descending, then by `n` descending (by `pmi` when `measure = "count"`),
+#'   then by the glyph and the word, so the order is fully determined. Ties in
+#'   `pmi` are common: every pair seen the same number of times with the same
+#'   marginals scores alike.
 #' @seealso [emoji_context()] for the occurrence-level windows this aggregates.
 #' @examples
 #' df <- data.frame(text = c("cold coffee \U0001f622",
 #'                           "coffee again \U0001f622",
 #'                           "warm tea \U0001f60a"))
 #' emoji_collocations(df, text, min_n = 1)
+#' @concept context and co-text
+#' @concept association measures
 #' @export
 emoji_collocations <- function(data, text, window = 5, min_n = 3,
-                               measure = c("pmi", "count")) {
-  measure <- .emoji_match_arg(measure, c("pmi", "count"), "measure")
+                               measure = c("pmi", "count", "ppmi", "dice",
+                                           "logdice", "llr", "tscore"),
+                               presentation = "emoji") {
+  measure <- .emoji_match_arg(
+    measure, c("pmi", "count", "ppmi", "dice", "logdice", "llr", "tscore"),
+    "measure"
+  )
   if (!.emoji_is_count(min_n, finite = FALSE)) {
     stop("`min_n` must be a single non-negative whole number.", call. = FALSE)
   }
   .emoji_warn_grouped(data, "emoji_collocations", "0.4.0")
   empty <- tibble::tibble(emoji = character(), word = character(),
                           n = integer(), pmi = numeric())
-  ctx <- emoji_context(data, {{ text }}, window = window, unit = "word")
+  ctx <- emoji_context(data, {{ text }}, window = window, unit = "word",
+                       presentation = presentation)
   if (!nrow(ctx)) return(empty)
 
   glyph <- emoji_canonical(ctx$.emoji)
@@ -395,14 +437,57 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
   # marginals over every co-occurrence, before min_n prunes the table
   emoji_tot <- vapply(split(counts$n, counts$emoji), sum, numeric(1))
   word_tot <- vapply(split(counts$n, counts$word), sum, numeric(1))
-  counts$pmi <- unname(log(
-    counts$n * total / (emoji_tot[counts$emoji] * word_tot[counts$word])
-  ))
-  out <- counts[counts$n >= min_n, , drop = FALSE]
-  out <- out[c("emoji", "word", "n", "pmi")]
-  if (measure == "pmi") {
-    .emoji_arrange(out, dplyr::desc(pmi), dplyr::desc(n), emoji, word)
-  } else {
-    .emoji_arrange(out, dplyr::desc(n), dplyr::desc(pmi), emoji, word)
+  r1 <- unname(emoji_tot[counts$emoji])
+  c1 <- unname(word_tot[counts$word])
+  counts$pmi <- log(counts$n * total / (r1 * c1))
+  if (!measure %in% c("pmi", "count")) {
+    counts[[measure]] <- .emoji_association(measure, counts$n, r1, c1, total)
   }
+  out <- counts[counts$n >= min_n, , drop = FALSE]
+  out <- out[c("emoji", "word", "n", "pmi",
+               if (!measure %in% c("pmi", "count")) measure)]
+  if (measure == "count") {
+    return(.emoji_arrange(out, dplyr::desc(n), dplyr::desc(pmi), emoji, word))
+  }
+  out$.sort <- out[[measure]]
+  out <- .emoji_arrange(out, dplyr::desc(.sort), dplyr::desc(n), emoji, word)
+  out$.sort <- NULL
+  out
+}
+
+# The association measures, from the cells of a two-by-two table: `o` the
+# joint count, `r` and `cc` the two marginals, `total` the grand total. One
+# definition for emoji_collocations() and emoji_pairs(), so the two cannot
+# drift apart.
+.emoji_association <- function(measure, o, r, cc, total) {
+  e <- r * cc / total
+  switch(
+    measure,
+    pmi = log(o / e),
+    ppmi = pmax(0, log(o / e)),
+    dice = 2 * o / (r + cc),
+    logdice = 14 + log2(2 * o / (r + cc)),
+    tscore = (o - e) / sqrt(o),
+    llr = {
+      # observed and expected for all four cells; 0 * log(0) is 0
+      o12 <- r - o
+      o21 <- cc - o
+      o22 <- total - r - cc + o
+      e12 <- r * (total - cc) / total
+      e21 <- (total - r) * cc / total
+      e22 <- (total - r) * (total - cc) / total
+      term <- function(obs, exp) ifelse(obs > 0, obs * log(obs / exp), 0)
+      g2 <- 2 * (term(o, e) + term(o12, e12) + term(o21, e21) +
+                   term(o22, e22))
+      sign(o - e) * pmax(g2, 0)
+    },
+    log_odds = {
+      # Haldane-Anscombe: half a count in every cell, so a pair that fills
+      # its row or its column has a finite answer
+      o12 <- r - o
+      o21 <- cc - o
+      o22 <- total - r - cc + o
+      log(((o + 0.5) * (o22 + 0.5)) / ((o12 + 0.5) * (o21 + 0.5)))
+    }
+  )
 }

@@ -96,10 +96,18 @@
 #' So if the pipeline has to restore emoji downstream, `"shortcode"` is the
 #' only policy that permits it, and it holds up on the awkward cases:
 #' skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
-#' Measured against the whole reference table of \pkg{emoji} 16.0.0: for all
-#' 3790 emoji in their canonical (fully qualified) spelling -- the spelling a
-#' keyboard emits and text normally holds -- **the round trip returns the
+#' Measured against the whole catalogue: for all 3790 emoji that have a
+#' shortcode, in their canonical (fully qualified) spelling, which is the
+#' spelling a keyboard emits and text normally holds, **the round trip returns the
 #' original text byte for byte, 100% of the time**.
+#'
+#' **The other 182 have no shortcode, and `"shortcode"` leaves them in the
+#' text.** They are the Emoji 17.0 and 18.0 additions: the catalogue knows
+#' them, but the shortcodes come from the \pkg{emoji} package, which does not
+#' yet. They survive the round trip trivially, but a column sanitised with
+#' `"shortcode"` can still hold them, so if the point was to keep emoji away
+#' from a model, check with [emoji_summary()] or use `"name"`, which reaches
+#' them because they do have names.
 #'
 #' **That row of the table assumes the default `wrap`.** Restoring the text
 #' means [text_to_emoji()] can find the token, and it reads exactly
@@ -148,9 +156,9 @@
 #' Unicode also lists shorter spellings of the same emoji, with the `U+FE0F`
 #' presentation selectors omitted. Feed one of those in and the round trip
 #' returns the *canonical* spelling instead: `U+270C` comes back as
-#' `U+270C U+FE0F`. Across all 4853 catalogued spellings that is 79.5%
-#' byte-identical, and the remaining 20.5% differ by `U+FE0F` alone -- never
-#' by more. The emoji is always the same emoji, and every tidyEmoji lookup
+#' `U+270C U+FE0F`. Across all 4853 spellings that have a shortcode that is
+#' 79.5% byte-identical, and the remaining 20.5% differ by `U+FE0F` alone,
+#' never by more. The emoji is always the same emoji, and every tidyEmoji lookup
 #' treats the two spellings as one, so this matters only if you are diffing raw
 #' bytes on text that had its selectors stripped upstream.
 #'
@@ -158,6 +166,31 @@
 #' emoji was here" as a model feature and not enough to reconstruct the text.
 #' `"name"` is the accessibility answer rather than the reversible one -- it
 #' is what a screen reader announces.
+#'
+#' @section Why a policy, and why written down:
+#' An emoji reaching a language model unexamined is a measurable risk rather
+#' than a matter of taste, and three independent lines of work now say so.
+#' Models read emoji in context poorly: on the EMODIS benchmark even the
+#' strongest of them frequently fail to tell an emoji's meanings apart when
+#' only subtle cues in the text distinguish them (Huang et al., 2025). Emoji
+#' also move a model's safety behaviour: prompts that carry toxic intent in
+#' emoji readily induce toxic generations across seven mainstream models
+#' (Cui et al., 2025), and a 2026 evaluation of four open-weight models found
+#' emoji-augmented adversarial prompts succeeding against three of them, a
+#' weakness an evaluation using plain text prompts does not measure
+#' (Gopinadh, 2026). None of these says which policy is right for
+#' a given pipeline; all of them say the choice is worth recording.
+#'
+#' @references Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
+#'   Context-Dependent Emoji Disambiguation in Large Language Models.
+#'   arXiv:2511.07193.
+#'
+#'   Cui S, Feng X, Wang Y, Yang J, Zhang Z, Sikdar B, Wang H, et al. (2025).
+#'   When Smiley Turns Hostile: Interpreting How Emojis Trigger LLMs'
+#'   Toxicity. arXiv:2509.11141.
+#'
+#'   Gopinadh MPVS (2026). Are LLMs Safe Beyond Text: Do Emojis Expose Gaps
+#'   in Safety Evaluation. arXiv:2608.18164.
 #'
 #' @inheritParams emoji_summary
 #' @param policy One of `"keep"` (default), `"strip"`, `"name"`,
@@ -180,10 +213,13 @@
 #' emoji_sanitize(df, text, policy = "strip")
 #' emoji_sanitize(df, text, policy = "name")
 #' emoji_sanitize(df, text, policy = "placeholder")
+#' @concept language-model preprocessing
 #' @export
 emoji_sanitize <- function(data, text, policy = "keep",
-                           placeholder = "[emoji]", wrap = ":{x}:") {
+                           placeholder = "[emoji]", wrap = ":{x}:",
+                           presentation = "emoji") {
   policy <- .emoji_match_arg(policy, .emoji_sanitize_policies(), "policy")
+  presentation <- .emoji_check_presentation(presentation)
   # resolve the column even for "keep", so a typo is an error under every
   # policy rather than only under the ones that rewrite
   col_name <- .emoji_col_name(data, {{ text }})
@@ -198,14 +234,19 @@ emoji_sanitize <- function(data, text, policy = "keep",
     return(.emoji_as_tibble(data))
   }
   if (policy %in% c("name", "shortcode")) {
-    return(emoji_to_text(data, {{ text }}, format = policy, wrap = wrap))
+    return(emoji_to_text(data, {{ text }}, format = policy, wrap = wrap,
+                         presentation = presentation))
   }
   if (policy == "placeholder") .emoji_check_string(placeholder, "placeholder")
 
   v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
-  locs <- .emoji_locations(v)
+  # Every span, the stand-alone components and stray regional indicators D1
+  # and D2 set aside included. They are not counted as emoji, but "strip"
+  # promises a column with no emoji material left in it, and a skin-tone
+  # swatch is exactly what a tokeniser would otherwise be handed on its own.
+  locs <- .emoji_all_spans(v, presentation)
   rewritten <- vapply(seq_along(v), function(i) {
     m <- locs[[i]]
     if (is.null(m) || nrow(m) == 0L) return(v[[i]])
@@ -234,7 +275,7 @@ emoji_sanitize <- function(data, text, policy = "keep",
     repeat {
       idx <- idx[grepl("[^\x01-\x7f]", rewritten[idx], useBytes = TRUE)]
       if (!length(idx)) break
-      again <- .emoji_locations(rewritten[idx])
+      again <- .emoji_all_spans(rewritten[idx], presentation)
       keep <- vapply(again, nrow, integer(1)) > 0L
       if (!any(keep)) break
       idx <- idx[keep]
@@ -301,14 +342,17 @@ emoji_sanitize <- function(data, text, policy = "keep",
 #'                   "\U0001F467\u200d\U0001F466")
 #' df <- data.frame(text = c("hi \U0001f600", family, "plain"))
 #' emoji_token_cost(df, text)
+#' @concept language-model preprocessing
 #' @export
-emoji_token_cost <- function(data, text, tokenizer = NULL) {
+emoji_token_cost <- function(data, text, tokenizer = NULL,
+                             presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   if (!is.null(tokenizer) && !is.function(tokenizer)) {
     stop("`tokenizer` must be a function or NULL.", call. = FALSE)
   }
   v <- .emoji_text_col(data, {{ text }})
   v[is.na(v)] <- ""
-  lst <- emoji_glyph_list(v)
+  lst <- emoji_glyph_list(v, presentation)
   joined <- vapply(lst, paste, character(1), collapse = "")
   n_bytes <- as.integer(nchar(joined, type = "bytes"))
   n_chars <- as.integer(nchar(joined, type = "chars"))

@@ -12,8 +12,8 @@ A data frame with two columns:
 }
 }
 \source{
-Derived from the \code{emojis} table of the \pkg{emoji} package; rebuilt by
-\code{data-raw/crosswalks.R}.
+Unicode's \code{emoji-test.txt}, the catalogue \code{\link[=emoji_properties]{emoji_properties()}}
+reports; rebuilt by \code{data-raw/crosswalks.R}.
 }
 \usage{
 category_unicode_crosswalk

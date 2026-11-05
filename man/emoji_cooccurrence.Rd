@@ -4,7 +4,14 @@
 \alias{emoji_cooccurrence}
 \title{Emoji co-occurrence counts, with an optional diagonal}
 \usage{
-emoji_cooccurrence(data, text, doc_id = NULL, diagonal = FALSE, sort = TRUE)
+emoji_cooccurrence(
+  data,
+  text,
+  doc_id = NULL,
+  diagonal = FALSE,
+  sort = TRUE,
+  presentation = "emoji"
+)
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -29,22 +36,45 @@ a value are treated as one document. Default: each row is a document.
 The result has a row per pair, so it grows with the \emph{square} of the
 distinct emoji in a document: a day or a conversation is cheap, and
 pooling a whole corpus under one id is not. 800 distinct emoji in one
-document is 319,600 pairs and a few seconds; 3790 would be 7.2 million.}
+document is 319,600 pairs and a few seconds; all 3963 would be 7.9 million.}
 
 \item{diagonal}{If \code{TRUE}, include one \code{item1 == item2} row per emoji with
 its document frequency. Default \code{FALSE}.}
 
-\item{sort}{If \code{TRUE} (default), sort by descending \code{n} (ties broken by
-\code{item1}, \code{item2} so the order is deterministic). \code{FALSE} sorts by \code{item1}
-then \code{item2} instead -- still a fixed order, computed in the C locale, not
-the order the pairs happened to be counted in.}
+\item{sort}{If \code{TRUE} (default), sort by descending \code{measure} (by
+descending \code{n} for \code{"count"}; ties broken by \code{n}, then \code{item1}, \code{item2},
+so the order is deterministic). \code{FALSE} sorts by \code{item1} then \code{item2}
+instead, which is still a fixed order, computed in the C locale, not the
+order the pairs happened to be counted in.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A tibble with columns \code{item1}, \code{item2} and \code{n}.
 }
 \description{
 \code{emoji_cooccurrence()} is \code{\link[=emoji_pairs]{emoji_pairs()}} under the name the matrix form
-goes by, with one argument added and one taken away.
+goes by, with one argument added and two taken away.
 }
 \details{
 Added: \code{diagonal = TRUE} also returns the \code{item1 == item2} rows, whose \code{n}
@@ -55,7 +85,9 @@ Taken away: there is no \code{directed} here. A co-occurrence matrix is
 symmetric, so an ordered pair has no meaning on it and the diagonal this
 verb exists to add would not either. Use \code{\link[=emoji_pairs]{emoji_pairs()}} when you want
 \code{directed = TRUE}; the off-diagonal rows the two verbs return are otherwise
-identical.
+identical. Nor is there a \code{measure}: an association measure scores two
+emoji against each other, and a diagonal cell has only one. Use
+\code{\link[=emoji_pairs]{emoji_pairs()}} for the association-weighted edges.
 
 Glyphs are canonicalised through the package's codepoint key, so two
 spellings of one emoji make one row rather than two; see
@@ -68,3 +100,4 @@ emoji_cooccurrence(df, text, diagonal = TRUE)
 \seealso{
 \code{\link[=emoji_pairs]{emoji_pairs()}}, \code{\link[=emoji_ngrams]{emoji_ngrams()}}.
 }
+\concept{networks and co-occurrence}

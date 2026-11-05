@@ -95,13 +95,19 @@ jobs:
         shell: Rscript {0}
 
   catalogue:
-    # The one kind of staleness the test suite structurally cannot see. Our
-    # tests compare our code against our own bundled data, both frozen in the
-    # repo, so the comparison is self-consistent and can never fail because
-    # upstream moved. DESCRIPTION asks for emoji (>= 16.0.0), a floor rather
-    # than a pin, so every run already installs whatever CRAN serves today
-    # while data/*.rda stays at whatever version last regenerated it. Nothing
-    # else in CI compares the two.
+    # The two kinds of staleness the test suite structurally cannot see,
+    # because every test compares our code with our own bundled data.
+    #
+    # 1. Unicode ships an emoji version every September, and the catalogue in
+    #    R/sysdata.rda (built from data-raw/emoji-test.txt) does not move
+    #    until someone reruns data-raw/crosswalks.R. The canary test asks
+    #    unicode.org which version latest/ holds; it runs here and nowhere
+    #    else, so a Unicode release turns this job red rather than every push.
+    # 2. The shortcodes still come from {emoji}, which DESCRIPTION asks for as
+    #    a floor rather than a pin, so every run installs whatever CRAN serves
+    #    today while data/*.rda stays as it was built. Rebuilding the
+    #    crosswalks from the committed emoji-test.txt and today's {emoji} and
+    #    comparing them with the shipped ones catches that drift.
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -112,36 +118,48 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::emoji, any::dplyr, any::tidyr, local::.
-      - name: Bundled catalogue is current with the installed {emoji}
+          extra-packages: any::emoji, any::dplyr, any::tidyr, any::testthat, local::.
+      - name: The bundled catalogue is Unicode's latest emoji version
+        env:
+          TIDYEMOJI_CANARY: "true"
+        run: |
+          res <- as.data.frame(testthat::test_file(
+            "tests/testthat/test-regression-0.6.0.R",
+            package = "tidyEmoji", load_package = "installed",
+            reporter = "summary"
+          ))
+          canary <- res[grepl("canary", res$test), ]
+          print(canary[, c("test", "failed", "skipped")])
+          if (nrow(canary) != 1L || canary$skipped) {
+            stop("The canary did not run; it is the whole point of this job.")
+          }
+          if (sum(res$failed) || any(res$error)) {
+            stop(
+              "Unicode has published a newer emoji version than the bundled ",
+              "catalogue. Rerun data-raw/crosswalks.R with ",
+              "TIDYEMOJI_FETCH=true, then update the figures the help pages ",
+              "and vignettes state by hand."
+            )
+          }
+        shell: Rscript {0}
+      - name: The crosswalks still reproduce with today's {emoji}
         run: |
           sets <- c("emoji_unicode_crosswalk", "category_unicode_crosswalk")
-          paths <- file.path("data", paste0(sets, ".rda"))
-
           shipped <- new.env()
-          for (p in paths) load(p, envir = shipped)
+          for (nm in sets) load(file.path("data", paste0(nm, ".rda")),
+                                envir = shipped)
 
-          # Regenerates data/*.rda in place from emoji::emojis.
-          source("data-raw/crosswalks.R")
-
+          Sys.setenv(TIDYEMOJI_WRITE = "false")
           fresh <- new.env()
-          for (p in paths) load(p, envir = fresh)
-
-          # Compare content, not bytes: xz compression and R's serialiser are
-          # free to differ run to run, so a byte diff would cry wolf.
-          norm <- function(d) {
-            d <- d[do.call(order, d), , drop = FALSE]
-            rownames(d) <- NULL
-            d
-          }
+          sys.source("data-raw/crosswalks.R", envir = fresh)
 
           drift <- character()
           for (nm in sets) {
-            a <- norm(get(nm, shipped))
-            b <- norm(get(nm, fresh))
+            a <- get(nm, shipped)
+            b <- get(nm, fresh)
             if (!identical(a, b)) {
               drift <- c(drift, sprintf(
-                "  %s: %d rows shipped, %d rows regenerated", nm, nrow(a), nrow(b)
+                "  %s: %d rows shipped, %d rows rebuilt", nm, nrow(a), nrow(b)
               ))
             }
           }
@@ -150,14 +168,13 @@ jobs:
           if (length(drift)) {
             cat(drift, sep = "\n")
             stop(
-              "The bundled catalogue is behind {emoji} ", ver, ".\n",
-              "Re-run data-raw/crosswalks.R, then update the counts the help ",
-              "pages and vignettes state by hand. The data and the figures ",
-              "describing it have drifted apart before, which is why this ",
-              "job reports rather than committing the regenerated data."
+              "The shortcodes in {emoji} ", ver, " no longer match the ",
+              "bundled crosswalks. Rerun data-raw/crosswalks.R, then update ",
+              "the counts the help pages and vignettes state by hand. This ",
+              "job reports rather than committing the rebuilt data."
             )
           }
-          cat("Catalogue matches {emoji} ", ver, ".\n", sep = "")
+          cat("Crosswalks reproduce with {emoji} ", ver, ".\n", sep = "")
         shell: Rscript {0}
 
   cran:

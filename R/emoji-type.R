@@ -62,6 +62,7 @@ emoji_type_levels <- function() {
 #'   per-row share, [emoji_categorize()] for the raw Unicode categories.
 #' @examples
 #' as_emoji_type(c("\U0001f600", "\U0001f44d", "\U0001f355", "\u2764\ufe0f"))
+#' @concept categories and types
 #' @export
 as_emoji_type <- function(x) {
   ref <- emoji_reference()
@@ -101,9 +102,12 @@ as_emoji_type <- function(x) {
 #' @examples
 #' df <- data.frame(text = c("yum \U0001f355 \U0001f600", "\U0001f44d", "none"))
 #' emoji_type(df, text)
+#' @concept categories and types
+#' @concept LLM output auditing
 #' @export
-emoji_type <- function(data, text) {
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+emoji_type <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   type_lookup <- stats::setNames(as_emoji_type(all_glyphs), all_glyphs)
   types <- vapply(lst, function(g) {
@@ -144,9 +148,12 @@ emoji_type <- function(data, text) {
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f355", "\U0001f600", "none"))
 #' emoji_faceness(df, text)
+#' @concept categories and types
+#' @concept crisis communication
 #' @export
-emoji_faceness <- function(data, text) {
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+emoji_faceness <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   type_lookup <- stats::setNames(as_emoji_type(all_glyphs), all_glyphs)
   typed <- lapply(lst, function(g) {

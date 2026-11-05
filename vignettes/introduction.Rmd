@@ -46,7 +46,11 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Score emotions | `emoji_emotion()`, `emoji_emotion_label()` |
 | Custom lexicons | `emoji_lexicons()`, `register_emoji_lexicon()`, `emoji_score()` |
 | Translate | `emoji_to_text()`, `text_to_emoji()`, `as_emoji*()` |
-| Search | `emoji_search()` |
+| Search the vocabulary | `emoji_search()`, `emoji_find()`, `emoji_keywords()` |
+| Describe a glyph | `emoji_properties()`, `as_emoji_canonical()`, `emoji_identical()` |
+| Coverage | `emoji_coverage()` |
+| Flags and places | `emoji_country()`, `emoji_subdivision()`, `emoji_flag()` |
+| Tallies | `emoji_from_counts()` |
 | Relate | `emoji_pairs()`, `emoji_cooccurrence()`, `emoji_ngrams()` |
 | Measure | `emoji_position()`, `emoji_density()`, `emoji_ratio()` |
 | Interpretation risk | `emoji_ambiguity()`, `emoji_risk()`, `emoji_flag_ambiguous()` |
@@ -57,6 +61,33 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Model features | `emoji_dfm()` |
 | LLM pipelines | `emoji_sanitize()`, `emoji_token_cost()` |
 | Provenance | `emoji_provenance()`, `emoji_unicode_version()`, `emoji_unicode_releases()` |
+
+### Find the verb for your question
+
+The same capability serves many research communities, and the table above is
+organised by what the verbs do rather than by what people ask. This is the
+other index. Every help page also carries the matching keyword, so
+`help.search("accessibility", package = "tidyEmoji")` finds the verbs for it.
+
+| If you are asking... | Start with |
+|------|-------------|
+| How much emoji is in this corpus, and which? | `emoji_summary()`, `emoji_frequency()` |
+| How much of my corpus can a lexicon score? | `emoji_coverage()` |
+| Is this emoji the same character as that one? (forensics, eDiscovery) | `emoji_identical()`, `emoji_properties()` |
+| What do readers disagree about? (content QA, miscommunication) | `emoji_ambiguity()`, `emoji_flag_ambiguous()` |
+| Does the emoji contradict the words? (sarcasm, review helpfulness) | `emoji_incongruity()`, `emoji_congruence()` |
+| Which countries do these flags name? | `emoji_country()`, `emoji_flag()` |
+| What do the reactions on these pull requests say? | `emoji_from_counts()` |
+| Which emoji belong to a semantic field? (stimulus sets, L2 studies) | `emoji_find()`, `emoji_keywords()` |
+| Which words keep company with an emoji? | `emoji_collocations()` |
+| Which emoji cluster together? (networks) | `emoji_pairs()`, `vignette("emoji-networks")` |
+| How did emoji use change over time, and how fast were new ones adopted? | `emoji_trend()`, `emoji_adoption_lag()` |
+| What will a screen reader announce? (accessibility) | `emoji_to_text()`, `as_emoji_name()` |
+| Faces or objects? (crisis communication, marketing) | `emoji_type()`, `emoji_faceness()` |
+| What should a language-model pipeline do with emoji? | `emoji_sanitize()`, `emoji_token_cost()` |
+| How does a model's own output use emoji? (LLM output auditing) | `emoji_ratio()`, `emoji_position()` |
+| What features does a classifier need? (stylometry, ML) | `emoji_dfm()` |
+| Which catalogue and lexicons produced this result? | `emoji_provenance()` |
 
 Two design choices are worth highlighting:
 
@@ -151,7 +182,8 @@ contain at least one emoji.
 `emoji_filter()` keeps only the rows whose text contains at least one emoji,
 preserving every original column. This is useful when you want to compare
 emoji-bearing and emoji-free text, or restrict an analysis to the emoji subset.
-(`emoji_tweets()` is a synonym retained for backward compatibility.)
+(`emoji_tweets()` is a deprecated synonym: it warns, and it is removed in
+0.7.0.)
 
 ```{r}
 ata_tweets %>%
@@ -237,6 +269,34 @@ demo <- data.frame(
 
 demo %>%
   emoji_extract_unnest(text)
+```
+
+### What counts, and what does not
+
+The catalogue tidyEmoji detects against is Unicode's own list of emoji, for
+the version `emoji_unicode_version()` reports, bundled with the package. Two
+kinds of emoji *material* are not emoji in it, and no verb counts them: a
+skin-tone swatch with nothing to modify (the tone after a grinning face, which
+cannot take one) and regional indicators that spell no country. `emoji_summary()`
+counts both, so they are accounted for rather than silently lost:
+
+```{r}
+odd <- data.frame(text = c("\U0001F600\U0001F3FB",        # face + stray tone
+                           "\U0001F1FD\U0001F1FD",        # "XX", no country
+                           "\U0001F1EF\U0001F1F5"))       # Japan
+emoji_summary(odd, text)
+```
+
+Some emoji are also emoji only when they carry the presentation selector
+`U+FE0F`: the bare heart `U+2764` is text, `U+2764 U+FE0F` is an emoji. Every
+verb that counts, scores or rewrites emoji takes `presentation = "any"` to read
+the bare forms as well (all but the copyright, registered and trade-mark signs, which are
+typography far more often than emoji):
+
+```{r}
+hearts <- data.frame(text = c("I \u2764 R", "I \u2764\ufe0f R"))
+emoji_summary(hearts, text)
+emoji_summary(hearts, text, presentation = "any")
 ```
 
 ## Counting emoji across the corpus
@@ -437,6 +497,33 @@ emoji_sentiment_lexicon %>%
   select(emoji, unicode_name, occurrences, sentiment_score)
 ```
 
+### How much of the corpus can be scored?
+
+A lexicon scores the emoji it was built from and nothing else, so before
+reading a sentiment result it is worth knowing how much of the corpus it
+covers. `emoji_coverage()` reports that for every lexicon at once, as a share
+of the emoji *occurrences*, as a share of the distinct emoji *types*, and as
+the number of emoji-bearing entries left with no score at all:
+
+```{r}
+coverage <- ata_tweets %>%
+  emoji_coverage(full_text)
+
+coverage %>%
+  select(lexicon, occurrence_coverage, type_coverage, n_rows_with_emoji,
+         n_rows_unscored)
+```
+
+The sentiment lexicon scores
+`r round(100 * coverage$occurrence_coverage[1], 1)`% of the emoji occurrences
+here but only `r round(100 * coverage$type_coverage[1], 1)`% of the distinct
+emoji, because a few common glyphs make up most of the occurrences. And
+`r coverage$n_rows_unscored[1]` of the `r coverage$n_rows_with_emoji[1]`
+entries holding an emoji have no `.emoji_sentiment` at all. Filtering those out
+before a comparison drops a third of the emoji-bearing data, and not at
+random: the unscored entries are the ones using the rarer glyphs. Report both
+coverage figures beside any lexicon-based result.
+
 ## Interpretation risk: how much do readers disagree?
 
 The most practically important fact about emoji is that people do not agree on
@@ -461,6 +548,21 @@ Because the measure is a property of the glyph, the corpus-level question --
 ```{r}
 ata_tweets %>%
   emoji_flag_ambiguous(full_text, top_n = 5)
+```
+
+The default measure, entropy, treats the three annotation classes as
+unordered, so it scores an emoji whose readers split between negative and
+positive exactly as it scores one whose readers split between negative and
+neutral. The first is the one that causes real miscommunication.
+`measure = "polarisation"` respects the order: it is the expected distance
+between two readers' judgements on a -1, 0, 1 scale, the statistic Miller et
+al. used, and it puts the face with open mouth and cold sweat at rank 6 of
+969 where entropy puts it at rank 156.
+
+```{r}
+emoji_ambiguity(measure = "polarisation") %>%
+  filter(n_annotations > 100) %>%
+  head(5)
 ```
 
 `emoji_risk()` is the per-entry version, and the pair `.emoji_n` /
@@ -579,6 +681,18 @@ Set `directed = TRUE` to order each pair by first appearance, or supply
 `doc_id` to pool several rows (a conversation, a user, a day) into one
 document. `emoji_cooccurrence(diagonal = TRUE)` additionally returns each
 emoji's document frequency on the diagonal.
+
+Raw counts favour the common emoji, which pair with everything, and most pairs
+in a real corpus are seen exactly once. `measure` scores each pair against
+what its two emoji's frequencies predict instead, and
+`vignette("emoji-networks", package = "tidyEmoji")` builds a network on it:
+
+```{r}
+ata_tweets %>%
+  emoji_pairs(full_text, measure = "dice") %>%
+  filter(n >= 3) %>%
+  head(5)
+```
 
 Order also matters *within* an entry. `emoji_ngrams()` slides a window over
 each entry's emoji in reading order (any text in between is ignored), which is
@@ -758,6 +872,18 @@ scored <- ata_tweets %>%
   mutate(text_score = sentimentr::sentiment_by(full_text)$ave_sentiment)
 ```
 
+Two R packages take the opposite design, and both are complements rather than
+alternatives. **EmojiSentR** (Hanson, Lahrim and Tong, 2026) scores text and
+emoji together: it extracts the emoji, scores the words and the emoji
+separately, applies VADER's negation rules and returns one weighted composite
+per document. That composite is a finished answer, where tidyEmoji keeps the
+two channels apart precisely so their *disagreement* can be measured: feed
+EmojiSentR's word-channel score in as `text_score` and the two packages
+compose. **text2emotion** runs the other way round entirely: it classifies the
+emotion of the *words* with a trained model and maps the prediction onto an
+emoji for display, so it adds emoji to text rather than reading the emoji
+already there.
+
 Either way, pass `scale = "rank"` unless you can say why the two scales are
 already comparable.
 
@@ -832,6 +958,86 @@ emoji_search("happy")
 emoji_search("celebration")
 ```
 
+`emoji_find()` goes the other way, from a semantic field to its emoji, which
+is how a stimulus set is assembled; it matches whole CLDR keywords, and
+`emoji_keywords()` returns those keywords in long form:
+
+```{r}
+emoji_find(c("party", "celebration"))
+emoji_keywords("\U0001F389")
+```
+
+The keywords are the English CLDR sets, from the `emoji` package, so an emoji
+newer than that package has a name but no keywords.
+
+## What the catalogue knows about a glyph
+
+`emoji_properties()` reports everything the catalogue records about a glyph:
+its code points, its qualification status, its name, group and subgroup, the
+Unicode version that introduced it, and whether it takes a skin tone. Called
+with no argument it returns the whole catalogue:
+
+```{r}
+emoji_properties(c("\u2764", "\u2764\ufe0f", "\U0001F44D\U0001F3FD"))
+```
+
+Two spellings of one emoji differ only in `U+FE0F`, which makes a plain join on
+the glyph miss rows. `as_emoji_canonical()` maps every spelling to the one the
+catalogue marks fully qualified, and `emoji_identical()` says whether two
+glyphs are the same emoji, and how they differ when they are not:
+
+```{r}
+as_emoji_canonical(c("\u2764", "\u2764\ufe0f"))
+emoji_identical(c("\u2764", "\U0001F44D"),
+                c("\u2764\ufe0f", "\U0001F44D\U0001F3FD"),
+                details = TRUE)
+```
+
+`emoji_identical()` compares code points. It cannot say what anyone saw,
+because rendering belongs to the font and the platform; its help page says so
+in full, and anyone using it as evidence should read it.
+
+## Flags and places
+
+A flag emoji is two regional-indicator letters, so the country code is
+arithmetic, and the catalogue's 259 country flags say which pairs are real.
+`emoji_country()` returns one row per flag with its ISO 3166-1 code, ready to
+join to a map or to `countrycode::countrycode()`:
+
+```{r}
+places <- data.frame(
+  id = 1:2,
+  text = c("Tokyo \U0001F1EF\U0001F1F5 then Paris \U0001F1EB\U0001F1F7",
+           "stray \U0001F1FD\U0001F1FD letters"))
+emoji_country(places, text)
+emoji_flag(c("JP", "fr", "GB-SCT"))
+```
+
+A pair that spells no country keeps its row and its glyph, with `NA` for the
+code. `emoji_subdivision()` does the same for the tag-sequence flags of
+England, Scotland and Wales.
+
+## Reaction data and other tallies
+
+Reactions arrive as counts, not text: one row per item, emoji and number of
+presses. `emoji_from_counts()` writes each item's tally out as text, so every
+verb above reads it. It understands GitHub's reaction names as well as glyphs
+and shortcodes:
+
+```{r}
+reactions <- data.frame(pr = c(101, 101, 102),
+                        reaction = c("+1", "rocket", "-1"),
+                        count = c(3, 1, 2))
+reaction_text <- emoji_from_counts(reactions, reaction, count, id = pr)
+reaction_text
+emoji_sentiment(reaction_text, text)
+```
+
+The text is built so that every counting verb gives exactly the answer the
+tally implies. What it cannot do is say more than the tally does: a platform
+offering eight reactions records which of eight buttons was pressed, not what
+the reader felt.
+
 ## Emoji in language-model pipelines
 
 Emoji are now a preprocessing decision in every LLM pipeline, and the decision
@@ -870,6 +1076,33 @@ that round trip on the cases that break a hand-rolled substitution, and shows
 how to keep the emoji signal as feature columns while the text you send holds
 no emoji at all.
 
+### Auditing the emoji a model writes
+
+The same verbs work on emoji a model *produces*. A transcript of model output
+is a text column, so "how much emoji does this assistant use, where, and of
+what kind?" needs nothing new: `emoji_ratio()` finds the replies that are
+nothing but emoji, `emoji_position()` whether the emoji close a reply,
+`emoji_type()` the faces against the objects, and `emoji_trend()` over a
+model-version column whether an update changed the register. Work on around a
+million chatbot conversations treats exactly this, the emoji in the model's
+turns, as part of how the model positions itself towards the user.
+
+```{r}
+replies <- data.frame(
+  model = c("v1", "v1", "v2", "v2"),
+  reply = c("Sure, here is the summary.",
+            "Done \U0001F44D",
+            "Great question! \U0001F60A Here you go \U0001F680",
+            "\U0001F389\U0001F389")
+)
+replies %>%
+  emoji_ratio(reply) %>%
+  group_by(model) %>%
+  summarise(replies = n(), with_emoji = sum(.emoji_n > 0),
+            emoji_only = sum(.emoji_only, na.rm = TRUE),
+            emoji = sum(.emoji_n), codepoints = sum(.emoji_codepoints))
+```
+
 ## Recording provenance
 
 "Emoji" is not a fixed object. Which glyphs exist, what they are called and
@@ -896,10 +1129,12 @@ tidyEmoji ships four datasets, each documented with its own help page:
 * **`category_unicode_crosswalk`**: one row per Unicode category, listing its
   emoji.
 
-The two crosswalks are regenerated from the `emoji` package's catalogue, and
-the two lexicons from their published sources, by the scripts in the
-`data-raw/` directory of the package's source repository. That directory is
-not part of the installed package.
+The emoji catalogue itself is internal and is surfaced by
+`emoji_properties()`. It and the two crosswalks are rebuilt from Unicode's
+`emoji-test.txt` (with the shortcodes taken from the `emoji` package), and the
+two lexicons from their published sources, by the scripts in the `data-raw/`
+directory of the package's source repository. That directory is not part of
+the installed package.
 
 ## References
 
@@ -909,10 +1144,14 @@ Kralj Novak P, Smailović J, Sluban B, Mozetič I (2015). Sentiment of Emojis.
 distributed under the Creative Commons Attribution-ShareAlike 4.0 International
 (CC BY-SA 4.0) licence.
 
+Hanson L, Lahrim E, Tong X (2026). EmojiSentR: An R Package for Integrated
+Text and Emoji Sentiment Analysis. *Journal of Behavioral Data Science* 6(1).
+<https://doi.org/10.35566/jbds/tonghl>.
+
 Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L, Hecht B (2016).
 "Blissfully Happy" or "Ready to Fight": Varying Interpretations of Emoji.
 *ICWSM 2016*. The source of the disagreement result behind
-`emoji_ambiguity()`.
+`emoji_ambiguity()`, and of the polarisation measure.
 
 Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the Association between
 Emojis and Emotions. *EMNLP 2020*.

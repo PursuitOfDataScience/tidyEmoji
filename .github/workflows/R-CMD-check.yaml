@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [main, master]
   # Weekly, so a dependency release breaking our checks surfaces here rather
-  # than in a CRAN email. What this does NOT catch is the catalogue falling
-  # behind `emoji` without breaking anything, because our tests compare our
-  # code against our own bundled data. The `catalogue` job in checks.yaml
-  # covers that. Odd minute, off the top of the hour, where the schedule
-  # queue is shortest.
+  # than in a CRAN email. What this does NOT catch is the bundled catalogue
+  # falling behind Unicode, or the shortcodes behind `emoji`, without breaking
+  # anything, because our tests compare our code against our own bundled
+  # data. The `catalogue` job in checks.yaml covers both. Odd minute, off the
+  # top of the hour, where the schedule queue is shortest.
   schedule:
     - cron: '17 7 * * 1'
   workflow_dispatch:

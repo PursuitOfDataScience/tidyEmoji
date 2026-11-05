@@ -36,8 +36,9 @@ from ~70,000 tweets in 13 European languages annotated for sentiment. The
 \section{How much of the catalogue this covers}{
 
 \strong{969 rows, of which 736 resolve to an emoji tidyEmoji can detect -- about
-19\% of the 3790 distinct codepoint keys in the reference table of
-\pkg{emoji} 16.0.0} (see \code{\link[=emoji_provenance]{emoji_provenance()}} for the version you have).
+19\% of the 3972 distinct codepoint keys in the Emoji 18.0 catalogue} (see
+\code{\link[=emoji_provenance]{emoji_provenance()}} for the version you have, and \code{\link[=emoji_coverage]{emoji_coverage()}} for
+the share of your own corpus it can score).
 Two caveats on that figure, both consequences of the lexicon being built
 from 2015 tweets: the other 233 rows are not in the reference table at all
 -- see \emph{Detection limitations} below -- and nothing added to Unicode after

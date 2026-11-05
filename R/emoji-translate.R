@@ -28,10 +28,13 @@
 #' df <- data.frame(text = "great \U0001f600 love \u2764\ufe0f")
 #' emoji_to_text(df, text, format = "name")
 #' emoji_to_text(df, text, format = "shortcode")
+#' @concept translation
+#' @concept accessibility
 #' @export
 emoji_to_text <- function(data, text, format = c("name", "shortcode"),
-                          wrap = ":{x}:") {
+                          wrap = ":{x}:", presentation = "emoji") {
   format <- .emoji_match_arg(format, c("name", "shortcode"), "format")
+  presentation <- .emoji_check_presentation(presentation)
   if (format == "shortcode" &&
       (!is.character(wrap) || length(wrap) != 1L || is.na(wrap) ||
          !grepl("{x}", wrap, fixed = TRUE))) {
@@ -50,7 +53,11 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   was_na <- is.na(v)
   v[was_na] <- ""
 
-  locs <- .emoji_locations(v)
+  # Every span, the stand-alone components D1 sets aside included: a swatch
+  # left in the middle of a rewritten sentence is still a swatch, and the
+  # catalogue names it ("light skin tone"), so it is named as before 0.6.0.
+  # Stray regional indicators have no name and stay in place, as they did.
+  locs <- .emoji_all_spans(v, presentation)
   lst <- mapply(.emoji_slice, locs, v, SIMPLIFY = FALSE, USE.NAMES = FALSE)
   ref <- emoji_reference()
 
@@ -130,21 +137,23 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' share one shortcode and only one of the two spellings can come back.
 #' Feeding the whole emoji catalogue through
 #' `emoji_to_text(format = "shortcode")` and back returns an identical
-#' code-point key for all 5042 entries and identical bytes for 79% of them.
+#' code-point key for all 5244 entries and identical bytes for 80% of them.
 #' The other 1040 differ **by `U+FE0F` alone, never by more**: they come back
 #' as the spelling this verb's shortcode table carries. A second round trip
 #' changes nothing, so the result is stable either way -- but compare with
-#' \code{emoji_key()}, never with string equality.
+#' \code{emoji_key()}, never with string equality. The 202 spellings added in
+#' Emoji 17.0 and 18.0 are among the identical ones for a duller reason: they
+#' have no shortcode, so [emoji_to_text()] left them in place.
 #'
-#' Which 79% is *not* the same question as which were already fully qualified,
+#' Which 80% is *not* the same question as which were already fully qualified,
 #' and the two sets genuinely differ in both directions. The bare heart
 #' (`U+2764`) survives unchanged, because that unqualified spelling is the one
 #' `:heart:` maps to; the already-qualified man detective
 #' (`U+1F575 U+FE0F U+200D U+2642`) does not, because it comes back with a
 #' second selector on the gender sign. If your text holds the *canonical*
 #' spelling of each emoji -- what a keyboard emits -- the round trip is
-#' byte-exact for all 3790 of them; see [emoji_sanitize()], which tabulates
-#' both denominators.
+#' byte-exact for all 3790 that have a shortcode; see [emoji_sanitize()],
+#' which tabulates both denominators.
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with the text column rewritten in place. `NA`
@@ -159,6 +168,7 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' # colons elsewhere in the text do not interfere
 #' text_to_emoji(data.frame(text = "https://example.org at 10:30 :grinning:"),
 #'               text)
+#' @concept translation
 #' @export
 text_to_emoji <- function(data, text) {
   v <- .emoji_text_col(data, {{ text }})
@@ -202,7 +212,7 @@ text_to_emoji <- function(data, text) {
 #' makes it agree with [emoji_to_text()] and survive a round trip, but it is
 #' not always the first alias of the glyph you passed in. 344 codepoint keys
 #' have a different first alias on each of their two spellings, so for 175 of
-#' the catalogue's 5042 rows the two answers differ:
+#' the catalogue's 5244 rows the two answers differ:
 #' `as_emoji_shortcode("\u2764")` is `"heart"`, the qualified heart's alias,
 #' where the bare `U+2764` row's own first alias is `"red_heart"`.
 #'
@@ -210,9 +220,13 @@ text_to_emoji <- function(data, text) {
 #' a search result is a row -- so the two verbs can disagree on the same glyph.
 #' Both resolve back to the same emoji through [text_to_emoji()], which reads
 #' every alias, so where both answer the disagreement is cosmetic. Where they
-#' differ in substance is the 189 rows that have no alias: [emoji_search()]
-#' reports `NA` for those, while `as_emoji_shortcode()` still answers for all
-#' 189, having borrowed the alias of the glyph's other spelling.
+#' differ in substance is the 189 rows of the Emoji 16.0 catalogue that have
+#' no alias: [emoji_search()] reports `NA` for those, while
+#' `as_emoji_shortcode()` still answers for all 189, having borrowed the alias
+#' of the glyph's other spelling. The 202 spellings added in Emoji 17.0 and
+#' 18.0 have no alias on any spelling, since the aliases come from the
+#' \pkg{emoji} package and it has not caught up, so both return `NA` for
+#' them; they still have a name.
 #'
 #' @details
 #' `as_emoji()` accepts either namespace in the same argument, and 464 strings
@@ -242,6 +256,8 @@ text_to_emoji <- function(data, text) {
 #' as_emoji_shortcode(c("\U0001f600", "\u2764\ufe0f"))
 #' as_emoji(c("grinning", "heart"))
 #' @rdname as_emoji_name
+#' @concept translation
+#' @concept accessibility
 #' @export
 as_emoji_name <- function(x) {
   ref <- emoji_reference()

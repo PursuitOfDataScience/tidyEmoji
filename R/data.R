@@ -5,10 +5,12 @@
 #' trust), for the 150 most popular Twitter emoji, from EmoTag1200.
 #'
 #' @section How much of the catalogue this covers:
-#' **150 glyphs, about 4% of the distinct emoji tidyEmoji can detect** (3790
-#' distinct codepoint keys in the reference table of \pkg{emoji} 16.0.0; see
-#' [emoji_provenance()] for the version you have). That is not a defect --
-#' EmoTag1200 is a carefully annotated 150-glyph resource -- but it is worth
+#' **150 glyphs, about 4% of the distinct emoji tidyEmoji can detect** (3972
+#' distinct codepoint keys in the Emoji 18.0 catalogue, nine of them the
+#' skin-tone and hair components; see [emoji_provenance()] for the version
+#' you have, and [emoji_coverage()] for the share of *your* corpus it scores,
+#' which is a different and larger number). That is not a defect, since
+#' EmoTag1200 is a carefully annotated 150-glyph resource, but it is worth
 #' knowing *before* concluding that a corpus carries no emotion: a modern
 #' corpus is mostly post-2018 glyphs that no bundled lexicon has seen.
 #' [emoji_emotion()] reports this per row rather than hiding it:
@@ -55,8 +57,11 @@
 #'   \item{emoji_category}{The Unicode category the emoji belongs to.}
 #'   \item{key}{Codepoint-normalised key (U+FE0F stripped) for robust joining.}
 #' }
-#' @source Derived from the `emojis` table of the \pkg{emoji} package; rebuilt by
-#'   `data-raw/crosswalks.R`.
+#' @source The glyphs and categories come from Unicode's `emoji-test.txt`,
+#'   the catalogue [emoji_properties()] reports, and the names from the
+#'   GitHub-style aliases of the \pkg{emoji} package; rebuilt by
+#'   `data-raw/crosswalks.R`. An emoji newer than \pkg{emoji}'s own table has
+#'   no alias, so it is in the catalogue but not in this table.
 "emoji_unicode_crosswalk"
 
 
@@ -70,8 +75,8 @@
 #'   \item{category}{The Unicode category (10 categories).}
 #'   \item{unicodes}{The emoji glyphs in the category, separated by `|`.}
 #' }
-#' @source Derived from the `emojis` table of the \pkg{emoji} package; rebuilt by
-#'   `data-raw/crosswalks.R`.
+#' @source Unicode's `emoji-test.txt`, the catalogue [emoji_properties()]
+#'   reports; rebuilt by `data-raw/crosswalks.R`.
 "category_unicode_crosswalk"
 
 
@@ -84,8 +89,9 @@
 #'
 #' @section How much of the catalogue this covers:
 #' **969 rows, of which 736 resolve to an emoji tidyEmoji can detect -- about
-#' 19% of the 3790 distinct codepoint keys in the reference table of
-#' \pkg{emoji} 16.0.0** (see [emoji_provenance()] for the version you have).
+#' 19% of the 3972 distinct codepoint keys in the Emoji 18.0 catalogue** (see
+#' [emoji_provenance()] for the version you have, and [emoji_coverage()] for
+#' the share of your own corpus it can score).
 #' Two caveats on that figure, both consequences of the lexicon being built
 #' from 2015 tweets: the other 233 rows are not in the reference table at all
 #' -- see *Detection limitations* below -- and nothing added to Unicode after

@@ -22,6 +22,7 @@ reference:
   contents:
   - emoji_summary
   - emoji_filter
+  - emoji_coverage
 - title: Count
   contents:
   - emoji_frequency
@@ -91,6 +92,21 @@ reference:
   - as_emoji_shortcode
   - as_emoji
   - emoji_search
+  - emoji_find
+  - emoji_keywords
+- title: The catalogue
+  contents:
+  - emoji_properties
+  - as_emoji_canonical
+  - emoji_identical
+- title: Flags & places
+  contents:
+  - emoji_country
+  - emoji_subdivision
+  - emoji_flag
+- title: Tallies
+  contents:
+  - emoji_from_counts
 - title: Provenance & reference data
   contents:
   - emoji_provenance
@@ -114,6 +130,8 @@ navbar:
       href: articles/introduction.html
     - text: Reversible emoji preprocessing for language models
       href: articles/reversible-preprocessing.html
+    - text: "Emoji networks: edges worth drawing"
+      href: articles/emoji-networks.html
   - text: News
     href: news/index.html
   right:

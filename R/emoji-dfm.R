@@ -39,9 +39,13 @@
 #' emoji_dfm(df, text)
 #' emoji_dfm(df, text, weighting = "binary")
 #' emoji_dfm(df, text, weighting = "tfidf")
+#' @concept machine learning features
+#' @concept stylometry
 #' @export
 emoji_dfm <- function(data, text, doc_id = NULL,
-                      weighting = c("count", "binary", "tfidf")) {
+                      weighting = c("count", "binary", "tfidf"),
+                      presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   weighting <- .emoji_match_arg(weighting, c("count", "binary", "tfidf"),
                                "weighting")
   if (.emoji_warn_grouped(
@@ -50,7 +54,7 @@ emoji_dfm <- function(data, text, doc_id = NULL,
     data <- dplyr::ungroup(data)
   }
 
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   lst <- lapply(lst, emoji_canonical)
 
   q <- rlang::enquo(doc_id)

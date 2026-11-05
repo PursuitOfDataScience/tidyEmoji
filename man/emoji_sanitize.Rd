@@ -9,7 +9,8 @@ emoji_sanitize(
   text,
   policy = "keep",
   placeholder = "[emoji]",
-  wrap = ":{x}:"
+  wrap = ":{x}:",
+  presentation = "emoji"
 )
 }
 \arguments{
@@ -39,6 +40,28 @@ policies.}
 \item{wrap}{Template for \code{policy = "shortcode"}, with \code{{x}} standing for the
 shortcode. Default \code{":{x}:"}. Ignored under the other four policies, as
 it is in \code{\link[=emoji_to_text]{emoji_to_text()}} for \code{format = "name"}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same
@@ -118,10 +141,18 @@ put the emoji back after the model call.\tabular{llll}{
 So if the pipeline has to restore emoji downstream, \code{"shortcode"} is the
 only policy that permits it, and it holds up on the awkward cases:
 skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
-Measured against the whole reference table of \pkg{emoji} 16.0.0: for all
-3790 emoji in their canonical (fully qualified) spelling -- the spelling a
-keyboard emits and text normally holds -- \strong{the round trip returns the
+Measured against the whole catalogue: for all 3790 emoji that have a
+shortcode, in their canonical (fully qualified) spelling, which is the
+spelling a keyboard emits and text normally holds, \strong{the round trip returns the
 original text byte for byte, 100\% of the time}.
+
+\strong{The other 182 have no shortcode, and \code{"shortcode"} leaves them in the
+text.} They are the Emoji 17.0 and 18.0 additions: the catalogue knows
+them, but the shortcodes come from the \pkg{emoji} package, which does not
+yet. They survive the round trip trivially, but a column sanitised with
+\code{"shortcode"} can still hold them, so if the point was to keep emoji away
+from a model, check with \code{\link[=emoji_summary]{emoji_summary()}} or use \code{"name"}, which reaches
+them because they do have names.
 
 \strong{That row of the table assumes the default \code{wrap}.} Restoring the text
 means \code{\link[=text_to_emoji]{text_to_emoji()}} can find the token, and it reads exactly
@@ -172,9 +203,9 @@ which is the cheapest way to see the inflation.
 Unicode also lists shorter spellings of the same emoji, with the \code{U+FE0F}
 presentation selectors omitted. Feed one of those in and the round trip
 returns the \emph{canonical} spelling instead: \verb{U+270C} comes back as
-\verb{U+270C U+FE0F}. Across all 4853 catalogued spellings that is 79.5\%
-byte-identical, and the remaining 20.5\% differ by \code{U+FE0F} alone -- never
-by more. The emoji is always the same emoji, and every tidyEmoji lookup
+\verb{U+270C U+FE0F}. Across all 4853 spellings that have a shortcode that is
+79.5\% byte-identical, and the remaining 20.5\% differ by \code{U+FE0F} alone,
+never by more. The emoji is always the same emoji, and every tidyEmoji lookup
 treats the two spellings as one, so this matters only if you are diffing raw
 bytes on text that had its selectors stripped upstream.
 
@@ -184,11 +215,39 @@ emoji was here" as a model feature and not enough to reconstruct the text.
 is what a screen reader announces.
 }
 
+\section{Why a policy, and why written down}{
+
+An emoji reaching a language model unexamined is a measurable risk rather
+than a matter of taste, and three independent lines of work now say so.
+Models read emoji in context poorly: on the EMODIS benchmark even the
+strongest of them frequently fail to tell an emoji's meanings apart when
+only subtle cues in the text distinguish them (Huang et al., 2025). Emoji
+also move a model's safety behaviour: prompts that carry toxic intent in
+emoji readily induce toxic generations across seven mainstream models
+(Cui et al., 2025), and a 2026 evaluation of four open-weight models found
+emoji-augmented adversarial prompts succeeding against three of them, a
+weakness an evaluation using plain text prompts does not measure
+(Gopinadh, 2026). None of these says which policy is right for
+a given pipeline; all of them say the choice is worth recording.
+}
+
 \examples{
 df <- data.frame(text = c("ship it \U0001f680", "no emoji"))
 emoji_sanitize(df, text, policy = "strip")
 emoji_sanitize(df, text, policy = "name")
 emoji_sanitize(df, text, policy = "placeholder")
+}
+\references{
+Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
+Context-Dependent Emoji Disambiguation in Large Language Models.
+arXiv:2511.07193.
+
+Cui S, Feng X, Wang Y, Yang J, Zhang Z, Sikdar B, Wang H, et al. (2025).
+When Smiley Turns Hostile: Interpreting How Emojis Trigger LLMs'
+Toxicity. arXiv:2509.11141.
+
+Gopinadh MPVS (2026). Are LLMs Safe Beyond Text: Do Emojis Expose Gaps
+in Safety Evaluation. arXiv:2608.18164.
 }
 \seealso{
 \code{vignette("reversible-preprocessing", package = "tidyEmoji")}
@@ -197,3 +256,4 @@ flags, keycaps and ZWJ sequences; \code{\link[=emoji_token_cost]{emoji_token_cos
 are costing you; \code{\link[=emoji_to_text]{emoji_to_text()}} for the name/shortcode rewrite on its
 own.
 }
+\concept{language-model preprocessing}

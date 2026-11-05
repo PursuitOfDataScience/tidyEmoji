@@ -4,7 +4,15 @@
 \alias{emoji_pairs}
 \title{Co-occurring emoji pairs}
 \usage{
-emoji_pairs(data, text, doc_id = NULL, directed = FALSE, sort = TRUE)
+emoji_pairs(
+  data,
+  text,
+  doc_id = NULL,
+  directed = FALSE,
+  sort = TRUE,
+  measure = c("count", "ppmi", "log_odds", "dice"),
+  presentation = "emoji"
+)
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -29,21 +37,49 @@ a value are treated as one document. Default: each row is a document.
 The result has a row per pair, so it grows with the \emph{square} of the
 distinct emoji in a document: a day or a conversation is cheap, and
 pooling a whole corpus under one id is not. 800 distinct emoji in one
-document is 319,600 pairs and a few seconds; 3790 would be 7.2 million.}
+document is 319,600 pairs and a few seconds; all 3963 would be 7.9 million.}
 
 \item{directed}{If \code{TRUE}, pairs are ordered by first appearance: a
 document where the tears-of-joy emoji appears before the heart-eyes emoji
 counts towards (tears-of-joy, heart-eyes), not the reverse. Default
 \code{FALSE} (unordered pairs, with \code{item1} sorted before \code{item2}).}
 
-\item{sort}{If \code{TRUE} (default), sort by descending \code{n} (ties broken by
-\code{item1}, \code{item2} so the order is deterministic). \code{FALSE} sorts by \code{item1}
-then \code{item2} instead -- still a fixed order, computed in the C locale, not
-the order the pairs happened to be counted in.}
+\item{sort}{If \code{TRUE} (default), sort by descending \code{measure} (by
+descending \code{n} for \code{"count"}; ties broken by \code{n}, then \code{item1}, \code{item2},
+so the order is deterministic). \code{FALSE} sorts by \code{item1} then \code{item2}
+instead, which is still a fixed order, computed in the C locale, not the
+order the pairs happened to be counted in.}
+
+\item{measure}{\code{"count"} (default) for the raw co-occurrence counts, or an
+association measure to add as a column and sort by: \code{"ppmi"},
+\code{"log_odds"} or \code{"dice"}. See \emph{Counts are not associations}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
-A tibble with columns \code{item1}, \code{item2} and \code{n}. Empty (but typed)
-when no document contains two distinct emoji.
+A tibble with columns \code{item1}, \code{item2} and \code{n}, plus a column named
+after \code{measure} unless it is \code{"count"}. Empty (but typed) when no
+document contains two distinct emoji.
 }
 \description{
 \code{emoji_pairs()} returns a tidy edge list of the emoji that appear together
@@ -61,6 +97,34 @@ node. Pairs are between \emph{distinct} emoji: repeats of the same emoji in a
 document do not pair with themselves (see \code{\link[=emoji_cooccurrence]{emoji_cooccurrence()}} for the
 diagonal).
 }
+\section{Counts are not associations}{
+
+Most emoji pairs in a real corpus are seen once: on the corpus behind the
+introduction vignette, 200 of the 213 edges (93.9\%) have \code{n = 1}. A graph
+drawn from raw counts is mostly noise with a layout, and the common emoji
+pair with everything simply because they are common. \code{measure} scores each
+pair against what its two emoji's frequencies predict, over documents: \code{N}
+is the number of documents holding at least one emoji, \code{n1} and \code{n2} the
+number holding each item, and \code{n} the number holding both.
+\itemize{
+\item \code{"ppmi"} is positive pointwise mutual information,
+\code{max(0, log(n * N / (n1 * n2)))}: how much more often the two appear
+together than chance, floored at "no more often".
+\item \code{"log_odds"} is the log odds ratio of the two-by-two table of documents,
+with half a document added to every cell so a pair that never appears
+apart stays finite.
+\item \code{"dice"} is \code{2 * n / (n1 + n2)}, from 0 (never together) to 1 (never
+apart); unlike the other two it does not favour rare pairs.
+}
+
+\code{N} counts only documents with an emoji, so adding emoji-free rows to a
+corpus changes no measure. Under \code{directed = TRUE}, \code{n} counts documents
+where \code{item1} comes first, and the measures score that ordered event
+against the same marginals. For a network, filter on a frequency threshold
+as well as on the measure, so the edges kept are both strong and seen more
+than once.
+}
+
 \examples{
 df <- data.frame(text = c("fun \U0001f602\U0001f60d",
                           "\U0001f602\U0001f60d\U0001f389",
@@ -72,3 +136,5 @@ emoji_pairs(df, text, directed = TRUE)
 \code{\link[=emoji_cooccurrence]{emoji_cooccurrence()}} for the same counts with an optional
 diagonal; \code{\link[=emoji_ngrams]{emoji_ngrams()}} for consecutive sequences.
 }
+\concept{association measures}
+\concept{networks and co-occurrence}

@@ -4,7 +4,7 @@
 \alias{emoji_categorize}
 \title{Categorise each row by the emoji categories it contains}
 \usage{
-emoji_categorize(data, text)
+emoji_categorize(data, text, presentation = "emoji")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -22,6 +22,28 @@ deparses it and the emoji found would be in the code rather than in your
 data. What counts as an emoji is the same in every verb; see the
 \emph{Detection} section of \link{tidyEmoji} for the one case that surprises
 people, code points that are emoji only when they carry \code{U+FE0F}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 \code{data}, as a tibble, filtered to the rows containing at least one
@@ -41,21 +63,21 @@ kept with \code{.emoji_category} set to \code{NA}. Dropping it would silently sh
 the corpus, and by exactly the rows a user whose Unicode coverage is behind
 most needs to see.
 
-Three different things reach that \code{NA}, and only the first is a catalogue
+Two different things reach that \code{NA}, and only the first is a catalogue
 question:
 \enumerate{
-\item A zero-width-joiner sequence \strong{newer than your installed \pkg{emoji}
-package}, since detection is grapheme-aware and does not require the
-sequence to be catalogued. Use \code{\link[=emoji_provenance]{emoji_provenance()}} to check which
-catalogue you are matching against; upgrading \code{emoji} fixes it.
-\item An \strong{invalid regional-indicator pair} such as \verb{U+1F1FD U+1F1FD}. It is
-a well-formed grapheme cluster and no catalogue will ever contain it, so
-no upgrade helps.
-\item A \strong{non-RGI ZWJ join} -- components joined in a combination Unicode
-does not recommend. These arrive as separate occurrences rather than one.
+\item A zero-width-joiner sequence \strong{newer than the bundled catalogue}, since
+detection is grapheme-aware and does not require the sequence to be
+catalogued. Use \code{\link[=emoji_provenance]{emoji_provenance()}} to check which catalogue you are
+matching against; a tidyEmoji release built on a newer Unicode file
+fixes it.
+\item A \strong{non-RGI ZWJ join}: components joined in a combination Unicode does
+not recommend, which no catalogue lists.
 }
 
-See the Detection section of \link{tidyEmoji} for both false-positive cases.
+An invalid regional-indicator pair such as \verb{U+1F1FD U+1F1FD} used to be a
+third. Since 0.6.0 it is not an emoji at all, so it no longer keeps a row
+here; see the Detection section of \link{tidyEmoji}.
 }
 \examples{
 df <- data.frame(text = c("smile \U0001f600",
@@ -69,3 +91,4 @@ the same group and subgroup, and \code{\link[=emoji_faceness]{emoji_faceness()}}
 reduces to; \code{\link[=emoji_frequency]{emoji_frequency()}} for per-glyph counts carrying \code{group};
 \link{category_unicode_crosswalk} for the ten categories themselves.
 }
+\concept{categories and types}

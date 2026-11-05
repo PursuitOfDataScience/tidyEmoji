@@ -4,7 +4,13 @@
 \alias{emoji_emotion}
 \title{Emoji emotion profiles (the 8 Plutchik emotions)}
 \usage{
-emoji_emotion(data, text, lexicon = "emotag1200", long = FALSE)
+emoji_emotion(
+  data,
+  text,
+  lexicon = "emotag1200",
+  long = FALSE,
+  presentation = "emoji"
+)
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -34,6 +40,28 @@ bundled one.}
 columns \code{.emoji_emotion} (the emotion name) and \code{.emoji_score} (its mean).
 Default \code{FALSE} adds eight \verb{.emoji_<emotion>} columns plus \code{.emoji_n} and
 \code{.emoji_n_scored}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 \code{data}, as a tibble. With \code{long = FALSE} (the default), eight
@@ -66,6 +94,17 @@ full of emoji. Read \code{.emoji_n_scored} alongside \code{.emoji_n} before conc
 a corpus carries no emotion; see \link{emoji_emotion_lexicon} for the figure and
 its denominator.
 }
+\section{Language and culture}{
+
+The scores are not language-neutral. The bundled sentiment lexicon was
+annotated on tweets in 13 European languages and the emotion lexicon on
+English ones, and emoji use differs measurably across languages
+(Cross-lingual Variations in Emoji Use, EMNLP 2024), so a glyph's score
+describes how those annotators read it. For text from another language
+community, register a lexicon built there (see \code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}})
+and report \code{\link[=emoji_coverage]{emoji_coverage()}} beside the result.
+}
+
 \examples{
 df <- data.frame(text = c("love it \U0001f60d", "scary \U0001f628", "meh"))
 emoji_emotion(df, text)
@@ -82,3 +121,4 @@ licence.
 \code{\link[=emoji_emotion_label]{emoji_emotion_label()}} for the dominant emotion per row;
 \code{\link[=emoji_sentiment]{emoji_sentiment()}} for valence.
 }
+\concept{emotion}

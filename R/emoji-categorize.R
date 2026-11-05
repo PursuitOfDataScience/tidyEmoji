@@ -20,20 +20,20 @@
 #' the corpus, and by exactly the rows a user whose Unicode coverage is behind
 #' most needs to see.
 #'
-#' Three different things reach that `NA`, and only the first is a catalogue
+#' Two different things reach that `NA`, and only the first is a catalogue
 #' question:
 #'
-#' 1. A zero-width-joiner sequence **newer than your installed \pkg{emoji}
-#'    package**, since detection is grapheme-aware and does not require the
-#'    sequence to be catalogued. Use [emoji_provenance()] to check which
-#'    catalogue you are matching against; upgrading `emoji` fixes it.
-#' 2. An **invalid regional-indicator pair** such as `U+1F1FD U+1F1FD`. It is
-#'    a well-formed grapheme cluster and no catalogue will ever contain it, so
-#'    no upgrade helps.
-#' 3. A **non-RGI ZWJ join** -- components joined in a combination Unicode
-#'    does not recommend. These arrive as separate occurrences rather than one.
+#' 1. A zero-width-joiner sequence **newer than the bundled catalogue**, since
+#'    detection is grapheme-aware and does not require the sequence to be
+#'    catalogued. Use [emoji_provenance()] to check which catalogue you are
+#'    matching against; a tidyEmoji release built on a newer Unicode file
+#'    fixes it.
+#' 2. A **non-RGI ZWJ join**: components joined in a combination Unicode does
+#'    not recommend, which no catalogue lists.
 #'
-#' See the Detection section of [tidyEmoji] for both false-positive cases.
+#' An invalid regional-indicator pair such as `U+1F1FD U+1F1FD` used to be a
+#' third. Since 0.6.0 it is not an emoji at all, so it no longer keeps a row
+#' here; see the Detection section of [tidyEmoji].
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, filtered to the rows containing at least one
@@ -48,9 +48,11 @@
 #'                           "flag \U0001f3c1\U0001f600",
 #'                           "nothing"))
 #' emoji_categorize(df, text)
+#' @concept categories and types
 #' @export
-emoji_categorize <- function(data, text) {
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+emoji_categorize <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   ref <- emoji_reference()
   cat_of <- stats::setNames(ref$group, ref$key)
 

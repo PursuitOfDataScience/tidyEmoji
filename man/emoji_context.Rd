@@ -9,7 +9,8 @@ emoji_context(
   text,
   window = 5,
   unit = c("word", "char"),
-  keep_text = FALSE
+  keep_text = FALSE,
+  presentation = "emoji"
 )
 }
 \arguments{
@@ -45,6 +46,28 @@ need.}
 
 \item{keep_text}{If \code{TRUE}, also return the row's original text column.
 Default \code{FALSE}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 A tibble with one row per emoji occurrence, in reading order, and
@@ -97,3 +120,4 @@ emoji_context(df, text, window = 6, unit = "char")
 \code{\link[=emoji_collocations]{emoji_collocations()}} for the corpus-level view;
 \code{\link[=emoji_position]{emoji_position()}} for where emoji sit in a text.
 }
+\concept{context and co-text}

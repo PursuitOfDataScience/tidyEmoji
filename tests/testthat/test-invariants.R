@@ -1855,7 +1855,8 @@ test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
   # the page has to say so
   txt <- rd_flat("emoji_sanitize")
   skip_if(is.na(txt), "emoji_sanitize.Rd not available")
-  expect_true(grepl("all 4853 catalogued spellings", txt, fixed = TRUE))
+  expect_true(grepl("all 4853 spellings that have a shortcode", txt,
+                    fixed = TRUE))
   expect_true(grepl("79.5% byte-identical", txt, fixed = TRUE))
   expect_true(grepl("remaining 20.5%", txt, fixed = TRUE))
 })
@@ -2889,8 +2890,9 @@ test_that("rebuilding the reference drops everything derived from it", {
 
   # the slot list is not empty, or the loop above asserts nothing
   expect_gt(length(E$.emoji_derived_cache_slots()), 1L)
-  expect_true(all(E$.emoji_derived_cache_slots() %in%
-                  c("ref_keys", "type")))
+  expect_true(all(c("ref_keys", "type", "detect_rx", "residue", "text_rx",
+                    "vocabulary", "by_key", "flags") %in%
+                  E$.emoji_derived_cache_slots()))
 })
 
 test_that("the bundled sentiment lexicon satisfies what the verbs assume", {
@@ -3567,8 +3569,8 @@ test_that("the lexicon sizes the documentation states are the data's", {
   # ?emoji_sentiment_lexicon and ?emoji_emotion_lexicon
   expect_identical(nrow(emoji_sentiment_lexicon), 969L)
   expect_identical(nrow(emoji_emotion_lexicon), 150L)
-  # "3790 distinct codepoint keys", quoted in both help pages
-  expect_identical(length(unique(tidyEmoji:::emoji_reference()$key)), 3790L)
+  # "3972 distinct codepoint keys", quoted in both help pages
+  expect_identical(length(unique(tidyEmoji:::emoji_reference()$key)), 3972L)
   # ?category_unicode_crosswalk: "The Unicode category (10 categories)"
   expect_identical(nrow(category_unicode_crosswalk), 10L)
 
@@ -3975,12 +3977,18 @@ test_that("the documented round-trip byte share is the catalogue's", {
   # every entry recovers the same emoji ...
   expect_true(all(tidyEmoji:::emoji_key(round_trip) ==
                     tidyEmoji:::emoji_key(ref$emoji)))
-  expect_identical(nrow(ref), 5042L)
-  # ... and 79% of them recover the same bytes
+  expect_identical(nrow(ref), 5244L)
+  # ... and 80% of them recover the same bytes
   same <- round_trip == ref$emoji
-  expect_identical(sum(same), 4002L)
-  expect_identical(round(100 * mean(same)), 79)
+  expect_identical(sum(same), 4204L)
+  expect_identical(round(100 * mean(same)), 80)
   expect_identical(sum(!same), 1040L)
+  # 202 of the identical ones are the Emoji 17.0 and 18.0 spellings, which
+  # have no shortcode and so are left where they are
+  new_rows <- tidyEmoji:::.emoji_version_num(ref$version) >= 17
+  expect_identical(sum(new_rows), 202L)
+  expect_true(all(is.na(ref$shortcode[new_rows])))
+  expect_true(all(same[new_rows]))
 
   # The claim the help page used to make -- that the 79% are "the ones that
   # were already fully qualified" -- is false, and plausible enough that it
@@ -3991,11 +3999,11 @@ test_that("the documented round-trip byte share is the catalogue's", {
   paired <- ref$key %in% ref$key[duplicated(ref$key)]
   fully_qualified <- has_fe0f | !paired
   expect_false(identical(same, fully_qualified))
-  expect_identical(sum(same & !fully_qualified), 212L)
+  expect_identical(sum(same & !fully_qualified), 232L)
   expect_identical(sum(fully_qualified & !same), 92L)
   expect_identical(round(100 * mean(fully_qualified)), 77)
-  # and it is not the canonical-spelling share (3790 / 5042) either
-  expect_identical(round(100 * length(unique(ref$key)) / nrow(ref)), 75)
+  # and it is not the canonical-spelling share (3972 / 5244) either
+  expect_identical(round(100 * length(unique(ref$key)) / nrow(ref)), 76)
 
   # the two worked examples the details give
   heart <- "\u2764"
@@ -4020,7 +4028,9 @@ test_that("the documented round-trip byte share is the catalogue's", {
   # and the canonical spelling of every emoji is byte-exact, which is the
   # denominator ?emoji_sanitize quotes
   canonical <- ref$emoji[!duplicated(ref$key)]
-  expect_identical(length(canonical), 3790L)
+  expect_identical(length(canonical), 3972L)
+  # 3790 of them have a shortcode, the denominator ?emoji_sanitize quotes
+  expect_identical(sum(!is.na(ref$shortcode[!duplicated(ref$key)])), 3790L)
   canon_rt <- text_to_emoji(
     emoji_to_text(data.frame(text = canonical, stringsAsFactors = FALSE),
                   text, format = "shortcode"), text
@@ -4196,9 +4206,12 @@ test_that("as_emoji_shortcode() is keyed on the emoji, emoji_search() on the row
 
   hit <- emoji_search("face")
   expect_gt(nrow(hit), 0L)
-  expect_identical(sum(is.na(hit$shortcode)), 7L)
-  expect_true(all(hit$emoji[is.na(hit$shortcode)] %in%
-                    emoji::emojis$emoji[no_alias]))
+  expect_identical(sum(is.na(hit$shortcode)), 9L)
+  # seven are 16.0 rows with no alias, and two are 17.0 and 18.0 faces that
+  # {emoji} does not know at all, so no spelling of them has one
+  na_hit <- hit$emoji[is.na(hit$shortcode)]
+  expect_identical(sum(na_hit %in% emoji::emojis$emoji[no_alias]), 7L)
+  expect_identical(sum(!na_hit %in% emoji::emojis$emoji), 2L)
 
   # every non-NA shortcode a search reports is a token text_to_emoji() reads,
   # and it recovers that row's emoji
@@ -4589,18 +4602,24 @@ test_that("the documented undetectable-spelling figures are the data's", {
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   detected <- lengths(tidyEmoji:::emoji_glyph_list(ref$emoji))
+  component <- ref$status == "component"
 
-  # 212 catalogue rows are spellings detection does not match
-  expect_identical(sum(detected == 0L), 212L)
+  # 212 catalogue spellings are ones detection does not match, all of them
+  # unqualified; the nine components are not emoji on their own either, but
+  # by design rather than by spelling, so they are counted apart
+  expect_identical(sum(detected == 0L & !component), 212L)
+  expect_true(all(ref$status[detected == 0L & !component] == "unqualified"))
+  expect_identical(sum(detected == 0L & component), 9L)
+  expect_identical(sum(component), 9L)
   # ... and nothing is ever split: a catalogued glyph is one emoji or none
   expect_identical(sum(detected > 1L), 0L)
 
-  # 1252 rows carry U+FE0F, and 216 of those break when it is dropped. That is
+  # 1272 rows carry U+FE0F, and 216 of those break when it is dropped. That is
   # a different question from the 212 above, and the answer is a different
   # number; asserting both stops either being "reconciled" into the other.
   has_fe0f <- vapply(ref$emoji, function(g) 0xFE0F %in% utf8ToInt(g),
                      logical(1), USE.NAMES = FALSE)
-  expect_identical(sum(has_fe0f), 1252L)
+  expect_identical(sum(has_fe0f), 1272L)
   stripped <- vapply(ref$emoji[has_fe0f], function(g) {
     cp <- utf8ToInt(g); intToUtf8(cp[cp != 0xFE0F])
   }, character(1), USE.NAMES = FALSE)
@@ -4617,7 +4636,7 @@ test_that("the documented undetectable-spelling figures are the data's", {
     sum(lengths(tidyEmoji:::emoji_glyph_list(sl$emoji[scorable])) == 0L), 57L)
 
   # "Detection is the only thing affected -- the join is not."
-  undetectable <- ref$emoji[detected == 0L]
+  undetectable <- ref$emoji[detected == 0L & !component]
   expect_false(anyNA(as_emoji_name(undetectable)))
   expect_false(anyNA(as_emoji_type(undetectable)))
   expect_false(anyNA(tidyEmoji:::emoji_key(undetectable)))
@@ -4629,7 +4648,7 @@ test_that("the keycap selector goes in the middle, not at the end", {
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   detected <- lengths(tidyEmoji:::emoji_glyph_list(ref$emoji))
-  undetectable <- ref$emoji[detected == 0L]
+  undetectable <- ref$emoji[detected == 0L & ref$status != "component"]
 
   appended <- paste0(undetectable, "\uFE0F")
   inserted <- vapply(undetectable, function(g) {
@@ -5077,33 +5096,42 @@ test_that("the declared dependency floors cover the arguments the code uses", {
 # Round 52: the reproducibility claim, and the last of the roadmap's
 # "grep for other nchar() uses on user text" action item.
 
-test_that("the bundled crosswalks are what data-raw/crosswalks.R produces", {
-  # Every dataset's @source names the data-raw script that builds it, and the
-  # vignette says the crosswalks "are regenerated from the `emoji` package's
-  # catalogue ... by the scripts in the `data-raw/` directory". Nothing checked
-  # that. The two crosswalks
-  # derive purely from emoji::emojis, so they can be rebuilt here; the two
-  # lexicons need the network and are verified out of band.
+test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
+  # Every dataset's @source names the data-raw script that builds it. Since
+  # 0.6.0 that script reads Unicode's emoji-test.txt, committed beside it, so
+  # the whole build can be repeated here without the network: the catalogue
+  # in R/sysdata.rda, its provenance, and both crosswalks. The two lexicons
+  # need the network and are verified out of band.
   skip_on_cran()
   script <- testthat::test_path("..", "..", "data-raw", "crosswalks.R")
-  skip_if(!file.exists(script), "data-raw/ not available")
+  input <- testthat::test_path("..", "..", "data-raw", "emoji-test.txt")
+  skip_if(!file.exists(script) || !file.exists(input),
+          "data-raw/ not available")
   skip_if_not_installed("dplyr")
   skip_if_not_installed("tidyr")
 
-  wd <- getwd()
-  tmp <- file.path(tempdir(), "tidyEmoji-regen")
-  dir.create(file.path(tmp, "data"), recursive = TRUE, showWarnings = FALSE)
-  on.exit({ setwd(wd); unlink(tmp, recursive = TRUE) }, add = TRUE)
-  code <- readLines(script, warn = FALSE)
-  setwd(tmp)
+  old <- Sys.getenv(c("TIDYEMOJI_WRITE", "TIDYEMOJI_EMOJI_TEST",
+                      "TIDYEMOJI_FETCH"), unset = NA)
+  on.exit({
+    for (v in names(old)) {
+      if (is.na(old[[v]])) Sys.unsetenv(v) else
+        do.call(Sys.setenv, stats::setNames(list(old[[v]]), v))
+    }
+  }, add = TRUE)
+  Sys.setenv(TIDYEMOJI_WRITE = "false",
+             TIDYEMOJI_EMOJI_TEST = normalizePath(input),
+             TIDYEMOJI_FETCH = "false")
   env <- new.env(parent = globalenv())
-  suppressMessages(eval(parse(text = paste(code, collapse = "\n")), env))
+  suppressMessages(sys.source(script, envir = env))
 
-  for (nm in c("emoji_unicode_crosswalk", "category_unicode_crosswalk")) {
-    built <- get(nm, envir = env)
-    bundled <- get(nm, envir = asNamespace("tidyEmoji"))
-    expect_identical(built, bundled, info = nm)
+  ns <- asNamespace("tidyEmoji")
+  for (nm in c("emoji_unicode_crosswalk", "category_unicode_crosswalk",
+               ".emoji_catalogue", ".emoji_catalogue_meta")) {
+    expect_identical(get(nm, envir = env), get(nm, envir = ns), info = nm)
   }
+  # the version recorded is the one the file says it is
+  expect_identical(ns$.emoji_catalogue_meta$emoji_version, "18.0")
+  expect_identical(ns$.emoji_catalogue_meta$rows, 5244L)
 })
 
 test_that("every nchar() on user text feeds a documented code-point figure", {
@@ -5244,8 +5272,15 @@ test_that("every cross-row aggregator warns once, and names itself", {
 
 test_that("the staged detection figures are the ones the rules give", {
   skip_if_catalogue_moved()
+  # These are the 0.4.0 grapheme repair's figures, measured against the 5042
+  # spellings of the Emoji 16.0 table it was built on, and they stay quotable
+  # only if they stay reproducible. So: the 16.0 rows of the catalogue, and
+  # the detector's matches before the catalogue classifies them (0.6.0 stops
+  # counting the nine components, which is a separate change, pinned in
+  # test-regression-0.6.0.R).
   ref <- tidyEmoji:::emoji_reference()
-  G <- ref$emoji
+  G <- ref$emoji[tidyEmoji:::.emoji_version_num(ref$version) <= 16]
+  expect_identical(length(G), 5042L)
   Z <- "\u200D"
 
   # rule 1 on its own: UAX #29 GB11, merging two matches separated by one ZWJ
@@ -5268,7 +5303,7 @@ test_that("the staged detection figures are the ones the rules give", {
     m <- raw[[i]]
     if (nrow(m) < 2L) m else merge_gb11(m, G[i])
   })
-  now <- tidyEmoji:::.emoji_locations(G)
+  now <- tidyEmoji:::.emoji_matches(G)
 
   exact <- function(locs) {
     sum(vapply(seq_along(G), function(i) {
@@ -5397,7 +5432,7 @@ test_that("the README's chunks all run, including the unevaluated ones", {
   lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
   opens <- grep("^```[{]r", lines)
   closes <- grep("^```$", lines)
-  expect_gt(length(opens), 4L)
+  expect_gt(length(opens), 2L)
 
   env <- new.env(parent = globalenv())
   n_uneval <- 0L
@@ -5416,12 +5451,12 @@ test_that("the README's chunks all run, including the unevaluated ones", {
                     error = function(e) conditionMessage(e))
     expect_null(err, info = paste0("line ", a, ": ", lines[a]))
   }
-  # the unevaluated chunks are the whole point, so fail rather than pass
-  # vacuously if they are ever made evaluated or removed
-  expect_gt(n_uneval, 0L)
-  # and the objects the unevaluated chunks lean on really were built, so the
-  # loop was not quietly skipping the interesting half
-  expect_true(all(c("reviews", "posts", "scored") %in% ls(env)))
+  # The 0.6.0 README was cut to the house style's short form and shows only
+  # evaluated chunks, so the unevaluated ones this test was written for are
+  # gone; any that come back are run by the loop above. What has to hold is
+  # that the loop really ran the page: the example data was built.
+  expect_gte(n_uneval, 0L)
+  expect_true("reviews" %in% ls(env))
 })
 
 test_that("every vignette chunk parses, including the unevaluated ones", {
@@ -5495,13 +5530,20 @@ test_that("README.md has not drifted from README.Rmd's prose", {
     gsub("[\u2013\u2014]", "-", x)
   }
   prose <- smart(prose)
-  body <- smart(paste(out, collapse = " "))
+  # pandoc re-marks lists on the way to github_document ("* item" becomes
+  # "- item", "1. step" becomes "1.  step") and re-wraps them, so compare a
+  # list item's text without its marker, and both sides with their runs of
+  # whitespace collapsed
+  prose <- sub("^(\\*|-|[0-9]+\\.)\\s+", "", prose)
+  # and redraws a table's header rule to its own width
+  prose <- prose[!grepl("^\\|[-:| ]+\\|$", prose)]
+  squash <- function(x) gsub("\\s+", " ", x)
+  body <- squash(smart(paste(out, collapse = " ")))
   missing <- prose[!vapply(prose, function(l) {
-    grepl(l, body, fixed = TRUE) ||
-      grepl(paste(strsplit(l, "\\s+")[[1L]], collapse = "\\s+"), body)
+    grepl(squash(l), body, fixed = TRUE)
   }, logical(1))]
   expect_identical(missing, character(0))
-  expect_gt(length(prose), 40L)
+  expect_gt(length(prose), 20L)
 })
 
 # ---------------------------------------------------------------------------
@@ -5611,10 +5653,10 @@ test_that("every export works as the first call in a session", {
 test_that("emoji_cooccurrence differs from emoji_pairs exactly as documented", {
   pairs_args <- names(formals(emoji_pairs))
   cooc_args <- names(formals(emoji_cooccurrence))
-  expect_identical(setdiff(pairs_args, cooc_args), "directed")
+  expect_identical(setdiff(pairs_args, cooc_args), c("directed", "measure"))
   expect_identical(setdiff(cooc_args, pairs_args), "diagonal")
   expect_identical(intersect(pairs_args, cooc_args),
-                   c("data", "text", "doc_id", "sort"))
+                   c("data", "text", "doc_id", "sort", "presentation"))
 
   # so this is an error, and the help page now says why
   A <- "\U0001F600"; H <- "\U0001F60D"
@@ -6776,10 +6818,12 @@ test_that("emoji_incongruity_profile's statistics are the row gaps aggregated", 
 test_that("emoji_dfm holds up at its widest", {
   skip_if_catalogue_moved()
   # Runs on CRAN: it is deterministic and about two seconds, and a table
-  # 3791 columns wide is exactly the shape most likely to behave differently
-  # on a flavour we cannot test here.
+  # 3964 columns wide is exactly the shape most likely to behave differently
+  # on a flavour we cannot test here. The nine components are not emoji on
+  # their own, so they make no column.
   ref <- tidyEmoji:::emoji_reference()
-  canon <- ref$emoji[!duplicated(ref$key)]
+  canon <- ref$emoji[!duplicated(ref$key) & ref$status != "component"]
+  expect_identical(length(canon), 3963L)
   # one document containing every distinct emoji: the widest table possible
   one <- data.frame(text = paste(canon, collapse = " "),
                     stringsAsFactors = FALSE)
@@ -7249,9 +7293,10 @@ test_that("a version newer than the release table degrades, never errors", {
     when = as.Date("2024-01-01") + c(0L, 10L, 20L)
   )
   key_a <- E$emoji_key(A)
-  # "E18.0" is the spelling the UTS #51 data files use; "18.0" the stripped
-  # one; NA is what an upstream row with no version at all looks like
-  for (inject in list("18.0", "E18.0", "99.9", NA_character_)) {
+  # "E19.0" is the spelling the UTS #51 data files use; "19.0" the stripped
+  # one; NA is what a catalogue row with no version at all looks like. All
+  # three are newer than the release table, whose last row is 18.0.
+  for (inject in list("19.0", "E19.0", "99.9", NA_character_)) {
     ref <- real
     ref$version[ref$key == key_a] <- inject
     assign("reference", ref, envir = E$.tidyEmoji_cache)
@@ -7278,10 +7323,10 @@ test_that("a version newer than the release table degrades, never errors", {
     # the other glyph is unaffected
     expect_false(is.na(l$lag_days[l$emoji == B]), info = lbl)
 
-    # and the build's reported version follows the injected label numerically
-    uv <- emoji_unicode_version()
-    expect_identical(uv, switch(lbl, "18.0" = "18.0", "E18.0" = "18.0",
-                                "99.9" = "99.9", "16.0"), info = lbl)
+    # and the build's reported version is the catalogue file's own header,
+    # whatever the rows say: since 0.6.0 it is recorded when the data is
+    # built rather than inferred from the table at run time
+    expect_identical(emoji_unicode_version(), "18.0", info = lbl)
   }
 })
 
@@ -7547,14 +7592,14 @@ test_that("the lexicon coverage figures in emoji_sentiment_lexicon's Rd hold", {
   expect_identical(nrow(lex), 969L)
   expect_identical(sum(inref), 736L)
   expect_identical(sum(!inref), 233L)
-  expect_identical(length(unique(ref$key)), 3790L)
-  # "about 19%" of the reference table's distinct keys
-  expect_equal(round(100 * 736 / 3790), 19)
+  expect_identical(length(unique(ref$key)), 3972L)
+  # "about 19%" of the catalogue's distinct keys
+  expect_equal(round(100 * 736 / 3972), 19)
   rd <- rd_flat("emoji_sentiment_lexicon")
   expect_true(grepl("969 rows", rd, fixed = TRUE))
   expect_true(grepl("736", rd, fixed = TRUE))
   expect_true(grepl("233", rd, fixed = TRUE))
-  expect_true(grepl("3790", rd, fixed = TRUE))
+  expect_true(grepl("3972", rd, fixed = TRUE))
 })
 
 
@@ -7763,11 +7808,19 @@ test_that("top_n_emojis()'s two naming branches agree", {
   single <- stats::setNames(one$emoji_name, one$unicode)
   g <- names(single)
   expect_true(all(g %in% names(by_glyph)))
-  # 189 of the reference table's rows carry no alias, but canonicalisation
-  # matches on the codepoint key, so a glyph borrows the alias of its other
-  # spelling: no glyph ends up nameless in either branch
-  expect_false(anyNA(single))
-  expect_false(anyNA(many$emoji_name))
+  # 189 of the Emoji 16.0 rows carry no alias, but canonicalisation matches
+  # on the codepoint key, so a glyph borrows the alias of its other spelling:
+  # no 16.0 glyph ends up nameless in either branch. The 182 emoji added in
+  # 17.0 and 18.0 have no alias on any spelling, and both branches report
+  # NA for exactly those.
+  new_keys <- unique(ref$key[E$.emoji_version_num(ref$version) >= 17])
+  expect_identical(length(new_keys), 182L)
+  is_new <- E$emoji_key(names(single)) %in% new_keys
+  expect_false(anyNA(single[!is_new]))
+  expect_true(all(is.na(single[is_new])))
+  many_new <- E$emoji_key(many$unicode) %in% new_keys
+  expect_false(anyNA(many$emoji_name[!many_new]))
+  expect_true(all(is.na(many$emoji_name[many_new])))
   # the single name is the first expanded name, for every glyph
   offenders <- g[!vapply(g, function(k)
     identical(single[[k]], by_glyph[[k]][[1L]]), logical(1))]
@@ -7953,7 +8006,7 @@ test_that("emoji_provenance()$n_emoji is the reference table's row count", {
   # section now tells the reader to use instead
   n_keys <- length(unique(ref$key))
   expect_gt(p$n_emoji, n_keys)
-  expect_identical(p$n_emoji - n_keys, 1252L)
+  expect_identical(p$n_emoji - n_keys, 1272L)
   # the lexicon strings count rows the same way
   expect_true(grepl(paste0("(", nrow(tidyEmoji::emoji_sentiment_lexicon),
                            " emoji)"), p$sentiment_lexicon, fixed = TRUE))
@@ -7971,20 +8024,26 @@ test_that("no emoji is lost to an undetectable spelling", {
   det <- vapply(ref$emoji,
                 function(x) length(E$emoji_glyph_list(x)[[1L]]) > 0L,
                 logical(1), USE.NAMES = FALSE)
-  expect_identical(sum(!det), 212L)
-  expect_identical(sum(det), 4830L)
+  component <- ref$status == "component"
+  # the nine components are not emoji on their own, by design since 0.6.0,
+  # and are the only keys no spelling reaches
+  expect_identical(sum(!det & !component), 212L)
+  expect_identical(sum(!det & component), 9L)
+  expect_identical(sum(det), 5023L)
   # no key is reachable only via an undetectable spelling
-  orphaned <- setdiff(unique(ref$key[!det]), unique(ref$key[det]))
+  orphaned <- setdiff(unique(ref$key[!det & !component]),
+                      unique(ref$key[det]))
   expect_identical(orphaned, character())
-  expect_identical(length(unique(ref$key[det])), length(unique(ref$key)))
+  expect_identical(length(unique(ref$key[det])),
+                   length(unique(ref$key[!component])))
 })
 
 test_that("emoji_provenance()'s Rd names the quantity n_emoji counts", {
   skip_if_catalogue_moved()
   rd <- rd_flat("emoji_provenance")
   expect_true(grepl("spellings, not", rd, fixed = TRUE))
-  expect_true(grepl("3790", rd, fixed = TRUE))
-  expect_true(grepl("1252", rd, fixed = TRUE))
+  expect_true(grepl("3972", rd, fixed = TRUE))
+  expect_true(grepl("1272", rd, fixed = TRUE))
   expect_true(grepl("212", rd, fixed = TRUE))
   # the old wording claimed it was the detectable set
   expect_false(grepl("size of the detectable emoji set", rd, fixed = TRUE))
@@ -8696,31 +8755,33 @@ test_that("the documented figures still match the installed emoji release", {
       "doc_emoji_version()."))
 })
 
-test_that("the help pages name the emoji release the figures came from", {
-  # four pages quote the version in prose; they must agree with each other and
-  # with the constant above, or a reader cannot tell which catalogue a figure
-  # describes
-  want <- doc_emoji_version()
-  pages <- c("emoji_sentiment_lexicon", "emoji_provenance", "emoji_sanitize",
-             "emoji_unicode_crosswalk")
+test_that("the help pages name the catalogue the figures came from", {
+  # Since 0.6.0 the catalogue figures describe the bundled Unicode file, named
+  # as "Emoji 18.0", and the vocabulary figures the emoji package, named by
+  # its release. Five pages quote one or the other in prose; they must agree
+  # with the data, or a reader cannot tell which catalogue a figure describes.
+  cat_ver <- emoji_unicode_version()
+  pages <- c("emoji_sentiment_lexicon", "emoji_emotion_lexicon",
+             "emoji_provenance", "emoji_sanitize", "emoji_unicode_crosswalk")
   named <- character()
   for (p in pages) {
     rd <- rd_flat(p)
     if (is.na(rd)) next
-    if (grepl(paste0("emoji} ", want), rd, fixed = TRUE) ||
-        grepl(paste0("emoji ", want), rd, fixed = TRUE)) {
-      named <- c(named, p)
-    }
+    if (grepl(paste("Emoji", cat_ver), rd, fixed = TRUE)) named <- c(named, p)
+    # a package release named for the emoji package is the one the
+    # vocabulary figures came from
+    pkg <- unique(regmatches(
+      rd, gregexpr("emoji\\}? [0-9]+\\.[0-9]+\\.[0-9]+", rd))[[1L]])
+    expect_true(all(grepl(doc_emoji_version(), pkg, fixed = TRUE)), info = p)
+    # every Emoji version named is a real one, and none is newer than the
+    # catalogue
+    ev <- unique(regmatches(rd, gregexpr("Emoji [0-9]+\\.[0-9]", rd))[[1L]])
+    num <- as.numeric(sub("Emoji ", "", ev))
+    expect_true(all(sub("Emoji ", "", ev) %in% emoji_unicode_releases()$version),
+                info = p)
+    expect_true(all(num <= as.numeric(cat_ver)), info = p)
   }
-  # at least one page states it, and no page states a different release
-  expect_gt(length(named), 0L)
-  for (p in pages) {
-    rd <- rd_flat(p)
-    if (is.na(rd)) next
-    vers <- unique(regmatches(rd, gregexpr("[0-9]+\\.[0-9]+\\.[0-9]+", rd))[[1L]])
-    stale <- setdiff(vers, c(want, "1.0.0"))
-    expect_identical(stale, character(), info = p)
-  }
+  expect_gte(length(named), 3L)
 })
 
 test_that("the declared emoji floor is the release the figures came from", {
@@ -8752,8 +8813,10 @@ test_that("emoji_provenance() reports the release the figures assume", {
   E <- asNamespace("tidyEmoji")
   ref <- E$emoji_reference()
   expect_identical(p$n_emoji, nrow(ref))
-  expect_identical(nrow(ref), 5042L)
-  expect_identical(length(unique(ref$key)), 3790L)
+  expect_identical(nrow(ref), 5244L)
+  expect_identical(length(unique(ref$key)), 3972L)
+  expect_identical(p$unicode_emoji, "18.0")
+  expect_identical(p$unicode_emoji_date, as.Date("2026-04-30"))
 })
 
 
@@ -8999,7 +9062,7 @@ test_that("README.md's shown output is what the package now produces", {
   }
   fresh <- out_lines(file.path(wd, "README.md"))
   shipped <- out_lines(md)
-  expect_gt(length(shipped), 40L)          # the README really does show output
+  expect_gt(length(shipped), 15L)          # the README really does show output
   expect_identical(length(fresh), length(shipped))
   expect_identical(fresh, shipped)
 })
@@ -9550,14 +9613,15 @@ test_that("the cost figures on ?emoji_cooccurrence are arithmetic", {
   pairs <- function(n) n * (n - 1) / 2
   # the two the page quotes
   expect_identical(pairs(800), 319600)
-  expect_equal(round(pairs(3790) / 1e6, 1), 7.2)
-  # and 3790 is the catalogue's distinct-emoji count, not an invented ceiling
+  expect_equal(round(pairs(3963) / 1e6, 1), 7.9)
+  # and 3963 is the catalogue's distinct-emoji count, components left out
+  # because they are not emoji on their own, not an invented ceiling
   ref <- asNamespace("tidyEmoji")$emoji_reference()
-  expect_identical(length(unique(ref$key)), 3790L)
+  expect_identical(length(unique(ref$key[ref$status != "component"])), 3963L)
   rd <- rd_flat("emoji_cooccurrence")
   expect_match(rd, "319,600", fixed = TRUE)
-  expect_match(rd, "3790", fixed = TRUE)
-  expect_match(rd, "7.2 million", fixed = TRUE)
+  expect_match(rd, "3963", fixed = TRUE)
+  expect_match(rd, "7.9 million", fixed = TRUE)
 })
 
 
@@ -9569,18 +9633,21 @@ test_that("the cost figures on ?emoji_cooccurrence are arithmetic", {
 
 test_that("the alias figures on ?emoji_search hold", {
   skip_if_catalogue_moved()
-  # "189 of the catalogue's 5042 rows carry no GitHub-style alias at all, so a
-  # search that hits one (7 of the 198 rows emoji_search("face") returns, for
+  # "391 of the catalogue's 5244 rows carry no GitHub-style alias at all, so a
+  # search that hits one (9 of the 200 rows emoji_search("face") returns, for
   # instance) has nothing to put in that column"
   ref <- asNamespace("tidyEmoji")$emoji_reference()
-  expect_identical(sum(is.na(ref$shortcode)), 189L)
-  expect_identical(nrow(ref), 5042L)
+  expect_identical(sum(is.na(ref$shortcode)), 391L)
+  expect_identical(nrow(ref), 5244L)
+  # "202 of the 391 are the Emoji 17.0 and 18.0 additions"
+  new_rows <- asNamespace("tidyEmoji")$.emoji_version_num(ref$version) >= 17
+  expect_identical(sum(is.na(ref$shortcode) & new_rows), 202L)
   f <- emoji_search("face")
-  expect_identical(nrow(f), 198L)
-  expect_identical(sum(is.na(f$shortcode)), 7L)
+  expect_identical(nrow(f), 200L)
+  expect_identical(sum(is.na(f$shortcode)), 9L)
   rd <- rd_flat("emoji_search")
-  expect_match(rd, "189 of the catalogue's 5042 rows", fixed = TRUE)
-  expect_match(rd, "7 of the 198 rows", fixed = TRUE)
+  expect_match(rd, "391 of the catalogue's 5244 rows", fixed = TRUE)
+  expect_match(rd, "9 of the 200 rows", fixed = TRUE)
 })
 
 test_that("?emoji_density's figures describe the vignette corpus", {
@@ -10211,13 +10278,14 @@ test_that("the four documented figures no test had ever held to hold", {
   # checkable ones, pinned here with the sentence each comes from.
   skip_if_catalogue_moved()
   ref <- asNamespace("tidyEmoji")$emoji_reference()
-  e <- emoji::emojis
+  e <- ref
 
-  # ?tidyEmoji: "Only 259 of the 676 possible pairs are real, the rows of the
-  # reference table whose `subgroup` is "country-flag"; its three
-  # "subdivision-flag" rows are tag sequences, not pairs". The page used to
-  # say 262 by adding those three in, and this test summed the two subgroups
-  # without ever asking which rows are regional-indicator pairs.
+  # ?tidyEmoji: "Only 259 of the 676 possible pairs are flags in the
+  # catalogue ... Subdivision flags are tag sequences, not pairs". The page
+  # once said 262 by adding the three subdivision rows in, and this test
+  # summed the two subgroups without ever asking which rows are
+  # regional-indicator pairs. (The 0.6.0 roadmap then claimed Emoji 18.0 has
+  # four subdivision flags; the 18.0 file has three.)
   is_ri_pair <- vapply(e$emoji, function(s) {
     cp <- utf8ToInt(s)
     length(cp) == 2L && all(cp >= 0x1F1E6 & cp <= 0x1F1FF)
@@ -10228,20 +10296,20 @@ test_that("the four documented figures no test had ever held to hold", {
   expect_identical(sum(e$subgroup == "subdivision-flag"), 3L)
   expect_false(any(is_ri_pair[e$subgroup == "subdivision-flag"]))
   pkg <- rd_flat("tidyEmoji-package")
-  expect_match(pkg, "Only 259 of the 676 possible pairs are real",
+  expect_match(pkg, "Only 259 of the 676 possible pairs are flags",
                fixed = TRUE)
 
-  # ?emoji_to_text: "returns an identical code-point key for all 5042 entries
-  # and identical bytes for 79% of them. The other 1040 differ by U+FE0F
+  # ?emoji_to_text: "returns an identical code-point key for all 5244 entries
+  # and identical bytes for 80% of them. The other 1040 differ by U+FE0F
   # alone, never by more" and "A second round trip changes nothing".
-  expect_identical(nrow(ref), 5042L)
+  expect_identical(nrow(ref), 5244L)
   d <- data.frame(t = ref$emoji, stringsAsFactors = FALSE)
   back <- text_to_emoji(emoji_to_text(d, t, format = "shortcode"), t)$t
   ekey <- asNamespace("tidyEmoji")$emoji_key
   expect_identical(ekey(back), ekey(ref$emoji))
   differ <- back != ref$emoji
   expect_identical(sum(differ), 1040L)
-  expect_equal(round(100 * mean(!differ)), 79)
+  expect_equal(round(100 * mean(!differ)), 80)
   # cp[cp != 0xFE0F], not setdiff(): setdiff() also drops repeated code
   # points, so two ZWJ sequences with the same set of code points in another
   # order or multiplicity would have compared equal
@@ -10270,9 +10338,9 @@ test_that("the four documented figures no test had ever held to hold", {
 
   # ?emoji_unicode_version: the example in @return is the answer, not a
   # remembered one from an older catalogue
-  expect_identical(emoji_unicode_version(), "16.0")
+  expect_identical(emoji_unicode_version(), "18.0")
   expect_match(rd_flat("emoji_unicode_version"),
-               "\\code{\"16.0\"} with \\pkg{emoji} 16.0.0", fixed = TRUE)
+               "such as \\code{\"18.0\"}", fixed = TRUE)
 })
 
 test_that("the bundled corpus carries no direct identifiers", {
@@ -10406,11 +10474,13 @@ test_that("a top_n of zero returns a typed zero-row result", {
 
   z <- emoji_trend(d, text, when, top_n = 0)
   expect_identical(nrow(z), 0L)
-  expect_identical(names(z), c(".period", "emoji", "name", "n", "share"))
+  expect_identical(names(z), c(".period", "emoji", "name", "n", "n_period",
+                               "share"))
   expect_s3_class(z$.period, "Date")
   expect_type(z$emoji, "character")
   expect_type(z$name, "character")
   expect_type(z$n, "integer")
+  expect_type(z$n_period, "integer")
   expect_type(z$share, "double")
   # the types are the ones a populated call gives, so the two bind
   nz <- emoji_trend(d, text, when, top_n = 1)

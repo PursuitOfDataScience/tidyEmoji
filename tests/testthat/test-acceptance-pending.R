@@ -9,73 +9,50 @@
 # release that shipped 0.5.0 and would have to be rewritten at every release
 # whether or not the verb had landed. When one does land, move its test into
 # the regression file for the version that shipped it and delete the guard.
+# 0.6.0 moved six out this way: emoji_country(), emoji_coverage(),
+# presentation = "any", emoji_keywords(), as_emoji_canonical() and
+# emoji_identical(), all now in test-regression-0.6.0.R.
 
 smile <- intToUtf8(0x1F600)
-laugh <- intToUtf8(0x1F602)
+party <- intToUtf8(0x1F389)
 
 has_verb <- function(nm) {
   nm %in% getNamespaceExports("tidyEmoji")
 }
 
 
-test_that("an invalid regional-indicator pair gets no country code", {
-  skip_if_not(has_verb("emoji_country"),
-              "emoji_country() is not implemented yet")
-  xx <- intToUtf8(c(0x1F1FD, 0x1F1FD))                  # 'XX', not a country
-  out <- emoji_country(tibble::tibble(text = paste("a", xx, "b")), text)
-  expect_true(is.na(out$.emoji_iso2[1]))
-})
-
 test_that("an orphan skin-tone modifier is accounted for, not counted", {
   skip_if_not(has_verb("emoji_skin_tone"),
               "emoji_skin_tone() is not implemented yet")
-  # A tone modifier on a base that cannot take one.
+  # A tone modifier on a base that cannot take one. 0.6.0 stopped counting
+  # the swatch as an emoji; the identity verbs still have to report it.
   orphan <- paste0(smile, intToUtf8(0x1F3FB))
   out <- emoji_skin_tone(tibble::tibble(text = paste("a", orphan, "b")), text)
   expect_equal(out$.emoji_n_orphan_modifiers[1], 1L)
   expect_equal(out$.emoji_n_modified[1], 0L)
 })
 
-test_that("emoji_coverage() reports what a lexicon could not score", {
-  skip_if_not(has_verb("emoji_coverage"),
-              "emoji_coverage() is not implemented yet")
-  d <- tibble::tibble(text = c(paste("hi", smile),
-                               paste("new", intToUtf8(0x1F97A)),
-                               "none"))
-  out <- emoji_coverage(d, text, lexicon = "sentiment")
-  expect_equal(out$n_occurrences, 2L)
-  expect_equal(out$n_scoreable, 1L)
-  expect_equal(out$coverage_rate, 0.5)
+test_that("emoji_runs() segments spans and flags reduplication", {
+  skip_if_not(has_verb("emoji_runs"), "emoji_runs() is not implemented yet")
+  d <- tibble::tibble(text = c(
+    paste0("wow ", smile, smile, smile),   # one run, length 3, reduplication
+    paste0(smile, " ok ", party),          # two runs, length 1 each
+    paste0(smile, party)                   # one run, length 2, not reduplication
+  ))
+  out <- emoji_runs(d, text)
+  expect_equal(nrow(out), 4L)
+  expect_equal(out$.run_length, c(3L, 1L, 1L, 2L))
+  expect_equal(out$.run_is_reduplication, c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(out$.run_position[1], "END")
 })
 
-test_that("presentation = 'any' reaches text-presentation glyphs", {
-  skip_if_not("presentation" %in% names(formals(emoji_summary)),
-              "a presentation = argument is not implemented yet")
-  bare <- intToUtf8(0x2764)               # U+2764 with no U+FE0F
-  d <- tibble::tibble(text = paste("bare", bare, "heart"))
-  expect_equal(emoji_summary(d, text, presentation = "emoji")$n_with_emoji, 0L)
-  expect_equal(emoji_summary(d, text, presentation = "any")$n_with_emoji, 1L)
-})
-
-test_that("emoji_keywords() and emoji_find() search the bundled keyword surface", {
-  skip_if_not(has_verb("emoji_keywords"),
-              "emoji_keywords() is not implemented yet")
-  kw <- emoji_keywords(smile)
-  expect_s3_class(kw, "tbl_df")
-  expect_true(nrow(kw) > 0)
-})
-
-test_that("as_emoji_canonical() resolves both spellings to one", {
-  skip_if_not(has_verb("as_emoji_canonical"),
-              "as_emoji_canonical() is not implemented yet")
-  expect_identical(as_emoji_canonical(intToUtf8(0x2764)),
-                   as_emoji_canonical(intToUtf8(c(0x2764, 0xFE0F))))
-})
-
-test_that("emoji_identical() compares glyphs by codepoint identity", {
-  skip_if_not(has_verb("emoji_identical"),
-              "emoji_identical() is not implemented yet")
-  expect_true(emoji_identical(intToUtf8(0x2764),
-                              intToUtf8(c(0x2764, 0xFE0F))))
-  expect_false(emoji_identical(smile, laugh))
+test_that("emoji_sentiment_role() classifies a mitigation", {
+  skip_if_not(has_verb("emoji_sentiment_role"),
+              "emoji_sentiment_role() is not implemented yet")
+  d <- tibble::tibble(text = paste("great, another delay", intToUtf8(0x1F621)))
+  out <- emoji_sentiment_role(d, text,
+                              text_score = 0.6,           # with the emoji
+                              text_score_without = 0.8)   # without it
+  expect_equal(out$.emoji_role[1], "mitigation")
+  expect_true(out$.emoji_state[1] %in% c("keep", "add_negative"))
 })

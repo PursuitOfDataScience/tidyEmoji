@@ -4,7 +4,13 @@
 \alias{emoji_sentiment}
 \title{Score the sentiment of the emoji in each row}
 \usage{
-emoji_sentiment(data, text, lexicon = "novak2015", se = FALSE)
+emoji_sentiment(
+  data,
+  text,
+  lexicon = "novak2015",
+  se = FALSE,
+  presentation = "emoji"
+)
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -31,6 +37,28 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \item{se}{If \code{TRUE}, also return \code{.emoji_sentiment_se}, the standard error of
 the row's mean sentiment. Requires the bundled \code{"novak2015"} lexicon.
 Default \code{FALSE}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n} (the number of
@@ -58,6 +86,17 @@ emoji in your text, so they are neither counted nor scored. Supply the
 emoji-presentation (qualified) form and it resolves normally. See
 \link{emoji_sentiment_lexicon} for the full picture.
 }
+\section{Language and culture}{
+
+The scores are not language-neutral. The bundled sentiment lexicon was
+annotated on tweets in 13 European languages and the emotion lexicon on
+English ones, and emoji use differs measurably across languages
+(Cross-lingual Variations in Emoji Use, EMNLP 2024), so a glyph's score
+describes how those annotators read it. For text from another language
+community, register a lexicon built there (see \code{\link[=register_emoji_lexicon]{register_emoji_lexicon()}})
+and report \code{\link[=emoji_coverage]{emoji_coverage()}} beside the result.
+}
+
 \section{Uncertainty}{
 
 A glyph annotated eight times should not carry the same authority as one
@@ -85,3 +124,4 @@ of Emojis. PLoS ONE 10(12): e0144296. \doi{10.1371/journal.pone.0144296}
 \code{\link[=emoji_score]{emoji_score()}} for scoring against any lexicon; \code{\link[=emoji_emotion]{emoji_emotion()}} for
 discrete emotions; \code{\link[=emoji_ambiguity]{emoji_ambiguity()}} for annotator disagreement.
 }
+\concept{sentiment}

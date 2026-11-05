@@ -54,21 +54,23 @@ which ignores \code{U+FE0F}, so an unqualified glyph and its fully-qualified for
 share one shortcode and only one of the two spellings can come back.
 Feeding the whole emoji catalogue through
 \code{emoji_to_text(format = "shortcode")} and back returns an identical
-code-point key for all 5042 entries and identical bytes for 79\% of them.
+code-point key for all 5244 entries and identical bytes for 80\% of them.
 The other 1040 differ \strong{by \code{U+FE0F} alone, never by more}: they come back
 as the spelling this verb's shortcode table carries. A second round trip
 changes nothing, so the result is stable either way -- but compare with
-\code{emoji_key()}, never with string equality.
+\code{emoji_key()}, never with string equality. The 202 spellings added in
+Emoji 17.0 and 18.0 are among the identical ones for a duller reason: they
+have no shortcode, so \code{\link[=emoji_to_text]{emoji_to_text()}} left them in place.
 
-Which 79\% is \emph{not} the same question as which were already fully qualified,
+Which 80\% is \emph{not} the same question as which were already fully qualified,
 and the two sets genuinely differ in both directions. The bare heart
 (\code{U+2764}) survives unchanged, because that unqualified spelling is the one
 \verb{:heart:} maps to; the already-qualified man detective
 (\verb{U+1F575 U+FE0F U+200D U+2642}) does not, because it comes back with a
 second selector on the gender sign. If your text holds the \emph{canonical}
 spelling of each emoji -- what a keyboard emits -- the round trip is
-byte-exact for all 3790 of them; see \code{\link[=emoji_sanitize]{emoji_sanitize()}}, which tabulates
-both denominators.
+byte-exact for all 3790 that have a shortcode; see \code{\link[=emoji_sanitize]{emoji_sanitize()}},
+which tabulates both denominators.
 }
 \examples{
 df <- data.frame(text = "hi :grinning: bye :waving_hand:")
@@ -83,3 +85,4 @@ text_to_emoji(data.frame(text = "https://example.org at 10:30 :grinning:"),
 resolves a bare string by Unicode name first and so differs from
 this verb on 17 strings that name one emoji and alias another.
 }
+\concept{translation}

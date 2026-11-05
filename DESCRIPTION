@@ -2,7 +2,7 @@ Package: tidyEmoji
 Type: Package
 Title: Discover, Count, Categorise, Score, Translate and Relate Emoji in
     Text
-Version: 0.5.0
+Version: 0.6.0
 Authors@R:
     c(person(given = "Youzhi",
              family = "Yu",
@@ -22,7 +22,11 @@ Description: A tidy toolkit for working with the emoji in any text column, such
     quantifies how much annotators disagreed about an emoji (interpretation
     risk), extracts the words around each emoji, tracks emoji use over time,
     measures text-emoji sentiment mismatch, and applies explicit
-    emoji-preprocessing policies for language-model pipelines. The
+    emoji-preprocessing policies for language-model pipelines. Its emoji
+    catalogue is the Unicode emoji test data, bundled and current to Emoji
+    18.0, so it can also say what a glyph is, map flag emoji to ISO 3166
+    codes, report how much of a corpus each lexicon can score, and read
+    reaction tallies as well as text. The
     bundled emoji sentiment lexicon is from the Emoji
     Sentiment Ranking of Kralj Novak et al. (2015)
     <doi:10.1371/journal.pone.0144296>, released under CC BY-SA 4.0; the emotion
@@ -46,6 +50,7 @@ Imports:
     lifecycle (>= 1.0.3),
     rlang,
     stats,
+    stringi,
     tibble,
     tidyr (>= 1.3.0),
     utils
@@ -59,6 +64,7 @@ Suggests:
     ggplot2,
     readr (>= 2.0.0),
     forcats,
-    stringr
+    stringr,
+    igraph
 Config/testthat/edition: 3
 VignetteBuilder: knitr

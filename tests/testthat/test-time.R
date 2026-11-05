@@ -30,7 +30,7 @@ test_that("emoji_unicode_version reports a parseable version", {
 
 test_that("emoji_trend returns a complete period x emoji grid", {
   out <- emoji_trend(df, text, when)
-  expect_named(out, c(".period", "emoji", "name", "n", "share"))
+  expect_named(out, c(".period", "emoji", "name", "n", "n_period", "share"))
   expect_s3_class(out$.period, "Date")
   expect_equal(nrow(out), 4L)                 # 2 periods x 2 emoji
   expect_equal(sort(unique(out$.period)),
@@ -67,7 +67,7 @@ test_that("emoji_trend drops rows with unusable times", {
   none <- emoji_trend(data.frame(when = as.Date("2024-01-01"), text = "plain"),
                       text, when)
   expect_equal(nrow(none), 0L)
-  expect_named(none, c(".period", "emoji", "name", "n", "share"))
+  expect_named(none, c(".period", "emoji", "name", "n", "n_period", "share"))
 })
 
 test_that("emoji_turnover compares consecutive periods", {

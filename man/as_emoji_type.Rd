@@ -33,3 +33,4 @@ as_emoji_type(c("\U0001f600", "\U0001f44d", "\U0001f355", "\u2764\ufe0f"))
 \code{\link[=emoji_type]{emoji_type()}} for the data-frame verb, \code{\link[=emoji_faceness]{emoji_faceness()}} for the
 per-row share, \code{\link[=emoji_categorize]{emoji_categorize()}} for the raw Unicode categories.
 }
+\concept{categories and types}

@@ -4,7 +4,7 @@
 \alias{emoji_density}
 \title{Emoji density per character and per token}
 \usage{
-emoji_density(data, text)
+emoji_density(data, text, presentation = "emoji")
 }
 \arguments{
 \item{data}{A data frame or tibble containing a text column. Grouped data
@@ -22,13 +22,40 @@ deparses it and the emoji found would be in the code rather than in your
 data. What counts as an emoji is the same in every verb; see the
 \emph{Detection} section of \link{tidyEmoji} for the one case that surprises
 people, code points that are emoji only when they carry \code{U+FE0F}.}
+
+\item{presentation}{Which code points count as emoji: \code{"emoji"} (the
+default) or \code{"any"}.
+\itemize{
+\item \code{"emoji"} requires emoji presentation, so \verb{U+2764 U+FE0F} is an emoji
+and the bare \code{U+2764} is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.
+\item \code{"any"} also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, \verb{U+263A}, \code{U+2714}, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (\verb{U+00A9}, \verb{U+00AE},
+\code{U+2122}), which are typography far more often than they are emoji.
+}
+
+\code{"any"} only ever adds occurrences: everything \code{"emoji"} finds, it finds
+too, in the same place. \code{\link[=emoji_coverage]{emoji_coverage()}} reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.}
 }
 \value{
-\code{data}, as a tibble, with added columns \code{.emoji_n},
-\code{.emoji_per_char} (emoji per character, i.e. per code point, of text) and
-\code{.emoji_per_token} (emoji per whitespace-delimited token). A token is a
-maximal run of characters outside Unicode's \code{White_Space} property; see
-\code{\link[=emoji_ratio]{emoji_ratio()}} for the exact set, which does not vary with the locale.
+\code{data}, as a tibble, with added columns \code{.emoji_n}, \code{.emoji_n_char}
+(characters, i.e. code points, of text), \code{.emoji_n_token}
+(whitespace-delimited tokens), \code{.emoji_per_char} (emoji per character,
+i.e. per code point: \code{.emoji_n / .emoji_n_char}) and \code{.emoji_per_token}
+(\code{.emoji_n / .emoji_n_token}). A
+token is a maximal run of characters outside Unicode's \code{White_Space}
+property; see \code{\link[=emoji_ratio]{emoji_ratio()}} for the exact set, which does not vary with
+the locale. An \code{NA} text has \code{.emoji_n = 0} and \code{NA} for both
+denominators and both rates, since its length is not known; an empty
+text has denominators of \code{0} and rates of \code{NA}.
 }
 \description{
 \code{emoji_density()} measures how emoji-heavy each text is: the number of
@@ -50,6 +77,11 @@ the one \code{\link[=emoji_position]{emoji_position()}} uses: \code{.emoji_rel_p
 one position, because a proportion of the message has to. If you want a
 density that does not move with an emoji's internal length,
 \code{.emoji_per_token} is immune -- all three examples above give 0.5.
+
+Both rates ship with the counts they were computed from, \code{.emoji_n} over
+\code{.emoji_n_char} and over \code{.emoji_n_token}, so a count model can be fitted to
+the counts with the denominator as its exposure, rather than a linear model
+to the quotient. See \emph{Rates and their denominators} in \link{tidyEmoji}.
 }
 \examples{
 df <- data.frame(text = c("hi \U0001f600", "\U0001f600\U0001f600", "plain"))
@@ -58,3 +90,5 @@ emoji_density(df, text)
 \seealso{
 \code{\link[=emoji_position]{emoji_position()}}, \code{\link[=emoji_ratio]{emoji_ratio()}}.
 }
+\concept{position and intensity}
+\concept{rates and denominators}

@@ -13,10 +13,14 @@
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f600", "\U0001f621"))
 #' emoji_frequency(df, text)
+#' @concept counting
+#' @concept LLM output auditing
 #' @export
-emoji_frequency <- function(data, text) {
+emoji_frequency <- function(data, text, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   .emoji_warn_grouped(data, "emoji_frequency", "0.2.1")
-  glyphs <- unlist(emoji_glyph_list(.emoji_text_col(data, {{ text }})),
+  glyphs <- unlist(emoji_glyph_list(.emoji_text_col(data, {{ text }}),
+                                    presentation),
                    use.names = FALSE)
   if (!length(glyphs)) {
     return(tibble::tibble(emoji = character(), name = character(),
@@ -70,9 +74,12 @@ emoji_frequency <- function(data, text) {
 #' @examples
 #' df <- data.frame(text = c("\U0001f600\U0001f600\U0001f3c1", "\U0001f621"))
 #' top_n_emojis(df, text, n = 2)
+#' @concept counting
 #' @export
 top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
-                         duplicated_unicode = lifecycle::deprecated()) {
+                         duplicated_unicode = lifecycle::deprecated(),
+                         presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   if (!.emoji_is_count(n, finite = FALSE)) {
     # head(x, -1) silently drops the last row rather than erroring, and
     # head(x, 2.5) silently returns two, so either mistake would have returned
@@ -112,7 +119,7 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
     data <- dplyr::ungroup(data)
   }
 
-  freq <- emoji_frequency(data, {{ text }})
+  freq <- emoji_frequency(data, {{ text }}, presentation = presentation)
 
   # n counts distinct emoji: take head before expanding names
   freq_head <- utils::head(freq, n)

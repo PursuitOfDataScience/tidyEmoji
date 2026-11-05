@@ -33,6 +33,16 @@ emoji_ambiguity_table <- function() {
     # including NA, alone.
     ent <- ent + 0
     gini <- 1 - rowSums(p^2)
+    # Polarisation: the expected absolute difference between two annotations
+    # drawn at random, scoring negative -1, neutral 0, positive 1. Entropy and
+    # Gini are nominal and cannot see the order of the three classes, so they
+    # score a 50/0/50 split (half negative, half positive) exactly as they
+    # score a 50/50/0 one (half negative, half neutral); this gives 1 and 0.5.
+    # E|X - X'| = sum_ij p_i p_j |x_i - x_j| has the closed form below, and
+    # for three equally spaced classes it equals Berry and Mielke's index of
+    # ordinal variation and 1 - l^2 for Blair and Lacy's l, so those rank the
+    # lexicon identically and are not separate measures here.
+    polar <- 2 * (p_neg * p_neu + p_neu * p_pos + 2 * p_neg * p_pos)
     # score = (positive - negative) / n, and its binomial-style standard error
     # from the same counts: Var(X) = E[X^2] - E[X]^2 with X in {-1, 0, 1}.
     score <- p_pos - p_neg
@@ -48,6 +58,7 @@ emoji_ambiguity_table <- function() {
       p_pos = p_pos,
       entropy = ent,
       gini = gini,
+      polarisation = polar,
       neutral_share = p_neu,
       ci_width = 2 * stats::qnorm(0.975) * se,
       se = se
@@ -67,7 +78,7 @@ emoji_sentiment_se_map <- function() {
 
 # The ambiguity measures a user may ask for, in one place.
 emoji_ambiguity_measures <- function() {
-  c("entropy", "gini", "neutral_share", "ci_width")
+  c("entropy", "gini", "polarisation", "neutral_share", "ci_width")
 }
 
 
@@ -82,7 +93,7 @@ emoji_ambiguity_measures <- function() {
 #' than described as a caveat.
 #'
 #' @details
-#' The four measures are computed from the annotation shares
+#' The five measures are computed from the annotation shares
 #' `(p_neg, p_neu, p_pos)`:
 #'
 #' * `"entropy"` (the default) is Shannon entropy in nats: 0 when the
@@ -90,6 +101,10 @@ emoji_ambiguity_measures <- function() {
 #'   three ways.
 #' * `"gini"` is the Gini impurity, `1 - sum(p^2)`: 0 when unanimous, 2/3 at
 #'   maximum disagreement.
+#' * `"polarisation"` is the expected absolute difference between two
+#'   annotations drawn at random, scoring negative as -1, neutral as 0 and
+#'   positive as 1: 0 when unanimous, 1 when the annotators split evenly
+#'   between the two poles. See *Polarised or merely uncertain?* below.
 #' * `"neutral_share"` is `p_neu` on its own, for the "is this emoji simply
 #'   uninformative?" question.
 #' * `"ci_width"` is the width of a 95% Wald interval around the glyph's
@@ -99,6 +114,47 @@ emoji_ambiguity_measures <- function() {
 #'
 #' `rank` is always computed over the whole lexicon (1 = most ambiguous), so a
 #' rank keeps its meaning when `x` selects a handful of glyphs.
+#'
+#' @section Polarised or merely uncertain?:
+#' The three annotation classes are **ordered** (negative, then neutral, then
+#' positive), and entropy and Gini impurity are **nominal** statistics that
+#' ignore the order. So they cannot tell an emoji whose readers split
+#' between the two poles, the one that causes real miscommunication, from one
+#' whose readers merely hedged:
+#'
+#' | Annotation split | `entropy` | `gini` | `polarisation` |
+#' |---|---|---|---|
+#' | 50% negative, 0% neutral, 50% positive | 0.693 | 0.500 | **1.00** |
+#' | 50% negative, 50% neutral, 0% positive | 0.693 | 0.500 | **0.50** |
+#'
+#' Identical on both nominal measures, and twice apart on the ordinal one.
+#' Across the whole lexicon the rankings mostly agree (Spearman 0.96 between
+#' entropy and polarisation), which is why the difference is easy to miss, and
+#' they part company exactly where a user looks: the face with open mouth and
+#' cold sweat, with 302 annotations, is at rank 6 of 969 by polarisation and
+#' at rank 156 by entropy. The default stays `"entropy"`, because changing it would
+#' silently rewrite every ranking already published with it; ask for
+#' `"polarisation"` when the question is "which emoji will readers take in
+#' opposite directions?".
+#'
+#' `"polarisation"` is the statistic Miller et al. (2016) used, rescaled. They
+#' had each rater score a rendering from -5 to +5 and averaged the absolute
+#' difference over pairs of raters, so their misconstrual score runs from 0
+#' to 10 on a scale five times as wide as this one, and averages over pairs
+#' of *different* raters, which inflates it for small groups by `n / (n - 1)`.
+#' The value here is the large-sample version, computed from the shares like
+#' entropy and Gini are, so it does not reward thin annotation. For three
+#' equally spaced classes it coincides with Berry and Mielke's index of
+#' ordinal variation and with `1 - l^2` for Blair and Lacy's `l`, so those
+#' would rank the lexicon identically and are not offered separately. For a
+#' rating scale wider than three points, \pkg{agrmt} implements them, and
+#' Leik's D, in general.
+#'
+#' The obvious objection to any context-free ambiguity score is that emoji are
+#' read in context. Miller et al. (2017) tested exactly that, with 2,482
+#' participants, and found that the surrounding text does not substantially
+#' reduce the potential for miscommunication. That is the case for reading an
+#' emoji's disagreement off its annotations at all.
 #'
 #' **Read `n_annotations` before you read the ranking.** The lexicon's
 #' annotation counts are wildly uneven -- the median glyph has 18, and 69% have
@@ -151,7 +207,8 @@ emoji_ambiguity_measures <- function() {
 #'   `NULL`, returns every emoji in the lexicon, most ambiguous first. Glyphs
 #'   absent from the lexicon come back with `NA` statistics.
 #' @param measure Which ambiguity statistic to put in the `ambiguity` column:
-#'   one of `"entropy"` (default), `"gini"`, `"neutral_share"` or `"ci_width"`.
+#'   one of `"entropy"` (default), `"gini"`, `"polarisation"`,
+#'   `"neutral_share"` or `"ci_width"`.
 #' @return A tibble with columns `emoji`, `key` (the codepoint-normalised join
 #'   key), `n_annotations`, `p_neg`, `p_neu`, `p_pos`, `ambiguity` and `rank`.
 #'   `rank` is `1` for the most ambiguous emoji; glyphs with identical
@@ -164,6 +221,16 @@ emoji_ambiguity_measures <- function() {
 #' @references Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L,
 #'   Hecht B (2016). "Blissfully Happy" or "Ready to Fight": Varying
 #'   Interpretations of Emoji. *ICWSM 2016*.
+#'
+#'   Miller H, Kluver D, Thebault-Spieker J, Terveen L, Hecht B (2017).
+#'   Understanding Emoji Ambiguity in Context: The Role of Text in
+#'   Emoji-Related Miscommunication. *ICWSM 2017*.
+#'
+#'   Blair J, Lacy MG (2000). Statistics of Ordinal Variation. *Sociological
+#'   Methods & Research* 28(3), 251-280.
+#'
+#'   Berry KJ, Mielke PW (1992). Assessment of Variation in Ordinal Data.
+#'   *Perceptual and Motor Skills* 74(1), 63-66.
 #' @seealso [emoji_risk()] for the per-row version, [emoji_flag_ambiguous()]
 #'   for the emoji in your own corpus, and [emoji_sentiment()] with
 #'   `se = TRUE` for the uncertainty around a score.
@@ -177,6 +244,7 @@ emoji_ambiguity_measures <- function() {
 #'
 #' emoji_ambiguity(c("\U0001f602", "\U0001f643"))
 #' head(emoji_ambiguity(measure = "ci_width"))
+#' @concept ambiguity and misinterpretation
 #' @export
 emoji_ambiguity <- function(x = NULL, measure = "entropy") {
   measure <- .emoji_match_arg(measure, emoji_ambiguity_measures(), "measure")
@@ -245,9 +313,13 @@ emoji_ambiguity <- function(x = NULL, measure = "entropy") {
 #' @examples
 #' df <- data.frame(text = c("thanks \U0001f643", "great \U0001f600", "plain"))
 #' emoji_risk(df, text)
+#' @concept ambiguity and misinterpretation
+#' @concept content QA
 #' @export
-emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
+emoji_risk <- function(data, text, measure = "entropy", threshold = NULL,
+                       presentation = "emoji") {
   measure <- .emoji_match_arg(measure, emoji_ambiguity_measures(), "measure")
+  presentation <- .emoji_check_presentation(presentation)
   tbl <- emoji_ambiguity_table()
   if (is.null(threshold)) {
     threshold <- unname(stats::quantile(tbl[[measure]], 0.75, na.rm = TRUE))
@@ -258,7 +330,7 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
   }
   amb_map <- stats::setNames(tbl[[measure]], tbl$key)
 
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
   key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
   vals <- lapply(lst, function(g) {
@@ -320,10 +392,13 @@ emoji_risk <- function(data, text, measure = "entropy", threshold = NULL) {
 #' df <- data.frame(text = c("ok \U0001f643", "yay \U0001f600 \U0001f643",
 #'                           "hmm \U0001f612"))
 #' emoji_flag_ambiguous(df, text, top_n = 3)
+#' @concept ambiguity and misinterpretation
+#' @concept content QA
 #' @export
 emoji_flag_ambiguous <- function(data, text, top_n = 10,
-                                 measure = "entropy") {
+                                 measure = "entropy", presentation = "emoji") {
   measure <- .emoji_match_arg(measure, emoji_ambiguity_measures(), "measure")
+  presentation <- .emoji_check_presentation(presentation)
   if (!is.null(top_n) && !.emoji_is_count(top_n, finite = FALSE)) {
     stop("`top_n` must be a single non-negative whole number, ",
          "or NULL for all.", call. = FALSE)
@@ -333,7 +408,7 @@ emoji_flag_ambiguous <- function(data, text, top_n = 10,
   if (.emoji_warn_grouped(data, "emoji_flag_ambiguous", "0.4.0")) {
     data <- dplyr::ungroup(data)
   }
-  freq <- emoji_frequency(data, {{ text }})
+  freq <- emoji_frequency(data, {{ text }}, presentation = presentation)
   amb <- emoji_ambiguity(measure = measure)
   idx <- match(emoji_key(freq$emoji), amb$key)
   out <- tibble::tibble(

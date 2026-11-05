@@ -507,11 +507,12 @@ test_that("the CITATION header names every export that reads a bundled lexicon",
   emo <- ex[vapply(ex, reaches, logical(1), target = "emoji_emotion_map")]
   # pinned, so an empty call graph cannot pass the loops below
   expect_setequal(sent, c("emoji_ambiguity", "emoji_congruence",
+                          "emoji_coverage",
                           "emoji_flag_ambiguous", "emoji_incongruity",
                           "emoji_incongruity_profile", "emoji_risk",
                           "emoji_score", "emoji_sentiment", "emoji_tokens"))
-  expect_setequal(emo, c("emoji_emotion", "emoji_emotion_label",
-                         "emoji_score"))
+  expect_setequal(emo, c("emoji_coverage", "emoji_emotion",
+                         "emoji_emotion_label", "emoji_score"))
   hdr <- paste(attr(utils::citation("tidyEmoji"), "mheader"), collapse = " ")
   hdr <- gsub("[[:space:]]+", " ", hdr)
   s_part <- sub(

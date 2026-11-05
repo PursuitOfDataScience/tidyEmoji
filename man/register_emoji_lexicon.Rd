@@ -38,6 +38,47 @@ and without a way to get the old one back: there is no public counterpart
 that removes a registration, so re-registering is how a lexicon is
 changed. \code{\link[=emoji_lexicons]{emoji_lexicons()}} shows what is currently registered.
 }
+\section{Lexicons worth registering}{
+
+The two bundled lexicons give polarity and eight discrete emotions, and
+neither gives \strong{arousal}, so nothing bundled can tell calm-positive from
+excited-positive, which is the distinction persuasion and marketing work
+turns on. Three peer-reviewed sets of emoji norms fill that gap, and each
+is published on OSF under CC BY 4.0, so it can be downloaded, registered
+and cited:
+\itemize{
+\item \strong{Emoji-SP} (Ferre et al., \emph{Behavior Research Methods}, 2023): 1031
+emoji rated by Spanish speakers for valence, arousal, familiarity,
+frequency of use, clarity and visual complexity. Larger than the bundled
+sentiment lexicon, and the broadest arousal source there is.
+\url{https://osf.io/dtfjv/}
+\item \strong{Emoji-Dis} (Ferre et al., \emph{Scientific Data}, 2025): 112 emoji
+characterised on 13 discrete emotions by 763 Spanish speakers, from awe
+and serenity to disgust and anxiety. \url{https://osf.io/wv7ub/}
+\item \strong{Face-emoji norms} (Scheffler and Nenchev, \emph{Behavior Research
+Methods}, 2024): 107 face emoji rated by 138 German speakers for
+valence, arousal, familiarity, clarity and visual complexity; it pairs
+naturally with \code{\link[=emoji_faceness]{emoji_faceness()}}.
+\url{https://osf.io/vbmpj/}
+}
+
+Each arrives as a table keyed by emoji, so registering one is a rename and
+a call: put the glyphs in a column called \code{emoji}, keep the rating you
+want as a numeric column, and register it.
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{norms <- read.csv("emoji_sp_norms.csv")   # downloaded from OSF
+names(norms)[names(norms) == "Emoji"] <- "emoji"
+register_emoji_lexicon("emoji_sp", norms)
+emoji_score(df, text, lexicon = "emoji_sp", score = "arousal")
+emoji_coverage(df, text, lexicon = "emoji_sp")
+}\if{html}{\out{</div>}}
+
+The column names above are illustrative: read the file's own codebook.
+All three were rated by speakers of one language each, so the caution on
+the bundled lexicons applies to them too: an emoji's reading is not
+language-neutral. Cite the source you register, as you would a bundled one.
+}
+
 \examples{
 my_lex <- data.frame(
   emoji = c("\U0001f600", "\U0001f621"),
@@ -50,3 +91,5 @@ emoji_score(data.frame(text = "great \U0001f600"), text, lexicon = "mine")
 \seealso{
 \code{\link[=emoji_lexicons]{emoji_lexicons()}} to list lexicons; \code{\link[=emoji_score]{emoji_score()}} to use one.
 }
+\concept{arousal and valence norms}
+\concept{lexicons}

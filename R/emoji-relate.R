@@ -6,8 +6,8 @@
 # With `doc_id = NULL` every row is its own document; otherwise rows sharing a
 # doc_id value are concatenated (in row order) into one document. Rows whose
 # doc_id is NA form their own single document.
-.emoji_doc_glyphs <- function(data, text, doc_id) {
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+.emoji_doc_glyphs <- function(data, text, doc_id, presentation = "emoji") {
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   lst <- lapply(lst, emoji_canonical)
   q <- rlang::enquo(doc_id)
   if (rlang::quo_is_null(q)) {
@@ -41,17 +41,46 @@
 #'   The result has a row per pair, so it grows with the *square* of the
 #'   distinct emoji in a document: a day or a conversation is cheap, and
 #'   pooling a whole corpus under one id is not. 800 distinct emoji in one
-#'   document is 319,600 pairs and a few seconds; 3790 would be 7.2 million.
+#'   document is 319,600 pairs and a few seconds; all 3963 would be 7.9 million.
 #' @param directed If `TRUE`, pairs are ordered by first appearance: a
 #'   document where the tears-of-joy emoji appears before the heart-eyes emoji
 #'   counts towards (tears-of-joy, heart-eyes), not the reverse. Default
 #'   `FALSE` (unordered pairs, with `item1` sorted before `item2`).
-#' @param sort If `TRUE` (default), sort by descending `n` (ties broken by
-#'   `item1`, `item2` so the order is deterministic). `FALSE` sorts by `item1`
-#'   then `item2` instead -- still a fixed order, computed in the C locale, not
-#'   the order the pairs happened to be counted in.
-#' @return A tibble with columns `item1`, `item2` and `n`. Empty (but typed)
-#'   when no document contains two distinct emoji.
+#' @param sort If `TRUE` (default), sort by descending `measure` (by
+#'   descending `n` for `"count"`; ties broken by `n`, then `item1`, `item2`,
+#'   so the order is deterministic). `FALSE` sorts by `item1` then `item2`
+#'   instead, which is still a fixed order, computed in the C locale, not the
+#'   order the pairs happened to be counted in.
+#' @param measure `"count"` (default) for the raw co-occurrence counts, or an
+#'   association measure to add as a column and sort by: `"ppmi"`,
+#'   `"log_odds"` or `"dice"`. See *Counts are not associations*.
+#' @section Counts are not associations:
+#' Most emoji pairs in a real corpus are seen once: on the corpus behind the
+#' introduction vignette, 200 of the 213 edges (93.9%) have `n = 1`. A graph
+#' drawn from raw counts is mostly noise with a layout, and the common emoji
+#' pair with everything simply because they are common. `measure` scores each
+#' pair against what its two emoji's frequencies predict, over documents: `N`
+#' is the number of documents holding at least one emoji, `n1` and `n2` the
+#' number holding each item, and `n` the number holding both.
+#'
+#' * `"ppmi"` is positive pointwise mutual information,
+#'   `max(0, log(n * N / (n1 * n2)))`: how much more often the two appear
+#'   together than chance, floored at "no more often".
+#' * `"log_odds"` is the log odds ratio of the two-by-two table of documents,
+#'   with half a document added to every cell so a pair that never appears
+#'   apart stays finite.
+#' * `"dice"` is `2 * n / (n1 + n2)`, from 0 (never together) to 1 (never
+#'   apart); unlike the other two it does not favour rare pairs.
+#'
+#' `N` counts only documents with an emoji, so adding emoji-free rows to a
+#' corpus changes no measure. Under `directed = TRUE`, `n` counts documents
+#' where `item1` comes first, and the measures score that ordered event
+#' against the same marginals. For a network, filter on a frequency threshold
+#' as well as on the measure, so the edges kept are both strong and seen more
+#' than once.
+#' @return A tibble with columns `item1`, `item2` and `n`, plus a column named
+#'   after `measure` unless it is `"count"`. Empty (but typed) when no
+#'   document contains two distinct emoji.
 #' @seealso [emoji_cooccurrence()] for the same counts with an optional
 #'   diagonal; [emoji_ngrams()] for consecutive sequences.
 #' @examples
@@ -60,9 +89,16 @@
 #'                           "just \U0001f602"))
 #' emoji_pairs(df, text)
 #' emoji_pairs(df, text, directed = TRUE)
+#' @concept networks and co-occurrence
+#' @concept association measures
 #' @export
 emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
-                        sort = TRUE) {
+                        sort = TRUE, measure = c("count", "ppmi", "log_odds",
+                                                 "dice"),
+                        presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
+  measure <- .emoji_match_arg(measure, c("count", "ppmi", "log_odds", "dice"),
+                              "measure")
   .emoji_check_flag(directed, "directed")
   .emoji_check_flag(sort, "sort")
   if (.emoji_warn_grouped(
@@ -70,7 +106,7 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
         details = "emoji_pairs() ignores groups. Use doc_id to define documents.")) {
     data <- dplyr::ungroup(data)
   }
-  docs <- .emoji_doc_glyphs(data, {{ text }}, {{ doc_id }})
+  docs <- .emoji_doc_glyphs(data, {{ text }}, {{ doc_id }}, presentation)
 
   pair_list <- lapply(docs, function(g) {
     u <- unique(g)
@@ -85,14 +121,32 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
   })
   pair_list <- pair_list[!vapply(pair_list, is.null, logical(1))]
   if (!length(pair_list)) {
-    return(tibble::tibble(item1 = character(), item2 = character(),
-                          n = integer()))
+    out <- tibble::tibble(item1 = character(), item2 = character(),
+                          n = integer())
+    if (measure != "count") out[[measure]] <- numeric()
+    return(out)
   }
   m <- do.call(rbind, pair_list)
   out <- tibble::tibble(item1 = m[, 1L], item2 = m[, 2L]) %>%
     dplyr::count(item1, item2, name = "n")
+  if (measure != "count") {
+    # document frequencies over the documents that hold an emoji at all
+    present <- lapply(docs, unique)
+    n_docs <- sum(lengths(present) > 0L)
+    df <- table(unlist(present, use.names = FALSE))
+    n1 <- as.numeric(df[out$item1])
+    n2 <- as.numeric(df[out$item2])
+    out[[measure]] <- .emoji_association(measure, out$n, n1, n2, n_docs)
+  }
   if (isTRUE(sort)) {
-    out <- .emoji_arrange(out, dplyr::desc(n), item1, item2)
+    if (measure == "count") {
+      out <- .emoji_arrange(out, dplyr::desc(n), item1, item2)
+    } else {
+      out$.sort <- out[[measure]]
+      out <- .emoji_arrange(out, dplyr::desc(.sort), dplyr::desc(n),
+                            item1, item2)
+      out$.sort <- NULL
+    }
   } else {
     out <- .emoji_arrange(out, item1, item2)
   }
@@ -103,7 +157,7 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 #' Emoji co-occurrence counts, with an optional diagonal
 #'
 #' `emoji_cooccurrence()` is [emoji_pairs()] under the name the matrix form
-#' goes by, with one argument added and one taken away.
+#' goes by, with one argument added and two taken away.
 #'
 #' Added: `diagonal = TRUE` also returns the `item1 == item2` rows, whose `n`
 #' is the number of documents containing that emoji (the diagonal of the
@@ -113,7 +167,9 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 #' symmetric, so an ordered pair has no meaning on it and the diagonal this
 #' verb exists to add would not either. Use [emoji_pairs()] when you want
 #' `directed = TRUE`; the off-diagonal rows the two verbs return are otherwise
-#' identical.
+#' identical. Nor is there a `measure`: an association measure scores two
+#' emoji against each other, and a diagonal cell has only one. Use
+#' [emoji_pairs()] for the association-weighted edges.
 #'
 #' Glyphs are canonicalised through the package's codepoint key, so two
 #' spellings of one emoji make one row rather than two; see
@@ -127,9 +183,11 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
 #' @examples
 #' df <- data.frame(text = c("\U0001f602\U0001f60d", "\U0001f602"))
 #' emoji_cooccurrence(df, text, diagonal = TRUE)
+#' @concept networks and co-occurrence
 #' @export
 emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
-                               sort = TRUE) {
+                               sort = TRUE, presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   .emoji_check_flag(diagonal, "diagonal")
   # Warn under this verb's own name, then ungroup: delegating to emoji_pairs()
   # while still grouped named emoji_pairs() in the warning -- a function the
@@ -141,9 +199,10 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
     data <- dplyr::ungroup(data)
   }
   out <- emoji_pairs(data, {{ text }}, doc_id = {{ doc_id }},
-                     directed = FALSE, sort = sort)
+                     directed = FALSE, sort = sort,
+                     presentation = presentation)
   if (isTRUE(diagonal)) {
-    docs <- .emoji_doc_glyphs(data, {{ text }}, {{ doc_id }})
+    docs <- .emoji_doc_glyphs(data, {{ text }}, {{ doc_id }}, presentation)
     present <- unlist(lapply(docs, unique), use.names = FALSE)
     if (length(present)) {
       diag_tbl <- tibble::tibble(item1 = present, item2 = present) %>%
@@ -189,8 +248,11 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
 #' df <- data.frame(text = c("\U0001f602\U0001f60d\U0001f389", "\U0001f602"))
 #' emoji_ngrams(df, text)
 #' emoji_ngrams(df, text, n = 3)
+#' @concept sequences
 #' @export
-emoji_ngrams <- function(data, text, n = 2, sep = " ") {
+emoji_ngrams <- function(data, text, n = 2, sep = " ",
+                         presentation = "emoji") {
+  presentation <- .emoji_check_presentation(presentation)
   if (!.emoji_is_count(n, min = 1)) {
     stop("`n` must be a single finite whole number >= 1.", call. = FALSE)
   }
@@ -201,7 +263,7 @@ emoji_ngrams <- function(data, text, n = 2, sep = " ") {
   # "missing value where TRUE/FALSE needed". No row holds more emoji than
   # that, so capping it changes no answer.
   n <- as.integer(min(n, .Machine$integer.max))
-  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}))
+  lst <- emoji_glyph_list(.emoji_text_col(data, {{ text }}), presentation)
   lst <- lapply(lst, emoji_canonical)
 
   per_row <- lapply(seq_along(lst), function(i) {
