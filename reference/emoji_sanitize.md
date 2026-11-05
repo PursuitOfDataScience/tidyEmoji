@@ -18,7 +18,8 @@ emoji_sanitize(
   text,
   policy = "keep",
   placeholder = "[emoji]",
-  wrap = ":{x}:"
+  wrap = ":{x}:",
+  presentation = "emoji"
 )
 ```
 
@@ -67,6 +68,30 @@ emoji_sanitize(
   as it is in
   [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
   for `format = "name"`.
+
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
 
 ## Value
 
@@ -145,10 +170,19 @@ try to put the emoji back after the model call.
 So if the pipeline has to restore emoji downstream, `"shortcode"` is the
 only policy that permits it, and it holds up on the awkward cases:
 skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
-Measured against the whole reference table of emoji 16.0.0: for all 3790
-emoji in their canonical (fully qualified) spelling – the spelling a
-keyboard emits and text normally holds – **the round trip returns the
-original text byte for byte, 100% of the time**.
+Measured against the whole catalogue: for all 3790 emoji that have a
+shortcode, in their canonical (fully qualified) spelling, which is the
+spelling a keyboard emits and text normally holds, **the round trip
+returns the original text byte for byte, 100% of the time**.
+
+**The other 182 have no shortcode, and `"shortcode"` leaves them in the
+text.** They are the Emoji 17.0 and 18.0 additions: the catalogue knows
+them, but the shortcodes come from the emoji package, which does not
+yet. They survive the round trip trivially, but a column sanitised with
+`"shortcode"` can still hold them, so if the point was to keep emoji
+away from a model, check with
+[`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+or use `"name"`, which reaches them because they do have names.
 
 **That row of the table assumes the default `wrap`.** Restoring the text
 means
@@ -209,16 +243,45 @@ inflation.
 Unicode also lists shorter spellings of the same emoji, with the
 `U+FE0F` presentation selectors omitted. Feed one of those in and the
 round trip returns the *canonical* spelling instead: `U+270C` comes back
-as `U+270C U+FE0F`. Across all 4853 catalogued spellings that is 79.5%
-byte-identical, and the remaining 20.5% differ by `U+FE0F` alone – never
-by more. The emoji is always the same emoji, and every tidyEmoji lookup
-treats the two spellings as one, so this matters only if you are diffing
-raw bytes on text that had its selectors stripped upstream.
+as `U+270C U+FE0F`. Across all 4853 spellings that have a shortcode that
+is 79.5% byte-identical, and the remaining 20.5% differ by `U+FE0F`
+alone, never by more. The emoji is always the same emoji, and every
+tidyEmoji lookup treats the two spellings as one, so this matters only
+if you are diffing raw bytes on text that had its selectors stripped
+upstream.
 
 `"placeholder"` keeps *where* but not *which*, which is enough to use
 "an emoji was here" as a model feature and not enough to reconstruct the
 text. `"name"` is the accessibility answer rather than the reversible
 one – it is what a screen reader announces.
+
+## Why a policy, and why written down
+
+An emoji reaching a language model unexamined is a measurable risk
+rather than a matter of taste, and three independent lines of work now
+say so. Models read emoji in context poorly: on the EMODIS benchmark
+even the strongest of them frequently fail to tell an emoji's meanings
+apart when only subtle cues in the text distinguish them (Huang et al.,
+2025). Emoji also move a model's safety behaviour: prompts that carry
+toxic intent in emoji readily induce toxic generations across seven
+mainstream models (Cui et al., 2025), and a 2026 evaluation of four
+open-weight models found emoji-augmented adversarial prompts succeeding
+against three of them, a weakness an evaluation using plain text prompts
+does not measure (Gopinadh, 2026). None of these says which policy is
+right for a given pipeline; all of them say the choice is worth
+recording.
+
+## References
+
+Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for Context-Dependent
+Emoji Disambiguation in Large Language Models. arXiv:2511.07193.
+
+Cui S, Feng X, Wang Y, Yang J, Zhang Z, Sikdar B, Wang H, et al. (2025).
+When Smiley Turns Hostile: Interpreting How Emojis Trigger LLMs'
+Toxicity. arXiv:2509.11141.
+
+Gopinadh MPVS (2026). Are LLMs Safe Beyond Text: Do Emojis Expose Gaps
+in Safety Evaluation. arXiv:2608.18164.
 
 ## See also
 

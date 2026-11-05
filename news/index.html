@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -34,6 +35,102 @@
       <small>Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.0" id="tidyemoji-060">tidyEmoji 0.6.0<a class="anchor" aria-label="anchor" href="#tidyemoji-060"></a></h2>
+<p><strong>The catalogue is now Unicode’s own, current to Emoji 18.0, and the package says exactly what a glyph is and what it could not measure.</strong> Until 0.5.0 tidyEmoji detected against the table inside the <code>emoji</code> package, which has stayed at Emoji 16.0 through two Unicode releases, so the 182 emoji added in 17.0 and 18.0 were not detected at all. The catalogue is now Unicode’s <code>emoji-test.txt</code>, bundled with the package and rebuilt by <code>data-raw/crosswalks.R</code> when Unicode ships; <code>emoji</code> still supplies the shortcodes, the keywords and the detection regex. On top of it come ten new verbs, two detection repairs, a <code>presentation</code> argument on every verb that reads text, and association and polarisation measures on three shipped verbs.</p>
+<p><strong>Counts move, in both directions.</strong> A corpus scored under 0.5.0 and again under 0.6.0 can report more emoji, because the 17.0 and 18.0 additions are now detected, and it can report fewer, because two kinds of emoji material are no longer counted as emoji:</p>
+<ul><li>
+<code>U+1F600 U+1F3FB</code>, a grinning face followed by a skin tone it cannot take, was two emoji in 0.5.0 (the second named “light skin tone”, in group <code>"Component"</code>) and is one emoji in 0.6.0.</li>
+<li>
+<code>U+1F1FD U+1F1FD</code>, two regional indicators spelling “XX”, was one emoji with no name in 0.5.0 and is no emoji in 0.6.0, as is a lone indicator.</li>
+<li>
+<code>U+1FAEA</code>, distorted face (Emoji 17.0), was nothing in 0.5.0 and is one emoji in 0.6.0.</li>
+</ul><p><code><a href="../reference/emoji_summary.html">emoji_summary()</a></code> counts the first two kinds, so a diff between the two releases can be explained from the output, and <code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code> reports the catalogue version and the date of its data file. The corpus behind the introduction vignette holds none of the three, so every figure the vignettes quote for it is unchanged.</p>
+<div class="section level3">
+<h3 id="the-catalogue-0-6-0">The catalogue<a class="anchor" aria-label="anchor" href="#the-catalogue-0-6-0"></a></h3>
+<ul><li>
+<p><strong>Detection reads Emoji 18.0.</strong> <code><a href="../reference/emoji_unicode_version.html">emoji_unicode_version()</a></code> is <code>"18.0"</code>, read from the data file’s own <code># Version:</code> header when the data is built, because Unicode serves the current file at an unversioned address and the per-version directories stopped at 16.0. The catalogue has 5244 spellings of 3972 emoji. All 3963 fully-qualified and 1029 minimally-qualified spellings are detected as exactly one emoji, and the 182 additions are named, though <code>emoji</code> has no shortcodes or keywords for them yet.</p>
+<p>The detector is still <code>emoji</code>’s regex, behind a short prefix for the 16 code points newer than it (the two 18.0 thumb signs, which also take skin tones, among them). The prefix is derived from the catalogue and the installed regex together, so it can only match where the upstream regex cannot, and an <code>emoji</code> release that catches up empties it on its own. Checked: on all 5042 Emoji 16.0 spellings, alone and in context, and on the bundled corpus, the raw matches are byte-identical to 0.5.0’s.</p>
+</li>
+<li><p><strong>The switch was proven before it was made.</strong> Built from Unicode’s Emoji 16.0 file with <code>emoji</code> 16.0.0’s aliases, the new <code>data-raw/crosswalks.R</code> reproduces both shipped crosswalks with <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> TRUE. Built from the 18.0 file, <code>emoji_unicode_crosswalk</code> keeps the same 5761 rows (seven of them in a new order) and <code>category_unicode_crosswalk</code> gains the 202 new spellings in their groups and loses none. The input file is committed as <code>data-raw/emoji-test.txt</code>, so the build repeats without the network, and a test does exactly that.</p></li>
+<li><p><strong>Three flag names follow CLDR.</strong> “flag: Heard &amp; McDonald Islands”, “flag: St. Helena” and “flag: French Southern Territories” are now “flag: Heard Island &amp; McDonald Islands”, “flag: St. Helena, Ascension &amp; Tristan da Cunha” and “flag: French Southern and Antarctic Lands”. Join on the glyph or the code, not the name.</p></li>
+<li><p><strong><code><a href="../reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> gains Emoji 18.0</strong>, released 2026-09-16.</p></li>
+<li><p><strong><code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code> gains <code>unicode_emoji_date</code></strong>, the date in the catalogue file’s header, beside <code>unicode_emoji</code>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="two-detection-repairs-0-6-0">Two detection repairs<a class="anchor" aria-label="anchor" href="#two-detection-repairs-0-6-0"></a></h3>
+<ul><li><p><strong>A skin-tone or hair component standing alone is no longer an emoji occurrence.</strong> It was counted by every verb, and listed by <code><a href="../reference/emoji_frequency.html">emoji_frequency()</a></code> and <code><a href="../reference/top_n_emojis.html">top_n_emojis()</a></code> as an emoji in its own right. The rule is applied once, where detection decides what a match is, so no verb can bring it back. A component inside a sequence, as in a toned thumb or a red-haired person, is part of that emoji as before.</p></li>
+<li><p><strong>Regional indicators that spell no flag are no longer an emoji.</strong> Any well-formed pair used to be read as one, so a stray “XX” turned up in <code><a href="../reference/emoji_frequency.html">emoji_frequency()</a></code> with every name column <code>NA</code>, in <code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code> as a column and in <code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code> as a node. The 259 country flags of the catalogue are the valid set. Indicators pair from the start of a run, as Unicode says and as a phone displays them.</p></li>
+<li><p><strong>Neither is silently discarded.</strong> <code><a href="../reference/emoji_summary.html">emoji_summary()</a></code> gains <code>n_orphan_components</code> and <code>n_invalid_flags</code>. The verbs that rewrite text treat both exactly as before, because what changed is what is counted: <code>emoji_sanitize(policy = "strip")</code> still removes a stray swatch, <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> still names it, <code><a href="../reference/emoji_context.html">emoji_context()</a></code> masks it out of its windows, <code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code> does not let it stop a row being emoji-only, and <code>emoji_incongruity(where = "final")</code> still finds the emoji before it.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="presentation--any-0-6-0"><code>presentation = "any"</code><a class="anchor" aria-label="anchor" href="#presentation--any-0-6-0"></a></h3>
+<ul><li>
+<strong>Every verb that counts, scores or rewrites emoji takes <code>presentation</code>.</strong> The default, <code>"emoji"</code>, is the detection every earlier release used and it stays the default. <code>"any"</code> also reads the text-presentation spellings Unicode lists, such as the bare heart <code>U+2764</code> that several keyboards emit, <code>U+263A</code> and a keycap without its selector: 240 of the catalogue’s 243 unqualified spellings. The other three are the copyright, registered and trade-mark signs, which are left out so that the copyright line of a legal footer is not emoji use. <code>"any"</code> only ever adds occurrences to what <code>"emoji"</code> finds. The argument is the last one of every signature, so no positional call written for 0.5.0 changes meaning.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="rates-ship-with-their-denominators-0-6-0">Rates ship with their denominators<a class="anchor" aria-label="anchor" href="#rates-ship-with-their-denominators-0-6-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code> gains <code>.emoji_n</code>, <code>.emoji_codepoints</code> and <code>.emoji_n_char</code></strong>, the counts <code>.emoji_ratio</code> is the quotient of. It returned neither before.</li>
+<li>
+<strong><code><a href="../reference/emoji_density.html">emoji_density()</a></code> gains <code>.emoji_n_char</code> and <code>.emoji_n_token</code></strong>, the two denominators of its two densities.</li>
+<li>
+<strong><code><a href="../reference/emoji_trend.html">emoji_trend()</a></code> gains <code>n_period</code></strong>, every emoji token in the period, so <code>share = n / n_period</code> keeps its base when <code>top_n</code> keeps only some emoji.</li>
+<li>
+<strong>The principle is written into <code><a href="../reference/tidyEmoji-package.html">?tidyEmoji</a></code></strong>: every rate the package returns ships with its numerator and denominator, so a count model can be fitted instead of a linear model on a ratio. The new columns sit before the rates they explain.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-verbs-0-6-0">New verbs<a class="anchor" aria-label="anchor" href="#new-verbs-0-6-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_coverage.html">emoji_coverage()</a></code></strong> reports, for every lexicon at once, how much of a corpus it can score: as a share of the emoji occurrences, as a share of the distinct emoji, and as the number of emoji-bearing rows left with no score at all. On the corpus behind the introduction vignette the sentiment lexicon scores 62.8% of the occurrences and 50.8% of the distinct emoji, and 187 of the 560 rows holding an emoji get no <code>.emoji_sentiment</code>. It also reports what <code>presentation = "any"</code> would add, and how much of that the lexicon could score.</li>
+<li>
+<strong><code><a href="../reference/emoji_properties.html">emoji_properties()</a></code></strong> says what the catalogue records about a glyph: its code points, its qualification status, its name, group, subgroup and emoji version, and whether it takes a skin tone. With no argument it returns the whole catalogue.</li>
+<li>
+<strong><code><a href="../reference/as_emoji_canonical.html">as_emoji_canonical()</a></code></strong> maps every spelling of an emoji to its fully-qualified one, the normalisation the verbs use internally, so a join of your own cannot miss rows over a <code>U+FE0F</code>.</li>
+<li>
+<strong><code><a href="../reference/emoji_identical.html">emoji_identical()</a></code></strong> says whether two glyphs are the same emoji and, with <code>details = TRUE</code>, how they differ: not at all, in the variation selector, in skin tone, or in the emoji itself. Its help page states the limit a forensic user most needs: code points are not what anyone saw.</li>
+<li>
+<strong><code><a href="../reference/emoji_find.html">emoji_find()</a></code></strong> returns the emoji whose CLDR keywords carry any (or all) of a set of terms, and <strong><code><a href="../reference/emoji_keywords.html">emoji_keywords()</a></code></strong> returns those keywords in long form, with <code>NA</code>, never <code>""</code>, for an emoji that has none.</li>
+<li>
+<strong><code><a href="../reference/emoji_country.html">emoji_country()</a></code></strong> maps the country flags in a text column to ISO 3166-1 codes and region names, keeping a stray pair with its glyph and <code>NA</code> for the code. <strong><code><a href="../reference/emoji_subdivision.html">emoji_subdivision()</a></code></strong> does the same for the tag-sequence flags (<code>GB-SCT</code>), and <strong><code><a href="../reference/emoji_flag.html">emoji_flag()</a></code></strong> converts codes to flags and back.</li>
+<li>
+<strong><code><a href="../reference/emoji_from_counts.html">emoji_from_counts()</a></code></strong> turns a tally of (item, emoji, count) rows, such as GitHub reactions, into text every other verb reads, so reaction data can be scored, counted and turned into a document-by-emoji matrix. A tally and its expanded text give identical answers, and that identity is tested.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="measures-on-shipped-verbs-0-6-0">Measures on shipped verbs<a class="anchor" aria-label="anchor" href="#measures-on-shipped-verbs-0-6-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>, <code><a href="../reference/emoji_risk.html">emoji_risk()</a></code> and <code><a href="../reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code> gain <code>measure = "polarisation"</code>.</strong> The annotation classes are ordered, negative to neutral to positive, and the shipped measures are nominal, so entropy and Gini gave a 50/0/50 split exactly the score of a 50/50/0 one although the first is a glyph readers take in opposite directions. Polarisation is the expected distance between two annotations on a -1, 0, 1 scale, the statistic Miller et al. (2016) used, rescaled. Over the whole lexicon it agrees with entropy closely (Spearman 0.96) and parts from it where it matters: the face with open mouth and cold sweat, with 302 annotations, is at rank 6 of 969 by polarisation and at rank 156 by entropy. The default stays <code>"entropy"</code>, so no published ranking moves.</li>
+<li>
+<strong><code><a href="../reference/emoji_collocations.html">emoji_collocations()</a></code> gains the association measures <code>"ppmi"</code>, <code>"dice"</code>, <code>"logdice"</code>, <code>"llr"</code> and <code>"tscore"</code></strong> beside <code>"pmi"</code> and <code>"count"</code>, labelled on its help page as effect sizes or significance measures. PMI ties on 40.6% of the rows of the bundled corpus and favours rare pairs. The default output is unchanged; another measure adds its column and reorders the rows, and never changes the pairs or their <code>n</code>.</li>
+<li>
+<strong><code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code> gains <code>measure = "ppmi"</code>, <code>"log_odds"</code> or <code>"dice"</code></strong>, scored over the documents that hold an emoji, so adding emoji-free rows changes nothing. On the bundled corpus 93.9% of the raw edges are seen once, which is why a network needs one of these and a frequency threshold; the new <code><a href="../articles/emoji-networks.html">vignette("emoji-networks")</a></code> builds one.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="lifecycle-0-6-0">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle-0-6-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_filter.html">emoji_tweets()</a></code> now warns</strong> (<code><a href="https://lifecycle.r-lib.org/reference/deprecate_soft.html" class="external-link">lifecycle::deprecate_warn()</a></code>), after four releases of soft deprecation, and it will be removed in 0.7.0. Use <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-6-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-6-0"></a></h3>
+<ul><li>
+<strong>Every help page carries research-question keywords</strong> (<code>\concept{}</code>), so <code>help.search("accessibility", package = "tidyEmoji")</code> finds the verbs for a question, and the introduction vignette opens with an index from questions to verbs.</li>
+<li>
+<strong>New vignette, <code>emoji-networks</code></strong>, on association-weighted edges, a frequency threshold and the checks a real network should pass.</li>
+<li>The introduction vignette gains sections on coverage, the catalogue, flags, tallies, polarisation and association measures, and on auditing the emoji a language model writes, plus a paragraph each on how EmojiSentR and text2emotion differ.</li>
+<li>
+<code><a href="../reference/register_emoji_lexicon.html">?register_emoji_lexicon</a></code> names three sets of arousal norms worth registering (Emoji-SP, Emoji-Dis and the face-emoji norms), all CC BY 4.0 on OSF, since neither bundled lexicon has arousal.</li>
+<li>
+<code><a href="../reference/emoji_sanitize.html">?emoji_sanitize</a></code> cites the evidence that an unexamined emoji reaching a language model is a measurable risk, and says that the shortcode policy leaves the 182 newest emoji in place, since they have no shortcode yet.</li>
+<li>
+<code>inst/LICENSE.note</code> carries the Unicode licence for the bundled catalogue.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="infrastructure-0-6-0">Infrastructure<a class="anchor" aria-label="anchor" href="#infrastructure-0-6-0"></a></h3>
+<ul><li>The weekly <code>catalogue</code> job now asks Unicode whether a newer emoji version has shipped, through a canary test that stays out of every other run, and checks the vocabulary columns read from <code>emoji</code>.</li>
+<li>
+<code>stringi</code>, already installed with <code>emoji</code>, is now a direct Import: the detector calls it with the extended regex. <code>igraph</code> joins Suggests, for the networks vignette.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="tidyemoji-050">tidyEmoji 0.5.0<a class="anchor" aria-label="anchor" href="#tidyemoji-050"></a></h2>
 <p>No new verbs. <code><a href="../reference/emoji_context.html">emoji_context()</a></code> returns its answers a great deal faster, and <code><a href="../reference/emoji_collocations.html">emoji_collocations()</a></code>, which answered a non-Latin-script corpus wrongly in a non-UTF-8 locale, now answers it the same in every locale. A source reading before submission then found eleven smaller defects, each a wrong, order-dependent or crashing answer on an input the documentation already covered: a user-supplied lexicon, a one-row input, a count past integer range, <code>where = "final"</code> in the incongruity profile, trailing Unicode whitespace under <code>policy = "strip"</code>, and the C-locale order under one <code>dplyr</code> option. They are listed below, each with a test. The rest of the release is documentation and the infrastructure that checks it.</p>

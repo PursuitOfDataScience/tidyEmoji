@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Discover, Count, Categorise, Score, Translate and Relate Emoji in Text">
-<meta name="description" content="A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. tidyEmoji extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a tidyverse workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) &lt;doi:10.1371/journal.pone.0144296&gt;, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb &amp; de Melo (2020) &lt;https://aclanthology.org/2020.emnlp-main.720/&gt;, released under the MIT licence.">
-<meta property="og:description" content="A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. tidyEmoji extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a tidyverse workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) &lt;doi:10.1371/journal.pone.0144296&gt;, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb &amp; de Melo (2020) &lt;https://aclanthology.org/2020.emnlp-main.720/&gt;, released under the MIT licence.">
+<meta name="description" content="A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. tidyEmoji extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a tidyverse workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. Its emoji catalogue is the Unicode emoji test data, bundled and current to Emoji 18.0, so it can also say what a glyph is, map flag emoji to ISO 3166 codes, report how much of a corpus each lexicon can score, and read reaction tallies as well as text. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) &lt;doi:10.1371/journal.pone.0144296&gt;, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb &amp; de Melo (2020) &lt;https://aclanthology.org/2020.emnlp-main.720/&gt;, released under the MIT licence.">
+<meta property="og:description" content="A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. tidyEmoji extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a tidyverse workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. Its emoji catalogue is the Unicode emoji test data, bundled and current to Emoji 18.0, so it can also say what a glyph is, map flag emoji to ISO 3166 codes, report how much of a corpus each lexicon can score, and read reaction tallies as well as text. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) &lt;doi:10.1371/journal.pone.0144296&gt;, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb &amp; de Melo (2020) &lt;https://aclanthology.org/2020.emnlp-main.720/&gt;, released under the MIT licence.">
 <meta property="og:image" content="https://pursuitofdatascience.github.io/tidyEmoji/logo.svg">
 </head>
 <body>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
 <li><a class="dropdown-item" href="articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
@@ -58,268 +59,136 @@
 </div>
 <!-- badges: start -->
 
-<p>tidyEmoji helps you <strong>discover, count, categorise, sentiment-score, score emotions, translate and relate the emoji in any text column</strong> (social-media posts, product reviews, chat logs, survey responses, support tickets), from summary counts through emotion profiles, co-occurrence networks, structural metrics and model-ready feature tables, always as tidy data frames that drop straight into a tidyverse workflow.</p>
-<p>Unicode is awkward to work with and not every code point is an emoji, which makes emoji statistics fiddly. tidyEmoji takes care of that, including grapheme-aware detection so skin-tone modifiers (👍🏽) and multi-person sequences (👨‍👩‍👧‍👦) are treated as a single emoji rather than being split apart.</p>
-<p>It also answers the questions a count cannot: how much annotators <em>disagreed</em> about an emoji, what words surround each occurrence, how emoji use moves over time, where the text and the emoji disagree, and which emoji policy a language-model pipeline applied.</p>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
+<p><strong>Count, score, translate and relate the emoji in any text column, and get tidy data frames back.</strong></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"tidyEmoji"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># development version</span></span>
-<span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"PursuitOfDataScience/tidyEmoji"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
-</h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pursuitofdatascience.github.io/tidyEmoji/">tidyEmoji</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">reviews</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Best purchase ever \U0001f600\U0001f60d"</span>,</span>
 <span>                               <span class="st">"It broke after a day \U0001f621"</span>,</span>
 <span>                               <span class="st">"Does the job."</span>,</span>
-<span>                               <span class="st">"Wearing my mask \U0001f637\U0001f637"</span>,</span>
-<span>                               <span class="st">"Shipped fast \U0001f3c1\U0001f600"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="how-much-emoji-is-in-the-data">How much emoji is in the data?<a class="anchor" aria-label="anchor" href="#how-much-emoji-is-in-the-data"></a>
-</h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>        <span class="co"># entries with emoji vs. total</span></span>
-<span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total</span></span>
-<span><span class="co">#&gt;          &lt;int&gt;   &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1            4       5</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_filter.html">emoji_filter</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>         <span class="co"># keep only the rows that have emoji</span></span>
-<span><span class="co">#&gt; # A tibble: 4 × 1</span></span>
-<span><span class="co">#&gt;   text                   </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                  </span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍</span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡</span></span>
-<span><span class="co">#&gt; 3 Wearing my mask 😷😷   </span></span>
-<span><span class="co">#&gt; 4 Shipped fast 🏁😀</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="which-emoji-are-most-common">Which emoji are most common?<a class="anchor" aria-label="anchor" href="#which-emoji-are-most-common"></a>
-</h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>      <span class="co"># every emoji, with name + category</span></span>
+<span>                               <span class="st">"Shipped to \U0001f1ef\U0001f1f5 in two days \U0001f680"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">reviews</span>, <span class="va">text</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
-<span><span class="co">#&gt;   emoji name                         shortcode      group                 n</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt; &lt;chr&gt;                        &lt;chr&gt;          &lt;chr&gt;             &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 😀    grinning face                grinning       Smileys &amp; Emotion     2</span></span>
-<span><span class="co">#&gt; 2 😷    face with medical mask       mask           Smileys &amp; Emotion     2</span></span>
-<span><span class="co">#&gt; 3 🏁    chequered flag               checkered_flag Flags                 1</span></span>
-<span><span class="co">#&gt; 4 😍    smiling face with heart-eyes heart_eyes     Smileys &amp; Emotion     1</span></span>
-<span><span class="co">#&gt; 5 😡    enraged face                 rage           Smileys &amp; Emotion     1</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/top_n_emojis.html">top_n_emojis</a></span><span class="op">(</span><span class="va">text</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>  <span class="co"># just the most frequent</span></span>
-<span><span class="co">#&gt; # A tibble: 3 × 4</span></span>
-<span><span class="co">#&gt;   emoji_name     unicode emoji_category        n</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;             &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 grinning       😀      Smileys &amp; Emotion     2</span></span>
-<span><span class="co">#&gt; 2 mask           😷      Smileys &amp; Emotion     2</span></span>
-<span><span class="co">#&gt; 3 checkered_flag 🏁      Flags                 1</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="pull-the-emoji-out">Pull the emoji out<a class="anchor" aria-label="anchor" href="#pull-the-emoji-out"></a>
-</h3>
-<p><code><a href="reference/emoji_tokens.html">emoji_tokens()</a></code> gives one tidy row per emoji occurrence, with its name, category and sentiment, ready to count, join or plot.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_tokens.html">emoji_tokens</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 7 × 5</span></span>
-<span><span class="co">#&gt;   text                    .emoji .emoji_name    .emoji_category .emoji_sentiment</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                   &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt;                      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍 😀     grinning face  Smileys &amp; Emot…            0.572</span></span>
-<span><span class="co">#&gt; 2 Best purchase ever 😀😍 😍     smiling face … Smileys &amp; Emot…            0.678</span></span>
-<span><span class="co">#&gt; 3 It broke after a day 😡 😡     enraged face   Smileys &amp; Emot…           -0.173</span></span>
-<span><span class="co">#&gt; 4 Wearing my mask 😷😷    😷     face with med… Smileys &amp; Emot…           -0.171</span></span>
-<span><span class="co">#&gt; 5 Wearing my mask 😷😷    😷     face with med… Smileys &amp; Emot…           -0.171</span></span>
-<span><span class="co">#&gt; 6 Shipped fast 🏁😀       🏁     chequered flag Flags                      0.571</span></span>
-<span><span class="co">#&gt; 7 Shipped fast 🏁😀       😀     grinning face  Smileys &amp; Emot…            0.572</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="categorise-and-score-sentiment">Categorise and score sentiment<a class="anchor" aria-label="anchor" href="#categorise-and-score-sentiment"></a>
-</h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_categorize.html">emoji_categorize</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>     <span class="co"># which Unicode categories each row spans</span></span>
-<span><span class="co">#&gt; # A tibble: 4 × 2</span></span>
-<span><span class="co">#&gt;   text                    .emoji_category        </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                   &lt;chr&gt;                  </span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍 Smileys &amp; Emotion      </span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡 Smileys &amp; Emotion      </span></span>
-<span><span class="co">#&gt; 3 Wearing my mask 😷😷    Smileys &amp; Emotion      </span></span>
-<span><span class="co">#&gt; 4 Shipped fast 🏁😀       Flags|Smileys &amp; Emotion</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>      <span class="co"># mean emoji sentiment per row (-1 to +1)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 4</span></span>
-<span><span class="co">#&gt;   text                    .emoji_n .emoji_n_scored .emoji_sentiment</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                      &lt;int&gt;           &lt;int&gt;            &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍        2               2            0.625</span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡        1               1           -0.173</span></span>
-<span><span class="co">#&gt; 3 Does the job.                  0              NA           NA    </span></span>
-<span><span class="co">#&gt; 4 Wearing my mask 😷😷           2               2           -0.171</span></span>
-<span><span class="co">#&gt; 5 Shipped fast 🏁😀              2               2            0.572</span></span></code></pre></div>
-<p><code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code> uses the bundled <strong>Emoji Sentiment Ranking</strong> lexicon (Kralj Novak et al., 2015). See the package vignette for a fuller tour.</p>
-</div>
-<div class="section level3">
-<h3 id="score-emoji-emotions">Score emoji emotions<a class="anchor" aria-label="anchor" href="#score-emoji-emotions"></a>
-</h3>
-<p><code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code> scores each row’s emoji across the eight Plutchik emotions using the bundled EmoTag1200 lexicon (Shoeb &amp; de Melo, 2020).</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_emotion.html">emoji_emotion</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">text</span>, <span class="va">.emoji_joy</span>, <span class="va">.emoji_trust</span>,</span>
-<span>                                           <span class="va">.emoji_anger</span>, <span class="va">.emoji_n</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
-<span><span class="co">#&gt;   text                    .emoji_joy .emoji_trust .emoji_anger .emoji_n</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;    &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍       0.76        0.375         0.03        2</span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡       0           0.06          1           1</span></span>
-<span><span class="co">#&gt; 3 Does the job.                NA          NA            NA           0</span></span>
-<span><span class="co">#&gt; 4 Wearing my mask 😷😷          0           0.11          0.03        2</span></span>
-<span><span class="co">#&gt; 5 Shipped fast 🏁😀             0.69        0.25          0.06        2</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_emotion_label.html">emoji_emotion_label</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>   <span class="co"># the dominant emotion per row</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 4</span></span>
-<span><span class="co">#&gt;   text                    .emoji_n .emoji_n_scored .emoji_emotion</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                      &lt;int&gt;           &lt;int&gt; &lt;chr&gt;         </span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍        2               2 joy           </span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡        1               1 anger         </span></span>
-<span><span class="co">#&gt; 3 Does the job.                  0              NA &lt;NA&gt;          </span></span>
-<span><span class="co">#&gt; 4 Wearing my mask 😷😷           2               2 disgust       </span></span>
-<span><span class="co">#&gt; 5 Shipped fast 🏁😀              2               1 joy</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="relate-emoji-to-each-other">Relate emoji to each other<a class="anchor" aria-label="anchor" href="#relate-emoji-to-each-other"></a>
-</h3>
-<p><code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code> returns a graph-ready edge list of the emoji that appear in the same entry (<code>widyr</code>-style <code>item1</code>/<code>item2</code>/<code>n</code>; pipe it into igraph, tidygraph or ggraph), and <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code> captures consecutive sequences.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   emoji name                         shortcode  group                 n</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt; &lt;chr&gt;                        &lt;chr&gt;      &lt;chr&gt;             &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1 🇯🇵    flag: Japan                  jp         Flags                 1</span></span>
+<span><span class="co">#&gt; 2 😀    grinning face                grinning   Smileys &amp; Emotion     1</span></span>
+<span><span class="co">#&gt; 3 😍    smiling face with heart-eyes heart_eyes Smileys &amp; Emotion     1</span></span>
+<span><span class="co">#&gt; 4 😡    enraged face                 rage       Smileys &amp; Emotion     1</span></span>
+<span><span class="co">#&gt; 5 🚀    rocket                       rocket     Travel &amp; Places       1</span></span>
+<span><span class="fu"><a href="reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">reviews</span>, <span class="va">text</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 4 × 4</span></span>
+<span><span class="co">#&gt;   text                         .emoji_n .emoji_n_scored .emoji_sentiment</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;                           &lt;int&gt;           &lt;int&gt;            &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Best purchase ever 😀😍             2               2            0.625</span></span>
+<span><span class="co">#&gt; 2 It broke after a day 😡             1               1           -0.173</span></span>
+<span><span class="co">#&gt; 3 Does the job.                       0              NA           NA    </span></span>
+<span><span class="co">#&gt; 4 Shipped to 🇯🇵 in two days 🚀        2               1            0.525</span></span></code></pre></div>
+<p>How much of that could the lexicon score? One more call says so:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/emoji_coverage.html">emoji_coverage</a></span><span class="op">(</span><span class="va">reviews</span>, <span class="va">text</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lexicon"</span>, <span class="st">"occurrence_coverage"</span>,</span>
+<span>                                  <span class="st">"n_rows_unscored"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; # A tibble: 2 × 3</span></span>
-<span><span class="co">#&gt;   item1 item2     n</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt; &lt;chr&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 🏁    😀        1</span></span>
-<span><span class="co">#&gt; 2 😀    😍        1</span></span></code></pre></div>
-<p>There are structural metrics too: <code><a href="reference/emoji_position.html">emoji_position()</a></code> (emoji sit at the end of messages), <code><a href="reference/emoji_density.html">emoji_density()</a></code> and <code><a href="reference/emoji_ratio.html">emoji_ratio()</a></code> (emoji-only detection). And <code><a href="reference/emoji_dfm.html">emoji_dfm()</a></code> builds a document-by-emoji count/binary/tf-idf table for modelling.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_dfm.html">emoji_dfm</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 4</span></span>
-<span><span class="co">#&gt;   .row_number  `😀`  `😷`  `🏁`</span></span>
-<span><span class="co">#&gt;         &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1           1     1     0     0</span></span>
-<span><span class="co">#&gt; 2           2     0     0     0</span></span>
-<span><span class="co">#&gt; 3           3     0     0     0</span></span>
-<span><span class="co">#&gt; 4           4     0     2     0</span></span>
-<span><span class="co">#&gt; 5           5     1     0     1</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="how-likely-is-an-emoji-to-be-misread">How likely is an emoji to be misread?<a class="anchor" aria-label="anchor" href="#how-likely-is-an-emoji-to-be-misread"></a>
-</h3>
-<p>Readers of the <em>same</em> emoji rendering disagree about its sentiment roughly a quarter of the time (Miller et al., 2016). The bundled lexicon keeps the raw annotation counts behind its score, so that disagreement is a number rather than a caveat.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/emoji_ambiguity.html">emoji_ambiguity</a></span><span class="op">(</span><span class="op">)</span>                             <span class="co"># every glyph, most disputed first</span></span>
-<span>                                              <span class="co"># (filter on n_annotations first)</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_risk.html">emoji_risk</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>                  <span class="co"># interpretation risk per row</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span>        <span class="co"># the riskiest emoji in this corpus</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">text</span>, se <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># a score with a standard error</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="what-is-around-each-emoji-and-when-was-it-used">What is around each emoji, and when was it used?<a class="anchor" aria-label="anchor" href="#what-is-around-each-emoji-and-when-was-it-used"></a>
-</h3>
-<p><code><a href="reference/emoji_context.html">emoji_context()</a></code> returns one row per occurrence with the surrounding words, and <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code> turns those windows into a PMI-scored emoji-word table: corpus-derived senses, with no licence baggage and nothing stale. On the time axis, <code><a href="reference/emoji_trend.html">emoji_trend()</a></code> and <code><a href="reference/emoji_turnover.html">emoji_turnover()</a></code> follow usage and vocabulary churn, while <code><a href="reference/emoji_version_profile.html">emoji_version_profile()</a></code> and <code><a href="reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code> use the Unicode version of each glyph to ask how new a corpus’s repertoire is.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># the time verbs need a date column, so give the reviews one</span></span>
-<span><span class="va">posts</span> <span class="op">&lt;-</span> <span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>posted_at <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2024-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span>, <span class="fl">80</span>, <span class="fl">200</span>, <span class="fl">300</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_context.html">emoji_context</a></span><span class="op">(</span><span class="va">text</span>, window <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_collocations.html">emoji_collocations</a></span><span class="op">(</span><span class="va">text</span>, min_n <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="va">posts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_trend.html">emoji_trend</a></span><span class="op">(</span><span class="va">text</span>, <span class="va">posted_at</span>, by <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span>
-<span><span class="va">posts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_adoption_lag.html">emoji_adoption_lag</a></span><span class="op">(</span><span class="va">text</span>, <span class="va">posted_at</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="does-the-text-agree-with-the-emoji">Does the text agree with the emoji?<a class="anchor" aria-label="anchor" href="#does-the-text-agree-with-the-emoji"></a>
-</h3>
-<p>Emoji-text sentiment mismatch is a sarcasm feature in NLP and the (in)congruence variable in marketing research. tidyEmoji supplies the emoji half and the arithmetic; you bring the text score from tidytext, sentimentr or a model, and say how the two were made comparable.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># text_score is the half you bring; any scorer will do</span></span>
-<span><span class="va">scored</span> <span class="op">&lt;-</span> <span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>text_score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.9</span>, <span class="op">-</span><span class="fl">0.8</span>, <span class="fl">0</span>, <span class="fl">0.1</span>, <span class="fl">0.7</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">scored</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_incongruity.html">emoji_incongruity</a></span><span class="op">(</span><span class="va">text</span>, <span class="va">text_score</span>, scale <span class="op">=</span> <span class="st">"rank"</span><span class="op">)</span></span>
-<span><span class="va">scored</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_incongruity_profile.html">emoji_incongruity_profile</a></span><span class="op">(</span><span class="va">text</span>, <span class="va">text_score</span>, scale <span class="op">=</span> <span class="st">"rank"</span>,</span>
-<span>                                     min_n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>   <span class="co"># default 5 needs more rows</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="emoji-in-language-model-pipelines">Emoji in language-model pipelines<a class="anchor" aria-label="anchor" href="#emoji-in-language-model-pipelines"></a>
-</h3>
-<p>Emoji are a preprocessing decision, and <code><a href="reference/emoji_sanitize.html">emoji_sanitize()</a></code> makes it an explicit one. <code><a href="reference/emoji_token_cost.html">emoji_token_cost()</a></code> says what they are costing you, and <code><a href="reference/emoji_provenance.html">emoji_provenance()</a></code> records every version behind a result for your methods section.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">text</span>, policy <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span>   <span class="co"># or strip/shortcode/...</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="bring-your-own-lexicon">Bring your own lexicon<a class="anchor" aria-label="anchor" href="#bring-your-own-lexicon"></a>
-</h3>
-<p>The scoring machinery is pluggable: <code><a href="reference/emoji_lexicons.html">emoji_lexicons()</a></code> lists what’s available, <code><a href="reference/register_emoji_lexicon.html">register_emoji_lexicon()</a></code> adds your own, and <code><a href="reference/emoji_score.html">emoji_score()</a></code> scores a text column against any of them, always joining through a codepoint-normalised key, so qualified and unqualified emoji forms both match.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_lexicon</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>emoji <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f600"</span>, <span class="st">"\U0001f621"</span><span class="op">)</span>,</span>
-<span>                         score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_score.html">emoji_score</a></span><span class="op">(</span><span class="va">text</span>, lexicon <span class="op">=</span> <span class="va">my_lexicon</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 4</span></span>
-<span><span class="co">#&gt;   text                    .emoji_n .emoji_n_scored .emoji_score</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                      &lt;int&gt;           &lt;int&gt;        &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 Best purchase ever 😀😍        2               1            1</span></span>
-<span><span class="co">#&gt; 2 It broke after a day 😡        1               1           -1</span></span>
-<span><span class="co">#&gt; 3 Does the job.                  0              NA           NA</span></span>
-<span><span class="co">#&gt; 4 Wearing my mask 😷😷           2               0           NA</span></span>
-<span><span class="co">#&gt; 5 Shipped fast 🏁😀              2               1            1</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="translate-emoji-to-and-from-text">Translate emoji to and from text<a class="anchor" aria-label="anchor" href="#translate-emoji-to-and-from-text"></a>
-</h3>
-<p><code><a href="reference/emoji_to_text.html">emoji_to_text()</a></code> replaces emoji with words (handy for accessibility and NLP preprocessing); <code><a href="reference/text_to_emoji.html">text_to_emoji()</a></code> is the inverse. <code><a href="reference/as_emoji_name.html">as_emoji_name()</a></code>, <code><a href="reference/as_emoji_name.html">as_emoji_shortcode()</a></code> and <code><a href="reference/as_emoji_name.html">as_emoji()</a></code> are the vector-level equivalents.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 1</span></span>
-<span><span class="co">#&gt;   text                                                        </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                                                       </span></span>
-<span><span class="co">#&gt; 1 Best purchase ever grinning facesmiling face with heart-eyes</span></span>
-<span><span class="co">#&gt; 2 It broke after a day enraged face                           </span></span>
-<span><span class="co">#&gt; 3 Does the job.                                               </span></span>
-<span><span class="co">#&gt; 4 Wearing my mask face with medical maskface with medical mask</span></span>
-<span><span class="co">#&gt; 5 Shipped fast chequered flaggrinning face</span></span>
-<span><span class="va">reviews</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="reference/emoji_to_text.html">emoji_to_text</a></span><span class="op">(</span><span class="va">text</span>, format <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 1</span></span>
-<span><span class="co">#&gt;   text                                     </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                                    </span></span>
-<span><span class="co">#&gt; 1 Best purchase ever :grinning::heart_eyes:</span></span>
-<span><span class="co">#&gt; 2 It broke after a day :rage:              </span></span>
-<span><span class="co">#&gt; 3 Does the job.                            </span></span>
-<span><span class="co">#&gt; 4 Wearing my mask :mask::mask:             </span></span>
-<span><span class="co">#&gt; 5 Shipped fast :checkered_flag::grinning:</span></span></code></pre></div>
-<p>You can also search the emoji catalogue by keyword:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 27 × 5</span></span>
-<span><span class="co">#&gt;    emoji name                            shortcode             group     keyword</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;                           &lt;chr&gt;                 &lt;chr&gt;     &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt;  1 😀    grinning face                   grinning              Smileys … happy  </span></span>
-<span><span class="co">#&gt;  2 😃    grinning face with big eyes     smiley                Smileys … happy  </span></span>
-<span><span class="co">#&gt;  3 😄    grinning face with smiling eyes smile                 Smileys … happy  </span></span>
-<span><span class="co">#&gt;  4 😁    beaming face with smiling eyes  grin                  Smileys … happy  </span></span>
-<span><span class="co">#&gt;  5 😆    grinning squinting face         laughing              Smileys … happy  </span></span>
-<span><span class="co">#&gt;  6 🤣    rolling on the floor laughing   rofl                  Smileys … happy  </span></span>
-<span><span class="co">#&gt;  7 😂    face with tears of joy          joy                   Smileys … happy  </span></span>
-<span><span class="co">#&gt;  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  </span></span>
-<span><span class="co">#&gt;  9 😇    smiling face with halo          innocent              Smileys … happy  </span></span>
-<span><span class="co">#&gt; 10 ☺     smiling face                    smiling_face          Smileys … happy  </span></span>
-<span><span class="co">#&gt; # ℹ 17 more rows</span></span></code></pre></div>
-</div>
+<span><span class="co">#&gt;   lexicon    occurrence_coverage n_rows_unscored</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;                    &lt;dbl&gt;           &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1 novak2015                  0.8               0</span></span>
+<span><span class="co">#&gt; 2 emotag1200                 0.6               1</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="rocket-get-started">🚀 Get started<a class="anchor" aria-label="anchor" href="#rocket-get-started"></a>
+</h2>
+<ol style="list-style-type: decimal">
+<li>Install from CRAN: <code>install.packages("tidyEmoji")</code>
+</li>
+<li>Load it: <code><a href="https://pursuitofdatascience.github.io/tidyEmoji/">library(tidyEmoji)</a></code>
+</li>
+<li>Hand any verb a data frame and its text column: <code>emoji_summary(df, text)</code>
+</li>
+<li>Take the tour: <code><a href="articles/introduction.html">vignette("introduction", package = "tidyEmoji")</a></code>
+</li>
+</ol>
 </div>
 <div class="section level2">
-<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+<h2 id="toolbox-pick-a-verb-by-question">🧰 Pick a verb by question<a class="anchor" aria-label="anchor" href="#toolbox-pick-a-verb-by-question"></a>
 </h2>
-<p>The <a href="https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html">introductory vignette</a> (<code><a href="articles/introduction.html">vignette("introduction", package = "tidyEmoji")</a></code>) walks through a full analysis of a real corpus: counting, categorising, sentiment- and emotion-scoring emoji, and plotting the results.</p>
-<p>Sending text to a language model? <code><a href="articles/reversible-preprocessing.html">vignette("reversible-preprocessing", package = "tidyEmoji")</a></code> covers which <code><a href="reference/emoji_sanitize.html">emoji_sanitize()</a></code> policy you can undo afterwards, and what the other four cost you. It is on the package website under the Vignettes menu. No URL for it here on purpose: <code>R CMD check</code> resolves every address in this file, and an article page is only live after the next site build, which would make the link a 404 in a submission.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Question</th>
+<th>Verbs</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>How much emoji is here, and which?</td>
+<td>
+<code><a href="reference/emoji_summary.html">emoji_summary()</a></code>, <code><a href="reference/emoji_frequency.html">emoji_frequency()</a></code>, <code><a href="reference/emoji_tokens.html">emoji_tokens()</a></code>
+</td>
+</tr>
+<tr>
+<td>What does it say?</td>
+<td>
+<code><a href="reference/emoji_sentiment.html">emoji_sentiment()</a></code>, <code><a href="reference/emoji_emotion.html">emoji_emotion()</a></code>, <code><a href="reference/emoji_coverage.html">emoji_coverage()</a></code>
+</td>
+</tr>
+<tr>
+<td>Will readers agree on it?</td>
+<td>
+<code><a href="reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>, <code><a href="reference/emoji_risk.html">emoji_risk()</a></code>
+</td>
+</tr>
+<tr>
+<td>What is this glyph, exactly?</td>
+<td>
+<code><a href="reference/emoji_properties.html">emoji_properties()</a></code>, <code><a href="reference/emoji_identical.html">emoji_identical()</a></code>, <code><a href="reference/emoji_find.html">emoji_find()</a></code>
+</td>
+</tr>
+<tr>
+<td>What goes with what?</td>
+<td>
+<code><a href="reference/emoji_pairs.html">emoji_pairs()</a></code>, <code><a href="reference/emoji_collocations.html">emoji_collocations()</a></code>, <code><a href="reference/emoji_ngrams.html">emoji_ngrams()</a></code>
+</td>
+</tr>
+<tr>
+<td>When, and how new?</td>
+<td>
+<code><a href="reference/emoji_trend.html">emoji_trend()</a></code>, <code><a href="reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code>
+</td>
+</tr>
+<tr>
+<td>Which countries do the flags name?</td>
+<td>
+<code><a href="reference/emoji_country.html">emoji_country()</a></code>, <code><a href="reference/emoji_flag.html">emoji_flag()</a></code>
+</td>
+</tr>
+<tr>
+<td>Reaction counts rather than text?</td>
+<td><code><a href="reference/emoji_from_counts.html">emoji_from_counts()</a></code></td>
+</tr>
+<tr>
+<td>Sending text to a language model?</td>
+<td>
+<code><a href="reference/emoji_sanitize.html">emoji_sanitize()</a></code>, <code><a href="reference/emoji_token_cost.html">emoji_token_cost()</a></code>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="bulb-tips">💡 Tips<a class="anchor" aria-label="anchor" href="#bulb-tips"></a>
+</h2>
+<ul>
+<li>Count bare text-style emoji such as the plain heart with <code>presentation = "any"</code>, which every counting and scoring verb takes.</li>
+<li>Report <code><a href="reference/emoji_coverage.html">emoji_coverage()</a></code> next to any lexicon score: it says how much of the corpus the score covers.</li>
+<li>Paste <code><a href="reference/emoji_provenance.html">emoji_provenance()</a></code> into a methods section: it records the Unicode catalogue (Emoji 18.0, bundled) and the lexicons behind a result.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="books-learn-more">📚 Learn more<a class="anchor" aria-label="anchor" href="#books-learn-more"></a>
+</h2>
+<p>Three articles ship with the package: <code><a href="articles/introduction.html">vignette("introduction")</a></code> for a full analysis of a real corpus, <code><a href="articles/reversible-preprocessing.html">vignette("reversible-preprocessing")</a></code> for emoji in language-model pipelines, and <code><a href="articles/emoji-networks.html">vignette("emoji-networks")</a></code> for co-occurrence networks. All three are on the <a href="https://pursuitofdatascience.github.io/tidyEmoji/">package website</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

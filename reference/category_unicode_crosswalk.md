@@ -23,5 +23,6 @@ A data frame with two columns:
 
 ## Source
 
-Derived from the `emojis` table of the emoji package; rebuilt by
-`data-raw/crosswalks.R`.
+Unicode's `emoji-test.txt`, the catalogue
+[`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md)
+reports; rebuilt by `data-raw/crosswalks.R`.

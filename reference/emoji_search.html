@@ -13,7 +13,7 @@ keywords, ready for further inspection or piping into other verbs."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@ keywords, ready for further inspection or piping into other verbs."><meta proper
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -73,10 +74,13 @@ the matched spelling has no alias; see Details.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>shortcode</code> is the <em>matched row's</em> first alias, and it is <code>NA</code> when the
-matched spelling has none: 189 of the catalogue's 5042 rows carry no
-GitHub-style alias at all, so a search that hits one (7 of the 198 rows
+matched spelling has none: 391 of the catalogue's 5244 rows carry no
+GitHub-style alias at all, so a search that hits one (9 of the 200 rows
 <code>emoji_search("face")</code> returns, for instance) has nothing to put in that
-column. Use the <code>emoji</code> column for those, or <code><a href="as_emoji_name.html">as_emoji_shortcode()</a></code>, which
+column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
+<span class="pkg">emoji</span> package supplying the aliases and keywords does not know yet:
+they are found by name, and only by name, because they have no keywords
+either. Use the <code>emoji</code> column for those, or <code><a href="as_emoji_name.html">as_emoji_shortcode()</a></code>, which
 is keyed on the emoji rather than on the row and so can borrow the alias of
 the glyph's other spelling. For the same reason the two can disagree even
 when both answer – see <code><a href="as_emoji_name.html">as_emoji_shortcode()</a></code>.</p>

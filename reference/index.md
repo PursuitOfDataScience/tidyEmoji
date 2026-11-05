@@ -7,6 +7,8 @@
 - [`emoji_filter()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
   [`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
   : Keep only the rows whose text contains emoji
+- [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  : How much of a corpus can each lexicon score?
 
 ## Count
 
@@ -130,6 +132,33 @@
   : Vector helpers: convert emoji to/from names and shortcodes
 - [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
   : Search emoji by keyword, name or shortcode
+- [`emoji_find()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_find.md)
+  : Which emoji carry these keywords?
+- [`emoji_keywords()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_keywords.md)
+  : The keywords of each emoji, one row per keyword
+
+## The catalogue
+
+- [`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md)
+  : What the catalogue knows about a glyph
+- [`as_emoji_canonical()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_canonical.md)
+  : The canonical spelling of an emoji
+- [`emoji_identical()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_identical.md)
+  : Are two glyphs the same emoji?
+
+## Flags & places
+
+- [`emoji_country()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_country.md)
+  : Country flags in a text column, as ISO 3166-1 codes
+- [`emoji_subdivision()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_subdivision.md)
+  : Subdivision flags in a text column, as ISO 3166-2 codes
+- [`emoji_flag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag.md)
+  : Convert between flag emoji and region codes
+
+## Tallies
+
+- [`emoji_from_counts()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_from_counts.md)
+  : Turn a tally of emoji into text the other verbs can read
 
 ## Provenance & reference data
 

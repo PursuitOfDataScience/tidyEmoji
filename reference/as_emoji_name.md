@@ -67,7 +67,7 @@ That is what makes it agree with
 [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
 and survive a round trip, but it is not always the first alias of the
 glyph you passed in. 344 codepoint keys have a different first alias on
-each of their two spellings, so for 175 of the catalogue's 5042 rows the
+each of their two spellings, so for 175 of the catalogue's 5244 rows the
 two answers differ: `as_emoji_shortcode("\u2764")` is `"heart"`, the
 qualified heart's alias, where the bare `U+2764` row's own first alias
 is `"red_heart"`.
@@ -78,11 +78,14 @@ result is a row – so the two verbs can disagree on the same glyph. Both
 resolve back to the same emoji through
 [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
 which reads every alias, so where both answer the disagreement is
-cosmetic. Where they differ in substance is the 189 rows that have no
-alias:
+cosmetic. Where they differ in substance is the 189 rows of the Emoji
+16.0 catalogue that have no alias:
 [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
 reports `NA` for those, while `as_emoji_shortcode()` still answers for
-all 189, having borrowed the alias of the glyph's other spelling.
+all 189, having borrowed the alias of the glyph's other spelling. The
+202 spellings added in Emoji 17.0 and 18.0 have no alias on any
+spelling, since the aliases come from the emoji package and it has not
+caught up, so both return `NA` for them; they still have a name.
 
 ## See also
 

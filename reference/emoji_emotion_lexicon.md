@@ -42,13 +42,16 @@ Processed by `data-raw/emoji_emotion_lexicon.R`.
 ## How much of the catalogue this covers
 
 **150 glyphs, about 4% of the distinct emoji tidyEmoji can detect**
-(3790 distinct codepoint keys in the reference table of emoji 16.0.0;
-see
+(3972 distinct codepoint keys in the Emoji 18.0 catalogue, nine of them
+the skin-tone and hair components; see
 [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
-for the version you have). That is not a defect – EmoTag1200 is a
-carefully annotated 150-glyph resource – but it is worth knowing
-*before* concluding that a corpus carries no emotion: a modern corpus is
-mostly post-2018 glyphs that no bundled lexicon has seen.
+for the version you have, and
+[`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+for the share of *your* corpus it scores, which is a different and
+larger number). That is not a defect, since EmoTag1200 is a carefully
+annotated 150-glyph resource, but it is worth knowing *before*
+concluding that a corpus carries no emotion: a modern corpus is mostly
+post-2018 glyphs that no bundled lexicon has seen.
 [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
 reports this per row rather than hiding it: `.emoji_n_scored` is `0`
 when a row has emoji the lexicon cannot score, and `NA` only when the

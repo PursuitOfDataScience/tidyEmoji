@@ -15,8 +15,12 @@ intact), returning tidy data frames that slot straight into a
 about an emoji (interpretation risk), extracts the words around each
 emoji, tracks emoji use over time, measures text-emoji sentiment
 mismatch, and applies explicit emoji-preprocessing policies for
-language-model pipelines. The bundled emoji sentiment lexicon is from
-the Emoji Sentiment Ranking of Kralj Novak et al. (2015)
+language-model pipelines. Its emoji catalogue is the Unicode emoji test
+data, bundled and current to Emoji 18.0, so it can also say what a glyph
+is, map flag emoji to ISO 3166 codes, report how much of a corpus each
+lexicon can score, and read reaction tallies as well as text. The
+bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of
+Kralj Novak et al. (2015)
 [doi:10.1371/journal.pone.0144296](https://doi.org/10.1371/journal.pone.0144296)
 , released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of
 Shoeb & de Melo (2020) <https://aclanthology.org/2020.emnlp-main.720/>,
@@ -113,11 +117,39 @@ leaves a `.emoji_n_scored` describing the emotion lexicon beside a
 before adding the second, or keep the two tables apart.
 
 `group` always refers to the Unicode top-level category (the term used
-by the underlying
-[`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html)
-table). Every glyph-to-metadata join is normalised through a codepoint
-key that strips the `U+FE0F` variation selector, so qualified and
-unqualified emoji forms resolve identically in every verb.
+by Unicode's own `emoji-test.txt`, which the catalogue is built from).
+Every glyph-to-metadata join is normalised through a codepoint key that
+strips the `U+FE0F` variation selector, so qualified and unqualified
+emoji forms resolve identically in every verb.
+
+## Rates and their denominators
+
+**Every rate tidyEmoji returns ships with the numerator and the
+denominator it was computed from**, so a user can fit a count model (a
+Poisson or negative binomial regression of the count with the
+denominator as its exposure) instead of a linear model on a ratio.
+[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
+returns `.emoji_codepoints` and `.emoji_n_char` beside `.emoji_ratio`,
+[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
+returns `.emoji_n_char` and `.emoji_n_token` beside its two densities,
+[`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
+returns `n_period` beside `share`, and
+[`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+returns the counts beside both coverages. Where a table already carries
+every count a share is built from, as
+[`emoji_seasonality()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_seasonality.md)
+and
+[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
+do, the denominator is the column's total.
+
+This matters more than it sounds. Emoji counts are compositional (shares
+of a document's total) and heavily zero-inflated, and the log-ratio
+transforms compositional analysis depends on are undefined at zero, so a
+bare quotient pushes the analyst into the modelling error. tidyEmoji
+offers no `clr` or `ilr` transform, because zero replacement is a
+methodological choice that belongs to the analysis (compositions and
+zCompositions make it properly), but it returns what such a choice
+needs. A new verb is held to the same rule.
 
 ## Detection
 
@@ -126,17 +158,28 @@ sequence (a family, a couple, a profession) stays intact as one emoji,
 and every verb asks the same question, so counts agree across the
 package.
 
+**What counts as an emoji is decided by the catalogue**, Unicode's own
+`emoji-test.txt` for the version
+[`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)
+reports, bundled with the package.
+[`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md)
+shows what it records about any glyph. Until 0.6.0 the catalogue was the
+table inside the emoji package, which stayed at Emoji 16.0 through two
+Unicode releases, so the 182 emoji added in 17.0 and 18.0 were
+invisible; they are detected now. A corpus re-run under 0.6.0 can
+therefore report more emoji than it did, and because of the two repairs
+below, it can also report fewer.
+
 There is one systematic exclusion, and it is worth knowing before you
 read a count. Some code points are emoji only in their
 *emoji-presentation* form, that is only when the variation selector
 `U+FE0F` is present. The best-known is the heart: `U+2764 U+FE0F` is
 detected, the bare `U+2764` is not, and several keyboards emit the bare
-form. Across the reference catalogue 1252 emoji carry `U+FE0F`, and 216
-of those become undetectable if it is dropped – in the bundled sentiment
+form. Across the catalogue 1272 spellings carry `U+FE0F`, and 216 of
+those become undetectable if it is dropped: in the bundled sentiment
 lexicon, 57 of the scorable glyphs. Counted the other way round, 212 of
-the catalogue's 5042 rows are spellings that are themselves
-undetectable; the two figures measure different things and both are
-right.
+the catalogue's 5244 spellings are themselves undetectable; the two
+figures measure different things and both are right.
 
 The selector does not always go at the end. For 200 of those 212 it
 does, so appending `U+FE0F` is what makes them detectable. The
@@ -146,10 +189,16 @@ belongs *between* the two: `U+0031 U+FE0F U+20E3` is detected and
 `U+0031 U+20E3 U+FE0F` is not. Inserting `U+FE0F` after the first code
 point is the rule that repairs all 212.
 
-The default does not match the bare forms, and that is deliberate rather
-than an oversight: the same set contains `U+00A9`, `U+00AE` and
-`U+2122`, so matching them unqualified would count the copyright sign in
-a legal footer as emoji use. Detection is the only thing affected – the
+**`presentation = "any"` reads them as they are**, on every verb that
+counts, scores or rewrites emoji, without your having to repair the
+text: all 212 except three. The default does not, and that is deliberate
+rather than an oversight: the same set contains `U+00A9`, `U+00AE` and
+`U+2122`, so matching them would count the copyright sign in a legal
+footer as emoji use, which is why `"any"` leaves those three out. The
+default stays `"emoji"`, because widening it would silently recount
+every corpus already analysed;
+[`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+reports what the choice adds. Detection is the only thing affected; the
 join is not. Every glyph-to-metadata lookup strips `U+FE0F` first, so if
 you hand a bare `U+2764` to
 [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
@@ -162,47 +211,41 @@ Joined sequences are unaffected either way. Unicode lists several
 spellings of a zero-width-joiner sequence – fully qualified, and shorter
 forms with the selectors omitted – and a shorter one can leave an
 undetectable component in the middle. Detection repairs those: **every
-canonical spelling in the reference table, and all but two of the
-shorter ones, is read as exactly one emoji**, so `U+2764 U+200D U+1F525`
-is "heart on fire" rather than "fire" even with its selectors stripped.
-The two exceptions are spellings in which no component at all is
-detectable, and both have a canonical form that is found.
+fully-qualified and minimally-qualified spelling in the catalogue is
+read as exactly one emoji**, so `U+2764 U+200D U+1F525` is "heart on
+fire" rather than "fire" even with its selectors stripped.
 
-Everything above is about what detection *misses*. It also admits two
-things that are well formed but not emoji, and both flow through every
-verb, so a corpus statistic can be inflated by them:
+Two things are emoji *material* without being emoji, and since 0.6.0 no
+verb counts them:
 
-- **An invalid regional-indicator pair.** Any two regional indicators
-  form one grapheme cluster, so `U+1F1FD U+1F1FD` is read as a single
-  emoji even though no country has that code. It appears in
-  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
-  with `name = NA`, gets a column in
-  [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
-  and a node in
-  [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md).
-  Only 259 of the 676 possible pairs are real, the rows of the reference
-  table whose `subgroup` is `"country-flag"`; its three
-  `"subdivision-flag"` rows are tag sequences, not pairs. A pair outside
-  that set is in no catalogue, so
-  [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md)
-  reports it with `group = NA` as well as `name = NA`, which is the way
-  to filter it out, and
-  [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
-  reports which catalogue you have.
+- **A skin-tone swatch or hair component standing alone.** A modifier
+  applied to a base that cannot take one, as in `U+1F600 U+1F3FB`,
+  leaves the swatch with nothing to modify. That is one emoji, the
+  grinning face, and a swatch; until 0.6.0 it was counted as two emoji,
+  the second named "light skin tone" in group `"Component"`.
 
-- **An orphan skin-tone modifier or hair component.** A modifier applied
-  to a base that cannot take one, as in `U+1F600 U+1F3FB`, leaves the
-  swatch standing alone – and because the Component group is in the
-  reference table it comes back *named*, as "light skin tone" in group
-  `"Component"`, not as `NA`.
-  [`as_emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.md)
-  labels these `"component"`, which is the way to find and drop them:
-  `subset(emoji_frequency(df, text), as_emoji_type(emoji) != "component")`.
+- **Regional indicators that spell no flag.** Any two regional
+  indicators form one grapheme cluster, so `U+1F1FD U+1F1FD` ("XX") used
+  to be read as an emoji with no name, as did a lone indicator. Only 259
+  of the 676 possible pairs are flags in the catalogue; anything else is
+  not an emoji. Subdivision flags are tag sequences, not pairs, and are
+  unaffected.
 
-Both are defensible as raw detection and misleading as a corpus
-statistic, which is why they are named here rather than silently
-filtered: dropping them inside the verbs would make the emoji counts
-disagree with the text.
+Neither is silently discarded.
+[`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+counts both, in `n_orphan_components` and `n_invalid_flags`, so a corpus
+whose count fell can be explained, and
+[`emoji_country()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_country.md)
+reports a stray pair with its glyph and no country code. The verbs that
+rewrite text treat them as before 0.6.0
+(`emoji_sanitize(policy = "strip")` still removes a swatch, and
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+still names it), because what changed is what is *counted*, and a swatch
+left in a stripped column would still be a swatch.
+
+ASCII emoticons such as `:)` are not emoji and are never detected, so a
+study of the move from emoticons to emoji, which needs both in one
+denominator, has to count the emoticons itself.
 
 ## Which spelling comes back
 
@@ -266,10 +309,7 @@ through to their result, exactly as
 [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
 and
 [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
-do, so a
-[`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html)
-upstream still means something to a
-[`summarise()`](https://dplyr.tidyverse.org/reference/summarise.html)
+do, so a `group_by()` upstream still means something to a `summarise()`
 downstream. The verbs that pool across rows –
 [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md),
 [`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md),

@@ -32,8 +32,12 @@ A data frame with four columns:
 
 ## Source
 
-Derived from the `emojis` table of the emoji package; rebuilt by
-`data-raw/crosswalks.R`.
+The glyphs and categories come from Unicode's `emoji-test.txt`, the
+catalogue
+[`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md)
+reports, and the names from the GitHub-style aliases of the emoji
+package; rebuilt by `data-raw/crosswalks.R`. An emoji newer than emoji's
+own table has no alias, so it is in the catalogue but not in this table.
 
 ## Details
 

@@ -11,7 +11,7 @@ an emoji is known by, so glyphs that share several names occupy several rows."><
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,7 @@ an emoji is known by, so glyphs that share several names occupy several rows."><
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -52,7 +53,8 @@ an emoji is known by, so glyphs that share several names occupy several rows.</p
 <span>  <span class="va">text</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>  duplicated <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  duplicated_unicode <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  duplicated_unicode <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  presentation <span class="op">=</span> <span class="st">"emoji"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -94,6 +96,26 @@ Default <code>FALSE</code>.</p></dd>
 instead. Accepts only the values it ever meant – <code>TRUE</code>, <code>FALSE</code>,
 <code>"yes"</code> or <code>"no"</code> – and errors on anything else rather than reading it as
 <code>FALSE</code>, which is what <code>"TRUE"</code> and <code>1</code> used to get.</p></dd>
+
+
+<dt id="arg-presentation">presentation<a class="anchor" aria-label="anchor" href="#arg-presentation"></a></dt>
+<dd><p>Which code points count as emoji: <code>"emoji"</code> (the
+default) or <code>"any"</code>.</p><ul><li><p><code>"emoji"</code> requires emoji presentation, so <code>U+2764 U+FE0F</code> is an emoji
+and the bare <code>U+2764</code> is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.</p></li>
+<li><p><code>"any"</code> also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, <code>U+263A</code>, <code>U+2714</code>, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (<code>U+00A9</code>, <code>U+00AE</code>,
+<code>U+2122</code>), which are typography far more often than they are emoji.</p></li>
+</ul><p><code>"any"</code> only ever adds occurrences: everything <code>"emoji"</code> finds, it finds
+too, in the same place. <code><a href="emoji_coverage.html">emoji_coverage()</a></code> reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -8,7 +8,7 @@ table and quite different here.
 ## Usage
 
 ``` r
-emoji_version_profile(data, text)
+emoji_version_profile(data, text, presentation = "emoji")
 ```
 
 ## Arguments
@@ -39,6 +39,30 @@ emoji_version_profile(data, text)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
 
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
+
 ## Value
 
 A tibble with one row per version, oldest first: `version`,
@@ -49,16 +73,14 @@ reference table does not give are pooled into one last row with
 
 ## Details
 
-The version comes from the reference table tidyEmoji detects against, so
-it is capped by your installed emoji package (see
+The version comes from the catalogue tidyEmoji detects against, so it is
+capped by that catalogue's Unicode version (see
 [`emoji_unicode_version()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_unicode_version.md)).
-Glyphs whose version is unknown – including any the reference table does
-not carry – are reported in a row with `version = NA` rather than
-dropped. That row is rare in practice: the upstream table records the
-introducing version on only one spelling of a variation pair, and
-tidyEmoji fills it across every spelling sharing a codepoint key, so a
-fully-qualified glyph such as `U+2764 U+FE0F` reports the same version
-as its unqualified form.
+Glyphs whose version is unknown, which means any the catalogue does not
+carry, such as a ZWJ sequence newer than it, are reported in a row with
+`version = NA` rather than dropped. Every spelling in the catalogue
+carries its emoji's version, so a fully-qualified glyph such as
+`U+2764 U+FE0F` reports the same version as its unqualified form.
 
 The corpus's average vintage is a weighted mean over this table, for
 example

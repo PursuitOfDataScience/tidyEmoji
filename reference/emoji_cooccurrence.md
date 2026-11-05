@@ -2,13 +2,20 @@
 
 `emoji_cooccurrence()` is
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
-under the name the matrix form goes by, with one argument added and one
+under the name the matrix form goes by, with one argument added and two
 taken away.
 
 ## Usage
 
 ``` r
-emoji_cooccurrence(data, text, doc_id = NULL, diagonal = FALSE, sort = TRUE)
+emoji_cooccurrence(
+  data,
+  text,
+  doc_id = NULL,
+  diagonal = FALSE,
+  sort = TRUE,
+  presentation = "emoji"
+)
 ```
 
 ## Arguments
@@ -47,7 +54,7 @@ emoji_cooccurrence(data, text, doc_id = NULL, diagonal = FALSE, sort = TRUE)
   The result has a row per pair, so it grows with the *square* of the
   distinct emoji in a document: a day or a conversation is cheap, and
   pooling a whole corpus under one id is not. 800 distinct emoji in one
-  document is 319,600 pairs and a few seconds; 3790 would be 7.2
+  document is 319,600 pairs and a few seconds; all 3963 would be 7.9
   million.
 
 - diagonal:
@@ -57,10 +64,35 @@ emoji_cooccurrence(data, text, doc_id = NULL, diagonal = FALSE, sort = TRUE)
 
 - sort:
 
-  If `TRUE` (default), sort by descending `n` (ties broken by `item1`,
-  `item2` so the order is deterministic). `FALSE` sorts by `item1` then
-  `item2` instead – still a fixed order, computed in the C locale, not
-  the order the pairs happened to be counted in.
+  If `TRUE` (default), sort by descending `measure` (by descending `n`
+  for `"count"`; ties broken by `n`, then `item1`, `item2`, so the order
+  is deterministic). `FALSE` sorts by `item1` then `item2` instead,
+  which is still a fixed order, computed in the C locale, not the order
+  the pairs happened to be counted in.
+
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
 
 ## Value
 
@@ -77,7 +109,11 @@ symmetric, so an ordered pair has no meaning on it and the diagonal this
 verb exists to add would not either. Use
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
 when you want `directed = TRUE`; the off-diagonal rows the two verbs
-return are otherwise identical.
+return are otherwise identical. Nor is there a `measure`: an association
+measure scores two emoji against each other, and a diagonal cell has
+only one. Use
+[`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
+for the association-weighted edges.
 
 Glyphs are canonicalised through the package's codepoint key, so two
 spellings of one emoji make one row rather than two; see *Which spelling

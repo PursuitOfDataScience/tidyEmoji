@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -96,16 +97,20 @@ the first alias of the emoji's fully-qualified (RGI) form. That is what
 makes it agree with <code><a href="emoji_to_text.html">emoji_to_text()</a></code> and survive a round trip, but it is
 not always the first alias of the glyph you passed in. 344 codepoint keys
 have a different first alias on each of their two spellings, so for 175 of
-the catalogue's 5042 rows the two answers differ:
+the catalogue's 5244 rows the two answers differ:
 <code>as_emoji_shortcode("\u2764")</code> is <code>"heart"</code>, the qualified heart's alias,
 where the bare <code>U+2764</code> row's own first alias is <code>"red_heart"</code>.</p>
 <p><code><a href="emoji_search.html">emoji_search()</a></code> reports the other one – the matched row's own alias, since
 a search result is a row – so the two verbs can disagree on the same glyph.
 Both resolve back to the same emoji through <code><a href="text_to_emoji.html">text_to_emoji()</a></code>, which reads
 every alias, so where both answer the disagreement is cosmetic. Where they
-differ in substance is the 189 rows that have no alias: <code><a href="emoji_search.html">emoji_search()</a></code>
-reports <code>NA</code> for those, while <code>as_emoji_shortcode()</code> still answers for all
-189, having borrowed the alias of the glyph's other spelling.</p>
+differ in substance is the 189 rows of the Emoji 16.0 catalogue that have
+no alias: <code><a href="emoji_search.html">emoji_search()</a></code> reports <code>NA</code> for those, while
+<code>as_emoji_shortcode()</code> still answers for all 189, having borrowed the alias
+of the glyph's other spelling. The 202 spellings added in Emoji 17.0 and
+18.0 have no alias on any spelling, since the aliases come from the
+<span class="pkg">emoji</span> package and it has not caught up, so both return <code>NA</code> for
+them; they still have a name.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

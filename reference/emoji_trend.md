@@ -14,7 +14,8 @@ emoji_trend(
   time,
   by = "month",
   top_n = 20,
-  measure = c("n", "share")
+  measure = c("n", "share"),
+  presentation = "emoji"
 )
 ```
 
@@ -91,13 +92,39 @@ emoji_trend(
   Statistic used to rank emoji for `top_n` and to order the rows within
   a period: `"n"` (default) or `"share"`.
 
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
+
 ## Value
 
 A tibble with columns `.period` (a `Date`, the start of the period),
-`emoji`, `name`, `n` and `share`, sorted by `.period`, then by `measure`
-descending, then by the glyph, so the order is fully determined. That
-last key matters: within a period the zeros this verb fills in all tie
-on both of the others.
+`emoji`, `name`, `n`, `n_period` (every emoji token in the period, the
+denominator of `share`, which `top_n` would otherwise hide) and `share`
+(`n / n_period`), sorted by `.period`, then by `measure` descending,
+then by the glyph, so the order is fully determined. That last key
+matters: within a period the zeros this verb fills in all tie on both of
+the others.
 
 ## Details
 
@@ -148,11 +175,11 @@ df <- data.frame(
   text = c("\U0001f600 hi", "\U0001f600\U0001f602", "\U0001f602 yes")
 )
 emoji_trend(df, text, when)
-#> # A tibble: 4 × 5
-#>   .period    emoji name                       n share
-#>   <date>     <chr> <chr>                  <int> <dbl>
-#> 1 2024-01-01 😀    grinning face              2 0.667
-#> 2 2024-01-01 😂    face with tears of joy     1 0.333
-#> 3 2024-02-01 😂    face with tears of joy     1 1    
-#> 4 2024-02-01 😀    grinning face              0 0    
+#> # A tibble: 4 × 6
+#>   .period    emoji name                       n n_period share
+#>   <date>     <chr> <chr>                  <int>    <int> <dbl>
+#> 1 2024-01-01 😀    grinning face              2        3 0.667
+#> 2 2024-01-01 😂    face with tears of joy     1        3 0.333
+#> 3 2024-02-01 😂    face with tears of joy     1        1 1    
+#> 4 2024-02-01 😀    grinning face              0        1 0    
 ```

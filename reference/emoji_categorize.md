@@ -8,7 +8,7 @@ when a row spans more than one category.
 ## Usage
 
 ``` r
-emoji_categorize(data, text)
+emoji_categorize(data, text, presentation = "emoji")
 ```
 
 ## Arguments
@@ -39,6 +39,30 @@ emoji_categorize(data, text)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
 
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
+
 ## Value
 
 `data`, as a tibble, filtered to the rows containing at least one emoji,
@@ -53,27 +77,23 @@ row is kept with `.emoji_category` set to `NA`. Dropping it would
 silently shrink the corpus, and by exactly the rows a user whose Unicode
 coverage is behind most needs to see.
 
-Three different things reach that `NA`, and only the first is a
-catalogue question:
+Two different things reach that `NA`, and only the first is a catalogue
+question:
 
-1.  A zero-width-joiner sequence **newer than your installed emoji
-    package**, since detection is grapheme-aware and does not require
-    the sequence to be catalogued. Use
+1.  A zero-width-joiner sequence **newer than the bundled catalogue**,
+    since detection is grapheme-aware and does not require the sequence
+    to be catalogued. Use
     [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
-    to check which catalogue you are matching against; upgrading `emoji`
-    fixes it.
+    to check which catalogue you are matching against; a tidyEmoji
+    release built on a newer Unicode file fixes it.
 
-2.  An **invalid regional-indicator pair** such as `U+1F1FD U+1F1FD`. It
-    is a well-formed grapheme cluster and no catalogue will ever contain
-    it, so no upgrade helps.
+2.  A **non-RGI ZWJ join**: components joined in a combination Unicode
+    does not recommend, which no catalogue lists.
 
-3.  A **non-RGI ZWJ join** – components joined in a combination Unicode
-    does not recommend. These arrive as separate occurrences rather than
-    one.
-
-See the Detection section of
-[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
-for both false-positive cases.
+An invalid regional-indicator pair such as `U+1F1FD U+1F1FD` used to be
+a third. Since 0.6.0 it is not an emoji at all, so it no longer keeps a
+row here; see the Detection section of
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
 
 ## See also
 

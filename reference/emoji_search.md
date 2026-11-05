@@ -30,10 +30,13 @@ matched the name or a shortcode rather than a keyword. `shortcode` *is*
 ## Details
 
 `shortcode` is the *matched row's* first alias, and it is `NA` when the
-matched spelling has none: 189 of the catalogue's 5042 rows carry no
-GitHub-style alias at all, so a search that hits one (7 of the 198 rows
+matched spelling has none: 391 of the catalogue's 5244 rows carry no
+GitHub-style alias at all, so a search that hits one (9 of the 200 rows
 `emoji_search("face")` returns, for instance) has nothing to put in that
-column. Use the `emoji` column for those, or
+column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
+emoji package supplying the aliases and keywords does not know yet: they
+are found by name, and only by name, because they have no keywords
+either. Use the `emoji` column for those, or
 [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
 which is keyed on the emoji rather than on the row and so can borrow the
 alias of the glyph's other spelling. For the same reason the two can

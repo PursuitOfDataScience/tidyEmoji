@@ -47,7 +47,7 @@ for the version this build reflects.
 
 ``` r
 emoji_unicode_releases()
-#> # A tibble: 23 × 4
+#> # A tibble: 24 × 4
 #>    version version_num series  release_date
 #>    <chr>         <dbl> <chr>   <date>      
 #>  1 0.6             0.6 emoji   2010-10-11  
@@ -60,5 +60,5 @@ emoji_unicode_releases()
 #>  8 6.0             6   unicode 2010-10-11  
 #>  9 6.1             6.1 unicode 2012-01-31  
 #> 10 7.0             7   unicode 2014-06-16  
-#> # ℹ 13 more rows
+#> # ℹ 14 more rows
 ```

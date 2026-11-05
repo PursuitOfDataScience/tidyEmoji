@@ -13,7 +13,7 @@ sentiment_score is (positive - negative) / occurrences, ranging from -1
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@ sentiment_score is (positive - negative) / occurrences, ranging from -1
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -95,8 +96,9 @@ licence. Processed by <code>data-raw/emoji_sentiment_lexicon.R</code>.</p>
 
 
 <p><strong>969 rows, of which 736 resolve to an emoji tidyEmoji can detect – about
-19% of the 3790 distinct codepoint keys in the reference table of
-<span class="pkg">emoji</span> 16.0.0</strong> (see <code><a href="emoji_provenance.html">emoji_provenance()</a></code> for the version you have).
+19% of the 3972 distinct codepoint keys in the Emoji 18.0 catalogue</strong> (see
+<code><a href="emoji_provenance.html">emoji_provenance()</a></code> for the version you have, and <code><a href="emoji_coverage.html">emoji_coverage()</a></code> for
+the share of your own corpus it can score).
 Two caveats on that figure, both consequences of the lexicon being built
 from 2015 tweets: the other 233 rows are not in the reference table at all
 – see <em>Detection limitations</em> below – and nothing added to Unicode after

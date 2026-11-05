@@ -19,7 +19,7 @@ than described as a caveat."><meta property="og:image" content="https://pursuito
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,7 @@ than described as a caveat."><meta property="og:image" content="https://pursuito
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -74,7 +75,8 @@ absent from the lexicon come back with <code>NA</code> statistics.</p></dd>
 
 <dt id="arg-measure">measure<a class="anchor" aria-label="anchor" href="#arg-measure"></a></dt>
 <dd><p>Which ambiguity statistic to put in the <code>ambiguity</code> column:
-one of <code>"entropy"</code> (default), <code>"gini"</code>, <code>"neutral_share"</code> or <code>"ci_width"</code>.</p></dd>
+one of <code>"entropy"</code> (default), <code>"gini"</code>, <code>"polarisation"</code>,
+<code>"neutral_share"</code> or <code>"ci_width"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -91,12 +93,16 @@ order.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The four measures are computed from the annotation shares
+    <p>The five measures are computed from the annotation shares
 <code>(p_neg, p_neu, p_pos)</code>:</p><ul><li><p><code>"entropy"</code> (the default) is Shannon entropy in nats: 0 when the
 annotators were unanimous, <code>log(3)</code> (about 1.0986) when they split evenly
 three ways.</p></li>
 <li><p><code>"gini"</code> is the Gini impurity, <code>1 - sum(p^2)</code>: 0 when unanimous, 2/3 at
 maximum disagreement.</p></li>
+<li><p><code>"polarisation"</code> is the expected absolute difference between two
+annotations drawn at random, scoring negative as -1, neutral as 0 and
+positive as 1: 0 when unanimous, 1 when the annotators split evenly
+between the two poles. See <em>Polarised or merely uncertain?</em> below.</p></li>
 <li><p><code>"neutral_share"</code> is <code>p_neu</code> on its own, for the "is this emoji simply
 uninformative?" question.</p></li>
 <li><p><code>"ci_width"</code> is the width of a 95% Wald interval around the glyph's
@@ -105,6 +111,41 @@ annotations grows, so it answers "how well do we know this score?" rather
 than "how much do readers disagree?".</p></li>
 </ul><p><code>rank</code> is always computed over the whole lexicon (1 = most ambiguous), so a
 rank keeps its meaning when <code>x</code> selects a handful of glyphs.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="polarised-or-merely-uncertain-">Polarised or merely uncertain?<a class="anchor" aria-label="anchor" href="#polarised-or-merely-uncertain-"></a></h2>
+
+
+<p>The three annotation classes are <strong>ordered</strong> (negative, then neutral, then
+positive), and entropy and Gini impurity are <strong>nominal</strong> statistics that
+ignore the order. So they cannot tell an emoji whose readers split
+between the two poles, the one that causes real miscommunication, from one
+whose readers merely hedged:</p><table class="table table"><tr><td>Annotation split</td><td><code>entropy</code></td><td><code>gini</code></td><td><code>polarisation</code></td></tr><tr><td>50% negative, 0% neutral, 50% positive</td><td>0.693</td><td>0.500</td><td><strong>1.00</strong></td></tr><tr><td>50% negative, 50% neutral, 0% positive</td><td>0.693</td><td>0.500</td><td><strong>0.50</strong></td></tr></table><p>Identical on both nominal measures, and twice apart on the ordinal one.
+Across the whole lexicon the rankings mostly agree (Spearman 0.96 between
+entropy and polarisation), which is why the difference is easy to miss, and
+they part company exactly where a user looks: the face with open mouth and
+cold sweat, with 302 annotations, is at rank 6 of 969 by polarisation and
+at rank 156 by entropy. The default stays <code>"entropy"</code>, because changing it would
+silently rewrite every ranking already published with it; ask for
+<code>"polarisation"</code> when the question is "which emoji will readers take in
+opposite directions?".</p>
+<p><code>"polarisation"</code> is the statistic Miller et al. (2016) used, rescaled. They
+had each rater score a rendering from -5 to +5 and averaged the absolute
+difference over pairs of raters, so their misconstrual score runs from 0
+to 10 on a scale five times as wide as this one, and averages over pairs
+of <em>different</em> raters, which inflates it for small groups by <code>n / (n - 1)</code>.
+The value here is the large-sample version, computed from the shares like
+entropy and Gini are, so it does not reward thin annotation. For three
+equally spaced classes it coincides with Berry and Mielke's index of
+ordinal variation and with <code>1 - l^2</code> for Blair and Lacy's <code>l</code>, so those
+would rank the lexicon identically and are not offered separately. For a
+rating scale wider than three points, <span class="pkg">agrmt</span> implements them, and
+Leik's D, in general.</p>
+<p>The obvious objection to any context-free ambiguity score is that emoji are
+read in context. Miller et al. (2017) tested exactly that, with 2,482
+participants, and found that the surrounding text does not substantially
+reduce the potential for miscommunication. That is the case for reading an
+emoji's disagreement off its annotations at all.</p>
 <p><strong>Read <code>n_annotations</code> before you read the ranking.</strong> The lexicon's
 annotation counts are wildly uneven – the median glyph has 18, and 69% have
 fewer than 50 – and the first three measures are shape statistics that do
@@ -153,6 +194,13 @@ on <code>n_annotations</code> as above.</p>
     <p>Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L,
 Hecht B (2016). "Blissfully Happy" or "Ready to Fight": Varying
 Interpretations of Emoji. <em>ICWSM 2016</em>.</p>
+<p>Miller H, Kluver D, Thebault-Spieker J, Terveen L, Hecht B (2017).
+Understanding Emoji Ambiguity in Context: The Role of Text in
+Emoji-Related Miscommunication. <em>ICWSM 2017</em>.</p>
+<p>Blair J, Lacy MG (2000). Statistics of Ordinal Variation. <em>Sociological
+Methods &amp; Research</em> 28(3), 251-280.</p>
+<p>Berry KJ, Mielke PW (1992). Assessment of Variation in Ordinal Data.
+<em>Perceptual and Motor Skills</em> 74(1), 63-66.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

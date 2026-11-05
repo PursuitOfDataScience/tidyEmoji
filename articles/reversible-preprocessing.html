@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
 <li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -214,10 +215,10 @@ like an emoji and is not detected as one.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">hearts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            1       2</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            1       2                   0               0</span></span></code></pre></div>
 <p>One of the two is counted. Detection asks for emoji presentation, and
 a bare <code>U+2764</code> carries text presentation, so it passes
 through <code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code> untouched and survives the round
@@ -399,14 +400,15 @@ against the catalogue that performed it.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 1</span></span>
-<span><span class="co">#&gt; Columns: 7</span></span>
-<span><span class="co">#&gt; $ tidyEmoji         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.5.0"</span></span>
-<span><span class="co">#&gt; $ emoji_pkg         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0.0"</span></span>
-<span><span class="co">#&gt; $ unicode_emoji     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0"</span></span>
-<span><span class="co">#&gt; $ n_emoji           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 5042</span></span>
-<span><span class="co">#&gt; $ sentiment_lexicon <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "novak2015 (969 emoji)"</span></span>
-<span><span class="co">#&gt; $ emotion_lexicon   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "emotag1200 (150 emoji)"</span></span>
-<span><span class="co">#&gt; $ R                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "4.6.1"</span></span></code></pre></div>
+<span><span class="co">#&gt; Columns: 8</span></span>
+<span><span class="co">#&gt; $ tidyEmoji          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.6.0"</span></span>
+<span><span class="co">#&gt; $ emoji_pkg          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0.0"</span></span>
+<span><span class="co">#&gt; $ unicode_emoji      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "18.0"</span></span>
+<span><span class="co">#&gt; $ unicode_emoji_date <span style="color: #949494; font-style: italic;">&lt;date&gt;</span> 2026-04-30</span></span>
+<span><span class="co">#&gt; $ n_emoji            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 5244</span></span>
+<span><span class="co">#&gt; $ sentiment_lexicon  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "novak2015 (969 emoji)"</span></span>
+<span><span class="co">#&gt; $ emotion_lexicon    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "emotag1200 (150 emoji)"</span></span>
+<span><span class="co">#&gt; $ R                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "4.6.2"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a>

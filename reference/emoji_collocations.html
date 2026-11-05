@@ -15,7 +15,7 @@ baggage."><meta property="og:image" content="https://pursuitofdatascience.github
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,6 +28,7 @@ baggage."><meta property="og:image" content="https://pursuitofdatascience.github
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
+    <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -58,7 +59,8 @@ baggage.</p>
 <span>  <span class="va">text</span>,</span>
 <span>  window <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  min_n <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>  measure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmi"</span>, <span class="st">"count"</span><span class="op">)</span></span>
+<span>  measure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmi"</span>, <span class="st">"count"</span>, <span class="st">"ppmi"</span>, <span class="st">"dice"</span>, <span class="st">"logdice"</span>, <span class="st">"llr"</span>, <span class="st">"tscore"</span><span class="op">)</span>,</span>
+<span>  presentation <span class="op">=</span> <span class="st">"emoji"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -96,18 +98,41 @@ Default <code>3</code>.</p></dd>
 
 
 <dt id="arg-measure">measure<a class="anchor" aria-label="anchor" href="#arg-measure"></a></dt>
-<dd><p>Sort order: <code>"pmi"</code> (default) or <code>"count"</code>. Both columns are
-always returned.</p></dd>
+<dd><p>The association measure to sort by: <code>"pmi"</code> (default),
+<code>"count"</code>, <code>"ppmi"</code>, <code>"dice"</code>, <code>"logdice"</code>, <code>"llr"</code> or <code>"tscore"</code>. See
+<em>Choosing an association measure</em>.</p></dd>
+
+
+<dt id="arg-presentation">presentation<a class="anchor" aria-label="anchor" href="#arg-presentation"></a></dt>
+<dd><p>Which code points count as emoji: <code>"emoji"</code> (the
+default) or <code>"any"</code>.</p><ul><li><p><code>"emoji"</code> requires emoji presentation, so <code>U+2764 U+FE0F</code> is an emoji
+and the bare <code>U+2764</code> is not. This is the default and it will stay the
+default: widening it would silently recount every corpus already
+analysed.</p></li>
+<li><p><code>"any"</code> also reads the text-presentation spellings Unicode lists for an
+emoji (the bare heart, <code>U+263A</code>, <code>U+2714</code>, a keycap without its
+selector), because several keyboards emit them. It never reads the
+copyright, registered and trade-mark signs (<code>U+00A9</code>, <code>U+00AE</code>,
+<code>U+2122</code>), which are typography far more often than they are emoji.</p></li>
+</ul><p><code>"any"</code> only ever adds occurrences: everything <code>"emoji"</code> finds, it finds
+too, in the same place. <code><a href="emoji_coverage.html">emoji_coverage()</a></code> reports how many it adds and
+how many of those a lexicon can score, which is the cost of the choice in
+one number. Every verb that counts, scores or rewrites the emoji in a
+text column takes this argument, so counts still agree across the
+package for whichever value you use. The flag verbs do not need it,
+since a flag has no text-presentation form.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>emoji</code>, <code>word</code>, <code>n</code> (co-occurrences) and
 <code>pmi</code>, shaped like <code>widyr::pairwise_count()</code> output so it drops into
-existing tidytext workflows. Rows are sorted by <code>measure</code> descending,
-then by the other of the two descending, then by the glyph and the word,
-so the order is fully determined. Ties in <code>pmi</code> are common: every pair
-seen the same number of times with the same marginals scores alike.</p>
+existing tidytext workflows, plus a column named after <code>measure</code> when it
+is neither <code>"pmi"</code> nor <code>"count"</code>. Rows are sorted by <code>measure</code>
+descending, then by <code>n</code> descending (by <code>pmi</code> when <code>measure = "count"</code>),
+then by the glyph and the word, so the order is fully determined. Ties in
+<code>pmi</code> are common: every pair seen the same number of times with the same
+marginals scores alike.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -125,6 +150,33 @@ analysis, not for this package – filter the result with
 emoji-word co-occurrence events. Marginals are computed over <em>all</em>
 co-occurrences before <code>min_n</code> filters the rows, so a rare pairing is scored
 against the full corpus rather than against the surviving subset.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="choosing-an-association-measure">Choosing an association measure<a class="anchor" aria-label="anchor" href="#choosing-an-association-measure"></a></h2>
+
+
+<p>PMI alone is a fragile ranking. It favours rare pairs (a word seen once
+beside an emoji seen once scores the maximum), and on a real corpus it
+ties constantly: on the corpus behind the introduction vignette 40.6% of
+the rows share their PMI with another row. Corpus linguistics answers this
+by choosing the measure for the question, and by knowing which kind of
+question it is. <code>measure</code> offers the standard ones, all computed from the
+same counts as PMI, with <code>O</code> the pair's <code>n</code> and <code>E = n(e) * n(w) / N</code> the
+count expected by chance:</p><ul><li><p><strong>Effect size</strong>, how strongly the two are associated: <code>"pmi"</code>,
+<code>log(O / E)</code>; <code>"ppmi"</code>, the same floored at 0; <code>"dice"</code>,
+<code>2 * O / (n(e) + n(w))</code>, from 0 to 1, which does not favour rare pairs;
+and <code>"logdice"</code>, <code>14 + log2(dice)</code>, the lexicographers' rescaling of it,
+at most 14.</p></li>
+<li><p><strong>Significance</strong>, how sure the corpus makes you that there is an
+association at all: <code>"llr"</code>, Dunning's log-likelihood ratio (G-squared)
+over the two-by-two table, negative when the pair occurs less often than
+chance; and <code>"tscore"</code>, <code>(O - E) / sqrt(O)</code>. Both grow with the evidence,
+so they favour pairs that are common as well as associated.</p></li>
+</ul><p>The two kinds are not substitutes: a significance measure says a frequent
+pairing is real, an effect size says a rare one is strong. Report the one
+that matches the claim being made. Changing <code>measure</code> never changes which
+pairs are returned or their <code>n</code>; it changes the order, and adds the
+measure's column.</p>
 <p>Glyphs are canonicalised through the package's codepoint key, so qualified
 and unqualified forms of the same emoji share one row.</p>
 <p><strong>On a script without spaces between words this verb cannot find a

@@ -14,7 +14,8 @@ emoji_collocations(
   text,
   window = 5,
   min_n = 3,
-  measure = c("pmi", "count")
+  measure = c("pmi", "count", "ppmi", "dice", "logdice", "llr", "tscore"),
+  presentation = "emoji"
 )
 ```
 
@@ -57,17 +58,44 @@ emoji_collocations(
 
 - measure:
 
-  Sort order: `"pmi"` (default) or `"count"`. Both columns are always
-  returned.
+  The association measure to sort by: `"pmi"` (default), `"count"`,
+  `"ppmi"`, `"dice"`, `"logdice"`, `"llr"` or `"tscore"`. See *Choosing
+  an association measure*.
+
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
 
 ## Value
 
 A tibble with columns `emoji`, `word`, `n` (co-occurrences) and `pmi`,
 shaped like `widyr::pairwise_count()` output so it drops into existing
-tidytext workflows. Rows are sorted by `measure` descending, then by the
-other of the two descending, then by the glyph and the word, so the
-order is fully determined. Ties in `pmi` are common: every pair seen the
-same number of times with the same marginals scores alike.
+tidytext workflows, plus a column named after `measure` when it is
+neither `"pmi"` nor `"count"`. Rows are sorted by `measure` descending,
+then by `n` descending (by `pmi` when `measure = "count"`), then by the
+glyph and the word, so the order is fully determined. Ties in `pmi` are
+common: every pair seen the same number of times with the same marginals
+scores alike.
 
 ## Details
 
@@ -87,6 +115,36 @@ PMI is `log(n(e, w) * N / (n(e) * n(w)))`, with `N` the total number of
 emoji-word co-occurrence events. Marginals are computed over *all*
 co-occurrences before `min_n` filters the rows, so a rare pairing is
 scored against the full corpus rather than against the surviving subset.
+
+## Choosing an association measure
+
+PMI alone is a fragile ranking. It favours rare pairs (a word seen once
+beside an emoji seen once scores the maximum), and on a real corpus it
+ties constantly: on the corpus behind the introduction vignette 40.6% of
+the rows share their PMI with another row. Corpus linguistics answers
+this by choosing the measure for the question, and by knowing which kind
+of question it is. `measure` offers the standard ones, all computed from
+the same counts as PMI, with `O` the pair's `n` and
+`E = n(e) * n(w) / N` the count expected by chance:
+
+- **Effect size**, how strongly the two are associated: `"pmi"`,
+  `log(O / E)`; `"ppmi"`, the same floored at 0; `"dice"`,
+  `2 * O / (n(e) + n(w))`, from 0 to 1, which does not favour rare
+  pairs; and `"logdice"`, `14 + log2(dice)`, the lexicographers'
+  rescaling of it, at most 14.
+
+- **Significance**, how sure the corpus makes you that there is an
+  association at all: `"llr"`, Dunning's log-likelihood ratio
+  (G-squared) over the two-by-two table, negative when the pair occurs
+  less often than chance; and `"tscore"`, `(O - E) / sqrt(O)`. Both grow
+  with the evidence, so they favour pairs that are common as well as
+  associated.
+
+The two kinds are not substitutes: a significance measure says a
+frequent pairing is real, an effect size says a rare one is strong.
+Report the one that matches the claim being made. Changing `measure`
+never changes which pairs are returned or their `n`; it changes the
+order, and adds the measure's column.
 
 Glyphs are canonicalised through the package's codepoint key, so
 qualified and unqualified forms of the same emoji share one row.

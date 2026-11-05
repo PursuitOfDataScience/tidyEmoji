@@ -11,7 +11,13 @@ its annotators fought over.
 ## Usage
 
 ``` r
-emoji_risk(data, text, measure = "entropy", threshold = NULL)
+emoji_risk(
+  data,
+  text,
+  measure = "entropy",
+  threshold = NULL,
+  presentation = "emoji"
+)
 ```
 
 ## Arguments
@@ -51,6 +57,30 @@ emoji_risk(data, text, measure = "entropy", threshold = NULL)
 
   Value at or above which a glyph counts as ambiguous. `NULL` (default)
   uses the lexicon's upper quartile of `measure`.
+
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
 
 ## Value
 

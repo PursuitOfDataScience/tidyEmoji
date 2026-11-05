@@ -1,385 +1,93 @@
 # tidyEmoji
 
-tidyEmoji helps you **discover, count, categorise, sentiment-score,
-score emotions, translate and relate the emoji in any text column**
-(social-media posts, product reviews, chat logs, survey responses,
-support tickets), from summary counts through emotion profiles,
-co-occurrence networks, structural metrics and model-ready feature
-tables, always as tidy data frames that drop straight into a tidyverse
-workflow.
-
-Unicode is awkward to work with and not every code point is an emoji,
-which makes emoji statistics fiddly. tidyEmoji takes care of that,
-including grapheme-aware detection so skin-tone modifiers (👍🏽) and
-multi-person sequences (👨‍👩‍👧‍👦) are treated as a single emoji rather than
-being split apart.
-
-It also answers the questions a count cannot: how much annotators
-*disagreed* about an emoji, what words surround each occurrence, how
-emoji use moves over time, where the text and the emoji disagree, and
-which emoji policy a language-model pipeline applied.
-
-## Installation
-
-``` r
-
-install.packages("tidyEmoji")
-
-# development version
-# install.packages("devtools")
-devtools::install_github("PursuitOfDataScience/tidyEmoji")
-```
-
-## Usage
+**Count, score, translate and relate the emoji in any text column, and
+get tidy data frames back.**
 
 ``` r
 
 library(tidyEmoji)
-library(dplyr)
 
 reviews <- data.frame(text = c("Best purchase ever \U0001f600\U0001f60d",
                                "It broke after a day \U0001f621",
                                "Does the job.",
-                               "Wearing my mask \U0001f637\U0001f637",
-                               "Shipped fast \U0001f3c1\U0001f600"))
-```
+                               "Shipped to \U0001f1ef\U0001f1f5 in two days \U0001f680"))
 
-### How much emoji is in the data?
-
-``` r
-
-reviews %>% emoji_summary(text)        # entries with emoji vs. total
-#> # A tibble: 1 × 2
-#>   n_with_emoji n_total
-#>          <int>   <int>
-#> 1            4       5
-reviews %>% emoji_filter(text)         # keep only the rows that have emoji
-#> # A tibble: 4 × 1
-#>   text                   
-#>   <chr>                  
-#> 1 Best purchase ever 😀😍
-#> 2 It broke after a day 😡
-#> 3 Wearing my mask 😷😷   
-#> 4 Shipped fast 🏁😀
-```
-
-### Which emoji are most common?
-
-``` r
-
-reviews %>% emoji_frequency(text)      # every emoji, with name + category
+emoji_frequency(reviews, text)
 #> # A tibble: 5 × 5
-#>   emoji name                         shortcode      group                 n
-#>   <chr> <chr>                        <chr>          <chr>             <int>
-#> 1 😀    grinning face                grinning       Smileys & Emotion     2
-#> 2 😷    face with medical mask       mask           Smileys & Emotion     2
-#> 3 🏁    chequered flag               checkered_flag Flags                 1
-#> 4 😍    smiling face with heart-eyes heart_eyes     Smileys & Emotion     1
-#> 5 😡    enraged face                 rage           Smileys & Emotion     1
-reviews %>% top_n_emojis(text, n = 3)  # just the most frequent
-#> # A tibble: 3 × 4
-#>   emoji_name     unicode emoji_category        n
-#>   <chr>          <chr>   <chr>             <int>
-#> 1 grinning       😀      Smileys & Emotion     2
-#> 2 mask           😷      Smileys & Emotion     2
-#> 3 checkered_flag 🏁      Flags                 1
+#>   emoji name                         shortcode  group                 n
+#>   <chr> <chr>                        <chr>      <chr>             <int>
+#> 1 🇯🇵    flag: Japan                  jp         Flags                 1
+#> 2 😀    grinning face                grinning   Smileys & Emotion     1
+#> 3 😍    smiling face with heart-eyes heart_eyes Smileys & Emotion     1
+#> 4 😡    enraged face                 rage       Smileys & Emotion     1
+#> 5 🚀    rocket                       rocket     Travel & Places       1
+emoji_sentiment(reviews, text)
+#> # A tibble: 4 × 4
+#>   text                         .emoji_n .emoji_n_scored .emoji_sentiment
+#>   <chr>                           <int>           <int>            <dbl>
+#> 1 Best purchase ever 😀😍             2               2            0.625
+#> 2 It broke after a day 😡             1               1           -0.173
+#> 3 Does the job.                       0              NA           NA    
+#> 4 Shipped to 🇯🇵 in two days 🚀        2               1            0.525
 ```
 
-### Pull the emoji out
-
-[`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md)
-gives one tidy row per emoji occurrence, with its name, category and
-sentiment, ready to count, join or plot.
+How much of that could the lexicon score? One more call says so:
 
 ``` r
 
-reviews %>% emoji_tokens(text)
-#> # A tibble: 7 × 5
-#>   text                    .emoji .emoji_name    .emoji_category .emoji_sentiment
-#>   <chr>                   <chr>  <chr>          <chr>                      <dbl>
-#> 1 Best purchase ever 😀😍 😀     grinning face  Smileys & Emot…            0.572
-#> 2 Best purchase ever 😀😍 😍     smiling face … Smileys & Emot…            0.678
-#> 3 It broke after a day 😡 😡     enraged face   Smileys & Emot…           -0.173
-#> 4 Wearing my mask 😷😷    😷     face with med… Smileys & Emot…           -0.171
-#> 5 Wearing my mask 😷😷    😷     face with med… Smileys & Emot…           -0.171
-#> 6 Shipped fast 🏁😀       🏁     chequered flag Flags                      0.571
-#> 7 Shipped fast 🏁😀       😀     grinning face  Smileys & Emot…            0.572
-```
-
-### Categorise and score sentiment
-
-``` r
-
-reviews %>% emoji_categorize(text)     # which Unicode categories each row spans
-#> # A tibble: 4 × 2
-#>   text                    .emoji_category        
-#>   <chr>                   <chr>                  
-#> 1 Best purchase ever 😀😍 Smileys & Emotion      
-#> 2 It broke after a day 😡 Smileys & Emotion      
-#> 3 Wearing my mask 😷😷    Smileys & Emotion      
-#> 4 Shipped fast 🏁😀       Flags|Smileys & Emotion
-reviews %>% emoji_sentiment(text)      # mean emoji sentiment per row (-1 to +1)
-#> # A tibble: 5 × 4
-#>   text                    .emoji_n .emoji_n_scored .emoji_sentiment
-#>   <chr>                      <int>           <int>            <dbl>
-#> 1 Best purchase ever 😀😍        2               2            0.625
-#> 2 It broke after a day 😡        1               1           -0.173
-#> 3 Does the job.                  0              NA           NA    
-#> 4 Wearing my mask 😷😷           2               2           -0.171
-#> 5 Shipped fast 🏁😀              2               2            0.572
-```
-
-[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
-uses the bundled **Emoji Sentiment Ranking** lexicon (Kralj Novak et
-al., 2015). See the package vignette for a fuller tour.
-
-### Score emoji emotions
-
-[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
-scores each row’s emoji across the eight Plutchik emotions using the
-bundled EmoTag1200 lexicon (Shoeb & de Melo, 2020).
-
-``` r
-
-reviews %>% emoji_emotion(text) %>% select(text, .emoji_joy, .emoji_trust,
-                                           .emoji_anger, .emoji_n)
-#> # A tibble: 5 × 5
-#>   text                    .emoji_joy .emoji_trust .emoji_anger .emoji_n
-#>   <chr>                        <dbl>        <dbl>        <dbl>    <int>
-#> 1 Best purchase ever 😀😍       0.76        0.375         0.03        2
-#> 2 It broke after a day 😡       0           0.06          1           1
-#> 3 Does the job.                NA          NA            NA           0
-#> 4 Wearing my mask 😷😷          0           0.11          0.03        2
-#> 5 Shipped fast 🏁😀             0.69        0.25          0.06        2
-reviews %>% emoji_emotion_label(text)   # the dominant emotion per row
-#> # A tibble: 5 × 4
-#>   text                    .emoji_n .emoji_n_scored .emoji_emotion
-#>   <chr>                      <int>           <int> <chr>         
-#> 1 Best purchase ever 😀😍        2               2 joy           
-#> 2 It broke after a day 😡        1               1 anger         
-#> 3 Does the job.                  0              NA <NA>          
-#> 4 Wearing my mask 😷😷           2               2 disgust       
-#> 5 Shipped fast 🏁😀              2               1 joy
-```
-
-### Relate emoji to each other
-
-[`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
-returns a graph-ready edge list of the emoji that appear in the same
-entry (`widyr`-style `item1`/`item2`/`n`; pipe it into igraph, tidygraph
-or ggraph), and
-[`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
-captures consecutive sequences.
-
-``` r
-
-reviews %>% emoji_pairs(text)
+emoji_coverage(reviews, text)[, c("lexicon", "occurrence_coverage",
+                                  "n_rows_unscored")]
 #> # A tibble: 2 × 3
-#>   item1 item2     n
-#>   <chr> <chr> <int>
-#> 1 🏁    😀        1
-#> 2 😀    😍        1
+#>   lexicon    occurrence_coverage n_rows_unscored
+#>   <chr>                    <dbl>           <int>
+#> 1 novak2015                  0.8               0
+#> 2 emotag1200                 0.6               1
 ```
 
-There are structural metrics too:
-[`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md)
-(emoji sit at the end of messages),
-[`emoji_density()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_density.md)
-and
-[`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-(emoji-only detection). And
-[`emoji_dfm()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_dfm.md)
-builds a document-by-emoji count/binary/tf-idf table for modelling.
+## 🚀 Get started
 
-``` r
+1.  Install from CRAN: `install.packages("tidyEmoji")`
+2.  Load it:
+    [`library(tidyEmoji)`](https://pursuitofdatascience.github.io/tidyEmoji/)
+3.  Hand any verb a data frame and its text column:
+    `emoji_summary(df, text)`
+4.  Take the tour:
+    [`vignette("introduction", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.md)
 
-reviews %>% emoji_dfm(text) %>% select(1:4)
-#> # A tibble: 5 × 4
-#>   .row_number  `😀`  `😷`  `🏁`
-#>         <int> <int> <int> <int>
-#> 1           1     1     0     0
-#> 2           2     0     0     0
-#> 3           3     0     0     0
-#> 4           4     0     2     0
-#> 5           5     1     0     1
-```
+## 🧰 Pick a verb by question
 
-### How likely is an emoji to be misread?
+| Question | Verbs |
+|----|----|
+| How much emoji is here, and which? | [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md), [`emoji_frequency()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_frequency.md), [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md) |
+| What does it say? | [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md), [`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md), [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md) |
+| Will readers agree on it? | [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md), [`emoji_risk()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.md) |
+| What is this glyph, exactly? | [`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md), [`emoji_identical()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_identical.md), [`emoji_find()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_find.md) |
+| What goes with what? | [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md), [`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md), [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md) |
+| When, and how new? | [`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md), [`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md) |
+| Which countries do the flags name? | [`emoji_country()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_country.md), [`emoji_flag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag.md) |
+| Reaction counts rather than text? | [`emoji_from_counts()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_from_counts.md) |
+| Sending text to a language model? | [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md), [`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md) |
 
-Readers of the *same* emoji rendering disagree about its sentiment
-roughly a quarter of the time (Miller et al., 2016). The bundled lexicon
-keeps the raw annotation counts behind its score, so that disagreement
-is a number rather than a caveat.
+## 💡 Tips
 
-``` r
+- Count bare text-style emoji such as the plain heart with
+  `presentation = "any"`, which every counting and scoring verb takes.
+- Report
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  next to any lexicon score: it says how much of the corpus the score
+  covers.
+- Paste
+  [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  into a methods section: it records the Unicode catalogue (Emoji 18.0,
+  bundled) and the lexicons behind a result.
 
-emoji_ambiguity()                             # every glyph, most disputed first
-                                              # (filter on n_annotations first)
-reviews %>% emoji_risk(text)                  # interpretation risk per row
-reviews %>% emoji_flag_ambiguous(text)        # the riskiest emoji in this corpus
-reviews %>% emoji_sentiment(text, se = TRUE)  # a score with a standard error
-```
+## 📚 Learn more
 
-### What is around each emoji, and when was it used?
-
-[`emoji_context()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_context.md)
-returns one row per occurrence with the surrounding words, and
-[`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
-turns those windows into a PMI-scored emoji-word table: corpus-derived
-senses, with no licence baggage and nothing stale. On the time axis,
-[`emoji_trend()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_trend.md)
-and
-[`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
-follow usage and vocabulary churn, while
-[`emoji_version_profile()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_version_profile.md)
-and
-[`emoji_adoption_lag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.md)
-use the Unicode version of each glyph to ask how new a corpus’s
-repertoire is.
-
-``` r
-
-# the time verbs need a date column, so give the reviews one
-posts <- reviews %>%
-  mutate(posted_at = as.Date("2024-01-01") + c(0, 40, 80, 200, 300))
-
-reviews %>% emoji_context(text, window = 5)
-reviews %>% emoji_collocations(text, min_n = 2)
-posts %>% emoji_trend(text, posted_at, by = "month")
-posts %>% emoji_adoption_lag(text, posted_at)
-```
-
-### Does the text agree with the emoji?
-
-Emoji-text sentiment mismatch is a sarcasm feature in NLP and the
-(in)congruence variable in marketing research. tidyEmoji supplies the
-emoji half and the arithmetic; you bring the text score from tidytext,
-sentimentr or a model, and say how the two were made comparable.
-
-``` r
-
-# text_score is the half you bring; any scorer will do
-scored <- reviews %>% mutate(text_score = c(0.9, -0.8, 0, 0.1, 0.7))
-
-scored %>% emoji_incongruity(text, text_score, scale = "rank")
-scored %>% emoji_incongruity_profile(text, text_score, scale = "rank",
-                                     min_n = 1)   # default 5 needs more rows
-```
-
-### Emoji in language-model pipelines
-
-Emoji are a preprocessing decision, and
-[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
-makes it an explicit one.
-[`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
-says what they are costing you, and
-[`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
-records every version behind a result for your methods section.
-
-``` r
-
-reviews %>% emoji_sanitize(text, policy = "name")   # or strip/shortcode/...
-reviews %>% emoji_token_cost(text)
-emoji_provenance()
-```
-
-### Bring your own lexicon
-
-The scoring machinery is pluggable:
-[`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
-lists what’s available,
-[`register_emoji_lexicon()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/register_emoji_lexicon.md)
-adds your own, and
-[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
-scores a text column against any of them, always joining through a
-codepoint-normalised key, so qualified and unqualified emoji forms both
-match.
-
-``` r
-
-my_lexicon <- data.frame(emoji = c("\U0001f600", "\U0001f621"),
-                         score = c(1, -1))
-reviews %>% emoji_score(text, lexicon = my_lexicon)
-#> # A tibble: 5 × 4
-#>   text                    .emoji_n .emoji_n_scored .emoji_score
-#>   <chr>                      <int>           <int>        <dbl>
-#> 1 Best purchase ever 😀😍        2               1            1
-#> 2 It broke after a day 😡        1               1           -1
-#> 3 Does the job.                  0              NA           NA
-#> 4 Wearing my mask 😷😷           2               0           NA
-#> 5 Shipped fast 🏁😀              2               1            1
-```
-
-### Translate emoji to and from text
-
-[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
-replaces emoji with words (handy for accessibility and NLP
-preprocessing);
-[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
-is the inverse.
-[`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
-[`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-and
-[`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-are the vector-level equivalents.
-
-``` r
-
-reviews %>% emoji_to_text(text, format = "name")
-#> # A tibble: 5 × 1
-#>   text                                                        
-#>   <chr>                                                       
-#> 1 Best purchase ever grinning facesmiling face with heart-eyes
-#> 2 It broke after a day enraged face                           
-#> 3 Does the job.                                               
-#> 4 Wearing my mask face with medical maskface with medical mask
-#> 5 Shipped fast chequered flaggrinning face
-reviews %>% emoji_to_text(text, format = "shortcode")
-#> # A tibble: 5 × 1
-#>   text                                     
-#>   <chr>                                    
-#> 1 Best purchase ever :grinning::heart_eyes:
-#> 2 It broke after a day :rage:              
-#> 3 Does the job.                            
-#> 4 Wearing my mask :mask::mask:             
-#> 5 Shipped fast :checkered_flag::grinning:
-```
-
-You can also search the emoji catalogue by keyword:
-
-``` r
-
-emoji_search("happy")
-#> # A tibble: 27 × 5
-#>    emoji name                            shortcode             group     keyword
-#>    <chr> <chr>                           <chr>                 <chr>     <chr>  
-#>  1 😀    grinning face                   grinning              Smileys … happy  
-#>  2 😃    grinning face with big eyes     smiley                Smileys … happy  
-#>  3 😄    grinning face with smiling eyes smile                 Smileys … happy  
-#>  4 😁    beaming face with smiling eyes  grin                  Smileys … happy  
-#>  5 😆    grinning squinting face         laughing              Smileys … happy  
-#>  6 🤣    rolling on the floor laughing   rofl                  Smileys … happy  
-#>  7 😂    face with tears of joy          joy                   Smileys … happy  
-#>  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  
-#>  9 😇    smiling face with halo          innocent              Smileys … happy  
-#> 10 ☺     smiling face                    smiling_face          Smileys … happy  
-#> # ℹ 17 more rows
-```
-
-## Learn more
-
-The [introductory
-vignette](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.html)
-([`vignette("introduction", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.md))
-walks through a full analysis of a real corpus: counting, categorising,
-sentiment- and emotion-scoring emoji, and plotting the results.
-
-Sending text to a language model?
-[`vignette("reversible-preprocessing", package = "tidyEmoji")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md)
-covers which
-[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
-policy you can undo afterwards, and what the other four cost you. It is
-on the package website under the Vignettes menu. No URL for it here on
-purpose: `R CMD check` resolves every address in this file, and an
-article page is only live after the next site build, which would make
-the link a 404 in a submission.
+Three articles ship with the package:
+[`vignette("introduction")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.md)
+for a full analysis of a real corpus,
+[`vignette("reversible-preprocessing")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md)
+for emoji in language-model pipelines, and
+[`vignette("emoji-networks")`](https://pursuitofdatascience.github.io/tidyEmoji/articles/emoji-networks.md)
+for co-occurrence networks. All three are on the [package
+website](https://pursuitofdatascience.github.io/tidyEmoji/).

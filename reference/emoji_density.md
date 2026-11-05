@@ -7,7 +7,7 @@ emoji get densities of 0; rows whose text is `NA` or empty get `NA`.
 ## Usage
 
 ``` r
-emoji_density(data, text)
+emoji_density(data, text, presentation = "emoji")
 ```
 
 ## Arguments
@@ -38,14 +38,43 @@ emoji_density(data, text)
   for the one case that surprises people, code points that are emoji
   only when they carry `U+FE0F`.
 
+- presentation:
+
+  Which code points count as emoji: `"emoji"` (the default) or `"any"`.
+
+  - `"emoji"` requires emoji presentation, so `U+2764 U+FE0F` is an
+    emoji and the bare `U+2764` is not. This is the default and it will
+    stay the default: widening it would silently recount every corpus
+    already analysed.
+
+  - `"any"` also reads the text-presentation spellings Unicode lists for
+    an emoji (the bare heart, `U+263A`, `U+2714`, a keycap without its
+    selector), because several keyboards emit them. It never reads the
+    copyright, registered and trade-mark signs (`U+00A9`, `U+00AE`,
+    `U+2122`), which are typography far more often than they are emoji.
+
+  `"any"` only ever adds occurrences: everything `"emoji"` finds, it
+  finds too, in the same place.
+  [`emoji_coverage()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_coverage.md)
+  reports how many it adds and how many of those a lexicon can score,
+  which is the cost of the choice in one number. Every verb that counts,
+  scores or rewrites the emoji in a text column takes this argument, so
+  counts still agree across the package for whichever value you use. The
+  flag verbs do not need it, since a flag has no text-presentation form.
+
 ## Value
 
-`data`, as a tibble, with added columns `.emoji_n`, `.emoji_per_char`
-(emoji per character, i.e. per code point, of text) and
-`.emoji_per_token` (emoji per whitespace-delimited token). A token is a
-maximal run of characters outside Unicode's `White_Space` property; see
+`data`, as a tibble, with added columns `.emoji_n`, `.emoji_n_char`
+(characters, i.e. code points, of text), `.emoji_n_token`
+(whitespace-delimited tokens), `.emoji_per_char` (emoji per character,
+i.e. per code point: `.emoji_n / .emoji_n_char`) and `.emoji_per_token`
+(`.emoji_n / .emoji_n_token`). A token is a maximal run of characters
+outside Unicode's `White_Space` property; see
 [`emoji_ratio()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.md)
-for the exact set, which does not vary with the locale.
+for the exact set, which does not vary with the locale. An `NA` text has
+`.emoji_n = 0` and `NA` for both denominators and both rates, since its
+length is not known; an empty text has denominators of `0` and rates of
+`NA`.
 
 ## Details
 
@@ -69,6 +98,12 @@ proportion of the message has to. If you want a density that does not
 move with an emoji's internal length, `.emoji_per_token` is immune – all
 three examples above give 0.5.
 
+Both rates ship with the counts they were computed from, `.emoji_n` over
+`.emoji_n_char` and over `.emoji_n_token`, so a count model can be
+fitted to the counts with the denominator as its exposure, rather than a
+linear model to the quotient. See *Rates and their denominators* in
+[tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
+
 ## See also
 
 [`emoji_position()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_position.md),
@@ -79,10 +114,10 @@ three examples above give 0.5.
 ``` r
 df <- data.frame(text = c("hi \U0001f600", "\U0001f600\U0001f600", "plain"))
 emoji_density(df, text)
-#> # A tibble: 3 × 4
-#>   text  .emoji_n .emoji_per_char .emoji_per_token
-#>   <chr>    <int>           <dbl>            <dbl>
-#> 1 hi 😀        1            0.25              0.5
-#> 2 😀😀         2            1                 2  
-#> 3 plain        0            0                 0  
+#> # A tibble: 3 × 6
+#>   text  .emoji_n .emoji_n_char .emoji_n_token .emoji_per_char .emoji_per_token
+#>   <chr>    <int>         <int>          <int>           <dbl>            <dbl>
+#> 1 hi 😀        1             4              2            0.25              0.5
+#> 2 😀😀         2             2              1            1                 2  
+#> 3 plain        0             5              1            0                 0  
 ```

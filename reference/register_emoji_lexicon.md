@@ -54,6 +54,48 @@ a lexicon is changed.
 [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)
 shows what is currently registered.
 
+## Lexicons worth registering
+
+The two bundled lexicons give polarity and eight discrete emotions, and
+neither gives **arousal**, so nothing bundled can tell calm-positive
+from excited-positive, which is the distinction persuasion and marketing
+work turns on. Three peer-reviewed sets of emoji norms fill that gap,
+and each is published on OSF under CC BY 4.0, so it can be downloaded,
+registered and cited:
+
+- **Emoji-SP** (Ferre et al., *Behavior Research Methods*, 2023): 1031
+  emoji rated by Spanish speakers for valence, arousal, familiarity,
+  frequency of use, clarity and visual complexity. Larger than the
+  bundled sentiment lexicon, and the broadest arousal source there is.
+  <https://osf.io/dtfjv/>
+
+- **Emoji-Dis** (Ferre et al., *Scientific Data*, 2025): 112 emoji
+  characterised on 13 discrete emotions by 763 Spanish speakers, from
+  awe and serenity to disgust and anxiety. <https://osf.io/wv7ub/>
+
+- **Face-emoji norms** (Scheffler and Nenchev, *Behavior Research
+  Methods*, 2024): 107 face emoji rated by 138 German speakers for
+  valence, arousal, familiarity, clarity and visual complexity; it pairs
+  naturally with
+  [`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md).
+  <https://osf.io/vbmpj/>
+
+Each arrives as a table keyed by emoji, so registering one is a rename
+and a call: put the glyphs in a column called `emoji`, keep the rating
+you want as a numeric column, and register it.
+
+    norms <- read.csv("emoji_sp_norms.csv")   # downloaded from OSF
+    names(norms)[names(norms) == "Emoji"] <- "emoji"
+    register_emoji_lexicon("emoji_sp", norms)
+    emoji_score(df, text, lexicon = "emoji_sp", score = "arousal")
+    emoji_coverage(df, text, lexicon = "emoji_sp")
+
+The column names above are illustrative: read the file's own codebook.
+All three were rated by speakers of one language each, so the caution on
+the bundled lexicons applies to them too: an emoji's reading is not
+language-neutral. Cite the source you register, as you would a bundled
+one.
+
 ## See also
 
 [`emoji_lexicons()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_lexicons.md)

@@ -27,7 +27,8 @@ emoji_ambiguity(x = NULL, measure = "entropy")
 - measure:
 
   Which ambiguity statistic to put in the `ambiguity` column: one of
-  `"entropy"` (default), `"gini"`, `"neutral_share"` or `"ci_width"`.
+  `"entropy"` (default), `"gini"`, `"polarisation"`, `"neutral_share"`
+  or `"ci_width"`.
 
 ## Value
 
@@ -44,7 +45,7 @@ deterministic; with `x` supplied the result has one row per element of
 
 ## Details
 
-The four measures are computed from the annotation shares
+The five measures are computed from the annotation shares
 `(p_neg, p_neu, p_pos)`:
 
 - `"entropy"` (the default) is Shannon entropy in nats: 0 when the
@@ -53,6 +54,11 @@ The four measures are computed from the annotation shares
 
 - `"gini"` is the Gini impurity, `1 - sum(p^2)`: 0 when unanimous, 2/3
   at maximum disagreement.
+
+- `"polarisation"` is the expected absolute difference between two
+  annotations drawn at random, scoring negative as -1, neutral as 0 and
+  positive as 1: 0 when unanimous, 1 when the annotators split evenly
+  between the two poles. See *Polarised or merely uncertain?* below.
 
 - `"neutral_share"` is `p_neu` on its own, for the "is this emoji simply
   uninformative?" question.
@@ -64,6 +70,49 @@ The four measures are computed from the annotation shares
 
 `rank` is always computed over the whole lexicon (1 = most ambiguous),
 so a rank keeps its meaning when `x` selects a handful of glyphs.
+
+## Polarised or merely uncertain?
+
+The three annotation classes are **ordered** (negative, then neutral,
+then positive), and entropy and Gini impurity are **nominal** statistics
+that ignore the order. So they cannot tell an emoji whose readers split
+between the two poles, the one that causes real miscommunication, from
+one whose readers merely hedged:
+
+|                                        |           |        |                |
+|----------------------------------------|-----------|--------|----------------|
+| Annotation split                       | `entropy` | `gini` | `polarisation` |
+| 50% negative, 0% neutral, 50% positive | 0.693     | 0.500  | **1.00**       |
+| 50% negative, 50% neutral, 0% positive | 0.693     | 0.500  | **0.50**       |
+
+Identical on both nominal measures, and twice apart on the ordinal one.
+Across the whole lexicon the rankings mostly agree (Spearman 0.96
+between entropy and polarisation), which is why the difference is easy
+to miss, and they part company exactly where a user looks: the face with
+open mouth and cold sweat, with 302 annotations, is at rank 6 of 969 by
+polarisation and at rank 156 by entropy. The default stays `"entropy"`,
+because changing it would silently rewrite every ranking already
+published with it; ask for `"polarisation"` when the question is "which
+emoji will readers take in opposite directions?".
+
+`"polarisation"` is the statistic Miller et al. (2016) used, rescaled.
+They had each rater score a rendering from -5 to +5 and averaged the
+absolute difference over pairs of raters, so their misconstrual score
+runs from 0 to 10 on a scale five times as wide as this one, and
+averages over pairs of *different* raters, which inflates it for small
+groups by `n / (n - 1)`. The value here is the large-sample version,
+computed from the shares like entropy and Gini are, so it does not
+reward thin annotation. For three equally spaced classes it coincides
+with Berry and Mielke's index of ordinal variation and with `1 - l^2`
+for Blair and Lacy's `l`, so those would rank the lexicon identically
+and are not offered separately. For a rating scale wider than three
+points, agrmt implements them, and Leik's D, in general.
+
+The obvious objection to any context-free ambiguity score is that emoji
+are read in context. Miller et al. (2017) tested exactly that, with
+2,482 participants, and found that the surrounding text does not
+substantially reduce the potential for miscommunication. That is the
+case for reading an emoji's disagreement off its annotations at all.
 
 **Read `n_annotations` before you read the ranking.** The lexicon's
 annotation counts are wildly uneven – the median glyph has 18, and 69%
@@ -119,6 +168,16 @@ and filter on `n_annotations` as above.
 Miller H, Thebault-Spieker J, Chang S, Johnson I, Terveen L, Hecht B
 (2016). "Blissfully Happy" or "Ready to Fight": Varying Interpretations
 of Emoji. *ICWSM 2016*.
+
+Miller H, Kluver D, Thebault-Spieker J, Terveen L, Hecht B (2017).
+Understanding Emoji Ambiguity in Context: The Role of Text in
+Emoji-Related Miscommunication. *ICWSM 2017*.
+
+Blair J, Lacy MG (2000). Statistics of Ordinal Variation. *Sociological
+Methods & Research* 28(3), 251-280.
+
+Berry KJ, Mielke PW (1992). Assessment of Variation in Ordinal Data.
+*Perceptual and Motor Skills* 74(1), 63-66.
 
 ## See also
 

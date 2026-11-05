@@ -169,10 +169,10 @@ hearts <- tibble::tibble(
 )
 
 hearts %>% emoji_summary(text)
-#> # A tibble: 1 × 2
-#>   n_with_emoji n_total
-#>          <int>   <int>
-#> 1            1       2
+#> # A tibble: 1 × 4
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags
+#>          <int>   <int>               <int>           <int>
+#> 1            1       2                   0               0
 ```
 
 One of the two is counted. Detection asks for emoji presentation, and a
@@ -338,14 +338,15 @@ against the catalogue that performed it.
 
 emoji_provenance() %>% glimpse()
 #> Rows: 1
-#> Columns: 7
-#> $ tidyEmoji         <chr> "0.5.0"
-#> $ emoji_pkg         <chr> "16.0.0"
-#> $ unicode_emoji     <chr> "16.0"
-#> $ n_emoji           <int> 5042
-#> $ sentiment_lexicon <chr> "novak2015 (969 emoji)"
-#> $ emotion_lexicon   <chr> "emotag1200 (150 emoji)"
-#> $ R                 <chr> "4.6.1"
+#> Columns: 8
+#> $ tidyEmoji          <chr> "0.6.0"
+#> $ emoji_pkg          <chr> "16.0.0"
+#> $ unicode_emoji      <chr> "18.0"
+#> $ unicode_emoji_date <date> 2026-04-30
+#> $ n_emoji            <int> 5244
+#> $ sentiment_lexicon  <chr> "novak2015 (969 emoji)"
+#> $ emotion_lexicon    <chr> "emotag1200 (150 emoji)"
+#> $ R                  <chr> "4.6.2"
 ```
 
 ## See also
