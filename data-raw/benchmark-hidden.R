@@ -14,8 +14,9 @@
 # Run from the package root: Rscript data-raw/benchmark-hidden.R [library]
 lib <- commandArgs(TRUE)[1]; if (is.na(lib)) lib <- NULL
 library(tidyEmoji, lib.loc = lib)
-tw <- utils::read.csv(system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
-                      encoding = "UTF-8", stringsAsFactors = FALSE)$full_text
+# measured on 2026-11-06 over the retired tweet corpus; the example corpus
+# since 0.7.0 is oasst_messages, sampled the same way
+tw <- tidyEmoji::oasst_messages$text
 set.seed(20261106)
 d <- data.frame(text = sample(tw, 50000L, replace = TRUE), stringsAsFactors = FALSE)
 run <- function(policy, n_pairs, warm = 3L) {

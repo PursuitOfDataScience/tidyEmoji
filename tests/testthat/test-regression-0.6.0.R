@@ -360,9 +360,7 @@ test_that("'any' reads all 243 unqualified spellings except three", {
 
 # Shared by the sweep and its CRAN twin: the corpus and a seventh of the catalogue, or a share of both
 check_any_only_adds <- function(stride) {
-  corpus <- utils::read.csv(
-    system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
-    stringsAsFactors = FALSE, encoding = "UTF-8")$full_text
+  corpus <- oasst_messages$text
   p <- emoji_properties()
   mixed <- c(corpus[seq(1L, length(corpus), by = stride)],
              paste(p$emoji[seq(1, nrow(p), by = 7L * stride)], collapse = " "),
@@ -373,10 +371,10 @@ check_any_only_adds <- function(stride) {
   expect_true(all(mapply(function(x, y) all(key(x) %in% key(y)), a, b)))
   added <- sum(vapply(b, nrow, integer(1))) - sum(vapply(a, nrow, integer(1)))
   expect_gt(added, 0L)
-  # on the vignette corpus the difference is eight bare glyphs
+  # on the example corpus the difference is nine bare glyphs
   if (stride == 1L) {
     ca <- emoji_coverage(data.frame(text = corpus), text)
-    expect_identical(unique(ca$n_text_presentation), 8L)
+    expect_identical(unique(ca$n_text_presentation), 9L)
   }
 }
 
@@ -733,31 +731,31 @@ test_that("emoji_coverage() reports what a lexicon could not score (moved)", {
   expect_identical(out$n_rows_unscored, 1L)
 })
 
-test_that("emoji_coverage() gives the roadmap's corpus figures", {
-  corpus <- utils::read.csv(
-    system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
-    stringsAsFactors = FALSE, encoding = "UTF-8")
-  cv <- emoji_coverage(corpus, full_text)
+test_that("emoji_coverage() gives the example corpus's figures", {
+  # 0.6.0 pinned these on the retired tweet corpus (900 occurrences, 62.8%
+  # and 50.8% for the sentiment lexicon); 0.7.0 on the OASST2 sample
+  corpus <- oasst_messages
+  cv <- emoji_coverage(corpus, text)
   expect_identical(cv$lexicon, c("novak2015", "emotag1200"))
   s <- cv[cv$lexicon == "novak2015", ]
   expect_identical(c(s$n_occurrences, s$n_scorable, s$n_types,
                      s$n_types_scorable, s$n_rows_with_emoji,
                      s$n_rows_unscored, s$lexicon_size),
-                   c(900L, 565L, 187L, 95L, 560L, 187L, 969L))
-  expect_equal(round(100 * s$occurrence_coverage, 1), 62.8)
-  expect_equal(round(100 * s$type_coverage, 1), 50.8)
+                   c(1450L, 1087L, 401L, 244L, 750L, 135L, 969L))
+  expect_equal(round(100 * s$occurrence_coverage, 1), 75.0)
+  expect_equal(round(100 * s$type_coverage, 1), 60.8)
   e <- cv[cv$lexicon == "emotag1200", ]
-  expect_equal(round(100 * e$occurrence_coverage, 1), 60.7)
-  expect_identical(e$n_types_scorable, 69L)
+  expect_equal(round(100 * e$occurrence_coverage, 1), 53.0)
+  expect_identical(e$n_types_scorable, 106L)
   # the per-row figure it summarises: rows with emoji and no score
-  sent <- emoji_sentiment(corpus, full_text)
+  sent <- emoji_sentiment(corpus, text)
   expect_identical(sum(sent$.emoji_n > 0L & is.na(sent$.emoji_sentiment)),
                    s$n_rows_unscored)
   # catalogue_share: lexicon emoji over the catalogue's 3963 emoji
   expect_equal(s$catalogue_share, 736 / 3963)
   # 'any' moves the text-presentation glyphs inside the counts, and the two
   # columns that describe them do not move
-  ca <- emoji_coverage(corpus, full_text, presentation = "any")
+  ca <- emoji_coverage(corpus, text, presentation = "any")
   expect_identical(ca$n_occurrences - cv$n_occurrences,
                    cv$n_text_presentation)
   expect_identical(ca$n_text_presentation, cv$n_text_presentation)
@@ -857,12 +855,10 @@ test_that("collocation measures agree on n and differ on ranking", {
 
 # Shared by the sweep and its CRAN twin: the whole corpus, or its first rows
 check_association_formulas <- function(n = NULL) {
-  corpus <- utils::read.csv(
-    system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
-    stringsAsFactors = FALSE, encoding = "UTF-8")
+  corpus <- oasst_messages
   if (!is.null(n)) corpus <- corpus[seq_len(n), , drop = FALSE]
-  base <- emoji_collocations(corpus, full_text, min_n = 1)
-  ctx <- emoji_context(corpus, full_text)
+  base <- emoji_collocations(corpus, text, min_n = 1)
+  ctx <- emoji_context(corpus, text)
   words <- lapply(ctx$.emoji_context, function(s) {
     unique(ns$.emoji_trim_words(ns$.emoji_words(ns$.emoji_fold(s))))
   })
@@ -880,14 +876,14 @@ check_association_formulas <- function(n = NULL) {
     tscore = (o - e) / sqrt(o)
   )
   for (m in names(ref)) {
-    got <- emoji_collocations(corpus, full_text, min_n = 1, measure = m)
+    got <- emoji_collocations(corpus, text, min_n = 1, measure = m)
     idx <- match(paste(base$emoji, base$word), paste(got$emoji, got$word))
     expect_equal(got[[m]][idx], ref[[m]], info = m)
     expect_identical(got$n[idx], base$n, info = m)
     expect_false(is.unsorted(-got[[m]]), info = m)
   }
   # log-likelihood, cell by cell, against a direct two-by-two computation
-  llr <- emoji_collocations(corpus, full_text, min_n = 1, measure = "llr")
+  llr <- emoji_collocations(corpus, text, min_n = 1, measure = "llr")
   i <- match(paste(base$emoji, base$word), paste(llr$emoji, llr$word))[seq_len(min(25L, nrow(base)))]
   for (k in seq_along(i)) {
     j <- i[[k]]

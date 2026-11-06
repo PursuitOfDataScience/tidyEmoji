@@ -5198,8 +5198,9 @@ test_that("emoji_unicode_crosswalk's row unit is a (name, glyph) pair", {
 #     call goes through .emoji_warn_grouped(), so on an older lifecycle a dozen
 #     verbs would fail with "unused argument".
 #   * readr's `read_csv(show_col_types=)` -- absent in readr 1.4.0, which is
-#     what R 4.1.0 ships here, so the vignette would fail to *build* and the
-#     corpus test errored rather than skipping.
+#     what R 4.1.0 ships here, so the corpus test errored rather than
+#     skipping. That test read the tweet corpus 0.7.0 retired, and readr left
+#     Suggests with it.
 
 test_that("every argument passed to a dependency is one it accepts", {
   # The general form of the bug: an "unused argument" error is invisible until
@@ -5258,8 +5259,6 @@ test_that("the declared dependency floors cover the arguments the code uses", {
     list(pkg = "dplyr", fun = "arrange", args = ".locale", floor = "1.1.0"),
     list(pkg = "tidyr", fun = "separate_longer_delim",
          args = "delim", floor = "1.3.0"),
-    list(pkg = "readr", fun = "read_csv",
-         args = "show_col_types", floor = "2.0.0"),
     # the suite itself: expect_no_error() and expect_no_warning() arrived in
     # testthat 3.1.5, and the suite calls them 15 times. A declared floor of
     # 3.0.0 described a testthat the tests could not run on.
@@ -5301,12 +5300,6 @@ test_that("the declared dependency floors cover the arguments the code uses", {
                 info = paste0(n$pkg, "::", n$fun, " lacks ",
                               paste(setdiff(n$args, fm), collapse = ", ")))
   }
-
-  # readr is only used by the vignette and one test, both of which must gate
-  # on the version rather than on mere presence
-  reg <- readLines("test-regression-0.4.0.R", warn = FALSE)
-  readr_lines <- grep("readr", reg, value = TRUE)
-  expect_true(any(grepl('minimum_version = "2.0.0"', readr_lines, fixed = TRUE)))
 })
 
 # ---------------------------------------------------------------------------
@@ -10748,29 +10741,29 @@ test_that("the four documented figures hold, the round trip on a sample", {
 })
 
 test_that("the bundled corpus carries no direct identifiers", {
-  # inst/extdata/ata_tweets.csv is 2000 entries of real social-media text and
-  # it ships with the package. Whoever assembled it stripped the direct
-  # identifiers -- there is not one @handle, retweet marker, email address or
-  # long numeric id in it -- and that is a property of shipped human text
-  # worth failing on rather than rediscovering. Swapping in a corpus that had
-  # not been scrubbed would otherwise pass every other test in this suite.
-  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
-  skip_if_not(file.exists(path), "bundled corpus not available")
-  x <- utils::read.csv(path, stringsAsFactors = FALSE,
-                       encoding = "UTF-8")$full_text
-  expect_length(x, 2000L)
-  expect_identical(sum(grepl("@[A-Za-z0-9_]{2,}", x)), 0L)
-  expect_identical(sum(grepl("^RT[ :]", x)), 0L)
+  # oasst_messages is real text written by people and it ships with the
+  # package (0.7.0; the tweet corpus it replaced passed the same kind of
+  # check). data-raw/oasst.R screens out e-mail addresses, phone-number
+  # shapes and URLs carrying a query string, and ships no user identifier
+  # at all, and that is a property of shipped human text worth failing on
+  # rather than rediscovering: a rebuilt sample that skipped the screen would
+  # otherwise pass every other test in this suite.
+  x <- oasst_messages$text
+  expect_length(x, 1485L)
+  expect_false(any(c("user_id", "message_tree_id") %in% names(oasst_messages)))
   expect_identical(
-    sum(grepl("[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}", x)), 0L)
-  # a run of nine or more digits is the shape of a status or account id
-  expect_identical(sum(grepl("[0-9]{9,}", x)), 0L)
+    sum(grepl("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}", x)), 0L)
+  expect_identical(
+    sum(stringi::stri_detect_regex(x, "\\+?[0-9][0-9 ().-]{8,}[0-9]")), 0L)
+  expect_identical(
+    sum(stringi::stri_detect_regex(x, "https?://[^\\s]+\\?[^\\s]+")), 0L)
   # what it does carry, so the assertions above are not vacuous on an empty
-  # or truncated file: shortened links in a handful of rows, and hashtags
-  expect_identical(sum(grepl("https?://", x)), 8L)
-  expect_gt(sum(grepl("#[A-Za-z][A-Za-z0-9_]+", x)), 50L)
+  # or truncated file: links without a query in a handful of rows, line
+  # breaks in a quarter of them
+  expect_identical(sum(grepl("https?://", x)), 9L)
+  expect_gt(sum(grepl("\n", x, fixed = TRUE)), 300L)
   # and emoji, which is the reason it is here at all
-  expect_gt(sum(lengths(tidyEmoji:::emoji_glyph_list(x)) > 0L), 500L)
+  expect_identical(sum(lengths(tidyEmoji:::emoji_glyph_list(x)) > 0L), 750L)
 })
 
 test_that("the vignette's 373-of-2000 figure and its zero-mean check hold", {

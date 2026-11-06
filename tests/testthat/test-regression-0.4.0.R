@@ -991,20 +991,19 @@ test_that("no catalogued ZWJ sequence is split into several glyphs", {
 
 test_that("real corpus text leaves no joiner orphaned", {
   # the residual below is confined to non-canonical spellings; this pins that
-  # it does not reach text people actually write
-  # `show_col_types` arrived in readr 2.0.0; readr 1.4.0 errors with
-  # "unused argument", so presence alone is not enough to run this
-  skip_if_not_installed("readr", minimum_version = "2.0.0")
-  # the corpus is installed (inst/extdata), so this resolves inside
-  # R CMD check too, where ../../vignettes does not exist
-  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
-  skip_if_not(file.exists(path), "vignette corpus not available")
-  txt <- readr::read_csv(path, show_col_types = FALSE)$full_text
-  expect_gt(sum(grepl("\u200D", txt, fixed = TRUE)), 0L)
+  # it does not reach text people actually write, the example corpus's
+  txt <- oasst_messages$text
+  expect_gt(sum(grepl("\u200D", txt, fixed = TRUE)), 20L)
   expect_equal(sum(orphaned_joiners(txt) > 0L), 0L)
-  # and every glyph the corpus yields resolves to a known emoji
+  # and every glyph the corpus yields resolves to a known emoji, except the
+  # three ZWJ sequences Unicode does not recommend, which come back as one
+  # nameless glyph until 0.7.0's D7 fix splits them
   glyphs <- unique(unlist(tidyEmoji:::emoji_glyph_list(txt), use.names = FALSE))
-  expect_false(anyNA(as_emoji_name(glyphs)))
+  nameless <- glyphs[is.na(as_emoji_name(glyphs))]
+  expect_setequal(nameless, c(
+    intToUtf8(c(0x1F431, 0x200D, 0x1F4BB)),
+    intToUtf8(c(0x1F468, 0x200D, 0x1F91D, 0x200D, 0x1F469)),
+    intToUtf8(c(0x1F91D, 0x200D, 0x1F9DF, 0x200D, 0x2640, 0xFE0F))))
 })
 
 # Shared by the sweep and its CRAN twin: every ZWJ spelling, or a sample with the two that lose a joiner

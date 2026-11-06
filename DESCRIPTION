@@ -69,7 +69,6 @@ Suggests:
     commonmark,
     xml2,
     ggplot2,
-    readr (>= 2.0.0),
     forcats,
     stringr,
     igraph
