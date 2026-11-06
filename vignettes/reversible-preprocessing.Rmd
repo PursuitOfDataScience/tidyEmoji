@@ -223,19 +223,14 @@ can carry the emoji-derived features forward as ordinary columns, while the
 text column that goes to the model holds no emoji at all.
 
 ```{r}
-corpus <- tibble::as_tibble(
-  utils::read.csv(
-    system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
-    encoding = "UTF-8", stringsAsFactors = FALSE
-  )
-)
+# the example corpus: 1,485 OASST2 messages, about half carrying emoji
+corpus <- oasst_messages
 
 prepared <- corpus %>%
-  emoji_sentiment(full_text) %>%          # how positive were the emoji
-  emoji_risk(full_text) %>%               # how much annotators disagreed
-  emoji_token_cost(full_text) %>%         # what they cost in the prompt
-  mutate(prompt_text = emoji_sanitize(., full_text,
-                                      policy = "shortcode")$full_text)
+  emoji_sentiment(text) %>%          # how positive were the emoji
+  emoji_risk(text) %>%               # how much annotators disagreed
+  emoji_token_cost(text) %>%         # what they cost in the prompt
+  mutate(prompt_text = emoji_sanitize(., text, policy = "shortcode")$text)
 
 prepared %>%
   filter(.emoji_n > 0) %>%
@@ -252,10 +247,10 @@ split over each glyph is not something a prompt recovers.
 ## What it saves, and how to measure it honestly
 
 ```{r}
-before <- corpus %>% emoji_token_cost(full_text)
+before <- corpus %>% emoji_token_cost(text)
 after  <- prepared %>%
-  select(full_text = prompt_text) %>%
-  emoji_token_cost(full_text)
+  select(text = prompt_text) %>%
+  emoji_token_cost(text)
 
 tibble::tibble(
   stage = c("original", "shortcode"),
@@ -266,12 +261,14 @@ tibble::tibble(
 )
 ```
 
-The sanitised column holds no emoji at all, so its emoji cost is zero. That is
-not quite guaranteed: `"shortcode"` leaves a glyph it cannot name in place, so
-a corpus carrying a ZWJ sequence too new for the installed catalogue would
-still show a cost here. This one does not, which is worth checking rather than
-assuming. `"strip"` is the policy that clears the column whatever it is
-handed. (The bare heart above is a different case: it is never detected, so it
+The sanitised column holds almost no emoji, and "almost" is the point:
+`"shortcode"` leaves a glyph it cannot name in place, so a corpus carrying a
+sequence the catalogue does not list still shows a cost here. This one keeps
+`r sum(after$.emoji_n)`: zero-width-joiner sequences Unicode does not
+recommend (a cat glued to a laptop, a handshake glued to a zombie), which the
+detector reads as one glyph with no name and so with no shortcode. That is
+worth checking rather than assuming. `"strip"` is the policy that clears the
+column whatever it is handed. (The bare heart above is a different case: it is never detected, so it
 costs nothing here and passes through every policy untouched.)
 
 Treat the token figures as what they are called:

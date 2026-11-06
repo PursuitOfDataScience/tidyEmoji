@@ -29,26 +29,26 @@ networks look like.
 library(tidyEmoji)
 library(dplyr)
 
-posts <- read.csv(system.file("extdata", "ata_tweets.csv",
-                              package = "tidyEmoji"),
-                  stringsAsFactors = FALSE, encoding = "UTF-8")
+# the example corpus: 1,485 OASST2 messages, about half carrying emoji
+posts <- oasst_messages
 ```
 
 ## Counts first, and why they are not enough
 
-One row per pair of distinct emoji that appear in the same post, with the
-number of posts in which they do:
+One row per pair of distinct emoji that appear in the same message, with the
+number of messages in which they do:
 
 ```{r}
-edges <- posts %>% emoji_pairs(full_text)
+edges <- posts %>% emoji_pairs(text)
 edges
 
 edges %>% count(n, name = "pairs")
 ```
 
 `r sum(edges$n == 1)` of the `r nrow(edges)` edges
-(`r round(100 * mean(edges$n == 1), 1)`%) are a single post. A graph drawn
-from all of them is one post's worth of evidence per line, and the few heavy
+(`r round(100 * mean(edges$n == 1), 1)`%) are a single message. A graph drawn
+from all of them is one message's worth of evidence per line, and the few
+heavy
 edges belong to the emoji that are common everywhere, which pair with
 everything because they are common, not because they are related.
 
@@ -58,27 +58,31 @@ Two changes fix this, and they do different jobs.
 
 * **An association measure** scores each pair against what its two emoji's
   own frequencies predict, so a common emoji no longer wins every edge.
-  `measure = "dice"` is `2 * n / (n1 + n2)`, with `n1` and `n2` the posts
+  `measure = "dice"` is `2 * n / (n1 + n2)`, with `n1` and `n2` the messages
   holding each emoji: 1 for a pair never seen apart, near 0 for a pair that
   is mostly apart. `"ppmi"` and `"log_odds"` are the alternatives; see
   `?emoji_pairs`.
 * **A frequency threshold** removes the edges seen too rarely to mean
   anything. An association measure cannot do this on its own: a pair seen in
-  one post, whose two emoji appear nowhere else, scores the maximum Dice of 1.
+  one message, whose two emoji appear nowhere else, scores the maximum Dice
+  of 1.
 
 ```{r}
 weighted <- posts %>%
-  emoji_pairs(full_text, measure = "dice") %>%
+  emoji_pairs(text, measure = "dice") %>%
   filter(n >= 2)
 
 weighted
 ```
 
-That is the honest network for this corpus: `r nrow(weighted)` edges. Two
-thousand posts holding 900 emoji are too few for a network of more than a
-handful of emoji, and it is better to know that than to draw the 213-edge
-version. A corpus of hundreds of thousands of posts, or one pooled by user or
-by conversation with `doc_id`, gives a graph with real structure.
+That is the honest network for this corpus: `r nrow(weighted)` edges, where
+the raw edge list had `r nrow(edges)`. Most of those came from a handful of
+replies that tabulate dozens of emoji at once, which pair every emoji in the
+table with every other; 1,485 messages holding 1,450 emoji are too few for a
+network of more than a modest number of emoji, and it is better to know that
+than to draw the whole edge list. A corpus of hundreds of thousands of
+messages, or one pooled by user or by conversation with `doc_id`, gives a
+graph with real structure.
 
 ## Into a network package
 
@@ -137,8 +141,8 @@ length(communities)
 ## Directed sequences
 
 `emoji_pairs(directed = TRUE)` orders each pair by first appearance in the
-post, so the edge from one emoji to another counts the posts where the first
-came first. The same measures apply to that ordered event, and
+message, so the edge from one emoji to another counts the messages where the
+first came first. The same measures apply to that ordered event, and
 `emoji_ngrams()` gives the strictly consecutive version for Markov-style
 models of emoji sequences.
 

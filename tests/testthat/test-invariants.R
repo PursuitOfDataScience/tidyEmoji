@@ -10302,9 +10302,11 @@ test_that("the tangled vignette script matches what the vignette says of it", {
     expect_gt(sum(grepl("^#+\\s+ggplot\\(", script)), 5L)
   }
 
-  # and the corpus is read the way the vignette says, so the non-plotting
-  # half really does run on the declared dependencies alone
-  expect_true(any(grepl("utils::read.csv", code, fixed = TRUE)))
+  # and the corpus is the bundled dataset (0.7.0; it was a CSV read with
+  # utils::read.csv() before), so the non-plotting half really does run on
+  # the declared dependencies alone
+  expect_true(any(grepl("oasst_messages", code, fixed = TRUE)))
+  expect_false(any(grepl("read.csv", code, fixed = TRUE)))
   expect_false(any(grepl("readr::", code, fixed = TRUE)))
 
   vig <- pkg_text_file("vignettes/introduction.Rmd", "doc/introduction.Rmd")
@@ -10759,30 +10761,34 @@ test_that("the bundled corpus carries no direct identifiers", {
   expect_identical(sum(lengths(tidyEmoji:::emoji_glyph_list(x)) > 0L), 750L)
 })
 
-test_that("the vignette's 373-of-2000 figure and its zero-mean check hold", {
-  # "Only 373 of these 2000 tweets qualify" and "on the rank scale the mean
-  # gap over the scored rows is exactly zero, so a non-zero mean means your
-  # filtering, not your data". The second is a property of scaling both sides
-  # over the same rows, so it is pinned for three different scorers rather
-  # than for the vignette's one; the first turns out not to depend on the
-  # scorer at all, because that scorer never returns NA, which is what keeps
-  # this test free of tolower() and so of the locale.
-  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
-  skip_if_not(file.exists(path), "vignette corpus not available")
-  d <- utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8")
-  expect_identical(nrow(d), 2000L)
-  expect_identical(sum(!is.na(emoji_sentiment(d, full_text)$.emoji_sentiment)),
-                   373L)
+test_that("the vignette's 615-of-1485 figure and its zero-mean check hold", {
+  # "Only 615 of these 1485 messages qualify" (373 of 2000 on the tweet
+  # corpus 0.7.0 retired) and "on the rank scale the mean gap over the scored
+  # rows is exactly zero, so a non-zero mean means your filtering, not your
+  # data". The second is a property of scaling both sides over the same rows,
+  # so it is pinned for three different scorers rather than for the
+  # vignette's one; the first turns out not to depend on the scorer at all,
+  # because that scorer never returns NA, which is what keeps this test free
+  # of tolower() and so of the locale.
+  d <- oasst_messages
+  expect_identical(nrow(d), 1485L)
+  expect_identical(sum(!is.na(emoji_sentiment(d, text)$.emoji_sentiment)),
+                   615L)
   set.seed(1)
   scorers <- list(rep(0, nrow(d)), seq_len(nrow(d)), stats::rnorm(nrow(d)))
   for (sc in scorers) {
     dd <- d
     dd$ts <- sc
-    inc <- emoji_incongruity(dd, full_text, ts, scale = "rank")
+    inc <- emoji_incongruity(dd, text, ts, scale = "rank")
     gap <- inc$.emoji_incongruity
-    expect_identical(sum(!is.na(gap)), 373L)
+    expect_identical(sum(!is.na(gap)), 615L)
     expect_equal(mean(gap, na.rm = TRUE), 0)
   }
+  vig <- pkg_text_file("vignettes/introduction.Rmd", "doc/introduction.Rmd")
+  skip_if(is.na(vig), "vignette source not available")
+  prose <- paste(readLines(vig, warn = FALSE, encoding = "UTF-8"),
+                 collapse = " ")
+  expect_match(prose, "Only 615 of these 1485 messages qualify", fixed = TRUE)
 })
 
 test_that("the reversible-preprocessing vignette's figures hold", {
@@ -10832,16 +10838,19 @@ test_that("the reversible-preprocessing vignette's figures hold", {
                fixed = TRUE)
 
   # and the claim the article makes about its own last table: "shortcode"
-  # clears this corpus, which the policy does not guarantee in general -- a
-  # glyph it cannot name is left in place. The prose now says so; pin that the
-  # corpus really is the clean case, so the sentence is not describing a
-  # different corpus.
-  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
-  skip_if_not(file.exists(path), "vignette corpus not available")
-  d <- utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8")
-  expect_identical(sum(emoji_token_cost(d, full_text)$.emoji_n), 900L)
-  san <- emoji_sanitize(d, full_text, policy = "shortcode")
-  expect_identical(sum(emoji_token_cost(san, full_text)$.emoji_n), 0L)
+  # leaves in place a glyph it cannot name, so a corpus holding one still
+  # shows a cost. On the example corpus that is the three ZWJ sequences
+  # Unicode does not recommend, read as one nameless glyph each until the D7
+  # fix; pin the count the inline figure prints and the reason the prose
+  # gives for it, so the sentence cannot describe a different corpus.
+  d <- oasst_messages
+  expect_identical(sum(emoji_token_cost(d, text)$.emoji_n), 1450L)
+  san <- emoji_sanitize(d, text, policy = "shortcode")
+  left <- unlist(tidyEmoji:::emoji_glyph_list(san$text), use.names = FALSE)
+  expect_identical(length(left), 3L)
+  expect_true(all(grepl("\u200d", left, fixed = TRUE)))
+  expect_true(all(is.na(as_emoji_name(left))))
+  expect_match(txt, "zero-width-joiner sequences Unicode does not", fixed = TRUE)
 })
 
 
