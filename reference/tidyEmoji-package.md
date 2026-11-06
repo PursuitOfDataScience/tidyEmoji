@@ -422,3 +422,6 @@ Other contributors:
 
 - OpenAssistant contributors (OASST2 example data in data/oasst\_\*.rda)
   \[copyright holder\]
+
+- emoji authors (snapshot of the emoji package's data in R/sysdata.rda)
+  \[copyright holder\]

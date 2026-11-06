@@ -175,6 +175,25 @@ links to.
   dates instead of fabricated ones. Figures in the sections below this
   one, for earlier releases, refer to the retired corpus.
 
+### Vocabulary
+
+- **Installing tidyEmoji no longer installs `emoji`.** Everything the
+  package read from it, the aliases and keywords of
+  [`emoji::emojis`](https://emilhvitfeldt.github.io/emoji/reference/emojis.html),
+  [`emoji::emoji_name`](https://emilhvitfeldt.github.io/emoji/reference/emoji_name.html)
+  and the detection regex
+  [`emoji::emoji_rx`](https://emilhvitfeldt.github.io/emoji/reference/emoji_rx.html),
+  is data that has not changed since `emoji` 16.0.0 (2024-10-28). It is
+  now bundled as an attributed snapshot of that release (MIT, in
+  `inst/LICENSE.note`), so every output is unchanged, which a
+  differential audit against the previous commit confirmed with
+  [`identical()`](https://rdrr.io/r/base/identical.html) on the
+  vocabulary verbs, detection and the bundled sample, and the package no
+  longer rests on one that stopped at Emoji 16.0. `emoji` stays in
+  Suggests for a test that compares the snapshot with the installed
+  release, so a new one is noticed the week it lands, and
+  `emoji_provenance()$emoji_pkg` reports the snapshot’s version.
+
 ### Smaller repairs
 
 - **[`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)

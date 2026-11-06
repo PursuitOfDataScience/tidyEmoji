@@ -10,6 +10,9 @@
 - **OpenAssistant contributors**. Copyright holder.  
   OASST2 example data in data/oasst\_\*.rda
 
+- **emoji authors**. Copyright holder.  
+  snapshot of the emoji package's data in R/sysdata.rda
+
 ## Citation
 
 Source:
