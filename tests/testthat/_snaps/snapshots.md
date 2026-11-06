@@ -33,12 +33,12 @@
             {
               "type": "integer",
               "attributes": {},
-              "value": [560]
+              "value": [750]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [2000]
+              "value": [1485]
             },
             {
               "type": "integer",
@@ -142,7 +142,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [2000]
+          "value": [1485]
         },
         {
           "type": "list",
@@ -157,22 +157,22 @@
             {
               "type": "integer",
               "attributes": {},
-              "value": [0, 1, 0, 1, 0, 0, 0, 0]
+              "value": [0, 0, 0, 0, 0, 0, 0, 0]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [0, 1, 0, 1, 0, 0, 0, 0]
+              "value": [0, 0, 0, 0, 0, 0, 0, 0]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [74, 51, 101, 60, 76, 35, 27, 72]
+              "value": [79, 306, 77, 81, 239, 227, 32, 32]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [0, 0.0196078, 0, 0.0166667, 0, 0, 0, 0]
+              "value": [0, 0, 0, 0, 0, 0, 0, 0]
             },
             {
               "type": "logical",
@@ -204,7 +204,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [2000]
+          "value": [1485]
         },
         {
           "type": "list",
@@ -219,27 +219,27 @@
             {
               "type": "integer",
               "attributes": {},
-              "value": [0, 1, 0, 1, 0, 0, 0, 0]
+              "value": [0, 0, 0, 0, 0, 0, 0, 0]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [74, 51, 101, 60, 76, 35, 27, 72]
+              "value": [79, 306, 77, 81, 239, 227, 32, 32]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [13, 10, 18, 12, 17, 7, 6, 13]
+              "value": [14, 47, 11, 15, 37, 38, 7, 6]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [0, 0.0196078, 0, 0.0166667, 0, 0, 0, 0]
+              "value": [0, 0, 0, 0, 0, 0, 0, 0]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [0, 0.1, 0, 0.0833333, 0, 0, 0, 0]
+              "value": [0, 0, 0, 0, 0, 0, 0, 0]
             }
           ]
         }
@@ -333,7 +333,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [187]
+          "value": [401]
         },
         {
           "type": "list",
@@ -348,27 +348,27 @@
             {
               "type": "character",
               "attributes": {},
-              "value": ["<1F602>", "<1F62D>", "<1F629>", "<1F923>", "<1F97A>", "<1F644>", "<1F974>", "<1F4AF>"]
+              "value": ["<1F60A>", "<1F609>", "<1F601>", "<1F604>", "<1F4B0>", "<1F917>", "<1F44D>", "<1F914>"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["face with tears of joy", "loudly crying face", "weary face", "rolling on the floor laughing", "pleading face", "face with rolling eyes", "woozy face", "hundred points"]
+              "value": ["smiling face with smiling eyes", "winking face", "beaming face with smiling eyes", "grinning face with smiling eyes", "money bag", "smiling face with open hands", "thumbs up", "thinking face"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["joy", "sob", "weary", "rofl", "pleading_face", "roll_eyes", "woozy_face", "100"]
+              "value": ["blush", "wink", "grin", "smile", "moneybag", "hugs", "+1", "thinking"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion"]
+              "value": ["Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Smileys & Emotion", "Objects", "Smileys & Emotion", "People & Body", "Smileys & Emotion"]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [160, 98, 34, 34, 29, 22, 21, 20]
+              "value": [230, 49, 34, 30, 28, 28, 25, 23]
             }
           ]
         }
@@ -395,7 +395,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [323]
+          "value": [288]
         },
         {
           "type": "list",
@@ -410,22 +410,22 @@
             {
               "type": "character",
               "attributes": {},
-              "value": ["<1F64C 1F3FF>", "<1F64C 1F3FF>", "<1F64C 1F3FF>", "<1F595 1F3FF>", "<1F64C 1F3FF>", "<1F64C 1F3FD>", "<1F595 1F3FF>", "<1F595 1F3FF>"]
+              "value": ["<1F494>", "<1F494>", "<1F494>", "<1F6B2>", "<1F6B2>", "<1F36B>", "<1F36B>", "<1F36B>"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["absolutely", "paprika", "pepper", "double", "hitting", "thank", "price", "then"]
+              "value": ["kot", "kotek", "kotku", "bicicleta", "u+1f6b2", "bar", "chocolate", "someday"]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [3, 3, 3, 4, 3, 4, 4, 4]
+              "value": [4, 4, 4, 3, 3, 3, 3, 3]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [5.79423, 5.79423, 5.79423, 5.50655, 5.50655, 5.32423, 5.10109, 5.10109]
+              "value": [6.44942, 6.44942, 6.44942, 6.22627, 6.22627, 5.63849, 5.63849, 5.63849]
             }
           ]
         }
@@ -452,7 +452,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [323]
+          "value": [288]
         },
         {
           "type": "list",
@@ -467,27 +467,27 @@
             {
               "type": "character",
               "attributes": {},
-              "value": ["<1F64C 1F3FD>", "<1F595 1F3FF>", "<1F64C 1F3FF>", "<1F64C 1F3FF>", "<1F64C 1F3FF>", "<1F64C 1F3FF>", "<1F595 1F3FF>", "<1F595 1F3FF>"]
+              "value": ["<1F494>", "<1F494>", "<1F494>", "<1F408>", "<1F6B2>", "<1F6B2>", "<1F532>", "<1F532>"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["thank", "double", "absolutely", "paprika", "pepper", "hitting", "price", "then"]
+              "value": ["kot", "kotek", "kotku", "<43A 43E 442 438 43A 430 445>", "bicicleta", "u+1f6b2", "<431 43E 43B 44C 448 435>", "<43D 440 430 432 438 442 441 44F>"]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [4, 4, 3, 3, 3, 3, 4, 4]
+              "value": [4, 4, 4, 8, 3, 3, 14, 14]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [5.32423, 5.50655, 5.79423, 5.79423, 5.79423, 5.50655, 5.10109, 5.10109]
+              "value": [6.44942, 6.44942, 6.44942, 5.43782, 6.22627, 6.22627, 4.07064, 4.018]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [12.5406, 12.415, 12.415, 12.415, 12.415, 12.337, 12.2996, 12.2996]
+              "value": [13, 13, 13, 12.6424, 12.415, 12.415, 12.3811, 12.3479]
             }
           ]
         }
@@ -514,7 +514,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [213]
+          "value": [4314]
         },
         {
           "type": "list",
@@ -529,17 +529,17 @@
             {
               "type": "character",
               "attributes": {},
-              "value": ["<1F602>", "<1F602>", "<1F602>", "<1F62D>", "<1F495>", "<1F49E>", "<1F4AF>", "<1F602>"]
+              "value": ["<1F52C>", "<2600>", "<2600>", "<2600>", "<2600>", "<2600>", "<2600>", "<2600>"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["<1F62D>", "<1F629>", "<1F644>", "<1F644>", "<1F970>", "<1F97A>", "<1F937 1F3FD 200D 2642>", "<1F914>"]
+              "value": ["<1F680>", "<26C5>", "<26C8>", "<2744>", "<1F30A>", "<1F324>", "<1F325>", "<1F326>"]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [10, 4, 3, 3, 2, 2, 2, 2]
+              "value": [4, 3, 3, 3, 3, 3, 3, 3]
             }
           ]
         }
@@ -566,7 +566,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [213]
+          "value": [4314]
         },
         {
           "type": "list",
@@ -581,17 +581,17 @@
             {
               "type": "character",
               "attributes": {},
-              "value": ["<26A1>", "<26A1>", "<26BD>", "<26BD>", "<26BD>", "<26BD>", "<26BD>", "<26BD>"]
+              "value": ["<26C5>", "<26C5>", "<26C5>", "<26C5>", "<26C5>", "<26C5>", "<26C5>", "<26C5>"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["<1F49A>", "<1F64F 1F3FF>", "<1F1EA 1F1FA>", "<1F44A 1F3FB>", "<1F47F>", "<1F595 1F3FB>", "<1F92B>", "<1F945>"]
+              "value": ["<26C8>", "<2744>", "<1F324>", "<1F325>", "<1F326>", "<1F328>", "<1F329>", "<1F32B>"]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [1, 1, 1, 1, 1, 1, 1, 1]
+              "value": [3, 3, 3, 3, 3, 3, 3, 3]
             },
             {
               "type": "double",
@@ -643,42 +643,42 @@
             {
               "type": "integer",
               "attributes": {},
-              "value": [900, 900]
+              "value": [1450, 1450]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [565, 546]
+              "value": [1087, 769]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [0.627778, 0.606667]
+              "value": [0.749655, 0.530345]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [187, 187]
+              "value": [401, 401]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [95, 69]
+              "value": [244, 106]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [0.508021, 0.368984]
+              "value": [0.608479, 0.264339]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [560, 560]
+              "value": [750, 750]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [187, 199]
+              "value": [135, 194]
             },
             {
               "type": "integer",
@@ -693,12 +693,12 @@
             {
               "type": "integer",
               "attributes": {},
-              "value": [8, 8]
+              "value": [9, 9]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [1, 1]
+              "value": [2, 1]
             }
           ]
         }

@@ -8,11 +8,9 @@
 # and in every locale. One test holds them all, so CRAN, where snapshots do
 # not run, counts one skip rather than a dozen.
 
-snap_corpus <- function() {
-  utils::read.csv(system.file("extdata", "ata_tweets.csv",
-                              package = "tidyEmoji"),
-                  stringsAsFactors = FALSE, encoding = "UTF-8")
-}
+# The example corpus since 0.7.0, the OASST2 sample; the snapshots were
+# re-recorded on it when the tweet corpus was retired.
+snap_corpus <- function() oasst_messages
 
 snap_shape <- function(df, n = 8L) {
   key <- asNamespace("tidyEmoji")$emoji_key
@@ -47,35 +45,35 @@ test_that("the 0.6.0 output shapes hold", {
     text = c(paste(g(0x1F600), g(0x1F600), g(0x1F602)),
              paste(g(0x2764, 0xFE0F), g(0x1F600)), g(0x1F602)))
 
-  expect_snapshot_value(snap_shape(emoji_summary(corpus, full_text)),
+  expect_snapshot_value(snap_shape(emoji_summary(corpus, text)),
                         style = "json2")
   expect_snapshot_value(snap_shape(emoji_summary(orphans, text,
                                                  presentation = "any")),
                         style = "json2")
   expect_snapshot_value(
-    snap_shape(emoji_ratio(corpus, full_text)[, c(".emoji_n",
+    snap_shape(emoji_ratio(corpus, text)[, c(".emoji_n",
       ".emoji_codepoints", ".emoji_n_char", ".emoji_ratio", ".emoji_only")]),
     style = "json2")
   expect_snapshot_value(
-    snap_shape(emoji_density(corpus, full_text)[, c(".emoji_n",
+    snap_shape(emoji_density(corpus, text)[, c(".emoji_n",
       ".emoji_n_char", ".emoji_n_token", ".emoji_per_char",
       ".emoji_per_token")]),
     style = "json2")
   expect_snapshot_value(snap_shape(emoji_trend(dated, text, when, top_n = 1)),
                         style = "json2")
-  expect_snapshot_value(snap_shape(emoji_frequency(corpus, full_text)),
+  expect_snapshot_value(snap_shape(emoji_frequency(corpus, text)),
                         style = "json2")
-  expect_snapshot_value(snap_shape(emoji_collocations(corpus, full_text)),
-                        style = "json2")
-  expect_snapshot_value(
-    snap_shape(emoji_collocations(corpus, full_text, measure = "logdice")),
-    style = "json2")
-  expect_snapshot_value(snap_shape(emoji_pairs(corpus, full_text)),
+  expect_snapshot_value(snap_shape(emoji_collocations(corpus, text)),
                         style = "json2")
   expect_snapshot_value(
-    snap_shape(emoji_pairs(corpus, full_text, measure = "dice")),
+    snap_shape(emoji_collocations(corpus, text, measure = "logdice")),
     style = "json2")
-  expect_snapshot_value(snap_shape(emoji_coverage(corpus, full_text)),
+  expect_snapshot_value(snap_shape(emoji_pairs(corpus, text)),
+                        style = "json2")
+  expect_snapshot_value(
+    snap_shape(emoji_pairs(corpus, text, measure = "dice")),
+    style = "json2")
+  expect_snapshot_value(snap_shape(emoji_coverage(corpus, text)),
                         style = "json2")
   expect_snapshot_value(
     snap_shape(emoji_ambiguity(measure = "polarisation")), style = "json2")
