@@ -1,3 +1,7 @@
+# tidyEmoji 0.7.0
+
+*In development. This section is filled in as the 0.7.0 work lands.*
+
 # tidyEmoji 0.6.0
 
 **The catalogue is now Unicode's own, current to Emoji 18.0, and the package

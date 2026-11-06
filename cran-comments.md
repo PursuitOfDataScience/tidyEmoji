@@ -1,48 +1,21 @@
 ## Submission notes
 
-This is a **feature release**. The current CRAN version is 0.4.0, published
-on 2026-09-17. Version 0.5.0 was prepared but never published on CRAN, so
-this submission carries the changes of both; NEWS.md lists each release under
-its own heading.
+*Skeleton for the next submission, opened 2026-11-06 after 0.6.0 was accepted.
+Fill in the two TODO sections before submitting; everything below them is
+carried forward because the test suite derives it and will fail if it goes
+stale. The 0.6.0 text is in git history (`git show v0.6.0:cran-comments.md`)
+if a paragraph is worth reusing.*
 
-* **Ten new exported functions**: `emoji_coverage()`, `emoji_properties()`,
-  `as_emoji_canonical()`, `emoji_identical()`, `emoji_find()`,
-  `emoji_keywords()`, `emoji_country()`, `emoji_subdivision()`,
-  `emoji_flag()` and `emoji_from_counts()`.
-* **New arguments, all with defaults that keep earlier behaviour**: every
-  verb that reads a text column gains `presentation = "emoji"`, placed last
-  so no positional call changes meaning; `emoji_collocations()` and
-  `emoji_pairs()` gain association measures; `emoji_ambiguity()` and its two
-  companions gain `measure = "polarisation"`.
-* **Results users can observe changing, all documented in NEWS.md with
-  worked examples**: the emoji catalogue moved from the `emoji` package's
-  table (Emoji 16.0) to Unicode's own `emoji-test.txt` (Emoji 18.0), so 182
-  more emoji are detected; and a skin-tone swatch standing alone, or a pair of
-  regional indicators that spells no country, is no longer counted as an
-  emoji. `emoji_summary()` reports both, so a changed count can be explained.
-  `emoji_ratio()`, `emoji_density()`, `emoji_trend()`, `emoji_summary()` and
-  `emoji_provenance()` gain columns; none loses one.
-* **Lifecycle**: `emoji_tweets()`, soft-deprecated since 0.2.1, now warns
-  through `lifecycle::deprecate_warn()` and names 0.7.0 as its removal.
-* **Dependencies**: `stringi` joins Imports. It was already installed with
-  every copy of tidyEmoji, through `emoji`, which imports `stringr`; the
-  detector now calls it directly with the extended pattern. `igraph` joins
-  Suggests, for the new networks vignette, whose `igraph` chunks are skipped
-  when it is absent. The declared floors are unchanged.
-* **Bundled data**: one new internal file, `R/sysdata.rda` (31 KB), holding
-  the Unicode catalogue. It is derived from Unicode data under the Unicode
-  License V3, whose full text `inst/LICENSE.note` now reproduces, as the
-  licence asks. The two crosswalk datasets are rebuilt from the same file:
-  `emoji_unicode_crosswalk` keeps its 5761 rows and
-  `category_unicode_crosswalk` gains the 202 new spellings. The two lexicons
-  are unchanged.
-* **Nothing is fetched at build, check, test or run time.** The catalogue is
-  built by `data-raw/crosswalks.R`, run by hand, from a copy of the Unicode
-  file committed beside it. One test asks unicode.org whether a newer emoji
-  version exists; it runs only when `TIDYEMOJI_CANARY=true`, which only the
-  repository's weekly job sets, and it is also skipped on CRAN.
-* **One new vignette**, `emoji-networks`, and additions to the introduction
-  vignette and to the help pages. No Rd content was removed.
+**TODO before submitting.** In this order:
+
+* What kind of release this is, and the previous CRAN version with its
+  publication date.
+* The new verbs and the behaviour changes a user could notice, each in one
+  sentence, pointing at NEWS.md for the detail.
+* Whether dependencies, bundled data or the licence changed.
+* The check times before and after the CRAN time budget, beside the CRAN
+  figures, including Windows and macOS.
+* Anything a CRAN reviewer flagged last time, and how it was addressed.
 
 ## Test environments
 
@@ -64,44 +37,16 @@ run that has happened for this version.*
 
 ## R CMD check results
 
-Reported per environment rather than as one headline, and separating the
-package's own results from this host's artefacts. The four that recur on our
-machine, and are not the package, are: no `qpdf`, no `tidy`, an unverifiable
-system clock, and the URL discussed below. The PDF reference manual is only
-built locally, so the local run is the one that covers it: do not skip it.
-
-* **Local, R 4.4.1 on Linux, `R CMD check --as-cran` with
-  `_R_CHECK_CRAN_INCOMING_REMOTE_=true`:** 1 WARNING, 3 NOTEs, and all four are the host artefacts above: no `qpdf`,
-  no `tidy`, the unverifiable clock, and the CLARIN.SI redirect target.
-  **Zero from the package.** The suite runs 16751 assertions with 0 failures
-  and the 17 skips inventoried below, and the PDF reference manual builds.
-  (Run from the source tree with `NOT_CRAN=true` the same suite reports 16867
-  assertions and 5 skips: the tests that stand down for a file the tarball
-  does not carry, or because the run is a CRAN one, run there.)
-
-* **Local, R 4.1.0 on Linux, the declared minimum:** the suite runs clean
-  from the source tree, 16863 assertions and 0 failures, with 6 skips: the
-  three acceptance tests, the tangled vignette script (not installed from a
-  source tree), the `readr (>= 2.0.0)` gate (that tree carries 1.4.0) and the
-  catalogue canary.
-* **Local, R 4.6.0 on Linux:** clean too, 16863 assertions, 0 failures and the
-  same 6 skips, `readr` being absent there.
-* **Local, R 4.4.1, the suite under `LC_ALL=C`:** 16858 assertions, 0
-  failures, 8 skips: the five a UTF-8 source run has, plus three that measure
-  R's own transliteration or case mapping rather than the package, and say
-  so. The new detection code reads text through `stringi`, which does not
-  depend on the locale.
-* **Coverage:** 98.4% by `covr::package_coverage()`, run the way the coverage
-  job runs it, against that job's 95% floor.
+**TODO: fill in from an actual run.** Report per environment rather than as one
+headline, and separate the package's own results from this host's artefacts.
+The four that recur on our machine, and are not the package, are: no `qpdf`,
+no `tidy`, an unverifiable system clock, and the URL discussed below. The PDF
+reference manual is only built locally, so the local run is the one that covers
+it: do not skip it.
 
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, the three vignettes, README.md and NEWS.md, with the
   208 entries in `inst/WORDLIST`.
-
-**Still to run before submitting**: the six GitHub Actions flavours with the
-two collation jobs and the `ctype` job, and win-builder on R-devel and
-R-release. Record each result here as it comes back rather than carrying this
-paragraph forward.
 
 ## The skip inventory
 

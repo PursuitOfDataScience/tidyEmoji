@@ -2,7 +2,7 @@ Package: tidyEmoji
 Type: Package
 Title: Discover, Count, Categorise, Score, Translate and Relate Emoji in
     Text
-Version: 0.6.0
+Version: 0.7.0
 Authors@R:
     c(person(given = "Youzhi",
              family = "Yu",
