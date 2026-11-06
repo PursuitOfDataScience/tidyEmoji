@@ -141,25 +141,16 @@ ata_tweets <- tibble::as_tibble(
     encoding = "UTF-8", stringsAsFactors = FALSE
   )
 )
-ata_tweets
-#> # A tibble: 2,000 × 1
-#>    full_text                                                                    
-#>    <chr>                                                                        
-#>  1 "Was Justin Bieber ever at any BLM March/protest this past summer? Or ever?" 
-#>  2 "Whole Family gone and I’m stuck here in Brunswick 😭"                       
-#>  3 "38 years old and I still get distracted while cleaning my room. \n\nJust in…
-#>  4 "This time last year I was blasting fever nonstop by Wizkid 😭"              
-#>  5 "Kanye is a just a black man with a lot of confidence and y’all tear him dow…
-#>  6 "Feel like being my inner self today"                                        
-#>  7 "Peep toe boots irk my sole."                                                
-#>  8 "Nah the biggest naruto fans be trying call one piece long like... nigga?"   
-#>  9 "if my shoes don’t arrive by next Friday imma be pissed"                     
-#> 10 "Phone dry asf 🙄"                                                           
-#> # ℹ 1,990 more rows
+emoji_summary(ata_tweets, full_text)
+#> # A tibble: 1 × 4
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags
+#>          <int>   <int>               <int>           <int>
+#> 1          560    2000                   0               0
 ```
 
 The actual text lives in the `full_text` column, which is the column we
-pass to each tidyEmoji verb.
+pass to each tidyEmoji verb. The outputs below report what tidyEmoji
+finds in that column rather than printing the text itself.
 
 ## Detecting and summarising emoji
 
@@ -198,21 +189,9 @@ is a deprecated synonym: it warns, and it is removed in 0.7.0.)
 ``` r
 
 ata_tweets %>%
-  emoji_filter(full_text)
-#> # A tibble: 560 × 1
-#>    full_text                                                                    
-#>    <chr>                                                                        
-#>  1 Whole Family gone and I’m stuck here in Brunswick 😭                         
-#>  2 This time last year I was blasting fever nonstop by Wizkid 😭                
-#>  3 Phone dry asf 🙄                                                             
-#>  4 When I gave my life to Christ, I was able to see people as imperfect, but st…
-#>  5 Everyone needs self care days❤️                                               
-#>  6 R u sears rn 🤦🏽‍♀️                                                              
-#>  7 Gucci wit some dope runnas head huncho top gunna u a sto runna😭             
-#>  8 i’m thinking insomnia cause they got this caramel apple pie cookie. 😋       
-#>  9 i deadass listen to the music everyday lmao🥲                                
-#> 10 Im ona block where ya barley can be at  if you try get shot down 😈          
-#> # ℹ 550 more rows
+  emoji_filter(full_text) %>%
+  nrow()
+#> [1] 560
 ```
 
 ## Extracting emoji
@@ -232,20 +211,20 @@ step.
 
 ata_tweets %>%
   emoji_extract_nest(full_text) %>%
-  select(full_text, .emoji_unicode)
-#> # A tibble: 2,000 × 2
-#>    full_text                                                      .emoji_unicode
-#>    <chr>                                                          <list>        
-#>  1 "Was Justin Bieber ever at any BLM March/protest this past su… <chr [0]>     
-#>  2 "Whole Family gone and I’m stuck here in Brunswick 😭"         <chr [1]>     
-#>  3 "38 years old and I still get distracted while cleaning my ro… <chr [0]>     
-#>  4 "This time last year I was blasting fever nonstop by Wizkid 😭… <chr [1]>     
-#>  5 "Kanye is a just a black man with a lot of confidence and y’a… <chr [0]>     
-#>  6 "Feel like being my inner self today"                          <chr [0]>     
-#>  7 "Peep toe boots irk my sole."                                  <chr [0]>     
-#>  8 "Nah the biggest naruto fans be trying call one piece long li… <chr [0]>     
-#>  9 "if my shoes don’t arrive by next Friday imma be pissed"       <chr [0]>     
-#> 10 "Phone dry asf 🙄"                                             <chr [1]>     
+  select(.emoji_unicode)
+#> # A tibble: 2,000 × 1
+#>    .emoji_unicode
+#>    <list>        
+#>  1 <chr [0]>     
+#>  2 <chr [1]>     
+#>  3 <chr [0]>     
+#>  4 <chr [1]>     
+#>  5 <chr [0]>     
+#>  6 <chr [0]>     
+#>  7 <chr [0]>     
+#>  8 <chr [0]>     
+#>  9 <chr [0]>     
+#> 10 <chr [1]>     
 #> # ℹ 1,990 more rows
 ```
 
@@ -316,20 +295,21 @@ plotting.
 ``` r
 
 ata_tweets %>%
-  emoji_tokens(full_text)
-#> # A tibble: 900 × 5
-#>    full_text                 .emoji .emoji_name .emoji_category .emoji_sentiment
-#>    <chr>                     <chr>  <chr>       <chr>                      <dbl>
-#>  1 Whole Family gone and I’… 😭     loudly cry… Smileys & Emot…          -0.0934
-#>  2 This time last year I wa… 😭     loudly cry… Smileys & Emot…          -0.0934
-#>  3 Phone dry asf 🙄          🙄     face with … Smileys & Emot…          NA     
-#>  4 When I gave my life to C… 😂     face with … Smileys & Emot…           0.221 
-#>  5 Everyone needs self care… ❤️      red heart   Smileys & Emot…           0.746 
-#>  6 R u sears rn 🤦🏽‍♀️           🤦🏽‍♀️     woman face… People & Body            NA     
-#>  7 Gucci wit some dope runn… 😭     loudly cry… Smileys & Emot…          -0.0934
-#>  8 i’m thinking insomnia ca… 😋     face savor… Smileys & Emot…           0.634 
-#>  9 i deadass listen to the … 🥲     smiling fa… Smileys & Emot…          NA     
-#> 10 Im ona block where ya ba… 😈     smiling fa… Smileys & Emot…           0.268 
+  emoji_tokens(full_text) %>%
+  select(-full_text)
+#> # A tibble: 900 × 4
+#>    .emoji .emoji_name                         .emoji_category   .emoji_sentiment
+#>    <chr>  <chr>                               <chr>                        <dbl>
+#>  1 😭     loudly crying face                  Smileys & Emotion          -0.0934
+#>  2 😭     loudly crying face                  Smileys & Emotion          -0.0934
+#>  3 🙄     face with rolling eyes              Smileys & Emotion          NA     
+#>  4 😂     face with tears of joy              Smileys & Emotion           0.221 
+#>  5 ❤️      red heart                           Smileys & Emotion           0.746 
+#>  6 🤦🏽‍♀️     woman facepalming: medium skin tone People & Body              NA     
+#>  7 😭     loudly crying face                  Smileys & Emotion          -0.0934
+#>  8 😋     face savoring food                  Smileys & Emotion           0.634 
+#>  9 🥲     smiling face with tear              Smileys & Emotion          NA     
+#> 10 😈     smiling face with horns             Smileys & Emotion           0.268 
 #> # ℹ 890 more rows
 ```
 
@@ -1131,18 +1111,19 @@ leaks into it:
 
 ``` r
 
-ata_tweets %>%
-  emoji_context(full_text, window = 4) %>%
-  select(.row_number, .emoji, .emoji_context) %>%
-  head(5)
-#> # A tibble: 5 × 3
-#>   .row_number .emoji .emoji_context                   
-#>         <int> <chr>  <chr>                            
-#> 1           2 😭     stuck here in Brunswick          
-#> 2           4 😭     fever nonstop by Wizkid          
-#> 3          10 🙄     Phone dry asf                    
-#> 4          15 😂     lot of white girls . I thought it
-#> 5          17 ❤️      needs self care days
+notes <- data.frame(text = c(
+  "so proud of the whole team \U0001F389 see you all on Friday",
+  "missed the last train again \U0001F62D\U0001F62D walking home now"
+))
+notes %>%
+  emoji_context(text, window = 4) %>%
+  select(.row_number, .emoji, .emoji_context)
+#> # A tibble: 3 × 3
+#>   .row_number .emoji .emoji_context                       
+#>         <int> <chr>  <chr>                                
+#> 1           1 🎉     of the whole team see you all on     
+#> 2           2 😭     the last train again walking home now
+#> 3           2 😭     the last train again walking home now
 ```
 
 Aggregated over a corpus, those windows give the emoji-word associations
@@ -1435,14 +1416,14 @@ incong %>%
 
 incong %>%
   filter(.emoji_polarity_flip) %>%
-  select(full_text, .emoji_sentiment, text_score) %>%
+  select(.emoji_sentiment, text_score) %>%
   head(3)
-#> # A tibble: 3 × 3
-#>   full_text                                          .emoji_sentiment text_score
-#>   <chr>                                                         <dbl>      <dbl>
-#> 1 zay hilfiger went from juju on that BEAT , to juj…           0.0245         -1
-#> 2 Worst story 📖 I heard. I guy I met bought 200 sha…           0.176          -1
-#> 3 Ew don’t you hate when a hoe watch you and you do…           0.221          -1
+#> # A tibble: 3 × 2
+#>   .emoji_sentiment text_score
+#>              <dbl>      <dbl>
+#> 1           0.0245         -1
+#> 2           0.176          -1
+#> 3           0.221          -1
 ```
 
 Note what happens to entries with no scorable emoji: they get `NA`,
