@@ -84,6 +84,7 @@ reference:
   contents:
   - emoji_sanitize
   - emoji_token_cost
+  - emoji_hidden
 - title: Translate & search
   contents:
   - emoji_to_text
