@@ -27,7 +27,7 @@ the number of messages in which they do:
 
 edges <- posts %>% emoji_pairs(text)
 edges
-#> # A tibble: 4,314 × 3
+#> # A tibble: 4,316 × 3
 #>    item1 item2     n
 #>    <chr> <chr> <int>
 #>  1 🔬    🚀        4
@@ -40,19 +40,19 @@ edges
 #>  8 ☀️     🌦️         3
 #>  9 ☀️     🌧️         3
 #> 10 ☀️     🌨️         3
-#> # ℹ 4,304 more rows
+#> # ℹ 4,306 more rows
 
 edges %>% count(n, name = "pairs")
 #> # A tibble: 4 × 2
 #>       n pairs
 #>   <int> <int>
-#> 1     1  4042
+#> 1     1  4044
 #> 2     2   169
 #> 3     3   102
 #> 4     4     1
 ```
 
-4042 of the 4314 edges (93.7%) are a single message. A graph drawn from
+4044 of the 4316 edges (93.7%) are a single message. A graph drawn from
 all of them is one message’s worth of evidence per line, and the few
 heavy edges belong to the emoji that are common everywhere, which pair
 with everything because they are common, not because they are related.
@@ -97,9 +97,9 @@ weighted
 ```
 
 That is the honest network for this corpus: 272 edges, where the raw
-edge list had 4314. Most of those came from a handful of replies that
+edge list had 4316. Most of those came from a handful of replies that
 tabulate dozens of emoji at once, which pair every emoji in the table
-with every other; 1,485 messages holding 1,450 emoji are too few for a
+with every other; 1,485 messages holding 1,454 emoji are too few for a
 network of more than a modest number of emoji, and it is better to know
 that than to draw the whole edge list. A corpus of hundreds of thousands
 of messages, or one pooled by user or by conversation with `doc_id`,

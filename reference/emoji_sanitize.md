@@ -132,10 +132,12 @@ The policies:
   face") or the GitHub-style alias (":grinning:"), exactly as
   [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
   does – including its rule that a glyph with no known name or alias is
-  **left in place unchanged**. A ZWJ sequence too new for the installed
-  catalogue is detected but cannot be named, so these two policies can
-  return a column that still holds emoji. `"strip"` never does. Neither
-  does `"placeholder"`, unless the token you supply is itself
+  **left in place unchanged**. A glyph the catalogue does not list, such
+  as a family with a skin tone (a sequence Unicode allows but does not
+  recommend), is detected but cannot be named, so these two policies can
+  return a column that still holds emoji. A ZWJ sequence the catalogue
+  does not list is named by its parts, in order. `"strip"` never does.
+  Neither does `"placeholder"`, unless the token you supply is itself
   emoji-forming: one that *is* an emoji survives by definition, and a
   lone combining character such as `U+FE0F` binds to whatever the
   removed glyph was standing next to. `name` is also the accessibility

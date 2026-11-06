@@ -444,10 +444,10 @@ frame with a text column will do.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,475 more rows</span></span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">oasst_messages</span>, <span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          750    <span style="text-decoration: underline;">1</span>485                   0               0        0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          750    <span style="text-decoration: underline;">1</span>485                   0               0          3        0</span></span></code></pre></div>
 <p>The messages themselves live in the <code>text</code> column, which
 is the column we pass to each tidyEmoji verb, beside a timestamp
 (<code>created_at</code>), the writer’s <code>role</code> and the
@@ -471,10 +471,10 @@ regardless of how many emoji it holds.</p>
 <span>  <span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">summary_tbl</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          750    <span style="text-decoration: underline;">1</span>485                   0               0        0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>          750    <span style="text-decoration: underline;">1</span>485                   0               0          3        0</span></span></code></pre></div>
 <p>Here, 750 of the 1,485 entries (50.5%) contain at least one
 emoji.</p>
 </div>
@@ -541,7 +541,7 @@ in that entry. Entries without emoji are dropped.</p>
 <span>  <span class="fu"><a href="../reference/emoji_extract_unnest.html">emoji_extract_unnest</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">emoji_per_message</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,283 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,284 × 3</span></span></span>
 <span><span class="co">#&gt;    .row_number .emoji_unicode .emoji_count</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          15 👍                        1</span></span>
@@ -554,7 +554,7 @@ in that entry. Entries without emoji are dropped.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          46 🏡                        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          46 🐺                        1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          46 👧🏻                        1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,273 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,274 more rows</span></span></span></code></pre></div>
 <p>We can use this to plot how many emoji each emoji-bearing entry
 contains:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -588,7 +588,7 @@ needed for counting, joining and plotting.</p>
 <code class="sourceCode R"><span><span class="va">oasst_messages</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_tokens.html">emoji_tokens</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">role</span>, <span class="va">lang</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">".emoji"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,450 × 6</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,454 × 6</span></span></span>
 <span><span class="co">#&gt;    role      lang  .emoji .emoji_name           .emoji_category .emoji_sentiment</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> assistant en    👍     thumbs up             People &amp; Body              0.522</span></span>
@@ -601,7 +601,7 @@ needed for counting, joining and plotting.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> assistant ru    🧑🏼‍🍳     cook: medium-light s… People &amp; Body             <span style="color: #BB0000;">NA</span>    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> assistant ru    🌲     evergreen tree        Animals &amp; Natu…            0.435</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> assistant ru    🐺     wolf                  Animals &amp; Natu…            0.263</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,440 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,444 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="a-note-on-grapheme-aware-detection">A note on grapheme-aware detection<a class="anchor" aria-label="anchor" href="#a-note-on-grapheme-aware-detection"></a>
@@ -642,10 +642,10 @@ counts both, so they are accounted for rather than silently lost:</p>
 <span>                           <span class="st">"\U0001F1FD\U0001F1FD"</span>,        <span class="co"># "XX", no country</span></span>
 <span>                           <span class="st">"\U0001F1EF\U0001F1F5"</span><span class="op">)</span><span class="op">)</span>       <span class="co"># Japan</span></span>
 <span><span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">odd</span>, <span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            2       3                   1               1        0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            2       3                   1               1          0        0</span></span></code></pre></div>
 <p>Some emoji are also emoji only when they carry the presentation
 selector <code>U+FE0F</code>: the bare heart <code>U+2764</code> is
 text, <code>U+2764 U+FE0F</code> is an emoji. Every verb that counts,
@@ -655,15 +655,15 @@ signs, which are typography far more often than emoji):</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hearts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I \u2764 R"</span>, <span class="st">"I \u2764\ufe0f R"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">hearts</span>, <span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            1       2                   0               0        0</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            1       2                   0               0          0        0</span></span>
 <span><span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">hearts</span>, <span class="va">text</span>, presentation <span class="op">=</span> <span class="st">"any"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            2       2                   0               0        0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            2       2                   0               0          0        0</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -680,7 +680,7 @@ annotated with each emoji’s name, shortcode and category.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">oasst_messages</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 401 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 398 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                            shortcode             group           n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😊    smiling face with smiling eyes  blush                 Smileys &amp; …   230</span></span>
@@ -693,7 +693,7 @@ annotated with each emoji’s name, shortcode and category.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🤔    thinking face                   thinking              Smileys &amp; …    23</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🙂    slightly smiling face           slightly_smiling_face Smileys &amp; …    22</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 😂    face with tears of joy          joy                   Smileys &amp; …    19</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 391 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 388 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="top_n_emojis">
@@ -835,10 +835,10 @@ reduces it to a single per-entry share:</p>
 <span><span class="co">#&gt;   .emoji_type     n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> <span style="color: #BB0000;">NA</span>            735</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> face          512</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> face          511</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> gesture        50</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> person         16</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> place          15</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> place          15</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> nature         14</span></span>
 <span></span>
 <span><span class="va">oasst_messages</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_faceness.html">emoji_faceness</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -847,7 +847,7 @@ reduces it to a single per-entry share:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;   mean_faceness all_faces</span></span>
 <span><span class="co">#&gt;           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         0.720       512</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         0.719       511</span></span></code></pre></div>
 <p><code><a href="../reference/as_emoji_type.html">as_emoji_type()</a></code> is the vector-level version, for typing
 a glyph you already have in hand.</p>
 </div>
@@ -982,10 +982,10 @@ emoji-bearing entries left with no score at all:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;   lexicon    occurrence_coverage type_coverage n_rows_with_emoji n_rows_unscored</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> novak2015                0.750         0.608               750             135</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> emotag1200               0.530         0.264               750             194</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> novak2015                0.750         0.613               750             135</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> emotag1200               0.529         0.266               750             194</span></span></code></pre></div>
 <p>The sentiment lexicon scores 75% of the emoji occurrences here but
-only 60.8% of the distinct emoji, because a few common glyphs make up
+only 61.3% of the distinct emoji, because a few common glyphs make up
 most of the occurrences. And 135 of the 750 entries holding an emoji
 have no <code>.emoji_sentiment</code> at all. Filtering those out before
 a comparison drops a sixth of the emoji-bearing data, and not at random:
@@ -1197,7 +1197,7 @@ such as igraph, tidygraph and ggraph:</p>
 <span>  <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">emoji_edges</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,314 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,316 × 3</span></span></span>
 <span><span class="co">#&gt;    item1 item2     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🔬    🚀        4</span></span>
@@ -1210,7 +1210,7 @@ such as igraph, tidygraph and ggraph:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ☀️     🌦️         3</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ☀️     🌧️         3</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☀️     🌨️         3</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,304 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,306 more rows</span></span></span></code></pre></div>
 <p>The strongest pairings make a readable chart on their own:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">emoji_edges</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -1254,7 +1254,7 @@ material for sequence and Markov-style analyses:</p>
 <code class="sourceCode R"><span><span class="va">oasst_messages</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="../reference/emoji_ngrams.html">emoji_ngrams</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">.emoji_ngram</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 575 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 579 × 2</span></span></span>
 <span><span class="co">#&gt;    .emoji_ngram     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 💰 💰           15</span></span>
@@ -1267,7 +1267,7 @@ material for sequence and Markov-style analyses:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 👏 👏            5</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🐱 👢            4</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 👢 💰            4</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 565 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 569 more rows</span></span></span></code></pre></div>
 <p>All the relational verbs canonicalise glyphs through the same
 codepoint-normalised key as the rest of the package, so qualified and
 unqualified forms of one emoji count as a single node.</p>
@@ -1351,7 +1351,7 @@ that are nothing but emoji (and whitespace):</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;   n_emoji_only mean_ratio</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>           19     0.052<span style="text-decoration: underline;">1</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>           19     0.051<span style="text-decoration: underline;">7</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="emoji-over-time">Emoji over time<a class="anchor" aria-label="anchor" href="#emoji-over-time"></a>
@@ -1373,12 +1373,12 @@ beside each count so the share can be recomputed for any grouping:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 2023-03-01 😊    smiling face with smiling eyes    51      262 0.195 </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 2023-03-01 😉    winking face                      12      262 0.045<span style="text-decoration: underline;">8</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 2023-03-01 😁    beaming face with smiling eyes     9      262 0.034<span style="text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 2023-04-01 😊    smiling face with smiling eyes    72      421 0.171 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 2023-04-01 😉    winking face                      17      421 0.040<span style="text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 2023-04-01 😁    beaming face with smiling eyes    10      421 0.023<span style="text-decoration: underline;">8</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 2023-05-01 😊    smiling face with smiling eyes    25      155 0.161 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> 2023-05-01 😁    beaming face with smiling eyes     2      155 0.012<span style="text-decoration: underline;">9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> 2023-05-01 😉    winking face                       2      155 0.012<span style="text-decoration: underline;">9</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 2023-04-01 😊    smiling face with smiling eyes    72      422 0.171 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 2023-04-01 😉    winking face                      17      422 0.040<span style="text-decoration: underline;">3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 2023-04-01 😁    beaming face with smiling eyes    10      422 0.023<span style="text-decoration: underline;">7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 2023-05-01 😊    smiling face with smiling eyes    25      158 0.158 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> 2023-05-01 😁    beaming face with smiling eyes     2      158 0.012<span style="text-decoration: underline;">7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> 2023-05-01 😉    winking face                       2      158 0.012<span style="text-decoration: underline;">7</span></span></span></code></pre></div>
 <p><code><a href="../reference/emoji_turnover.html">emoji_turnover()</a></code> asks a different question – not how
 often an emoji is used but how much of the <em>repertoire</em> changes
 from one period to the next:</p>
@@ -1390,9 +1390,9 @@ from one period to the next:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2023-02-01 2023-01-01              1     204 0.004<span style="text-decoration: underline;">90</span>   203      0      1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2023-03-01 2023-02-01            204     111 0.230      52    145     59</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2023-04-01 2023-03-01            111     167 0.188     123     67     44</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2023-05-01 2023-04-01            167      83 0.208      40    124     43</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2023-06-01 2023-05-01             83      11 0.033<span style="text-decoration: underline;">0</span>      8     80      3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2023-04-01 2023-03-01            111     168 0.187     124     67     44</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2023-05-01 2023-04-01            168      82 0.208      39    125     43</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2023-06-01 2023-05-01             82      11 0.033<span style="text-decoration: underline;">3</span>      8     79      3</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2023-07-01 2023-06-01             11      14 0.041<span style="text-decoration: underline;">7</span>     13     10      1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> 2023-08-01 2023-07-01             14       7 0.05        6     13      1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> 2023-09-01 2023-08-01              7      16 0          16      7      0</span></span>
@@ -1414,14 +1414,14 @@ call:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 7</span></span></span>
 <span><span class="co">#&gt;   version version_num release_date n_types n_tokens share_types share_tokens</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 0.6             0.6 2010-10-11       215      978      0.536       0.674  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 0.7             0.7 2014-06-16        24       64      0.059<span style="text-decoration: underline;">9</span>      0.044<span style="text-decoration: underline;">1</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 1.0             1   2015-06-09        67      238      0.167       0.164  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2.0             2   2015-11-12        12       14      0.029<span style="text-decoration: underline;">9</span>      0.009<span style="text-decoration: underline;">66</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 3.0             3   2016-06-21        20       39      0.049<span style="text-decoration: underline;">9</span>      0.026<span style="text-decoration: underline;">9</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 4.0             4   2016-11-22        13       23      0.032<span style="text-decoration: underline;">4</span>      0.015<span style="text-decoration: underline;">9</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> 5.0             5   2017-06-20        22       52      0.054<span style="text-decoration: underline;">9</span>      0.035<span style="text-decoration: underline;">9</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> 11.0           11   2018-06-05         9       15      0.022<span style="text-decoration: underline;">4</span>      0.010<span style="text-decoration: underline;">3</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 0.6             0.6 2010-10-11       215      982      0.540       0.675  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 0.7             0.7 2014-06-16        24       64      0.060<span style="text-decoration: underline;">3</span>      0.044<span style="text-decoration: underline;">0</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 1.0             1   2015-06-09        67      238      0.168       0.164  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2.0             2   2015-11-12        12       14      0.030<span style="text-decoration: underline;">2</span>      0.009<span style="text-decoration: underline;">63</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 3.0             3   2016-06-21        20       41      0.050<span style="text-decoration: underline;">3</span>      0.028<span style="text-decoration: underline;">2</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 4.0             4   2016-11-22        13       23      0.032<span style="text-decoration: underline;">7</span>      0.015<span style="text-decoration: underline;">8</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> 5.0             5   2017-06-20        22       53      0.055<span style="text-decoration: underline;">3</span>      0.036<span style="text-decoration: underline;">5</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> 11.0           11   2018-06-05         9       15      0.022<span style="text-decoration: underline;">6</span>      0.010<span style="text-decoration: underline;">3</span></span></span></code></pre></div>
 <p>With real timestamps, <code><a href="../reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code> goes one step
 further and compares each glyph’s first appearance in the corpus with
 its Unicode release date – see <code><a href="../reference/emoji_unicode_releases.html">emoji_unicode_releases()</a></code> for
@@ -1575,20 +1575,20 @@ engine under the marketing framing.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 18 × 7</span></span></span>
 <span><span class="co">#&gt;    emoji name                n mean_incongruity sd_incongruity n_flips flip_rate</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😊    smiling face w…   230           0.520          0.343        2   0.008<span style="text-decoration: underline;">70</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 😉    winking face       49          -<span style="color: #BB0000;">0.275</span>          0.304        0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 😁    beaming face w…    34          -<span style="color: #BB0000;">0.400</span>          0.248        0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😊    smiling face w…   230           0.521          0.343        2   0.008<span style="text-decoration: underline;">70</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 😉    winking face       49          -<span style="color: #BB0000;">0.278</span>          0.304        0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 😁    beaming face w…    34          -<span style="color: #BB0000;">0.398</span>          0.249        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 😄    grinning face …    30          -<span style="color: #BB0000;">0.484</span>          0.308        0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 💰    money bag          28          -<span style="color: #BB0000;">0.499</span>          0.127        0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 💰    money bag          28          -<span style="color: #BB0000;">0.498</span>          0.129        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 👍    thumbs up          25          -<span style="color: #BB0000;">0.161</span>          0.505        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 😂    face with tear…    19          -<span style="color: #BB0000;">0.722</span>          0.187        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😃    grinning face …    18           0.011<span style="text-decoration: underline;">6</span>         0.354        0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 👋    waving hand        16          -<span style="color: #BB0000;">0.451</span>          0.272        0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🔲    black square b…    14          -<span style="color: #BB0000;">0.208</span>          0            0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> 🔳    white square b…    14          -<span style="color: #BB0000;">0.208</span>          0            0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> 😀    grinning face      14          -<span style="color: #BB0000;">0.035</span><span style="color: #BB0000; text-decoration: underline;">7</span>         0.440        0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 👋    waving hand        16          -<span style="color: #BB0000;">0.451</span>          0.271        0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🔲    black square b…    14          -<span style="color: #BB0000;">0.205</span>          0            0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> 🔳    white square b…    14          -<span style="color: #BB0000;">0.205</span>          0            0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> 😀    grinning face      14          -<span style="color: #BB0000;">0.035</span><span style="color: #BB0000; text-decoration: underline;">5</span>         0.440        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> 😅    grinning face …    13          -<span style="color: #BB0000;">0.840</span>          0.280        0   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> 🚀    rocket             13           0.156          0.659        0   0      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> 🚀    rocket             13           0.156          0.658        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> 🐈    cat                12          -<span style="color: #BB0000;">0.510</span>          0.212        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> 👏    clapping hands     12          -<span style="color: #BB0000;">0.050</span><span style="color: #BB0000; text-decoration: underline;">1</span>         0.322        0   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> 🔥    fire               11          -<span style="color: #BB0000;">0.571</span>          0.087<span style="text-decoration: underline;">8</span>       0   0      </span></span>
@@ -1839,7 +1839,7 @@ through <code>tokenizer</code> when the number matters:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
 <span><span class="co">#&gt;   emoji bytes codepoints est_tokens</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  <span style="text-decoration: underline;">1</span>450  <span style="text-decoration: underline;">6</span>563       <span style="text-decoration: underline;">1</span>710       <span style="text-decoration: underline;">3</span>307</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  <span style="text-decoration: underline;">1</span>454  <span style="text-decoration: underline;">6</span>551       <span style="text-decoration: underline;">1</span>706       <span style="text-decoration: underline;">3</span>300</span></span></code></pre></div>
 <p><code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code> then applies one <em>named</em> policy
 to the column. The capability is not new – most of it exists across
 <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> and the extraction verbs – but the named

@@ -106,7 +106,12 @@ emoji_to_text(
 
 `data`, as a tibble, with the text column rewritten in place (same
 column name). `NA` entries stay `NA`, and emoji with no known name are
-left in place unchanged.
+left in place unchanged. A ZWJ sequence the catalogue does not list,
+such as grinning face, `U+200D`, fire, is written as the names of the
+parts it splits into, in order and separated by spaces ("grinning face
+fire"), or as their shortcodes (":grinning::fire:"): the parts every
+other verb counts since 0.7.0. If any part has no name the sequence
+stays as it is.
 
 ## See also
 

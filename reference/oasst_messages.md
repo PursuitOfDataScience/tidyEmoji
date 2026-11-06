@@ -104,10 +104,10 @@ tally.
 
 ``` r
 emoji_summary(oasst_messages, text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1          750    1485                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1          750    1485                   0               0          3        0
 table(oasst_messages$role)
 #> 
 #> assistant  prompter 

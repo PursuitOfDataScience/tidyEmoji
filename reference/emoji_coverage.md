@@ -106,7 +106,7 @@ questions:
 On the example corpus,
 [oasst_messages](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_messages.md),
 the two differ by fourteen points for the bundled sentiment lexicon,
-75.0% of occurrences against 60.8% of types, and the third number is the
+75.0% of occurrences against 61.3% of types, and the third number is the
 one with consequences: 135 of the 750 rows that hold an emoji have none
 the lexicon can score, so their `.emoji_sentiment` is `NA`. Dropping
 those rows before a comparison drops a sixth of the data, and not at
@@ -122,8 +122,9 @@ and are left out of the catalogue's count.
 ## What `presentation` costs
 
 The default detection requires emoji presentation, so a bare `U+2764`
-heart is not counted. `n_text_presentation` is how many such
-text-presentation glyphs the corpus holds (the occurrences
+heart is not counted, nor, since 0.7.0, a glyph the writer followed with
+`U+FE0E` to ask for its text form. `n_text_presentation` is how many
+such text-presentation glyphs the corpus holds (the occurrences
 `presentation = "any"` would add), and `n_text_presentation_scorable` is
 how many of those this lexicon could score. Under the default they are
 outside every other count here; under `presentation = "any"` they are

@@ -136,7 +136,11 @@ version before 0.7.0 did.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>data</code>, as a tibble, with the text column rewritten in place (same
 column name). <code>NA</code> entries stay <code>NA</code>, and emoji with no known name are left
-in place unchanged.</p>
+in place unchanged. A ZWJ sequence the catalogue does not list, such as
+grinning face, <code>U+200D</code>, fire, is written as the names of the parts it
+splits into, in order and separated by spaces ("grinning face fire"), or
+as their shortcodes (":grinning::fire:"): the parts every other verb
+counts since 0.7.0. If any part has no name the sequence stays as it is.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

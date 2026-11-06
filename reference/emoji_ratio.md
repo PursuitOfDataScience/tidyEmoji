@@ -96,7 +96,10 @@ section of
 [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)),
 so it adds nothing to `.emoji_n` or `.emoji_codepoints`. It is not text
 either, so it does not stop a row being `.emoji_only`: `U+1F600 U+1F3FB`
-is one emoji, a ratio of `0.5`, and emoji-only.
+is one emoji, a ratio of `0.5`, and emoji-only. The same holds for the
+joiners of a zero-width-joiner sequence Unicode does not recommend,
+which counts as its parts: `U+1F9D1 U+200D U+1F467` is two emoji, a
+ratio of `2/3`, and emoji-only.
 
 ## See also
 

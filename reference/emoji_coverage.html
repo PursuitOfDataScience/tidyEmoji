@@ -140,7 +140,7 @@ saw can be scored. This is the flattering one.</p></li>
 be scored. This is the one that says whether the rare, domain-specific
 glyphs are measured at all.</p></li>
 </ul><p>On the example corpus, <a href="oasst_messages.html">oasst_messages</a>, the two differ by fourteen points
-for the bundled sentiment lexicon, 75.0% of occurrences against 60.8% of
+for the bundled sentiment lexicon, 75.0% of occurrences against 61.3% of
 types, and the third number is the one with consequences: 135 of the 750
 rows that hold an emoji have none the lexicon can score, so their
 <code>.emoji_sentiment</code> is <code>NA</code>. Dropping those rows before a comparison drops
@@ -156,7 +156,8 @@ of the catalogue's count.</p>
 
 
 <p>The default detection requires emoji presentation, so a bare <code>U+2764</code>
-heart is not counted. <code>n_text_presentation</code> is how many such
+heart is not counted, nor, since 0.7.0, a glyph the writer followed with
+<code>U+FE0E</code> to ask for its text form. <code>n_text_presentation</code> is how many such
 text-presentation glyphs the corpus holds (the occurrences
 <code>presentation = "any"</code> would add), and <code>n_text_presentation_scorable</code> is
 how many of those this lexicon could score. Under the default they are

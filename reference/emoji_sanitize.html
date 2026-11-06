@@ -163,9 +163,11 @@ policy whose result is emoji-free whatever you hand it.</p></li>
 <li><p><code>"name"</code> and <code>"shortcode"</code> substitute the Unicode name
 ("grinning face") or the GitHub-style alias (":grinning:"), exactly as
 <code><a href="emoji_to_text.html">emoji_to_text()</a></code> does – including its rule that a glyph with no known
-name or alias is <strong>left in place unchanged</strong>. A ZWJ sequence too new for
-the installed catalogue is detected but cannot be named, so these two
-policies can return a column that still holds emoji. <code>"strip"</code> never
+name or alias is <strong>left in place unchanged</strong>. A glyph the catalogue does
+not list, such as a family with a skin tone (a sequence Unicode allows
+but does not recommend), is detected but cannot be named, so these two
+policies can return a column that still holds emoji. A ZWJ sequence the
+catalogue does not list is named by its parts, in order. <code>"strip"</code> never
 does. Neither does <code>"placeholder"</code>, unless the token you supply is
 itself emoji-forming: one that <em>is</em> an emoji survives by definition, and
 a lone combining character such as <code>U+FE0F</code> binds to whatever the

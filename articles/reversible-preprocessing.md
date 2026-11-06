@@ -195,10 +195,10 @@ hearts <- tibble::tibble(
 )
 
 hearts %>% emoji_summary(text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            1       2                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            1       2                   0               0          0        0
 ```
 
 One of the two is counted. Detection asks for emoji presentation, and a
@@ -315,20 +315,21 @@ tibble::tibble(
 #> # A tibble: 2 × 4
 #>   stage     emoji emoji_bytes est_tokens
 #>   <chr>     <int>       <int>      <int>
-#> 1 original   1450        6563       3307
-#> 2 shortcode     3          49         25
+#> 1 original   1454        6551       3300
+#> 2 shortcode     0           0          0
 ```
 
-The sanitised column holds almost no emoji, and “almost” is the point:
-`"shortcode"` leaves a glyph it cannot name in place, so a corpus
-carrying a sequence the catalogue does not list still shows a cost here.
-This one keeps 3: zero-width-joiner sequences Unicode does not recommend
-(a cat glued to a laptop, a handshake glued to a zombie), which the
-detector reads as one glyph with no name and so with no shortcode. That
-is worth checking rather than assuming. `"strip"` is the policy that
-clears the column whatever it is handed. (The bare heart above is a
-different case: it is never detected, so it costs nothing here and
-passes through every policy untouched.)
+The sanitised column keeps 0 emoji, and that is worth checking rather
+than assuming: `"shortcode"` leaves a glyph it cannot name in place, so
+a corpus carrying one (an emoji too new to have a shortcode, say) still
+shows a cost here. Before 0.7.0 it kept three: zero-width-joiner
+sequences Unicode does not recommend (a cat glued to a laptop, a
+handshake glued to a zombie), which the detector read as one glyph with
+no name. They now count as the parts they are made of, and every part
+has a shortcode. `"strip"` is the policy that clears the column whatever
+it is handed. (The bare heart above is a different case: it is never
+detected, so it costs nothing here and passes through every policy
+untouched.)
 
 Treat the token figures as what they are called: `.emoji_token_estimate`
 is an estimate. Pass your real tokeniser through

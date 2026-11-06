@@ -157,10 +157,10 @@ oasst_messages %>%
 #> # ℹ 1,475 more rows
 
 emoji_summary(oasst_messages, text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1          750    1485                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1          750    1485                   0               0          3        0
 ```
 
 The messages themselves live in the `text` column, which is the column
@@ -184,10 +184,10 @@ summary_tbl <- oasst_messages %>%
   emoji_summary(text)
 
 summary_tbl
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1          750    1485                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1          750    1485                   0               0          3        0
 ```
 
 Here, 750 of the 1,485 entries (50.5%) contain at least one emoji.
@@ -259,7 +259,7 @@ emoji_per_message <- oasst_messages %>%
   emoji_extract_unnest(text)
 
 emoji_per_message
-#> # A tibble: 1,283 × 3
+#> # A tibble: 1,284 × 3
 #>    .row_number .emoji_unicode .emoji_count
 #>          <int> <chr>                 <int>
 #>  1          15 👍                        1
@@ -272,7 +272,7 @@ emoji_per_message
 #>  8          46 🏡                        1
 #>  9          46 🐺                        1
 #> 10          46 👧🏻                        1
-#> # ℹ 1,273 more rows
+#> # ℹ 1,274 more rows
 ```
 
 We can use this to plot how many emoji each emoji-bearing entry
@@ -316,7 +316,7 @@ plotting.
 oasst_messages %>%
   emoji_tokens(text) %>%
   select(role, lang, starts_with(".emoji"))
-#> # A tibble: 1,450 × 6
+#> # A tibble: 1,454 × 6
 #>    role      lang  .emoji .emoji_name           .emoji_category .emoji_sentiment
 #>    <chr>     <chr> <chr>  <chr>                 <chr>                      <dbl>
 #>  1 assistant en    👍     thumbs up             People & Body              0.522
@@ -329,7 +329,7 @@ oasst_messages %>%
 #>  8 assistant ru    🧑🏼‍🍳     cook: medium-light s… People & Body             NA    
 #>  9 assistant ru    🌲     evergreen tree        Animals & Natu…            0.435
 #> 10 assistant ru    🐺     wolf                  Animals & Natu…            0.263
-#> # ℹ 1,440 more rows
+#> # ℹ 1,444 more rows
 ```
 
 ### A note on grapheme-aware detection
@@ -376,10 +376,10 @@ odd <- data.frame(text = c("\U0001F600\U0001F3FB",        # face + stray tone
                            "\U0001F1FD\U0001F1FD",        # "XX", no country
                            "\U0001F1EF\U0001F1F5"))       # Japan
 emoji_summary(odd, text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            2       3                   1               1        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            2       3                   1               1          0        0
 ```
 
 Some emoji are also emoji only when they carry the presentation selector
@@ -393,15 +393,15 @@ more often than emoji):
 
 hearts <- data.frame(text = c("I \u2764 R", "I \u2764\ufe0f R"))
 emoji_summary(hearts, text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            1       2                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            1       2                   0               0          0        0
 emoji_summary(hearts, text, presentation = "any")
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            2       2                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            2       2                   0               0          0        0
 ```
 
 ## Counting emoji across the corpus
@@ -418,7 +418,7 @@ shortcode and category.
 
 oasst_messages %>%
   emoji_frequency(text)
-#> # A tibble: 401 × 5
+#> # A tibble: 398 × 5
 #>    emoji name                            shortcode             group           n
 #>    <chr> <chr>                           <chr>                 <chr>       <int>
 #>  1 😊    smiling face with smiling eyes  blush                 Smileys & …   230
@@ -431,7 +431,7 @@ oasst_messages %>%
 #>  8 🤔    thinking face                   thinking              Smileys & …    23
 #>  9 🙂    slightly smiling face           slightly_smiling_face Smileys & …    22
 #> 10 😂    face with tears of joy          joy                   Smileys & …    19
-#> # ℹ 391 more rows
+#> # ℹ 388 more rows
 ```
 
 ### `top_n_emojis()`
@@ -608,10 +608,10 @@ oasst_messages %>%
 #>   .emoji_type     n
 #>   <chr>       <int>
 #> 1 NA            735
-#> 2 face          512
+#> 2 face          511
 #> 3 gesture        50
-#> 4 person         16
-#> 5 place          15
+#> 4 place          15
+#> 5 nature         14
 
 oasst_messages %>%
   emoji_faceness(text) %>%
@@ -620,7 +620,7 @@ oasst_messages %>%
 #> # A tibble: 1 × 2
 #>   mean_faceness all_faces
 #>           <dbl>     <int>
-#> 1         0.720       512
+#> 1         0.719       511
 ```
 
 [`as_emoji_type()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.md)
@@ -771,12 +771,12 @@ coverage %>%
 #> # A tibble: 2 × 5
 #>   lexicon    occurrence_coverage type_coverage n_rows_with_emoji n_rows_unscored
 #>   <chr>                    <dbl>         <dbl>             <int>           <int>
-#> 1 novak2015                0.750         0.608               750             135
-#> 2 emotag1200               0.530         0.264               750             194
+#> 1 novak2015                0.750         0.613               750             135
+#> 2 emotag1200               0.529         0.266               750             194
 ```
 
 The sentiment lexicon scores 75% of the emoji occurrences here but only
-60.8% of the distinct emoji, because a few common glyphs make up most of
+61.3% of the distinct emoji, because a few common glyphs make up most of
 the occurrences. And 135 of the 750 entries holding an emoji have no
 `.emoji_sentiment` at all. Filtering those out before a comparison drops
 a sixth of the emoji-bearing data, and not at random: the unscored
@@ -1028,7 +1028,7 @@ emoji_edges <- oasst_messages %>%
   emoji_pairs(text)
 
 emoji_edges
-#> # A tibble: 4,314 × 3
+#> # A tibble: 4,316 × 3
 #>    item1 item2     n
 #>    <chr> <chr> <int>
 #>  1 🔬    🚀        4
@@ -1041,7 +1041,7 @@ emoji_edges
 #>  8 ☀️     🌦️         3
 #>  9 ☀️     🌧️         3
 #> 10 ☀️     🌨️         3
-#> # ℹ 4,304 more rows
+#> # ℹ 4,306 more rows
 ```
 
 The strongest pairings make a readable chart on their own:
@@ -1100,7 +1100,7 @@ Markov-style analyses:
 oasst_messages %>%
   emoji_ngrams(text) %>%
   count(.emoji_ngram, sort = TRUE)
-#> # A tibble: 575 × 2
+#> # A tibble: 579 × 2
 #>    .emoji_ngram     n
 #>    <chr>        <int>
 #>  1 💰 💰           15
@@ -1113,7 +1113,7 @@ oasst_messages %>%
 #>  8 👏 👏            5
 #>  9 🐱 👢            4
 #> 10 👢 💰            4
-#> # ℹ 565 more rows
+#> # ℹ 569 more rows
 ```
 
 All the relational verbs canonicalise glyphs through the same
@@ -1217,7 +1217,7 @@ oasst_messages %>%
 #> # A tibble: 1 × 2
 #>   n_emoji_only mean_ratio
 #>          <int>      <dbl>
-#> 1           19     0.0521
+#> 1           19     0.0517
 ```
 
 ## Emoji over time
@@ -1242,12 +1242,12 @@ oasst_messages %>%
 #>  4 2023-03-01 😊    smiling face with smiling eyes    51      262 0.195 
 #>  5 2023-03-01 😉    winking face                      12      262 0.0458
 #>  6 2023-03-01 😁    beaming face with smiling eyes     9      262 0.0344
-#>  7 2023-04-01 😊    smiling face with smiling eyes    72      421 0.171 
-#>  8 2023-04-01 😉    winking face                      17      421 0.0404
-#>  9 2023-04-01 😁    beaming face with smiling eyes    10      421 0.0238
-#> 10 2023-05-01 😊    smiling face with smiling eyes    25      155 0.161 
-#> 11 2023-05-01 😁    beaming face with smiling eyes     2      155 0.0129
-#> 12 2023-05-01 😉    winking face                       2      155 0.0129
+#>  7 2023-04-01 😊    smiling face with smiling eyes    72      422 0.171 
+#>  8 2023-04-01 😉    winking face                      17      422 0.0403
+#>  9 2023-04-01 😁    beaming face with smiling eyes    10      422 0.0237
+#> 10 2023-05-01 😊    smiling face with smiling eyes    25      158 0.158 
+#> 11 2023-05-01 😁    beaming face with smiling eyes     2      158 0.0127
+#> 12 2023-05-01 😉    winking face                       2      158 0.0127
 ```
 
 [`emoji_turnover()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_turnover.md)
@@ -1263,9 +1263,9 @@ oasst_messages %>%
 #>   <date>     <date>              <int>   <int>   <dbl> <int>  <int>  <int>
 #> 1 2023-02-01 2023-01-01              1     204 0.00490   203      0      1
 #> 2 2023-03-01 2023-02-01            204     111 0.230      52    145     59
-#> 3 2023-04-01 2023-03-01            111     167 0.188     123     67     44
-#> 4 2023-05-01 2023-04-01            167      83 0.208      40    124     43
-#> 5 2023-06-01 2023-05-01             83      11 0.0330      8     80      3
+#> 3 2023-04-01 2023-03-01            111     168 0.187     124     67     44
+#> 4 2023-05-01 2023-04-01            168      82 0.208      39    125     43
+#> 5 2023-06-01 2023-05-01             82      11 0.0333      8     79      3
 #> 6 2023-07-01 2023-06-01             11      14 0.0417     13     10      1
 #> 7 2023-08-01 2023-07-01             14       7 0.05        6     13      1
 #> 8 2023-09-01 2023-08-01              7      16 0          16      7      0
@@ -1291,14 +1291,14 @@ oasst_messages %>%
 #> # A tibble: 8 × 7
 #>   version version_num release_date n_types n_tokens share_types share_tokens
 #>   <chr>         <dbl> <date>         <int>    <int>       <dbl>        <dbl>
-#> 1 0.6             0.6 2010-10-11       215      978      0.536       0.674  
-#> 2 0.7             0.7 2014-06-16        24       64      0.0599      0.0441 
-#> 3 1.0             1   2015-06-09        67      238      0.167       0.164  
-#> 4 2.0             2   2015-11-12        12       14      0.0299      0.00966
-#> 5 3.0             3   2016-06-21        20       39      0.0499      0.0269 
-#> 6 4.0             4   2016-11-22        13       23      0.0324      0.0159 
-#> 7 5.0             5   2017-06-20        22       52      0.0549      0.0359 
-#> 8 11.0           11   2018-06-05         9       15      0.0224      0.0103
+#> 1 0.6             0.6 2010-10-11       215      982      0.540       0.675  
+#> 2 0.7             0.7 2014-06-16        24       64      0.0603      0.0440 
+#> 3 1.0             1   2015-06-09        67      238      0.168       0.164  
+#> 4 2.0             2   2015-11-12        12       14      0.0302      0.00963
+#> 5 3.0             3   2016-06-21        20       41      0.0503      0.0282 
+#> 6 4.0             4   2016-11-22        13       23      0.0327      0.0158 
+#> 7 5.0             5   2017-06-20        22       53      0.0553      0.0365 
+#> 8 11.0           11   2018-06-05         9       15      0.0226      0.0103
 ```
 
 With real timestamps,
@@ -1480,20 +1480,20 @@ scored %>%
 #> # A tibble: 18 × 7
 #>    emoji name                n mean_incongruity sd_incongruity n_flips flip_rate
 #>    <chr> <chr>           <int>            <dbl>          <dbl>   <int>     <dbl>
-#>  1 😊    smiling face w…   230           0.520          0.343        2   0.00870
-#>  2 😉    winking face       49          -0.275          0.304        0   0      
-#>  3 😁    beaming face w…    34          -0.400          0.248        0   0      
+#>  1 😊    smiling face w…   230           0.521          0.343        2   0.00870
+#>  2 😉    winking face       49          -0.278          0.304        0   0      
+#>  3 😁    beaming face w…    34          -0.398          0.249        0   0      
 #>  4 😄    grinning face …    30          -0.484          0.308        0   0      
-#>  5 💰    money bag          28          -0.499          0.127        0   0      
+#>  5 💰    money bag          28          -0.498          0.129        0   0      
 #>  6 👍    thumbs up          25          -0.161          0.505        0   0      
 #>  7 😂    face with tear…    19          -0.722          0.187        0   0      
 #>  8 😃    grinning face …    18           0.0116         0.354        0   0      
-#>  9 👋    waving hand        16          -0.451          0.272        0   0      
-#> 10 🔲    black square b…    14          -0.208          0            0   0      
-#> 11 🔳    white square b…    14          -0.208          0            0   0      
-#> 12 😀    grinning face      14          -0.0357         0.440        0   0      
+#>  9 👋    waving hand        16          -0.451          0.271        0   0      
+#> 10 🔲    black square b…    14          -0.205          0            0   0      
+#> 11 🔳    white square b…    14          -0.205          0            0   0      
+#> 12 😀    grinning face      14          -0.0355         0.440        0   0      
 #> 13 😅    grinning face …    13          -0.840          0.280        0   0      
-#> 14 🚀    rocket             13           0.156          0.659        0   0      
+#> 14 🚀    rocket             13           0.156          0.658        0   0      
 #> 15 🐈    cat                12          -0.510          0.212        0   0      
 #> 16 👏    clapping hands     12          -0.0501         0.322        0   0      
 #> 17 🔥    fire               11          -0.571          0.0878       0   0      
@@ -1785,7 +1785,7 @@ oasst_messages %>%
 #> # A tibble: 1 × 4
 #>   emoji bytes codepoints est_tokens
 #>   <int> <int>      <int>      <int>
-#> 1  1450  6563       1710       3307
+#> 1  1454  6551       1706       3300
 ```
 
 [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)

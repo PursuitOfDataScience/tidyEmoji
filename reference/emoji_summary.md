@@ -65,18 +65,24 @@ emoji_summary(data, text, presentation = "emoji")
 ## Value
 
 A one-row tibble with columns `n_with_emoji` (entries containing at
-least one emoji), `n_total` (all entries), `n_orphan_components` and
-`n_invalid_flags`. The last two count *glyphs*, not entries: the emoji
-material the text holds that is not an emoji, and so is in no other
-count. `n_orphan_components` is the skin-tone swatches and hair
-components standing alone, as in `U+1F600 U+1F3FB`, where the tone
+least one emoji), `n_total` (all entries), `n_orphan_components`,
+`n_invalid_flags`, `n_unlisted` and `n_hidden`. The middle three count
+*glyphs*, not entries: the emoji material the text holds that is not an
+emoji as it stands. `n_orphan_components` is the skin-tone swatches and
+hair components standing alone, as in `U+1F600 U+1F3FB`, where the tone
 follows a base that cannot take one; `n_invalid_flags` is the runs of
 regional indicators that spell no country, such as `U+1F1FD U+1F1FD`
-("XX") or a lone indicator. Both were counted as emoji before 0.6.0, so
-they are what to look at when a corpus reports fewer emoji than it used
-to. See the *Detection* section of
+("XX") or a lone indicator. `n_unlisted` is the sequences the catalogue
+lists under no spelling: a code point followed by `U+FE0F`, such as the
+black star `U+2605 U+FE0F`, which no verb counts, and a
+zero-width-joiner sequence Unicode does not recommend, such as adult,
+girl and boy joined, which every verb counts as the parts it splits
+into. The first two were counted as emoji before 0.6.0 and the third
+before 0.7.0, so they are what to look at when a corpus reports a
+different number of emoji than it used to. See the *Detection* section
+of
 [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
-`n_hidden`, unlike those two, counts *entries*: the ones carrying a
+`n_hidden`, unlike those three, counts *entries*: the ones carrying a
 hidden payload, a code point
 [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
 reports and
@@ -97,21 +103,21 @@ df <- data.frame(text = c("I love R \U0001f600",
                           "no emoji here",
                           "flags \U0001f3c1\U0001f600"))
 emoji_summary(df, text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            2       3                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            2       3                   0               0          0        0
 
 # a bare heart is an emoji only under presentation = "any"
 hearts <- data.frame(text = c("I \u2764 R", "I \u2764\ufe0f R"))
 emoji_summary(hearts, text)
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            1       2                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            1       2                   0               0          0        0
 emoji_summary(hearts, text, presentation = "any")
-#> # A tibble: 1 × 5
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
-#>          <int>   <int>               <int>           <int>    <int>
-#> 1            2       2                   0               0        0
+#> # A tibble: 1 × 6
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_unlisted n_hidden
+#>          <int>   <int>               <int>           <int>      <int>    <int>
+#> 1            2       2                   0               0          0        0
 ```

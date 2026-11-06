@@ -129,7 +129,9 @@ indicator that spells no flag, is not an emoji (see the <em>Detection</em>
 section of <a href="tidyEmoji-package.html">tidyEmoji</a>), so it adds nothing to <code>.emoji_n</code> or
 <code>.emoji_codepoints</code>. It is not text either, so it does not stop a row being
 <code>.emoji_only</code>: <code>U+1F600 U+1F3FB</code> is one emoji, a ratio of <code>0.5</code>, and
-emoji-only.</p>
+emoji-only. The same holds for the joiners of a zero-width-joiner sequence
+Unicode does not recommend, which counts as its parts:
+<code>U+1F9D1 U+200D U+1F467</code> is two emoji, a ratio of <code>2/3</code>, and emoji-only.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -25,7 +25,7 @@ A character vector the same length as `x`.
 ## Details
 
 Two spellings of one emoji differ only in the variation selector
-`U+FE0F`, and a plain
+`U+FE0F` (or `U+FE0E`, which asks for the text form), and a plain
 [`dplyr::left_join()`](https://dplyr.tidyverse.org/reference/mutate-joins.html)
 on the glyph treats them as different keys, which silently drops every
 row whose text holds the other spelling. Canonicalising both sides first

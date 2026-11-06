@@ -85,7 +85,7 @@ with the number of messages in which they do:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="va">posts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span><span class="va">edges</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,314 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,316 × 3</span></span></span>
 <span><span class="co">#&gt;    item1 item2     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🔬    🚀        4</span></span>
@@ -98,17 +98,17 @@ with the number of messages in which they do:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ☀️     🌦️         3</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ☀️     🌧️         3</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☀️     🌨️         3</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,304 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,306 more rows</span></span></span>
 <span></span>
 <span><span class="va">edges</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">n</span>, name <span class="op">=</span> <span class="st">"pairs"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>
 <span><span class="co">#&gt;       n pairs</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  <span style="text-decoration: underline;">4</span>042</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  <span style="text-decoration: underline;">4</span>044</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2   169</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3   102</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4     1</span></span></code></pre></div>
-<p>4042 of the 4314 edges (93.7%) are a single message. A graph drawn
+<p>4044 of the 4316 edges (93.7%) are a single message. A graph drawn
 from all of them is one message’s worth of evidence per line, and the
 few heavy edges belong to the emoji that are common everywhere, which
 pair with everything because they are common, not because they are
@@ -155,9 +155,9 @@ scores the maximum Dice of 1.</li>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ⛈️     ❄️         3     1</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 262 more rows</span></span></span></code></pre></div>
 <p>That is the honest network for this corpus: 272 edges, where the raw
-edge list had 4314. Most of those came from a handful of replies that
+edge list had 4316. Most of those came from a handful of replies that
 tabulate dozens of emoji at once, which pair every emoji in the table
-with every other; 1,485 messages holding 1,450 emoji are too few for a
+with every other; 1,485 messages holding 1,454 emoji are too few for a
 network of more than a modest number of emoji, and it is better to know
 that than to draw the whole edge list. A corpus of hundreds of thousands
 of messages, or one pooled by user or by conversation with

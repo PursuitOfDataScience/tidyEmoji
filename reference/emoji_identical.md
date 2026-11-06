@@ -2,9 +2,9 @@
 
 `emoji_identical()` compares glyphs element by element and says whether
 each pair is the same emoji, which means the same code points once the
-variation selector `U+FE0F` is set aside. With `details = TRUE` it also
-says how two glyphs differ: not at all, only in that selector, only in
-skin tone, or in the emoji itself.
+variation selectors `U+FE0F` and `U+FE0E` are set aside. With
+`details = TRUE` it also says how two glyphs differ: not at all, only in
+a selector, only in skin tone, or in the emoji itself.
 
 ## Usage
 
