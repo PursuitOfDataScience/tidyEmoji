@@ -181,10 +181,31 @@ step: <code>"keep"</code> changes nothing, so the interesting answer is
 <code>"shortcode"</code>. It is the only policy that both removes the
 emoji from the model’s input and lets you reconstruct the user’s text
 afterwards.</p>
+<p>One thing no rung restores, by design: a hidden payload. A run of
+variation selectors after an emoji, or a string of Unicode tag
+characters, is invisible, survives copy and paste, and can carry a
+message to the model. Since 0.7.0 every policy, <code>"keep"</code>
+included, deletes those code points by default, and a round trip cannot
+bring them back. Text with nothing hidden in it, which is all of the
+text above, is untouched; <code><a href="../reference/emoji_hidden.html">emoji_hidden()</a></code> says what was
+there, and <code>hidden = "keep"</code> leaves it.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># "yes" hidden after a thumbs up, one variation selector per byte</span></span>
+<span><span class="va">hide</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/utf8Conversion.html" class="external-link">intToUtf8</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">b</span> <span class="op">&lt;</span> <span class="fl">16L</span>, <span class="fl">0xFE00L</span> <span class="op">+</span> <span class="va">b</span>, <span class="fl">0xE0100L</span> <span class="op">+</span> <span class="va">b</span> <span class="op">-</span> <span class="fl">16L</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">sneaky</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"ok "</span>, <span class="fu"><a href="https://rdrr.io/r/base/utf8Conversion.html" class="external-link">intToUtf8</a></span><span class="op">(</span><span class="fl">0x1F44D</span><span class="op">)</span>, <span class="fu">hide</span><span class="op">(</span><span class="st">"yes"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/emoji_hidden.html">emoji_hidden</a></span><span class="op">(</span><span class="va">sneaky</span>, <span class="va">text</span><span class="op">)</span><span class="op">$</span><span class="va">.emoji_hidden_payload</span></span>
+<span><span class="co">#&gt; [1] "yes"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">sneaky</span><span class="op">$</span><span class="va">text</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 7</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">sneaky</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="st">"keep"</span><span class="op">)</span><span class="op">$</span><span class="va">text</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 4</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="it-holds-on-the-awkward-cases">It holds on the awkward cases<a class="anchor" aria-label="anchor" href="#it-holds-on-the-awkward-cases"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">awkward</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    sanitized <span class="op">=</span> <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span><span class="op">$</span><span class="va">text</span>,</span>
@@ -207,7 +228,7 @@ for a reason worth separating out: nothing was substituted in them at
 all. The <code>"no emoji"</code> row is obvious. The
 <code>"bare heart"</code> row is the interesting one, because it looks
 like an emoji and is not detected as one.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hearts</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  spelling <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bare U+2764"</span>, <span class="st">"qualified U+2764 U+FE0F"</span><span class="op">)</span>,</span>
 <span>  text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"love it"</span>, <span class="fu"><a href="https://rdrr.io/r/base/utf8Conversion.html" class="external-link">intToUtf8</a></span><span class="op">(</span><span class="fl">0x2764</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -215,16 +236,16 @@ like an emoji and is not detected as one.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">hearts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_summary.html">emoji_summary</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
-<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            1       2                   0               0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
+<span><span class="co">#&gt;   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            1       2                   0               0        0</span></span></code></pre></div>
 <p>One of the two is counted. Detection asks for emoji presentation, and
 a bare <code>U+2764</code> carries text presentation, so it passes
 through <code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code> untouched and survives the round
 trip by never being touched. The fully qualified spelling, which is what
 a keyboard emits, is detected and restores byte for byte:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sanitized_hearts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">hearts</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span></span>
 <span><span class="va">sanitized_hearts</span><span class="op">$</span><span class="va">text</span></span>
 <span><span class="co">#&gt; [1] "love it ❤"       "love it :heart:"</span></span>
@@ -246,7 +267,7 @@ to remove them.</p>
 that. Decorate the token and the emoji still comes back, but the
 decoration stays behind. Remove the colons and nothing comes back at
 all, silently, because the shortcode is now an ordinary word.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">show_wrap</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">w</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">sent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">one</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="st">"shortcode"</span>, wrap <span class="op">=</span> <span class="va">w</span><span class="op">)</span></span>
 <span>  <span class="va">back</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/text_to_emoji.html">text_to_emoji</a></span><span class="op">(</span><span class="va">sent</span>, <span class="va">text</span><span class="op">)</span><span class="op">$</span><span class="va">text</span></span>
@@ -275,20 +296,15 @@ The point of doing this in tidyEmoji rather than with a regex is that
 the same pipeline can carry the emoji-derived features forward as
 ordinary columns, while the text column that goes to the model holds no
 emoji at all.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span></span>
-<span>  <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ata_tweets.csv"</span>, package <span class="op">=</span> <span class="st">"tidyEmoji"</span><span class="op">)</span>,</span>
-<span>    encoding <span class="op">=</span> <span class="st">"UTF-8"</span>, stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># the example corpus: 1,485 OASST2 messages, about half carrying emoji</span></span>
+<span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="va">oasst_messages</span></span>
 <span></span>
 <span><span class="va">prepared</span> <span class="op">&lt;-</span> <span class="va">corpus</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="../reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>          <span class="co"># how positive were the emoji</span></span>
-<span>  <span class="fu"><a href="../reference/emoji_risk.html">emoji_risk</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>               <span class="co"># how much annotators disagreed</span></span>
-<span>  <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>         <span class="co"># what they cost in the prompt</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>prompt_text <span class="op">=</span> <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">full_text</span>,</span>
-<span>                                      policy <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span><span class="op">$</span><span class="va">full_text</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/emoji_sentiment.html">emoji_sentiment</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>          <span class="co"># how positive were the emoji</span></span>
+<span>  <span class="fu"><a href="../reference/emoji_risk.html">emoji_risk</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>               <span class="co"># how much annotators disagreed</span></span>
+<span>  <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>         <span class="co"># what they cost in the prompt</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>prompt_text <span class="op">=</span> <span class="fu"><a href="../reference/emoji_sanitize.html">emoji_sanitize</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">text</span>, policy <span class="op">=</span> <span class="st">"shortcode"</span><span class="op">)</span><span class="op">$</span><span class="va">text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prepared</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.emoji_n</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -298,9 +314,9 @@ emoji at all.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
 <span><span class="co">#&gt;   .emoji_n .emoji_sentiment .emoji_ambiguity_mean .emoji_token_estimate</span></span>
 <span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span>                  1.06                     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        1          -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">4</span>                  1.06                     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        1          <span style="color: #BB0000;">NA</span>                      <span style="color: #BB0000;">NA</span>                        2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>        1            0.522                 0.882                     2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>        1           <span style="color: #BB0000;">NA</span>                    <span style="color: #BB0000;">NA</span>                         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>        1            0.464                 0.919                     2</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: prompt_text &lt;chr&gt;</span></span></span></code></pre></div>
 <p><code>prompt_text</code> is what you send. The four columns beside it
 are what you would have destroyed, and they are the ones a model reads
@@ -311,11 +327,11 @@ prompt recovers.</p>
 <div class="section level2">
 <h2 id="what-it-saves-and-how-to-measure-it-honestly">What it saves, and how to measure it honestly<a class="anchor" aria-label="anchor" href="#what-it-saves-and-how-to-measure-it-honestly"></a>
 </h2>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">before</span> <span class="op">&lt;-</span> <span class="va">corpus</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">before</span> <span class="op">&lt;-</span> <span class="va">corpus</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span><span class="va">after</span>  <span class="op">&lt;-</span> <span class="va">prepared</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>full_text <span class="op">=</span> <span class="va">prompt_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>text <span class="op">=</span> <span class="va">prompt_text</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_token_cost.html">emoji_token_cost</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  stage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"original"</span>, <span class="st">"shortcode"</span><span class="op">)</span>,</span>
@@ -327,13 +343,15 @@ prompt recovers.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
 <span><span class="co">#&gt;   stage     emoji emoji_bytes est_tokens</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> original    900        <span style="text-decoration: underline;">4</span>437       <span style="text-decoration: underline;">2</span>245</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> shortcode     0           0          0</span></span></code></pre></div>
-<p>The sanitised column holds no emoji at all, so its emoji cost is
-zero. That is not quite guaranteed: <code>"shortcode"</code> leaves a
-glyph it cannot name in place, so a corpus carrying a ZWJ sequence too
-new for the installed catalogue would still show a cost here. This one
-does not, which is worth checking rather than assuming.
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> original   <span style="text-decoration: underline;">1</span>450        <span style="text-decoration: underline;">6</span>563       <span style="text-decoration: underline;">3</span>307</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> shortcode     3          49         25</span></span></code></pre></div>
+<p>The sanitised column holds almost no emoji, and “almost” is the
+point: <code>"shortcode"</code> leaves a glyph it cannot name in place,
+so a corpus carrying a sequence the catalogue does not list still shows
+a cost here. This one keeps 3: zero-width-joiner sequences Unicode does
+not recommend (a cat glued to a laptop, a handshake glued to a zombie),
+which the detector reads as one glyph with no name and so with no
+shortcode. That is worth checking rather than assuming.
 <code>"strip"</code> is the policy that clears the column whatever it is
 handed. (The bare heart above is a different case: it is never detected,
 so it costs nothing here and passes through every policy untouched.)</p>
@@ -397,7 +415,7 @@ rather than implied by a regex.</p>
 <p>Which glyphs exist, what they are called, and which shortcode maps to
 which emoji all depend on versions. A round trip is reproducible only
 against the catalogue that performed it.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 1</span></span>
 <span><span class="co">#&gt; Columns: 8</span></span>

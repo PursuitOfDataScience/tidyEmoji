@@ -19,7 +19,8 @@ emoji_sanitize(
   policy = "keep",
   placeholder = "[emoji]",
   wrap = ":{x}:",
-  presentation = "emoji"
+  presentation = "emoji",
+  hidden = c("remove", "keep")
 )
 ```
 
@@ -92,6 +93,15 @@ emoji_sanitize(
   scores or rewrites the emoji in a text column takes this argument, so
   counts still agree across the package for whichever value you use. The
   flag verbs do not need it, since a flag has no text-presentation form.
+
+- hidden:
+
+  What to do with hidden payloads: `"remove"` (the default, under every
+  policy) deletes every variation selector and tag character that
+  carries no visible meaning, the code points
+  [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+  reports; `"keep"` leaves them, which is what every version before
+  0.7.0 did. See *Hidden payloads* below.
 
 ## Value
 
@@ -166,6 +176,7 @@ try to put the emoji back after the model call.
 | `"name"` | `great grinning face work` | no | the delimiters; the name is now ordinary words |
 | `"placeholder"` | `great [emoji] work` | no | *which* emoji – the position survives |
 | `"strip"` | `great work` | no | that there was an emoji at all |
+| any, with `hidden = "remove"` | the same, less any hidden payload | no | the payload, by design |
 
 So if the pipeline has to restore emoji downstream, `"shortcode"` is the
 only policy that permits it, and it holds up on the awkward cases:
@@ -255,6 +266,24 @@ upstream.
 text. `"name"` is the accessibility answer rather than the reversible
 one – it is what a screen reader announces.
 
+## Hidden payloads
+
+A run of variation selectors after an emoji, or a string of Unicode tag
+characters, is invisible in every renderer and survives copy and paste,
+and each of those code points can carry a byte of a message to whatever
+reads the text next. That is the best-documented emoji attack on
+language model pipelines: smuggling a prompt this way evaded six
+production guardrails in up to 100% of attempts (Hackett et al., 2025).
+Since 0.7.0 every policy, `"keep"` included, deletes those code points
+by default: `"keep"` means keep the emoji, and a payload is not part of
+any emoji. The rules are exact, so a lone `U+FE0E` or `U+FE0F`, the
+selectors of Japanese names, Unicode's standardized variants and the
+England, Scotland and Wales flags all stay. Text with nothing hidden in
+it comes back byte for byte as before; `hidden = "keep"` restores 0.6.0
+exactly.
+[`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+reports what was there, and decodes it.
+
 ## Why a policy, and why written down
 
 An emoji reaching a language model unexamined is a measurable risk
@@ -272,6 +301,10 @@ right for a given pipeline; all of them say the choice is worth
 recording.
 
 ## References
+
+Hackett W, Birch L, Trawicki S, Suri N, Garraghan P (2025). Bypassing
+LLM Guardrails: An Empirical Analysis of Evasion Attacks against Prompt
+Injection and Jailbreak Detection Systems. arXiv:2504.11168.
 
 Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for Context-Dependent
 Emoji Disambiguation in Large Language Models. arXiv:2511.07193.

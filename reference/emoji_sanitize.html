@@ -66,7 +66,8 @@ forgotten line of <code><a href="https://rdrr.io/r/base/grep.html" class="extern
 <span>  policy <span class="op">=</span> <span class="st">"keep"</span>,</span>
 <span>  placeholder <span class="op">=</span> <span class="st">"[emoji]"</span>,</span>
 <span>  wrap <span class="op">=</span> <span class="st">":{x}:"</span>,</span>
-<span>  presentation <span class="op">=</span> <span class="st">"emoji"</span></span>
+<span>  presentation <span class="op">=</span> <span class="st">"emoji"</span>,</span>
+<span>  hidden <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remove"</span>, <span class="st">"keep"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -130,6 +131,14 @@ text column takes this argument, so counts still agree across the
 package for whichever value you use. The flag verbs do not need it,
 since a flag has no text-presentation form.</p></dd>
 
+
+<dt id="arg-hidden">hidden<a class="anchor" aria-label="anchor" href="#arg-hidden"></a></dt>
+<dd><p>What to do with hidden payloads: <code>"remove"</code> (the default,
+under every policy) deletes every variation selector and tag character
+that carries no visible meaning, the code points <code><a href="emoji_hidden.html">emoji_hidden()</a></code>
+reports; <code>"keep"</code> leaves them, which is what every version before 0.7.0
+did. See <em>Hidden payloads</em> below.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -186,7 +195,7 @@ chose in order to change a result, not a companion belonging to a branch.</p>
 
 <p>The five policies are not five parallel options: they are a ladder of
 information loss, and how far down it you step is invisible until you try to
-put the emoji back after the model call.</p><table class="table table"><tr><td><code>policy</code></td><td><code>"great &lt;U+1F600&gt; work"</code> becomes</td><td>Restorable with <code><a href="text_to_emoji.html">text_to_emoji()</a></code>?</td><td>What is lost</td></tr><tr><td><code>"keep"</code></td><td><code>great &lt;U+1F600&gt; work</code></td><td>yes</td><td>nothing</td></tr><tr><td><code>"shortcode"</code></td><td><code>great :grinning: work</code></td><td><strong>yes</strong></td><td>nothing</td></tr><tr><td><code>"name"</code></td><td><code>great grinning face work</code></td><td>no</td><td>the delimiters; the name is now ordinary words</td></tr><tr><td><code>"placeholder"</code></td><td><code>great [emoji] work</code></td><td>no</td><td><em>which</em> emoji – the position survives</td></tr><tr><td><code>"strip"</code></td><td><code>great work</code></td><td>no</td><td>that there was an emoji at all</td></tr></table><p>So if the pipeline has to restore emoji downstream, <code>"shortcode"</code> is the
+put the emoji back after the model call.</p><table class="table table"><tr><td><code>policy</code></td><td><code>"great &lt;U+1F600&gt; work"</code> becomes</td><td>Restorable with <code><a href="text_to_emoji.html">text_to_emoji()</a></code>?</td><td>What is lost</td></tr><tr><td><code>"keep"</code></td><td><code>great &lt;U+1F600&gt; work</code></td><td>yes</td><td>nothing</td></tr><tr><td><code>"shortcode"</code></td><td><code>great :grinning: work</code></td><td><strong>yes</strong></td><td>nothing</td></tr><tr><td><code>"name"</code></td><td><code>great grinning face work</code></td><td>no</td><td>the delimiters; the name is now ordinary words</td></tr><tr><td><code>"placeholder"</code></td><td><code>great [emoji] work</code></td><td>no</td><td><em>which</em> emoji – the position survives</td></tr><tr><td><code>"strip"</code></td><td><code>great work</code></td><td>no</td><td>that there was an emoji at all</td></tr><tr><td>any, with <code>hidden = "remove"</code></td><td>the same, less any hidden payload</td><td>no</td><td>the payload, by design</td></tr></table><p>So if the pipeline has to restore emoji downstream, <code>"shortcode"</code> is the
 only policy that permits it, and it holds up on the awkward cases:
 skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
 Measured against the whole catalogue: for all 3790 emoji that have a
@@ -250,6 +259,24 @@ emoji was here" as a model feature and not enough to reconstruct the text.
 is what a screen reader announces.</p>
     </div>
     <div class="section level2">
+    <h2 id="hidden-payloads">Hidden payloads<a class="anchor" aria-label="anchor" href="#hidden-payloads"></a></h2>
+
+
+<p>A run of variation selectors after an emoji, or a string of Unicode tag
+characters, is invisible in every renderer and survives copy and paste,
+and each of those code points can carry a byte of a message to whatever
+reads the text next. That is the best-documented emoji attack on language
+model pipelines: smuggling a prompt this way evaded six production
+guardrails in up to 100% of attempts (Hackett et al., 2025). Since 0.7.0
+every policy, <code>"keep"</code> included, deletes those code points by default:
+<code>"keep"</code> means keep the emoji, and a payload is not part of any emoji. The
+rules are exact, so a lone <code>U+FE0E</code> or <code>U+FE0F</code>, the selectors of Japanese
+names, Unicode's standardized variants and the England, Scotland and Wales
+flags all stay. Text with nothing hidden in it comes back byte for byte as
+before; <code>hidden = "keep"</code> restores 0.6.0 exactly. <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports
+what was there, and decodes it.</p>
+    </div>
+    <div class="section level2">
     <h2 id="why-a-policy-and-why-written-down">Why a policy, and why written down<a class="anchor" aria-label="anchor" href="#why-a-policy-and-why-written-down"></a></h2>
 
 
@@ -268,7 +295,11 @@ a given pipeline; all of them say the choice is worth recording.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
+    <p>Hackett W, Birch L, Trawicki S, Suri N, Garraghan P (2025).
+Bypassing LLM Guardrails: An Empirical Analysis of Evasion Attacks
+against Prompt Injection and Jailbreak Detection Systems.
+arXiv:2504.11168.</p>
+<p>Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
 Context-Dependent Emoji Disambiguation in Large Language Models.
 arXiv:2511.07193.</p>
 <p>Cui S, Feng X, Wang Y, Yang J, Zhang Z, Sikdar B, Wang H, et al. (2025).

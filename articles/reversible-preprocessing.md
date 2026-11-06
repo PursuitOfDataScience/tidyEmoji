@@ -132,6 +132,32 @@ Two policies survive, and only one of them is a real preprocessing step:
 is the only policy that both removes the emoji from the model’s input
 and lets you reconstruct the user’s text afterwards.
 
+One thing no rung restores, by design: a hidden payload. A run of
+variation selectors after an emoji, or a string of Unicode tag
+characters, is invisible, survives copy and paste, and can carry a
+message to the model. Since 0.7.0 every policy, `"keep"` included,
+deletes those code points by default, and a round trip cannot bring them
+back. Text with nothing hidden in it, which is all of the text above, is
+untouched;
+[`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+says what was there, and `hidden = "keep"` leaves it.
+
+``` r
+
+# "yes" hidden after a thumbs up, one variation selector per byte
+hide <- function(s) {
+  b <- as.integer(charToRaw(s))
+  intToUtf8(ifelse(b < 16L, 0xFE00L + b, 0xE0100L + b - 16L))
+}
+sneaky <- tibble::tibble(text = paste0("ok ", intToUtf8(0x1F44D), hide("yes")))
+emoji_hidden(sneaky, text)$.emoji_hidden_payload
+#> [1] "yes"
+nchar(sneaky$text)
+#> [1] 7
+nchar(emoji_sanitize(sneaky, text, policy = "keep")$text)
+#> [1] 4
+```
+
 ### It holds on the awkward cases
 
 ``` r
@@ -169,10 +195,10 @@ hearts <- tibble::tibble(
 )
 
 hearts %>% emoji_summary(text)
-#> # A tibble: 1 × 4
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags
-#>          <int>   <int>               <int>           <int>
-#> 1            1       2                   0               0
+#> # A tibble: 1 × 5
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
+#>          <int>   <int>               <int>           <int>    <int>
+#> 1            1       2                   0               0        0
 ```
 
 One of the two is counted. Detection asks for emoji presentation, and a
@@ -242,19 +268,14 @@ all.
 
 ``` r
 
-corpus <- tibble::as_tibble(
-  utils::read.csv(
-    system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
-    encoding = "UTF-8", stringsAsFactors = FALSE
-  )
-)
+# the example corpus: 1,485 OASST2 messages, about half carrying emoji
+corpus <- oasst_messages
 
 prepared <- corpus %>%
-  emoji_sentiment(full_text) %>%          # how positive were the emoji
-  emoji_risk(full_text) %>%               # how much annotators disagreed
-  emoji_token_cost(full_text) %>%         # what they cost in the prompt
-  mutate(prompt_text = emoji_sanitize(., full_text,
-                                      policy = "shortcode")$full_text)
+  emoji_sentiment(text) %>%          # how positive were the emoji
+  emoji_risk(text) %>%               # how much annotators disagreed
+  emoji_token_cost(text) %>%         # what they cost in the prompt
+  mutate(prompt_text = emoji_sanitize(., text, policy = "shortcode")$text)
 
 prepared %>%
   filter(.emoji_n > 0) %>%
@@ -264,9 +285,9 @@ prepared %>%
 #> # A tibble: 3 × 5
 #>   .emoji_n .emoji_sentiment .emoji_ambiguity_mean .emoji_token_estimate
 #>      <int>            <dbl>                 <dbl>                 <int>
-#> 1        1          -0.0934                  1.06                     2
-#> 2        1          -0.0934                  1.06                     2
-#> 3        1          NA                      NA                        2
+#> 1        1            0.522                 0.882                     2
+#> 2        1           NA                    NA                         2
+#> 3        1            0.464                 0.919                     2
 #> # ℹ 1 more variable: prompt_text <chr>
 ```
 
@@ -279,10 +300,10 @@ actually split over each glyph is not something a prompt recovers.
 
 ``` r
 
-before <- corpus %>% emoji_token_cost(full_text)
+before <- corpus %>% emoji_token_cost(text)
 after  <- prepared %>%
-  select(full_text = prompt_text) %>%
-  emoji_token_cost(full_text)
+  select(text = prompt_text) %>%
+  emoji_token_cost(text)
 
 tibble::tibble(
   stage = c("original", "shortcode"),
@@ -294,16 +315,18 @@ tibble::tibble(
 #> # A tibble: 2 × 4
 #>   stage     emoji emoji_bytes est_tokens
 #>   <chr>     <int>       <int>      <int>
-#> 1 original    900        4437       2245
-#> 2 shortcode     0           0          0
+#> 1 original   1450        6563       3307
+#> 2 shortcode     3          49         25
 ```
 
-The sanitised column holds no emoji at all, so its emoji cost is zero.
-That is not quite guaranteed: `"shortcode"` leaves a glyph it cannot
-name in place, so a corpus carrying a ZWJ sequence too new for the
-installed catalogue would still show a cost here. This one does not,
-which is worth checking rather than assuming. `"strip"` is the policy
-that clears the column whatever it is handed. (The bare heart above is a
+The sanitised column holds almost no emoji, and “almost” is the point:
+`"shortcode"` leaves a glyph it cannot name in place, so a corpus
+carrying a sequence the catalogue does not list still shows a cost here.
+This one keeps 3: zero-width-joiner sequences Unicode does not recommend
+(a cat glued to a laptop, a handshake glued to a zombie), which the
+detector reads as one glyph with no name and so with no shortcode. That
+is worth checking rather than assuming. `"strip"` is the policy that
+clears the column whatever it is handed. (The bare heart above is a
 different case: it is never detected, so it costs nothing here and
 passes through every policy untouched.)
 

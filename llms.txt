@@ -213,6 +213,8 @@ website](https://pursuitofdatascience.github.io/tidyEmoji/).
   : Apply an explicit emoji policy to a text column
 - [`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
   : What are the emoji in this text costing a tokeniser?
+- [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+  : Find, measure and decode what is hidden in a text
 
 ## Translate & search
 
@@ -265,6 +267,10 @@ website](https://pursuitofdatascience.github.io/tidyEmoji/).
 
 ## Data
 
+- [`oasst_messages`](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_messages.md)
+  : OpenAssistant messages: a dated, multilingual example corpus
+- [`oasst_reactions`](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_reactions.md)
+  : Reaction tallies on the OpenAssistant messages
 - [`emoji_sentiment_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment_lexicon.md)
   : Emoji Sentiment Ranking lexicon
 - [`emoji_emotion_lexicon`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_lexicon.md)

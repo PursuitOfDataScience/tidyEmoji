@@ -39,6 +39,17 @@
 <h2 class="pkg-version" data-toc-text="0.7.0" id="tidyemoji-070">tidyEmoji 0.7.0<a class="anchor" aria-label="anchor" href="#tidyemoji-070"></a></h2>
 <p><em>In development. This section is filled in as the 0.7.0 work lands.</em></p>
 <div class="section level3">
+<h3 id="hidden-payloads-0-7-0">Hidden payloads<a class="anchor" aria-label="anchor" href="#hidden-payloads-0-7-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code> and <code><a href="../reference/emoji_to_text.html">emoji_to_text()</a></code> now remove hidden payloads by default, under every policy, and <code>hidden = "keep"</code> restores 0.6.0 exactly.</strong> A run of variation selectors after an emoji, or a string of Unicode tag characters, is invisible in every renderer, survives copy and paste, and can carry a message to whatever reads the text next: smuggling a prompt this way evaded six production guardrails in up to 100% of attempts (Hackett et al., 2025). In 0.6.0 every policy passed such a payload through untouched, <code>"strip"</code> included, because it sits outside every emoji span. <code>"keep"</code> means keep the emoji, and a payload is part of no emoji, so it goes under that policy too.</li>
+<li>
+<strong>The rules are exact, from Unicode’s own data.</strong> A variation selector is hidden when it follows another, when an ideographic selector does not follow a CJK ideograph, or when one of <code>U+FE00</code> to <code>U+FE0D</code> forms no standardized variation sequence (<code>StandardizedVariants.txt</code>, now bundled from the Unicode 18.0 character database); a tag character is hidden unless it is inside a well-formed flag. A single <code>U+FE0E</code> or <code>U+FE0F</code> is never hidden, and Japanese ideographic variants, Mongolian and mathematical variants, joiners and non-joiners and the England, Scotland and Wales flags are all left alone, so text with nothing hidden in it comes back byte for byte, as all 2,000 rows of the bundled corpus do under all five policies.</li>
+<li>
+<strong>New: <code><a href="../reference/emoji_hidden.html">emoji_hidden()</a></code></strong> reports, per row, how many code points are hidden, their bytes, whether they are selectors or tags, how many runs they form, and the payload decoded from the two published encodings, with every control character shown as <code>&lt;U+XXXX&gt;</code> so printing it is safe.</li>
+<li>
+<strong><code><a href="../reference/emoji_summary.html">emoji_summary()</a></code> gains <code>n_hidden</code></strong>, the rows carrying a payload, and <strong><code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code> gains <code>.emoji_n_hidden</code> and <code>.emoji_hidden_bytes</code></strong>, added at the end. 0.6.0 reported four bytes for an emoji that carried 112 more.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="lifecycle-0-7-0">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle-0-7-0"></a></h3>
 <ul><li>
 <strong><code><a href="../reference/emoji_filter.html">emoji_tweets()</a></code> is defunct, as 0.6.0 promised.</strong> It stops with an error naming <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code> instead of warning and answering. It stays exported for this one release so that an old script fails with that message rather than “could not find function”, and it is deleted in 0.8.0.</li>

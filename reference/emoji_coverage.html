@@ -139,12 +139,12 @@ saw can be scored. This is the flattering one.</p></li>
 <li><p><code>type_coverage</code>: what share of the emoji vocabulary of this corpus can
 be scored. This is the one that says whether the rare, domain-specific
 glyphs are measured at all.</p></li>
-</ul><p>On the corpus behind the introduction vignette the two differ by a third
-for the bundled sentiment lexicon, 62.8% of occurrences against 50.8% of
-types, and the third number is the one with consequences: 187 of the 560
+</ul><p>On the example corpus, <a href="oasst_messages.html">oasst_messages</a>, the two differ by fourteen points
+for the bundled sentiment lexicon, 75.0% of occurrences against 60.8% of
+types, and the third number is the one with consequences: 135 of the 750
 rows that hold an emoji have none the lexicon can score, so their
 <code>.emoji_sentiment</code> is <code>NA</code>. Dropping those rows before a comparison drops
-a third of the data, and not at random.</p>
+a sixth of the data, and not at random.</p>
 <p><code>lexicon_size</code> and <code>catalogue_share</code> describe the lexicon rather than the
 corpus: how many distinct emoji it scores, and what share of the emoji in
 the catalogue those are. Skin-tone and hair components are not emoji

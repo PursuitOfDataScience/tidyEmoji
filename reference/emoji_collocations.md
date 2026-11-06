@@ -120,11 +120,12 @@ scored against the full corpus rather than against the surviving subset.
 
 PMI alone is a fragile ranking. It favours rare pairs (a word seen once
 beside an emoji seen once scores the maximum), and on a real corpus it
-ties constantly: on the corpus behind the introduction vignette 40.6% of
-the rows share their PMI with another row. Corpus linguistics answers
-this by choosing the measure for the question, and by knowing which kind
-of question it is. `measure` offers the standard ones, all computed from
-the same counts as PMI, with `O` the pair's `n` and
+ties constantly: on the example corpus,
+[oasst_messages](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_messages.md),
+43.4% of the rows share their PMI with another row. Corpus linguistics
+answers this by choosing the measure for the question, and by knowing
+which kind of question it is. `measure` offers the standard ones, all
+computed from the same counts as PMI, with `O` the pair's `n` and
 `E = n(e) * n(w) / N` the count expected by chance:
 
 - **Effect size**, how strongly the two are associated: `"pmi"`,

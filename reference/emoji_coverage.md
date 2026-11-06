@@ -103,12 +103,14 @@ questions:
   be scored. This is the one that says whether the rare, domain-specific
   glyphs are measured at all.
 
-On the corpus behind the introduction vignette the two differ by a third
-for the bundled sentiment lexicon, 62.8% of occurrences against 50.8% of
-types, and the third number is the one with consequences: 187 of the 560
-rows that hold an emoji have none the lexicon can score, so their
-`.emoji_sentiment` is `NA`. Dropping those rows before a comparison
-drops a third of the data, and not at random.
+On the example corpus,
+[oasst_messages](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_messages.md),
+the two differ by fourteen points for the bundled sentiment lexicon,
+75.0% of occurrences against 60.8% of types, and the third number is the
+one with consequences: 135 of the 750 rows that hold an emoji have none
+the lexicon can score, so their `.emoji_sentiment` is `NA`. Dropping
+those rows before a comparison drops a sixth of the data, and not at
+random.
 
 `lexicon_size` and `catalogue_share` describe the lexicon rather than
 the corpus: how many distinct emoji it scores, and what share of the

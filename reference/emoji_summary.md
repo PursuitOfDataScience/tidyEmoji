@@ -76,6 +76,12 @@ regional indicators that spell no country, such as `U+1F1FD U+1F1FD`
 they are what to look at when a corpus reports fewer emoji than it used
 to. See the *Detection* section of
 [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md).
+`n_hidden`, unlike those two, counts *entries*: the ones carrying a
+hidden payload, a code point
+[`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+reports and
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+removes by default.
 
 ## See also
 
@@ -91,21 +97,21 @@ df <- data.frame(text = c("I love R \U0001f600",
                           "no emoji here",
                           "flags \U0001f3c1\U0001f600"))
 emoji_summary(df, text)
-#> # A tibble: 1 × 4
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags
-#>          <int>   <int>               <int>           <int>
-#> 1            2       3                   0               0
+#> # A tibble: 1 × 5
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
+#>          <int>   <int>               <int>           <int>    <int>
+#> 1            2       3                   0               0        0
 
 # a bare heart is an emoji only under presentation = "any"
 hearts <- data.frame(text = c("I \u2764 R", "I \u2764\ufe0f R"))
 emoji_summary(hearts, text)
-#> # A tibble: 1 × 4
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags
-#>          <int>   <int>               <int>           <int>
-#> 1            1       2                   0               0
+#> # A tibble: 1 × 5
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
+#>          <int>   <int>               <int>           <int>    <int>
+#> 1            1       2                   0               0        0
 emoji_summary(hearts, text, presentation = "any")
-#> # A tibble: 1 × 4
-#>   n_with_emoji n_total n_orphan_components n_invalid_flags
-#>          <int>   <int>               <int>           <int>
-#> 1            2       2                   0               0
+#> # A tibble: 1 × 5
+#>   n_with_emoji n_total n_orphan_components n_invalid_flags n_hidden
+#>          <int>   <int>               <int>           <int>    <int>
+#> 1            2       2                   0               0        0
 ```

@@ -59,7 +59,8 @@ so emoji carrying the <code>U+FE0F</code> variation selector still resolve.</p>
 <span>  <span class="va">text</span>,</span>
 <span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"shortcode"</span><span class="op">)</span>,</span>
 <span>  wrap <span class="op">=</span> <span class="st">":{x}:"</span>,</span>
-<span>  presentation <span class="op">=</span> <span class="st">"emoji"</span></span>
+<span>  presentation <span class="op">=</span> <span class="st">"emoji"</span>,</span>
+<span>  hidden <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"remove"</span>, <span class="st">"keep"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -122,6 +123,13 @@ one number. Every verb that counts, scores or rewrites the emoji in a
 text column takes this argument, so counts still agree across the
 package for whichever value you use. The flag verbs do not need it,
 since a flag has no text-presentation form.</p></dd>
+
+
+<dt id="arg-hidden">hidden<a class="anchor" aria-label="anchor" href="#arg-hidden"></a></dt>
+<dd><p>What to do with hidden payloads, as in <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code>:
+<code>"remove"</code> (the default) deletes the variation selectors and tag
+characters <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports, and <code>"keep"</code> leaves them, as every
+version before 0.7.0 did.</p></dd>
 
 </dl></div>
     <div class="section level2">

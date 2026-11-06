@@ -75,45 +75,44 @@ look like.</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pursuitofdatascience.github.io/tidyEmoji/">tidyEmoji</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">posts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"ata_tweets.csv"</span>,</span>
-<span>                              package <span class="op">=</span> <span class="st">"tidyEmoji"</span><span class="op">)</span>,</span>
-<span>                  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span>, encoding <span class="op">=</span> <span class="st">"UTF-8"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># the example corpus: 1,485 OASST2 messages, about half carrying emoji</span></span>
+<span><span class="va">posts</span> <span class="op">&lt;-</span> <span class="va">oasst_messages</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="counts-first-and-why-they-are-not-enough">Counts first, and why they are not enough<a class="anchor" aria-label="anchor" href="#counts-first-and-why-they-are-not-enough"></a>
 </h2>
-<p>One row per pair of distinct emoji that appear in the same post, with
-the number of posts in which they do:</p>
+<p>One row per pair of distinct emoji that appear in the same message,
+with the number of messages in which they do:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="va">posts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">full_text</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="va">posts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">text</span><span class="op">)</span></span>
 <span><span class="va">edges</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 213 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4,314 × 3</span></span></span>
 <span><span class="co">#&gt;    item1 item2     n</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😂    😭       10</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 😂    😩        4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 😂    🙄        3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 😭    🙄        3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 💕    🥰        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 💞    🥺        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 💯    🤷🏽‍♂️        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😂    🤔        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😂    🤣        2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 😂    🤷🏼‍♀️        2</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 203 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🔬    🚀        4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ☀️     ⛅        3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ☀️     ⛈️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ☀️     ❄️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ☀️     🌊        3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ☀️     🌤️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ☀️     🌥️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ☀️     🌦️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ☀️     🌧️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☀️     🌨️         3</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4,304 more rows</span></span></span>
 <span></span>
 <span><span class="va">edges</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">n</span>, name <span class="op">=</span> <span class="st">"pairs"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>
 <span><span class="co">#&gt;       n pairs</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1   200</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2     9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3     2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>    10     1</span></span></code></pre></div>
-<p>200 of the 213 edges (93.9%) are a single post. A graph drawn from
-all of them is one post’s worth of evidence per line, and the few heavy
-edges belong to the emoji that are common everywhere, which pair with
-everything because they are common, not because they are related.</p>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  <span style="text-decoration: underline;">4</span>042</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2   169</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3   102</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4     1</span></span></code></pre></div>
+<p>4042 of the 4314 edges (93.7%) are a single message. A graph drawn
+from all of them is one message’s worth of evidence per line, and the
+few heavy edges belong to the emoji that are common everywhere, which
+pair with everything because they are common, not because they are
+related.</p>
 </div>
 <div class="section level2">
 <h2 id="weight-by-association-then-threshold-on-frequency">Weight by association, then threshold on frequency<a class="anchor" aria-label="anchor" href="#weight-by-association-then-threshold-on-frequency"></a>
@@ -125,44 +124,44 @@ everything because they are common, not because they are related.</p>
 what its two emoji’s own frequencies predict, so a common emoji no
 longer wins every edge. <code>measure = "dice"</code> is
 <code>2 * n / (n1 + n2)</code>, with <code>n1</code> and <code>n2</code>
-the posts holding each emoji: 1 for a pair never seen apart, near 0 for
-a pair that is mostly apart. <code>"ppmi"</code> and
+the messages holding each emoji: 1 for a pair never seen apart, near 0
+for a pair that is mostly apart. <code>"ppmi"</code> and
 <code>"log_odds"</code> are the alternatives; see
 <code><a href="../reference/emoji_pairs.html">?emoji_pairs</a></code>.</li>
 <li>
 <strong>A frequency threshold</strong> removes the edges seen too
 rarely to mean anything. An association measure cannot do this on its
-own: a pair seen in one post, whose two emoji appear nowhere else,
+own: a pair seen in one message, whose two emoji appear nowhere else,
 scores the maximum Dice of 1.</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">weighted</span> <span class="op">&lt;-</span> <span class="va">posts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">full_text</span>, measure <span class="op">=</span> <span class="st">"dice"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_pairs.html">emoji_pairs</a></span><span class="op">(</span><span class="va">text</span>, measure <span class="op">=</span> <span class="st">"dice"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">n</span> <span class="op">&gt;=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">weighted</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 13 × 4</span></span></span>
-<span><span class="co">#&gt;    item1 item2     n   dice</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 💞    🥺        2 0.222 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 💕    🥰        2 0.182 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 💯    🤷🏽‍♂️        2 0.182 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 😂    😭       10 0.121 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 😭    🙄        3 0.065<span style="text-decoration: underline;">9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 😂    😩        4 0.064 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 😂    🙄        3 0.052<span style="text-decoration: underline;">6</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😭    🥰        2 0.046<span style="text-decoration: underline;">0</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😭    🥴        2 0.044<span style="text-decoration: underline;">0</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 😂    🤷🏼‍♀️        2 0.041<span style="text-decoration: underline;">7</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> 😂    🤔        2 0.039<span style="text-decoration: underline;">6</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> 😂    🥰        2 0.036<span style="text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> 😂    🤣        2 0.033<span style="text-decoration: underline;">9</span></span></span></code></pre></div>
-<p>That is the honest network for this corpus: 13 edges. Two thousand
-posts holding 900 emoji are too few for a network of more than a handful
-of emoji, and it is better to know that than to draw the 213-edge
-version. A corpus of hundreds of thousands of posts, or one pooled by
-user or by conversation with <code>doc_id</code>, gives a graph with
-real structure.</p>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 272 × 4</span></span></span>
+<span><span class="co">#&gt;    item1 item2     n  dice</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> ⛅    ⛈️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> ⛅    ❄️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> ⛅    🌤️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> ⛅    🌥️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> ⛅    🌦️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ⛅    🌨️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ⛅    🌩️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> ⛅    🌫️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ⛅    🌬️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ⛈️     ❄️         3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 262 more rows</span></span></span></code></pre></div>
+<p>That is the honest network for this corpus: 272 edges, where the raw
+edge list had 4314. Most of those came from a handful of replies that
+tabulate dozens of emoji at once, which pair every emoji in the table
+with every other; 1,485 messages holding 1,450 emoji are too few for a
+network of more than a modest number of emoji, and it is better to know
+that than to draw the whole edge list. A corpus of hundreds of thousands
+of messages, or one pooled by user or by conversation with
+<code>doc_id</code>, gives a graph with real structure.</p>
 </div>
 <div class="section level2">
 <h2 id="into-a-network-package">Into a network package<a class="anchor" aria-label="anchor" href="#into-a-network-package"></a>
@@ -174,11 +173,11 @@ directly, with the association measure as the edge weight:</p>
 <span>  <span class="va">weighted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"item1"</span>, <span class="st">"item2"</span>, <span class="st">"dice"</span>, <span class="st">"n"</span><span class="op">)</span><span class="op">]</span>, directed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/gorder.html" class="external-link">vcount</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 14</span></span>
+<span><span class="co">#&gt; [1] 95</span></span>
 <span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/gsize.html" class="external-link">ecount</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 13</span></span>
+<span><span class="co">#&gt; [1] 272</span></span>
 <span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/components.html" class="external-link">components</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span><span class="op">$</span><span class="va">no</span></span>
-<span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 10</span></span></code></pre></div>
 <p>Community detection then groups emoji that are used together more
 than chance; Louvain with the Dice weight is a reasonable default:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -186,16 +185,42 @@ than chance; Louvain with the Dice weight is a reasonable default:</p>
 <span><span class="va">communities</span> <span class="op">&lt;-</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/cluster_louvain.html" class="external-link">cluster_louvain</a></span><span class="op">(</span><span class="va">g</span>, weights <span class="op">=</span> <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/E.html" class="external-link">E</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span><span class="op">$</span><span class="va">dice</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/V.html" class="external-link">V</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span><span class="op">$</span><span class="va">name</span>, <span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/communities.html" class="external-link">membership</a></span><span class="op">(</span><span class="va">communities</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`1`</span></span>
-<span><span class="co">#&gt; [1] "💞" "🥺"</span></span>
+<span><span class="co">#&gt;  [1] "⛅" "⛈️"  "❄️"  "🌤️"  "🌥️"  "🌦️"  "🌨️"  "🌩️"  "🌫️"  "🌊" "🌧️"  "🌪️"  "☀️"  "☁️"  "🌈"</span></span>
+<span><span class="co">#&gt; [16] "🌬️" </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $`2`</span></span>
-<span><span class="co">#&gt; [1] "💕" "🥰"</span></span>
+<span><span class="co">#&gt; [1] "🧟‍♀️" "🧟‍♂️"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $`3`</span></span>
-<span><span class="co">#&gt; [1] "💯"    "🤷🏽‍♂️"</span></span>
+<span><span class="co">#&gt; [1] "🔴"   "🏡"   "🐺"   "🧒🏻"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $`4`</span></span>
-<span><span class="co">#&gt; [1] "😂"    "😭"    "🙄"    "😩"    "🥴"    "🤷🏼‍♀️" "🤔"    "🤣"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "🤛" "🤜"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`5`</span></span>
+<span><span class="co">#&gt; [1] "👨" "👩"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`6`</span></span>
+<span><span class="co">#&gt; [1] "❌" "⭕"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`7`</span></span>
+<span><span class="co">#&gt;  [1] "🌟" "💖" "✨" "😇" "😎" "🏆" "😉" "👍" "😊" "💃" "😀" "😘" "🤗" "😳" "🙁"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`8`</span></span>
+<span><span class="co">#&gt; [1] "👢" "🏰" "👑" "🎩" "🐈" "💰" "🔪"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`9`</span></span>
+<span><span class="co">#&gt;  [1] "😖" "😟" "😑" "😩" "😔" "😱" "😲" "😭" "😅" "😁" "🙄" "😈"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`10`</span></span>
+<span><span class="co">#&gt;  [1] "😐" "😝" "🤨" "🤩" "😞" "🤪" "😌" "😢" "🤓" "😨" "🤣" "😆" "😜" "😬" "😮"</span></span>
+<span><span class="co">#&gt; [16] "😂" "😃" "🤔" "😄" "🧐" "🙃" "🤯"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`11`</span></span>
+<span><span class="co">#&gt; [1] "😋" "😙" "😣"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`12`</span></span>
+<span><span class="co">#&gt; [1] "🌍"   "👨‍💻" "🔬"   "🌐"   "📦"   "💡"   "🚀"   "🤖"</span></span></code></pre></div>
 <p>Drawing it is a job for a graph-plotting package. With
 <code>ggraph</code> installed, and <code>ragg</code> as the graphics
 device so the glyphs render in colour:</p>
@@ -226,17 +251,17 @@ set too low:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/degree.html" class="external-link">degree</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  1  2  3  4  7 </span></span>
-<span><span class="co">#&gt; 10  1  1  1  1</span></span>
+<span><span class="co">#&gt;  1  2  3  4  5  6  7  8  9 10 11 13 14 15 </span></span>
+<span><span class="co">#&gt; 23 14  7 12  3  5  2  1  4  2  2  3 15  2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">communities</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 4</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 12</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="directed-sequences">Directed sequences<a class="anchor" aria-label="anchor" href="#directed-sequences"></a>
 </h2>
 <p><code>emoji_pairs(directed = TRUE)</code> orders each pair by first
-appearance in the post, so the edge from one emoji to another counts the
-posts where the first came first. The same measures apply to that
+appearance in the message, so the edge from one emoji to another counts
+the messages where the first came first. The same measures apply to that
 ordered event, and <code><a href="../reference/emoji_ngrams.html">emoji_ngrams()</a></code> gives the strictly
 consecutive version for Markov-style models of emoji sequences.</p>
 </div>

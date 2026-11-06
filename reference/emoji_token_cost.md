@@ -83,7 +83,13 @@ emoji_token_cost(data, text, tokenizer = NULL, presentation = "emoji")
 ## Value
 
 `data`, as a tibble, with added columns `.emoji_n`, `.emoji_bytes`,
-`.emoji_codepoints`, `.emoji_graphemes` and `.emoji_token_estimate`.
+`.emoji_codepoints`, `.emoji_graphemes` and `.emoji_token_estimate`,
+and, since 0.7.0, `.emoji_n_hidden` and `.emoji_hidden_bytes`: the code
+points riding invisibly in the row (see
+[`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md))
+and their UTF-8 bytes. They reach a tokenizer and belong to no emoji, so
+`.emoji_bytes` and the token estimate leave them out, as they always
+did; add the two to see the whole bill.
 
 ## Details
 
@@ -116,11 +122,12 @@ family <- paste0("\U0001F468\u200d\U0001F469\u200d",
                   "\U0001F467\u200d\U0001F466")
 df <- data.frame(text = c("hi \U0001f600", family, "plain"))
 emoji_token_cost(df, text)
-#> # A tibble: 3 × 6
+#> # A tibble: 3 × 8
 #>   text  .emoji_n .emoji_bytes .emoji_codepoints .emoji_graphemes
 #>   <chr>    <int>        <int>             <int>            <int>
 #> 1 hi 😀        1            4                 1                1
 #> 2 👨‍👩‍👧‍👦           1           25                 7                1
 #> 3 plain        0            0                 0                0
-#> # ℹ 1 more variable: .emoji_token_estimate <int>
+#> # ℹ 3 more variables: .emoji_token_estimate <int>, .emoji_n_hidden <int>,
+#> #   .emoji_hidden_bytes <int>
 ```

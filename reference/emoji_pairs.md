@@ -125,14 +125,14 @@ for the diagonal).
 
 ## Counts are not associations
 
-Most emoji pairs in a real corpus are seen once: on the corpus behind
-the introduction vignette, 200 of the 213 edges (93.9%) have `n = 1`. A
-graph drawn from raw counts is mostly noise with a layout, and the
-common emoji pair with everything simply because they are common.
-`measure` scores each pair against what its two emoji's frequencies
-predict, over documents: `N` is the number of documents holding at least
-one emoji, `n1` and `n2` the number holding each item, and `n` the
-number holding both.
+Most emoji pairs in a real corpus are seen once: on the example corpus,
+[oasst_messages](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_messages.md),
+4,042 of the 4,314 edges (93.7%) have `n = 1`. A graph drawn from raw
+counts is mostly noise with a layout, and the common emoji pair with
+everything simply because they are common. `measure` scores each pair
+against what its two emoji's frequencies predict, over documents: `N` is
+the number of documents holding at least one emoji, `n1` and `n2` the
+number holding each item, and `n` the number holding both.
 
 - `"ppmi"` is positive pointwise mutual information,
   `max(0, log(n * N / (n1 * n2)))`: how much more often the two appear

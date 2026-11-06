@@ -14,50 +14,48 @@ literature says such networks look like.
 library(tidyEmoji)
 library(dplyr)
 
-posts <- read.csv(system.file("extdata", "ata_tweets.csv",
-                              package = "tidyEmoji"),
-                  stringsAsFactors = FALSE, encoding = "UTF-8")
+# the example corpus: 1,485 OASST2 messages, about half carrying emoji
+posts <- oasst_messages
 ```
 
 ## Counts first, and why they are not enough
 
-One row per pair of distinct emoji that appear in the same post, with
-the number of posts in which they do:
+One row per pair of distinct emoji that appear in the same message, with
+the number of messages in which they do:
 
 ``` r
 
-edges <- posts %>% emoji_pairs(full_text)
+edges <- posts %>% emoji_pairs(text)
 edges
-#> # A tibble: 213 × 3
+#> # A tibble: 4,314 × 3
 #>    item1 item2     n
 #>    <chr> <chr> <int>
-#>  1 😂    😭       10
-#>  2 😂    😩        4
-#>  3 😂    🙄        3
-#>  4 😭    🙄        3
-#>  5 💕    🥰        2
-#>  6 💞    🥺        2
-#>  7 💯    🤷🏽‍♂️        2
-#>  8 😂    🤔        2
-#>  9 😂    🤣        2
-#> 10 😂    🤷🏼‍♀️        2
-#> # ℹ 203 more rows
+#>  1 🔬    🚀        4
+#>  2 ☀️     ⛅        3
+#>  3 ☀️     ⛈️         3
+#>  4 ☀️     ❄️         3
+#>  5 ☀️     🌊        3
+#>  6 ☀️     🌤️         3
+#>  7 ☀️     🌥️         3
+#>  8 ☀️     🌦️         3
+#>  9 ☀️     🌧️         3
+#> 10 ☀️     🌨️         3
+#> # ℹ 4,304 more rows
 
 edges %>% count(n, name = "pairs")
-#> # A tibble: 5 × 2
+#> # A tibble: 4 × 2
 #>       n pairs
 #>   <int> <int>
-#> 1     1   200
-#> 2     2     9
-#> 3     3     2
+#> 1     1  4042
+#> 2     2   169
+#> 3     3   102
 #> 4     4     1
-#> 5    10     1
 ```
 
-200 of the 213 edges (93.9%) are a single post. A graph drawn from all
-of them is one post’s worth of evidence per line, and the few heavy
-edges belong to the emoji that are common everywhere, which pair with
-everything because they are common, not because they are related.
+4042 of the 4314 edges (93.7%) are a single message. A graph drawn from
+all of them is one message’s worth of evidence per line, and the few
+heavy edges belong to the emoji that are common everywhere, which pair
+with everything because they are common, not because they are related.
 
 ## Weight by association, then threshold on frequency
 
@@ -66,45 +64,46 @@ Two changes fix this, and they do different jobs.
 - **An association measure** scores each pair against what its two
   emoji’s own frequencies predict, so a common emoji no longer wins
   every edge. `measure = "dice"` is `2 * n / (n1 + n2)`, with `n1` and
-  `n2` the posts holding each emoji: 1 for a pair never seen apart, near
-  0 for a pair that is mostly apart. `"ppmi"` and `"log_odds"` are the
-  alternatives; see
+  `n2` the messages holding each emoji: 1 for a pair never seen apart,
+  near 0 for a pair that is mostly apart. `"ppmi"` and `"log_odds"` are
+  the alternatives; see
   [`?emoji_pairs`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md).
 - **A frequency threshold** removes the edges seen too rarely to mean
   anything. An association measure cannot do this on its own: a pair
-  seen in one post, whose two emoji appear nowhere else, scores the
+  seen in one message, whose two emoji appear nowhere else, scores the
   maximum Dice of 1.
 
 ``` r
 
 weighted <- posts %>%
-  emoji_pairs(full_text, measure = "dice") %>%
+  emoji_pairs(text, measure = "dice") %>%
   filter(n >= 2)
 
 weighted
-#> # A tibble: 13 × 4
-#>    item1 item2     n   dice
-#>    <chr> <chr> <int>  <dbl>
-#>  1 💞    🥺        2 0.222 
-#>  2 💕    🥰        2 0.182 
-#>  3 💯    🤷🏽‍♂️        2 0.182 
-#>  4 😂    😭       10 0.121 
-#>  5 😭    🙄        3 0.0659
-#>  6 😂    😩        4 0.064 
-#>  7 😂    🙄        3 0.0526
-#>  8 😭    🥰        2 0.0460
-#>  9 😭    🥴        2 0.0440
-#> 10 😂    🤷🏼‍♀️        2 0.0417
-#> 11 😂    🤔        2 0.0396
-#> 12 😂    🥰        2 0.0364
-#> 13 😂    🤣        2 0.0339
+#> # A tibble: 272 × 4
+#>    item1 item2     n  dice
+#>    <chr> <chr> <int> <dbl>
+#>  1 ⛅    ⛈️         3     1
+#>  2 ⛅    ❄️         3     1
+#>  3 ⛅    🌤️         3     1
+#>  4 ⛅    🌥️         3     1
+#>  5 ⛅    🌦️         3     1
+#>  6 ⛅    🌨️         3     1
+#>  7 ⛅    🌩️         3     1
+#>  8 ⛅    🌫️         3     1
+#>  9 ⛅    🌬️         3     1
+#> 10 ⛈️     ❄️         3     1
+#> # ℹ 262 more rows
 ```
 
-That is the honest network for this corpus: 13 edges. Two thousand posts
-holding 900 emoji are too few for a network of more than a handful of
-emoji, and it is better to know that than to draw the 213-edge version.
-A corpus of hundreds of thousands of posts, or one pooled by user or by
-conversation with `doc_id`, gives a graph with real structure.
+That is the honest network for this corpus: 272 edges, where the raw
+edge list had 4314. Most of those came from a handful of replies that
+tabulate dozens of emoji at once, which pair every emoji in the table
+with every other; 1,485 messages holding 1,450 emoji are too few for a
+network of more than a modest number of emoji, and it is better to know
+that than to draw the whole edge list. A corpus of hundreds of thousands
+of messages, or one pooled by user or by conversation with `doc_id`,
+gives a graph with real structure.
 
 ## Into a network package
 
@@ -117,11 +116,11 @@ g <- igraph::graph_from_data_frame(
   weighted[, c("item1", "item2", "dice", "n")], directed = FALSE)
 
 igraph::vcount(g)
-#> [1] 14
+#> [1] 95
 igraph::ecount(g)
-#> [1] 13
+#> [1] 272
 igraph::components(g)$no
-#> [1] 3
+#> [1] 10
 ```
 
 Community detection then groups emoji that are used together more than
@@ -133,16 +132,42 @@ set.seed(2026)   # Louvain breaks ties at random; fix them for a stable answer
 communities <- igraph::cluster_louvain(g, weights = igraph::E(g)$dice)
 split(igraph::V(g)$name, igraph::membership(communities))
 #> $`1`
-#> [1] "💞" "🥺"
+#>  [1] "⛅" "⛈️"  "❄️"  "🌤️"  "🌥️"  "🌦️"  "🌨️"  "🌩️"  "🌫️"  "🌊" "🌧️"  "🌪️"  "☀️"  "☁️"  "🌈"
+#> [16] "🌬️" 
 #> 
 #> $`2`
-#> [1] "💕" "🥰"
+#> [1] "🧟‍♀️" "🧟‍♂️"
 #> 
 #> $`3`
-#> [1] "💯"    "🤷🏽‍♂️"
+#> [1] "🔴"   "🏡"   "🐺"   "🧒🏻"
 #> 
 #> $`4`
-#> [1] "😂"    "😭"    "🙄"    "😩"    "🥴"    "🤷🏼‍♀️" "🤔"    "🤣"
+#> [1] "🤛" "🤜"
+#> 
+#> $`5`
+#> [1] "👨" "👩"
+#> 
+#> $`6`
+#> [1] "❌" "⭕"
+#> 
+#> $`7`
+#>  [1] "🌟" "💖" "✨" "😇" "😎" "🏆" "😉" "👍" "😊" "💃" "😀" "😘" "🤗" "😳" "🙁"
+#> 
+#> $`8`
+#> [1] "👢" "🏰" "👑" "🎩" "🐈" "💰" "🔪"
+#> 
+#> $`9`
+#>  [1] "😖" "😟" "😑" "😩" "😔" "😱" "😲" "😭" "😅" "😁" "🙄" "😈"
+#> 
+#> $`10`
+#>  [1] "😐" "😝" "🤨" "🤩" "😞" "🤪" "😌" "😢" "🤓" "😨" "🤣" "😆" "😜" "😬" "😮"
+#> [16] "😂" "😃" "🤔" "😄" "🧐" "🙃" "🤯"
+#> 
+#> $`11`
+#> [1] "😋" "😙" "😣"
+#> 
+#> $`12`
+#> [1] "🌍"   "👨‍💻" "🔬"   "🌐"   "📦"   "💡"   "🚀"   "🤖"
 ```
 
 Drawing it is a job for a graph-plotting package. With `ggraph`
@@ -179,17 +204,18 @@ set too low:
 
 table(igraph::degree(g))
 #> 
-#>  1  2  3  4  7 
-#> 10  1  1  1  1
+#>  1  2  3  4  5  6  7  8  9 10 11 13 14 15 
+#> 23 14  7 12  3  5  2  1  4  2  2  3 15  2
 length(communities)
-#> [1] 4
+#> [1] 12
 ```
 
 ## Directed sequences
 
 `emoji_pairs(directed = TRUE)` orders each pair by first appearance in
-the post, so the edge from one emoji to another counts the posts where
-the first came first. The same measures apply to that ordered event, and
+the message, so the edge from one emoji to another counts the messages
+where the first came first. The same measures apply to that ordered
+event, and
 [`emoji_ngrams()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ngrams.md)
 gives the strictly consecutive version for Markov-style models of emoji
 sequences.

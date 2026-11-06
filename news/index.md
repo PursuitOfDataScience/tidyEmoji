@@ -4,6 +4,44 @@
 
 *In development. This section is filled in as the 0.7.0 work lands.*
 
+### Hidden payloads
+
+- **[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+  and
+  [`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+  now remove hidden payloads by default, under every policy, and
+  `hidden = "keep"` restores 0.6.0 exactly.** A run of variation
+  selectors after an emoji, or a string of Unicode tag characters, is
+  invisible in every renderer, survives copy and paste, and can carry a
+  message to whatever reads the text next: smuggling a prompt this way
+  evaded six production guardrails in up to 100% of attempts (Hackett et
+  al., 2025). In 0.6.0 every policy passed such a payload through
+  untouched, `"strip"` included, because it sits outside every emoji
+  span. `"keep"` means keep the emoji, and a payload is part of no
+  emoji, so it goes under that policy too.
+- **The rules are exact, from Unicode’s own data.** A variation selector
+  is hidden when it follows another, when an ideographic selector does
+  not follow a CJK ideograph, or when one of `U+FE00` to `U+FE0D` forms
+  no standardized variation sequence (`StandardizedVariants.txt`, now
+  bundled from the Unicode 18.0 character database); a tag character is
+  hidden unless it is inside a well-formed flag. A single `U+FE0E` or
+  `U+FE0F` is never hidden, and Japanese ideographic variants, Mongolian
+  and mathematical variants, joiners and non-joiners and the England,
+  Scotland and Wales flags are all left alone, so text with nothing
+  hidden in it comes back byte for byte, as all 2,000 rows of the
+  bundled corpus do under all five policies.
+- **New:
+  [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)**
+  reports, per row, how many code points are hidden, their bytes,
+  whether they are selectors or tags, how many runs they form, and the
+  payload decoded from the two published encodings, with every control
+  character shown as `<U+XXXX>` so printing it is safe.
+- **[`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
+  gains `n_hidden`**, the rows carrying a payload, and
+  **[`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)
+  gains `.emoji_n_hidden` and `.emoji_hidden_bytes`**, added at the end.
+  0.6.0 reported four bytes for an emoji that carried 112 more.
+
 ### Lifecycle
 
 - **[`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)

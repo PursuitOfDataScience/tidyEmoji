@@ -117,7 +117,12 @@ since a flag has no text-presentation form.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>data</code>, as a tibble, with added columns <code>.emoji_n</code>, <code>.emoji_bytes</code>,
-<code>.emoji_codepoints</code>, <code>.emoji_graphemes</code> and <code>.emoji_token_estimate</code>.</p>
+<code>.emoji_codepoints</code>, <code>.emoji_graphemes</code> and <code>.emoji_token_estimate</code>,
+and, since 0.7.0, <code>.emoji_n_hidden</code> and <code>.emoji_hidden_bytes</code>: the code
+points riding invisibly in the row (see <code><a href="emoji_hidden.html">emoji_hidden()</a></code>) and their
+UTF-8 bytes. They reach a tokenizer and belong to no emoji, so
+<code>.emoji_bytes</code> and the token estimate leave them out, as they always
+did; add the two to see the whole bill.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -146,13 +151,14 @@ before-and-after token budget on a real corpus.</p></div>
 <span class="r-in"><span>                  <span class="st">"\U0001F467\u200d\U0001F466"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hi \U0001f600"</span>, <span class="va">family</span>, <span class="st">"plain"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">emoji_token_cost</span><span class="op">(</span><span class="va">df</span>, <span class="va">text</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 8</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text  .emoji_n .emoji_bytes .emoji_codepoints .emoji_graphemes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> hi 😀        1            4                 1                1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 👨‍👩‍👧‍👦           1           25                 7                1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> plain        0            0                 0                0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: .emoji_token_estimate &lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 3 more variables: .emoji_token_estimate &lt;int&gt;, .emoji_n_hidden &lt;int&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   .emoji_hidden_bytes &lt;int&gt;</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

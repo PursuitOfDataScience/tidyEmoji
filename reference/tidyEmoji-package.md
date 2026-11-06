@@ -24,7 +24,10 @@ Kralj Novak et al. (2015)
 [doi:10.1371/journal.pone.0144296](https://doi.org/10.1371/journal.pone.0144296)
 , released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of
 Shoeb & de Melo (2020) <https://aclanthology.org/2020.emnlp-main.720/>,
-released under the MIT licence.
+released under the MIT licence. The example data, dated and
+multilingual, is a sample of OpenAssistant Conversations (Kopf et al.,
+2023) [arXiv:2304.07327](https://arxiv.org/abs/2304.07327), released
+under the Apache License 2.0.
 
 ## Output and naming contract
 
@@ -337,3 +340,11 @@ Useful links:
 Authors:
 
 - Youzhi Yu <yuyouzhi666@icloud.com>
+
+Other contributors:
+
+- Unicode, Inc. (Unicode emoji and character data in R/sysdata.rda)
+  \[copyright holder\]
+
+- OpenAssistant contributors (OASST2 example data in data/oasst\_\*.rda)
+  \[copyright holder\]

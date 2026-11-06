@@ -15,7 +15,8 @@ emoji_to_text(
   text,
   format = c("name", "shortcode"),
   wrap = ":{x}:",
-  presentation = "emoji"
+  presentation = "emoji",
+  hidden = c("remove", "keep")
 )
 ```
 
@@ -91,6 +92,15 @@ emoji_to_text(
   scores or rewrites the emoji in a text column takes this argument, so
   counts still agree across the package for whichever value you use. The
   flag verbs do not need it, since a flag has no text-presentation form.
+
+- hidden:
+
+  What to do with hidden payloads, as in
+  [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md):
+  `"remove"` (the default) deletes the variation selectors and tag
+  characters
+  [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+  reports, and `"keep"` leaves them, as every version before 0.7.0 did.
 
 ## Value
 

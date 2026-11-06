@@ -4,6 +4,12 @@
 
 - **[Youzhi Yu](https://youzhi.netlify.app/)**. Author, maintainer.
 
+- **Unicode, Inc.**. Copyright holder.  
+  Unicode emoji and character data in R/sysdata.rda
+
+- **OpenAssistant contributors**. Copyright holder.  
+  OASST2 example data in data/oasst\_\*.rda
+
 ## Citation
 
 Source:
