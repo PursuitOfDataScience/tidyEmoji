@@ -41,9 +41,11 @@ test_that("emoji_runs() segments spans and flags reduplication", {
   ))
   out <- emoji_runs(d, text)
   expect_equal(nrow(out), 4L)
-  expect_equal(out$.run_length, c(3L, 1L, 1L, 2L))
-  expect_equal(out$.run_is_reduplication, c(TRUE, FALSE, FALSE, FALSE))
-  expect_equal(out$.run_position[1], "END")
+  # the reserved .emoji_ namespace and lower-case positions, as every other
+  # column and vocabulary in the package (0.7.0 roadmap, decisions 3 and 4)
+  expect_equal(out$.emoji_run_length, c(3L, 1L, 1L, 2L))
+  expect_equal(out$.emoji_run_is_reduplication, c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(out$.emoji_run_position[1], "end")
 })
 
 test_that("emoji_sentiment_role() classifies a mitigation", {

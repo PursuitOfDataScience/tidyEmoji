@@ -549,14 +549,22 @@ test_that("glyph-ordered results ignore options(dplyr.legacy_locale)", {
          emoji_extract_unnest(df, text))
   }
   in_c <- run()
+  # dplyr 1.2 soft-deprecated the option this test sets, so everything run
+  # under it is wrapped, and its deprecation can never fail the suite. When
+  # dplyr makes the option defunct, setting it errors, the test stands down,
+  # and it should be retired: no user can set the option by then.
   options(dplyr.legacy_locale = TRUE)
   # the fixture is one on which the option really moves arrange(): the flag
   # and the accented word sort first under en_US and last under C
-  legacy_order <- suppressWarnings(
-    dplyr::arrange(tibble::tibble(x = c(heart_q, us, "fable", elan)), x)$x)
+  legacy_order <- tryCatch(
+    suppressWarnings(suppressMessages(
+      dplyr::arrange(tibble::tibble(x = c(heart_q, us, "fable", elan)), x)$x)),
+    error = function(e) NULL)
+  skip_if(is.null(legacy_order),
+          "dplyr.legacy_locale is defunct in this dplyr: retire this test")
   skip_if(identical(legacy_order, sort(c(heart_q, us, "fable", elan),
                                        method = "radix")),
           "this platform's en_US collation agrees with C on the fixture")
-  expect_identical(suppressWarnings(run()), in_c)
+  expect_identical(suppressWarnings(suppressMessages(run())), in_c)
   expect_identical(in_c[[1]]$emoji, sort(c(heart_q, us), method = "radix"))
 })
