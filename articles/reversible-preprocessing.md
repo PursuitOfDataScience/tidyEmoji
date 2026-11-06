@@ -339,7 +339,7 @@ against the catalogue that performed it.
 emoji_provenance() %>% glimpse()
 #> Rows: 1
 #> Columns: 8
-#> $ tidyEmoji          <chr> "0.6.0"
+#> $ tidyEmoji          <chr> "0.7.0"
 #> $ emoji_pkg          <chr> "16.0.0"
 #> $ unicode_emoji      <chr> "18.0"
 #> $ unicode_emoji_date <date> 2026-04-30

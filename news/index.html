@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tidyEmoji</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,10 @@
       <small>Source: <a href="https://github.com/PursuitOfDataScience/tidyEmoji/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.0" id="tidyemoji-070">tidyEmoji 0.7.0<a class="anchor" aria-label="anchor" href="#tidyemoji-070"></a></h2>
+<p><em>In development. This section is filled in as the 0.7.0 work lands.</em></p>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="tidyemoji-060">tidyEmoji 0.6.0<a class="anchor" aria-label="anchor" href="#tidyemoji-060"></a></h2><p class="text-muted">CRAN release: 2026-11-05</p>
 <p><strong>The catalogue is now Unicode’s own, current to Emoji 18.0, and the package says exactly what a glyph is and what it could not measure.</strong> Until 0.5.0 tidyEmoji detected against the table inside the <code>emoji</code> package, which has stayed at Emoji 16.0 through two Unicode releases, so the 182 emoji added in 17.0 and 18.0 were not detected at all. The catalogue is now Unicode’s <code>emoji-test.txt</code>, bundled with the package and rebuilt by <code>data-raw/crosswalks.R</code> when Unicode ships; <code>emoji</code> still supplies the shortcodes, the keywords and the detection regex. On top of it come ten new verbs, two detection repairs, a <code>presentation</code> argument on every verb that reads text, and association and polarisation measures on three shipped verbs.</p>
