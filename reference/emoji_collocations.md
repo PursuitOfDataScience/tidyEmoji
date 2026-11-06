@@ -95,7 +95,8 @@ neither `"pmi"` nor `"count"`. Rows are sorted by `measure` descending,
 then by `n` descending (by `pmi` when `measure = "count"`), then by the
 glyph and the word, so the order is fully determined. Ties in `pmi` are
 common: every pair seen the same number of times with the same marginals
-scores alike.
+scores alike. A result with no rows has the same columns, the `measure`
+column included, so it binds to a populated one.
 
 ## Details
 

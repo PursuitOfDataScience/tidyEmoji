@@ -77,9 +77,19 @@ return a tibble describing each comparison.</p></dd>
 glyphs are the same emoji, <code>NA</code> where either is <code>NA</code>. With
 <code>details = TRUE</code>, a tibble with columns <code>x</code>, <code>y</code>, <code>identical</code> (the same
 vector), <code>exact</code> (the code points are identical, selector included),
-<code>difference</code> (<code>"none"</code>, <code>"variation selector"</code>, <code>"skin tone"</code> or
-<code>"different"</code>), and <code>x_codepoints</code> and <code>y_codepoints</code>, the two code-point
+<code>difference</code> (<code>"none"</code>, <code>"variation selector"</code>, <code>"skin tone"</code>,
+<code>"different"</code> or <code>"not one emoji"</code>), and <code>x_codepoints</code> and
+<code>y_codepoints</code>, the two code-point
 sequences written out (<code>"U+2764 U+FE0F"</code>) for the record.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The comparison is by code points and nothing else, so it answers for any
+two strings: two that are not emoji are <code>identical</code> when their code points
+are. <code>difference</code> says so. When either side, in its canonical spelling, is
+not a catalogue spelling, it is <code>"not one emoji"</code>, whatever else is true:
+a grinning face followed by a skin tone (<code>U+1F600 U+1F3FB</code>) is a face and
+a swatch the face cannot take, never a toned variant of the face.</p>
     </div>
     <div class="section level2">
     <h2 id="what-this-can-and-cannot-tell-you">What this can and cannot tell you<a class="anchor" aria-label="anchor" href="#what-this-can-and-cannot-tell-you"></a></h2>

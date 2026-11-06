@@ -16,7 +16,9 @@ emoji_find(terms, match = c("any", "all"))
 
 - terms:
 
-  A character vector of keywords to look for.
+  A character vector of keywords to look for. Terms that differ only in
+  case are one term, reported in the spelling given first. An empty
+  vector finds nothing; `NA` and `""` are errors.
 
 - match:
 

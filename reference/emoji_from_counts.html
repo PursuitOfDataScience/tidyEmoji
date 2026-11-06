@@ -54,7 +54,7 @@ counted, profiled over time and turned into a document-by-emoji matrix.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">emoji_from_counts</span><span class="op">(</span><span class="va">data</span>, <span class="va">emoji</span>, <span class="va">n</span>, id <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">emoji_from_counts</span><span class="op">(</span><span class="va">data</span>, <span class="va">emoji</span>, <span class="va">n</span>, id <span class="op">=</span> <span class="cn">NULL</span>, unknown <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"drop"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -77,6 +77,15 @@ counted, profiled over time and turned into a document-by-emoji matrix.</p>
 <dd><p>Optional unquoted column identifying the item each count belongs
 to. Without it the whole table is one document.</p></dd>
 
+
+<dt id="arg-unknown">unknown<a class="anchor" aria-label="anchor" href="#arg-unknown"></a></dt>
+<dd><p>What to do with a value of <code>emoji</code> that resolves to no
+emoji: <code>"error"</code> (the default) stops and names it, since a silent drop
+changes answers; <code>"drop"</code> removes its rows and warns once, naming each
+such value with the total count it carried. Real tallies need it: the
+OASST2 one bundled as <a href="oasst_reactions.html">oasst_reactions</a> records interface actions
+(<code>"_skip_reply"</code>) beside the emoji.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -97,17 +106,28 @@ is added. Verbs that measure the <em>text</em> around emoji, such as
 those spaces, and have nothing to say about a tally.</p>
 <p>The <code>emoji</code> column can hold glyphs in any spelling, the names of GitHub's
 eight reactions (<code>"+1"</code>, <code>"-1"</code>, <code>"laugh"</code>, <code>"hooray"</code>, <code>"confused"</code>,
-<code>"heart"</code>, <code>"rocket"</code>, <code>"eyes"</code>, as its API returns them), shortcodes with
-or without their colons, or Unicode names. Every glyph is written in its
-canonical spelling, so a bare <code>U+2764</code> in the tally is read by the default
-<code>presentation</code>. A value that resolves to no emoji is an error naming it,
-rather than a silent zero.</p>
+<code>"heart"</code>, <code>"rocket"</code>, <code>"eyes"</code>, as its REST API returns them, or
+<code>"THUMBS_UP"</code>, <code>"THUMBS_DOWN"</code> and the rest, as its GraphQL API does, in
+any case), shortcodes with or without their colons, Slack's toned names
+(<code>"thumbsup::skin-tone-2"</code>, tone 2 light to 6 dark), or Unicode names.
+Every glyph is written in its canonical spelling, so a bare <code>U+2764</code> in the
+tally is read by the default <code>presentation</code>. A value that resolves to no
+emoji is an error naming it, rather than a silent zero, unless
+<code>unknown = "drop"</code>; a Slack tone on an emoji that takes none resolves to
+no emoji.</p>
 <p><code>n</code> must be a whole number of at least 0. A fractional count, such as a
 survey weight or an average, is refused rather than rounded: a text cannot hold
 2.5 emoji, and truncating it would change the answer without saying so.
 An item whose counts are all zero keeps its row, with an empty text, so it
 still counts as a document wherever the number of documents matters (the
-inverse document frequency of <code><a href="emoji_dfm.html">emoji_dfm()</a></code>, for one).</p>
+inverse document frequency of <code><a href="emoji_dfm.html">emoji_dfm()</a></code>, for one). So does an item
+whose every row <code>unknown = "drop"</code> removed.</p>
+<p>One item's text is one R string, which holds at most 2,147,483,647 bytes.
+A tally that would write more for one item, about 430 million thumbs-up,
+is refused before anything is built, with the item and the size named. A
+count that size is a weight over a corpus rather than a tally of one
+item's reactions, and a text cannot carry a weight; score the glyph once
+and multiply instead.</p>
 <p><strong>What a reaction count measures.</strong> A tally records which buttons were
 pressed, and the set of buttons is the platform's: GitHub offers eight, so
 "nobody reacted with a skull" says nothing about whether anyone thought it.
@@ -141,6 +161,25 @@ to do with the result.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   101 👍 👍 👍 🚀        4               4            0.523</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>   102 👎 👎              2               2           -<span style="color: #BB0000;">0.190</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># GraphQL names and Slack's tones resolve too</span></span></span>
+<span class="r-in"><span><span class="fu">emoji_from_counts</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"THUMBS_UP"</span>, <span class="st">"thumbsup::skin-tone-4"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                             n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, <span class="va">r</span>, <span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 1</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   text </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 👍 👍🏽</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a real tally, with the interface's skip actions set aside</span></span></span>
+<span class="r-in"><span><span class="va">oasst</span> <span class="op">&lt;-</span> <span class="fu">emoji_from_counts</span><span class="op">(</span><span class="va">oasst_reactions</span>, <span class="va">reaction</span>, <span class="va">n</span>, id <span class="op">=</span> <span class="va">message_id</span>,</span></span>
+<span class="r-in"><span>                           unknown <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Dropped 4 values of `emoji` that are not one emoji, with the counts they carried: `_skip_reply` (1,365), `_skip_labeling` (857), `_skip_ranking` (396), `red_flag` (48).</span>
+<span class="r-in"><span><span class="fu"><a href="emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">oasst</span>, <span class="va">text</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   emoji name        shortcode group             n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 👍    thumbs up   +1        People &amp; Body  <span style="text-decoration: underline;">2</span>323</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 👎    thumbs down -1        People &amp; Body   802</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

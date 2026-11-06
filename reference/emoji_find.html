@@ -59,7 +59,9 @@ semantic field.</p>
 
 
 <dl><dt id="arg-terms">terms<a class="anchor" aria-label="anchor" href="#arg-terms"></a></dt>
-<dd><p>A character vector of keywords to look for.</p></dd>
+<dd><p>A character vector of keywords to look for. Terms that differ
+only in case are one term, reported in the spelling given first. An empty
+vector finds nothing; <code>NA</code> and <code>""</code> are errors.</p></dd>
 
 
 <dt id="arg-match">match<a class="anchor" aria-label="anchor" href="#arg-match"></a></dt>

@@ -1695,12 +1695,12 @@ places <- data.frame(
   text = c("Tokyo \U0001F1EF\U0001F1F5 then Paris \U0001F1EB\U0001F1F7",
            "stray \U0001F1FD\U0001F1FD letters"))
 emoji_country(places, text)
-#> # A tibble: 3 × 5
-#>      id text                   .emoji .emoji_iso2 .emoji_country_name
-#>   <int> <chr>                  <chr>  <chr>       <chr>              
-#> 1     1 Tokyo 🇯🇵 then Paris 🇫🇷 🇯🇵     JP          Japan              
-#> 2     1 Tokyo 🇯🇵 then Paris 🇫🇷 🇫🇷     FR          France             
-#> 3     2 stray 🇽🇽 letters       🇽🇽     NA          NA
+#> # A tibble: 3 × 6
+#>      id text               .emoji .emoji_iso2 .emoji_country_name .emoji_iso3166
+#>   <int> <chr>              <chr>  <chr>       <chr>               <lgl>         
+#> 1     1 Tokyo 🇯🇵 then Pari… 🇯🇵     JP          Japan               TRUE          
+#> 2     1 Tokyo 🇯🇵 then Pari… 🇫🇷     FR          France              TRUE          
+#> 3     2 stray 🇽🇽 letters   🇽🇽     NA          NA                  NA
 emoji_flag(c("JP", "fr", "GB-SCT"))
 #> [1] "🇯🇵" "🇫🇷" "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
 ```
@@ -1739,18 +1739,17 @@ emoji_sentiment(reaction_text, text)
 ```
 
 Real tally data is messier. OASST2 records reactions on its messages,
-and `oasst_reactions` holds them for the sample. Beside the reactions
-(`"+1"`, `"-1"` and `"red_flag"`) sit the interface’s skip actions,
-which are not emoji at all, so a tally goes through
-[`emoji_from_counts()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_from_counts.md)
-once they are set aside:
+and `oasst_reactions` holds them for the sample. Beside the two votes
+(`"+1"` and `"-1"`) sit a report button (`"red_flag"`) and the
+interface’s skip actions, none of which is an emoji. By default a value
+that resolves to no emoji is an error, because dropping it silently
+would change the answer; `unknown = "drop"` sets such rows aside and
+says which, with the counts they carried:
 
 ``` r
 
-votes <- oasst_reactions %>%
-  filter(reaction %in% c("+1", "-1"))
-votes %>%
-  emoji_from_counts(reaction, n, id = message_id) %>%
+oasst_reactions %>%
+  emoji_from_counts(reaction, n, id = message_id, unknown = "drop") %>%
   emoji_frequency(text)
 #> # A tibble: 2 × 5
 #>   emoji name        shortcode group             n

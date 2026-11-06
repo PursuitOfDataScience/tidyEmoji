@@ -132,7 +132,8 @@ is neither <code>"pmi"</code> nor <code>"count"</code>. Rows are sorted by <code
 descending, then by <code>n</code> descending (by <code>pmi</code> when <code>measure = "count"</code>),
 then by the glyph and the word, so the order is fully determined. Ties in
 <code>pmi</code> are common: every pair seen the same number of times with the same
-marginals scores alike.</p>
+marginals scores alike. A result with no rows has the same columns, the
+<code>measure</code> column included, so it binds to a populated one.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

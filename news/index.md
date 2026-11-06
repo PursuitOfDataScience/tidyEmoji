@@ -118,6 +118,46 @@ so the difference can be explained from the output.
   dates instead of fabricated ones. Figures in the sections below this
   one, for earlier releases, refer to the retired corpus.
 
+### Smaller repairs
+
+- **[`emoji_collocations()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_collocations.md)
+  keeps its measure column at zero rows (D9).** With `measure = "ppmi"`,
+  `"dice"`, `"logdice"`, `"llr"` or `"tscore"`, an empty result (no
+  rows, all `NA`, or no pair reaching `min_n`) stopped at `pmi`, so a
+  group filtered down to nothing could not be bound to one that was not.
+  Found by re-running the zero-row sweep over 0.6.0’s new arguments,
+  which now covers every measure.
+- **[`emoji_from_counts()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_from_counts.md)
+  reads GitHub’s GraphQL reaction names** (`THUMBS_UP`, `HOORAY` and the
+  rest, in any case) as well as the REST ones, **and Slack’s toned
+  names**: `"thumbsup::skin-tone-2"` is the thumbs-up in tone 2 (light),
+  up to 6 (dark), and is refused when the emoji takes no tone.
+- **`emoji_from_counts(unknown = "drop")`** sets aside the rows whose
+  value resolves to no emoji and warns once, naming each value with the
+  count it carried; `"error"` stays the default, because a silent drop
+  changes answers. The bundled OASST2 tally needs it: beside its two
+  votes it records a report button and three interface actions.
+- **A tally too large for one R string is refused before anything is
+  built**, naming the item and the size: past 2,147,483,647 bytes, about
+  430 million thumbs-up for one item, a count is a weight over a corpus
+  rather than a tally, and a text cannot carry a weight.
+- **[`emoji_country()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_country.md)
+  gains `.emoji_iso3166`**, `FALSE` for the ten flags with no assigned
+  ISO 3166-1 code (EU, UN, Kosovo’s XK and seven territories ISO
+  reserves codes for, Sark’s CQ among them), so they can be set aside
+  before a country-level join instead of vanishing in it. The help page
+  now lists all ten.
+- **[`emoji_find()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_find.md)**
+  returns a zero-row result for an empty term list rather than an error,
+  and counts terms that differ only in case once: `c("cat", "CAT")` used
+  to match one keyword twice and satisfy `match = "all"` on its own.
+- **`emoji_identical(details = TRUE)` says `"not one emoji"`** when
+  either side is not a catalogue spelling, where 0.6.0 called a grinning
+  face and the same face followed by a swatch it cannot take a skin-tone
+  variant.
+- **[`emoji_flag()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag.md)’s
+  type error names both inputs it takes**, region codes and flag emoji.
+
 ### Lifecycle
 
 - **[`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)

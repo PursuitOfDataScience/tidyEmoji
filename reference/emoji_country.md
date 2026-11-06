@@ -44,9 +44,11 @@ emoji_country(data, text)
 
 A tibble with the columns of `data` plus `.emoji` (the flag as it
 appears in the text), `.emoji_iso2` (the two-letter code, `NA` for a
-pair that spells no flag) and `.emoji_country_name`. One row per flag,
-in reading order; rows without one are dropped. A grouped input stays
-grouped, as it does through
+pair that spells no flag), `.emoji_country_name` and `.emoji_iso3166`
+(`TRUE` where the code is an assigned ISO 3166-1 alpha-2 code, `FALSE`
+for the ten above, `NA` for a pair that spells no flag). One row per
+flag, in reading order; rows without one are dropped. A grouped input
+stays grouped, as it does through
 [`emoji_tokens()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_tokens.md).
 
 ## Details
@@ -66,10 +68,15 @@ packages take. Hand `.emoji_iso2` to
 map's ISO column, and a corpus of flags is a choropleth. Two things to
 know before you do:
 
-- Not every valid flag is a country. `EU` (European Union) and `UN`
-  (United Nations) are flags but not ISO 3166-1 countries, and `AC`,
-  `CP`, `DG`, `EA`, `IC` and `TA` are codes ISO reserves for territories
-  it does not list as countries. A country-level tool will not map them.
+- Not every valid flag is a country, and `.emoji_iso3166` says which are
+  not, so you can filter before a country-level join rather than lose
+  ten rows in it. Ten of the 259 flags have no assigned ISO 3166-1 code:
+  `EU` (European Union) and `UN` (United Nations); `AC` (Ascension
+  Island), `CP` (Clipperton Island), `CQ` (Sark), `DG` (Diego Garcia),
+  `EA` (Ceuta and Melilla), `IC` (Canary Islands) and `TA` (Tristan da
+  Cunha), codes ISO reserves for territories it does not list as
+  countries; and `XK` (Kosovo), a user-assigned code that ISO does not
+  define. A country-level tool will not map them.
 
 - `.emoji_country_name` is the Unicode (CLDR) English name, kept for
   reading the output, and it changes between Unicode versions: three
@@ -94,10 +101,10 @@ df <- data.frame(id = 1:3,
                           "no flags here",
                           "stray \U0001f1fd\U0001f1fd pair"))
 emoji_country(df, text)
-#> # A tibble: 3 × 5
-#>      id text          .emoji .emoji_iso2 .emoji_country_name
-#>   <int> <chr>         <chr>  <chr>       <chr>              
-#> 1     1 go 🇺🇸 and 🇯🇵  🇺🇸     US          United States      
-#> 2     1 go 🇺🇸 and 🇯🇵  🇯🇵     JP          Japan              
-#> 3     3 stray 🇽🇽 pair 🇽🇽     NA          NA                 
+#> # A tibble: 3 × 6
+#>      id text          .emoji .emoji_iso2 .emoji_country_name .emoji_iso3166
+#>   <int> <chr>         <chr>  <chr>       <chr>               <lgl>         
+#> 1     1 go 🇺🇸 and 🇯🇵  🇺🇸     US          United States       TRUE          
+#> 2     1 go 🇺🇸 and 🇯🇵  🇯🇵     JP          Japan               TRUE          
+#> 3     3 stray 🇽🇽 pair 🇽🇽     NA          NA                  NA            
 ```

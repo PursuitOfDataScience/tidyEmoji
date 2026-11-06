@@ -30,9 +30,19 @@ With `details = FALSE`, a logical vector: `TRUE` where the two glyphs
 are the same emoji, `NA` where either is `NA`. With `details = TRUE`, a
 tibble with columns `x`, `y`, `identical` (the same vector), `exact`
 (the code points are identical, selector included), `difference`
-(`"none"`, `"variation selector"`, `"skin tone"` or `"different"`), and
-`x_codepoints` and `y_codepoints`, the two code-point sequences written
-out (`"U+2764 U+FE0F"`) for the record.
+(`"none"`, `"variation selector"`, `"skin tone"`, `"different"` or
+`"not one emoji"`), and `x_codepoints` and `y_codepoints`, the two
+code-point sequences written out (`"U+2764 U+FE0F"`) for the record.
+
+## Details
+
+The comparison is by code points and nothing else, so it answers for any
+two strings: two that are not emoji are `identical` when their code
+points are. `difference` says so. When either side, in its canonical
+spelling, is not a catalogue spelling, it is `"not one emoji"`, whatever
+else is true: a grinning face followed by a skin tone
+(`U+1F600 U+1F3FB`) is a face and a swatch the face cannot take, never a
+toned variant of the face.
 
 ## What this can and cannot tell you
 

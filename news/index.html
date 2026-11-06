@@ -67,6 +67,25 @@
 <strong>Every figure the help pages and vignettes quoted from the old corpus is re-derived on the new one</strong>, and the time verbs’ examples use real dates instead of fabricated ones. Figures in the sections below this one, for earlier releases, refer to the retired corpus.</li>
 </ul></div>
 <div class="section level3">
+<h3 id="smaller-repairs-0-7-0">Smaller repairs<a class="anchor" aria-label="anchor" href="#smaller-repairs-0-7-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_collocations.html">emoji_collocations()</a></code> keeps its measure column at zero rows (D9).</strong> With <code>measure = "ppmi"</code>, <code>"dice"</code>, <code>"logdice"</code>, <code>"llr"</code> or <code>"tscore"</code>, an empty result (no rows, all <code>NA</code>, or no pair reaching <code>min_n</code>) stopped at <code>pmi</code>, so a group filtered down to nothing could not be bound to one that was not. Found by re-running the zero-row sweep over 0.6.0’s new arguments, which now covers every measure.</li>
+<li>
+<strong><code><a href="../reference/emoji_from_counts.html">emoji_from_counts()</a></code> reads GitHub’s GraphQL reaction names</strong> (<code>THUMBS_UP</code>, <code>HOORAY</code> and the rest, in any case) as well as the REST ones, <strong>and Slack’s toned names</strong>: <code>"thumbsup::skin-tone-2"</code> is the thumbs-up in tone 2 (light), up to 6 (dark), and is refused when the emoji takes no tone.</li>
+<li>
+<strong><code>emoji_from_counts(unknown = "drop")</code></strong> sets aside the rows whose value resolves to no emoji and warns once, naming each value with the count it carried; <code>"error"</code> stays the default, because a silent drop changes answers. The bundled OASST2 tally needs it: beside its two votes it records a report button and three interface actions.</li>
+<li>
+<strong>A tally too large for one R string is refused before anything is built</strong>, naming the item and the size: past 2,147,483,647 bytes, about 430 million thumbs-up for one item, a count is a weight over a corpus rather than a tally, and a text cannot carry a weight.</li>
+<li>
+<strong><code><a href="../reference/emoji_country.html">emoji_country()</a></code> gains <code>.emoji_iso3166</code></strong>, <code>FALSE</code> for the ten flags with no assigned ISO 3166-1 code (EU, UN, Kosovo’s XK and seven territories ISO reserves codes for, Sark’s CQ among them), so they can be set aside before a country-level join instead of vanishing in it. The help page now lists all ten.</li>
+<li>
+<strong><code><a href="../reference/emoji_find.html">emoji_find()</a></code></strong> returns a zero-row result for an empty term list rather than an error, and counts terms that differ only in case once: <code>c("cat", "CAT")</code> used to match one keyword twice and satisfy <code>match = "all"</code> on its own.</li>
+<li>
+<strong><code>emoji_identical(details = TRUE)</code> says <code>"not one emoji"</code></strong> when either side is not a catalogue spelling, where 0.6.0 called a grinning face and the same face followed by a swatch it cannot take a skin-tone variant.</li>
+<li>
+<strong><code><a href="../reference/emoji_flag.html">emoji_flag()</a></code>’s type error names both inputs it takes</strong>, region codes and flag emoji.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="lifecycle-0-7-0">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle-0-7-0"></a></h3>
 <ul><li>
 <strong><code><a href="../reference/emoji_filter.html">emoji_tweets()</a></code> is defunct, as 0.6.0 promised.</strong> It stops with an error naming <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code> instead of warning and answering. It stays exported for this one release so that an old script fails with that message rather than “could not find function”, and it is deleted in 0.8.0.</li>

@@ -85,7 +85,9 @@ people, code points that are emoji only when they carry <code>U+FE0F</code>.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with the columns of <code>data</code> plus <code>.emoji</code> (the flag as it
 appears in the text), <code>.emoji_iso2</code> (the two-letter code, <code>NA</code> for a
-pair that spells no flag) and <code>.emoji_country_name</code>. One row per flag,
+pair that spells no flag), <code>.emoji_country_name</code> and <code>.emoji_iso3166</code>
+(<code>TRUE</code> where the code is an assigned ISO 3166-1 alpha-2 code, <code>FALSE</code>
+for the ten above, <code>NA</code> for a pair that spells no flag). One row per flag,
 in reading order; rows without one are dropped. A grouped input stays
 grouped, as it does through <code><a href="emoji_tokens.html">emoji_tokens()</a></code>.</p>
     </div>
@@ -101,10 +103,15 @@ soup happened to produce: indicators pair up from the start of a run, so
 which is also how a phone displays it.</p>
 <p>The code is the join key, not the name, because the code is what other
 packages take. Hand <code>.emoji_iso2</code> to <code>countrycode::countrycode(x, "iso2c", "country.name")</code>, or join it to a map's ISO column, and a corpus
-of flags is a choropleth. Two things to know before you do:</p><ul><li><p>Not every valid flag is a country. <code>EU</code> (European Union) and <code>UN</code>
-(United Nations) are flags but not ISO 3166-1 countries, and <code>AC</code>,
-<code>CP</code>, <code>DG</code>, <code>EA</code>, <code>IC</code> and <code>TA</code> are codes ISO reserves for territories
-it does not list as countries. A country-level tool will not map them.</p></li>
+of flags is a choropleth. Two things to know before you do:</p><ul><li><p>Not every valid flag is a country, and <code>.emoji_iso3166</code> says which are
+not, so you can filter before a country-level join rather than lose ten
+rows in it. Ten of the 259 flags have no assigned ISO 3166-1 code: <code>EU</code>
+(European Union) and <code>UN</code> (United Nations); <code>AC</code> (Ascension Island),
+<code>CP</code> (Clipperton Island), <code>CQ</code> (Sark), <code>DG</code> (Diego Garcia), <code>EA</code> (Ceuta
+and Melilla), <code>IC</code> (Canary Islands) and <code>TA</code> (Tristan da Cunha), codes
+ISO reserves for territories it does not list as countries; and <code>XK</code>
+(Kosovo), a user-assigned code that ISO does not define. A country-level
+tool will not map them.</p></li>
 <li><p><code>.emoji_country_name</code> is the Unicode (CLDR) English name, kept for
 reading the output, and it changes between Unicode versions: three
 names did between Emoji 16.0 and 18.0. Join on the code.</p></li>
@@ -124,12 +131,12 @@ indicator pairs; see <code><a href="emoji_subdivision.html">emoji_subdivision()<
 <span class="r-in"><span>                          <span class="st">"no flags here"</span>,</span></span>
 <span class="r-in"><span>                          <span class="st">"stray \U0001f1fd\U0001f1fd pair"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">emoji_country</span><span class="op">(</span><span class="va">df</span>, <span class="va">text</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      id text          .emoji .emoji_iso2 .emoji_country_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1 go 🇺🇸 and 🇯🇵  🇺🇸     US          United States      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1 go 🇺🇸 and 🇯🇵  🇯🇵     JP          Japan              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     3 stray 🇽🇽 pair 🇽🇽     <span style="color: #BB0000;">NA</span>          <span style="color: #BB0000;">NA</span>                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      id text          .emoji .emoji_iso2 .emoji_country_name .emoji_iso3166</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>     1 go 🇺🇸 and 🇯🇵  🇺🇸     US          United States       TRUE          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>     1 go 🇺🇸 and 🇯🇵  🇯🇵     JP          Japan               TRUE          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>     3 stray 🇽🇽 pair 🇽🇽     <span style="color: #BB0000;">NA</span>          <span style="color: #BB0000;">NA</span>                  <span style="color: #BB0000;">NA</span>            </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
