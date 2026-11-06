@@ -41,6 +41,12 @@ reference:
   - emoji_sentiment
   - emoji_emotion
   - emoji_emotion_label
+- title: Identity
+  contents:
+  - emoji_decompose
+  - emoji_skin_tone
+  - emoji_gender
+  - emoji_retone
 - title: Interpretation risk
   contents:
   - emoji_ambiguity

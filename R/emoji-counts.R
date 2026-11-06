@@ -30,27 +30,13 @@
 
 # The catalogue's spelling of `glyph` in Slack's skin tone `tone`, 2 (light)
 # to 6 (dark), with every person in it toned alike; NA when the emoji takes no
-# tone. Read from the catalogue rather than built by inserting a modifier,
-# because where the modifier goes depends on the sequence.
+# tone. Read from the table emoji_retone() uses, so the two cannot disagree.
 .emoji_toned_spelling <- function(glyph, tone) {
-  out <- rep(NA_character_, length(glyph))
-  ok <- !is.na(glyph)
-  if (!any(ok)) return(out)
-  ref <- emoji_reference()
-  toned <- ref$emoji[ref$status == "fully-qualified" &
-                       grepl("(^| )1F3F[B-F]( |$)", ref$key)]
-  cps <- lapply(toned, utf8ToInt)
-  bare <- emoji_key(.emoji_strip_tones(toned))
-  for (i in which(ok)) {
-    mod <- 0x1F3FBL + as.integer(tone[[i]]) - 2L
-    alike <- vapply(cps, function(c) {
-      t <- c[c %in% .emoji_tone_cps]
-      length(t) > 0L && all(t == mod)
-    }, logical(1))
-    hit <- toned[alike & bare == emoji_key(glyph[[i]])]
-    if (length(hit)) out[[i]] <- hit[[1L]]
-  }
-  out
+  base <- .emoji_identity_lookup(glyph)$base
+  bk <- .emoji_by_key()
+  level <- .emoji_tone_levels[as.integer(tone) - 1L]
+  unname(.emoji_identity()$toned[paste(bk$key[match(base, bk$canonical)],
+                                       level)])
 }
 
 # Resolve each distinct value of a tally's glyph column to one emoji, or NA.

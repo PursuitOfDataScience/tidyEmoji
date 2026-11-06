@@ -48,6 +48,7 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Translate | `emoji_to_text()`, `text_to_emoji()`, `as_emoji*()` |
 | Search the vocabulary | `emoji_search()`, `emoji_find()`, `emoji_keywords()` |
 | Describe a glyph | `emoji_properties()`, `as_emoji_canonical()`, `emoji_identical()` |
+| Identity | `emoji_decompose()`, `emoji_skin_tone()`, `emoji_gender()`, `emoji_retone()` |
 | Coverage | `emoji_coverage()` |
 | Flags and places | `emoji_country()`, `emoji_subdivision()`, `emoji_flag()` |
 | Tallies | `emoji_from_counts()` |
@@ -84,6 +85,9 @@ other index. Every help page also carries the matching keyword, so
 | How did emoji use change over time, and how fast were new ones adopted? | `emoji_trend()`, `emoji_adoption_lag()` |
 | What will a screen reader announce? (accessibility) | `emoji_to_text()`, `as_emoji_name()` |
 | Faces or objects? (crisis communication, marketing) | `emoji_type()`, `emoji_faceness()` |
+| Which skin tones do writers choose, out of how many they could have? | `emoji_skin_tone()`, `emoji_decompose()` |
+| Which gender do the person emoji depict? | `emoji_gender()` |
+| Does a model treat the same text differently in another skin tone? (fairness) | `emoji_retone()` |
 | What should a language-model pipeline do with emoji? | `emoji_sanitize()`, `emoji_token_cost()` |
 | Is something hidden in this text? (prompt injection, phishing) | `emoji_hidden()`, `emoji_sanitize()` |
 | How does a model's own output use emoji? (LLM output auditing) | `emoji_ratio()`, `emoji_position()` |

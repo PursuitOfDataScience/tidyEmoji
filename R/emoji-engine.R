@@ -87,7 +87,7 @@ emoji_reference <- function() {
 # later that derives from the reference table belongs in this vector.
 .emoji_derived_cache_slots <- function() {
   c("ref_keys", "type", "detect_rx", "residue", "text_rx", "vocabulary",
-    "by_key", "flags", "search", "properties")
+    "by_key", "flags", "search", "properties", "identity")
 }
 
 .emoji_drop_derived_caches <- function() {

@@ -384,7 +384,10 @@ surface_070 <- function() {
     summary_n_hidden = function(d, col) emoji_summary(d, !!col),
     summary_n_unlisted_any = function(d, col)
       emoji_summary(d, !!col, presentation = "any"),
-    country_iso3166 = function(d, col) emoji_country(d, !!col)
+    country_iso3166 = function(d, col) emoji_country(d, !!col),
+    skin_tone = function(d, col) emoji_skin_tone(d, !!col),
+    gender = function(d, col) emoji_gender(d, !!col),
+    retone_dark = function(d, col) emoji_retone(d, !!col, tone = "dark")
   )
 }
 
@@ -506,7 +509,7 @@ test_that("the 0.7.0 surface holds every contract the 0.6.0 surface does", {
 })
 
 test_that("the 0.7.0 surface keeps one signature at every row count", {
-  check_surface_070(stride = 2L)
+  check_surface_070(stride = 3L)
 })
 
 # --- M2: a licensed, dated example corpus ---------------------------------------
@@ -888,13 +891,20 @@ test_that("a text presentation sequence is not an emoji by default (D10)", {
                                    text)$n), 1L)
 })
 
-test_that("every base with a text sequence is text when U+FE0E follows it (D10)", {
-  bases <- tidyEmoji:::.emoji_text_style_bases
-  expect_length(bases, 371L)
+# Shared by the sweep and its CRAN twin: every base with a text sequence, or
+# every k-th of them and the nine the detector reads bare
+check_d10_bases <- function(stride = 1L) {
+  all_bases <- tidyEmoji:::.emoji_text_style_bases
+  expect_length(all_bases, 371L)
   ref <- tidyEmoji:::emoji_reference()
   one <- ref$emoji[ref$status == "fully-qualified" & nchar(ref$emoji) == 1L]
+  expect_identical(sum(all_bases %in% vapply(one, utf8ToInt, integer(1))),
+                   152L)
+  nine <- c(0x261D, 0x26F9, 0x270C, 0x270D, 0x1F3CB, 0x1F3CC, 0x1F574,
+            0x1F575, 0x1F590)
+  keep <- seq_along(all_bases) %% stride == 0L | all_bases %in% nine
+  bases <- all_bases[keep]
   emoji_default <- bases %in% vapply(one, utf8ToInt, integer(1))
-  expect_identical(sum(emoji_default), 152L)
   x <- vapply(bases, function(b) cp(b, 0xFE0E), character(1))
   bare <- vapply(bases, intToUtf8, character(1))
   by_default <- lengths(tidyEmoji:::.emoji_locations(x)) > 0L
@@ -908,11 +918,10 @@ test_that("every base with a text sequence is text when U+FE0E follows it (D10)"
   expect_identical(under_any[!emoji_default], !typography[!emoji_default])
   # nine of them the detector reads bare, because they take a skin tone;
   # 0.6.0 counted them with U+FE0E too, and the request is honoured now
-  nine <- c(0x261D, 0x26F9, 0x270C, 0x270D, 0x1F3CB, 0x1F3CC, 0x1F574,
-            0x1F575, 0x1F590)
   bare_counted <- lengths(tidyEmoji:::.emoji_locations(bare)) > 0L
   expect_setequal(bases[bare_counted & !emoji_default], nine)
   expect_true(all(bare_counted[emoji_default]))
+  if (stride == 1L) expect_identical(sum(bare_counted), 161L)
   # under "any" each of those 161 is a text glyph with its selector inside
   sp <- tidyEmoji:::.emoji_spans(x, "any")
   held <- vapply(sp$locs, function(m) nrow(m) == 1L && m[1L, "end"] == 2L,
@@ -923,6 +932,15 @@ test_that("every base with a text sequence is text when U+FE0E follows it (D10)"
   cv <- emoji_coverage(tibble::tibble(text = x[bare_counted]), text)
   expect_identical(cv$n_occurrences, c(0L, 0L))
   expect_identical(cv$n_text_presentation, rep(sum(bare_counted), 2L))
+}
+
+test_that("every base with a text sequence is text when U+FE0E follows it (D10)", {
+  skip_sweep(twin = "a sample of the bases with a text sequence, and the nine, is text after U+FE0E")
+  check_d10_bases()
+})
+
+test_that("a sample of the bases with a text sequence, and the nine, is text after U+FE0E", {
+  check_d10_bases(8L)
 })
 
 test_that("the rewriting verbs leave a text-style star as text by default (D10)", {
@@ -1010,7 +1028,10 @@ test_that("emoji_collocations() keeps its measure column at zero rows (D9)", {
     expect_true(m %in% names(z), info = m)
     expect_equal(nrow(z), 0L, info = m)
   }
-  # every way to reach zero rows, against the populated shape
+})
+
+test_that("every way to zero collocations keeps the populated shape (D9)", {
+  skip_sweep(twin = "emoji_collocations() keeps its measure column at zero rows (D9)")
   shape <- function(z) vapply(z, function(x) class(x)[1L], character(1))
   full <- tibble::tibble(text = c(paste("cold coffee", cp(0x1F622)),
                                   paste("coffee again", cp(0x1F622))))
@@ -1179,4 +1200,349 @@ test_that("a tally past R's string limit is refused by name (N9)", {
   expect_match(e, "item `b`", fixed = TRUE)
   expect_match(e, "2,999,999,999 bytes", fixed = TRUE)
   expect_match(e, "weight", fixed = TRUE)
+})
+
+
+# --- Identity: emoji_decompose(), emoji_skin_tone(), emoji_gender(), emoji_retone() -----
+
+test_that("an orphan skin-tone modifier is accounted for, not counted", {
+  # A tone modifier on a base that cannot take one. 0.6.0 stopped counting
+  # the swatch as an emoji; the identity verbs still have to report it.
+  orphan <- cp(0x1F600, 0x1F3FB)
+  out <- emoji_skin_tone(tibble::tibble(text = paste("a", orphan, "b")), text)
+  expect_equal(out$.emoji_n_orphan_modifiers[1], 1L)
+  expect_equal(out$.emoji_n_modified[1], 0L)
+})
+
+test_that("modified and modifiable cannot be swapped unnoticed", {
+  thumb <- cp(0x1F44D)
+  toned <- cp(0x1F44D, 0x1F3FE)
+  d <- tibble::tibble(text = paste(thumb, thumb, toned))   # 3 modifiable, 1 modified
+  out <- emoji_skin_tone(d, text)
+  expect_equal(c(out$.emoji_n_modifiable, out$.emoji_n_modified), c(3L, 1L))
+  expect_false(out$.emoji_n_modifiable == out$.emoji_n_modified)
+  expect_equal(out$.emoji_n_medium_dark, 1L)
+  # and every tone column is its own: one instance of each, in a new order
+  five <- tibble::tibble(text = paste(cp(0x1F44D, 0x1F3FF), cp(0x1F44D, 0x1F3FB),
+                                      cp(0x1F44D, 0x1F3FB), cp(0x1F44D, 0x1F3FD),
+                                      cp(0x1F44D, 0x1F3FC), cp(0x1F44D, 0x1F3FC),
+                                      cp(0x1F44D, 0x1F3FC), cp(0x1F44D, 0x1F3FE)))
+  o5 <- emoji_skin_tone(five, text)
+  expect_identical(c(o5$.emoji_n_light, o5$.emoji_n_medium_light,
+                     o5$.emoji_n_medium, o5$.emoji_n_medium_dark,
+                     o5$.emoji_n_dark), c(2L, 3L, 1L, 1L, 1L))
+  expect_identical(o5$.emoji_tone, "mixed")
+})
+
+test_that("a mixed-tone couple adds to two tones and one mixed occurrence", {
+  couple <- cp(0x1F9D1, 0x1F3FB, 0x200D, 0x1F91D, 0x200D, 0x1F9D1, 0x1F3FF)
+  dc <- emoji_decompose(couple)
+  expect_equal(dc$tone, "mixed")
+  expect_equal(dc$tones, "light|dark")
+  expect_equal(dc$gender, "neutral")
+  st <- emoji_skin_tone(tibble::tibble(text = couple), text)
+  expect_identical(c(st$.emoji_n_light, st$.emoji_n_dark, st$.emoji_n_mixed,
+                     st$.emoji_n_modified), c(1L, 1L, 1L, 1L))
+})
+
+test_that("emoji_gender() tells the three technologists apart", {
+  w <- cp(0x1F469, 0x200D, 0x1F4BB)
+  m <- cp(0x1F468, 0x200D, 0x1F4BB)
+  p <- cp(0x1F9D1, 0x200D, 0x1F4BB)
+  out <- emoji_gender(tibble::tibble(text = paste(w, w, m, p)), text)  # asymmetric
+  expect_equal(c(out$.emoji_n_female, out$.emoji_n_male, out$.emoji_n_neutral),
+               c(2L, 1L, 1L))
+  expect_equal(out$.emoji_n_gender_variable, 4L)
+  expect_identical(out$.emoji_gender, "mixed")
+  # a gender with no other form is depicted but not a choice
+  dancer <- emoji_gender(tibble::tibble(text = cp(0x1F483)), text)
+  expect_identical(c(dancer$.emoji_n_female, dancer$.emoji_n_gender_variable),
+                   c(1L, 0L))
+})
+
+test_that("emoji_retone() is a lookup and round-trips through default", {
+  d <- tibble::tibble(text = paste("ok", cp(0x1F44D, 0x1F3FB), cp(0x1F600)))
+  dark <- emoji_retone(d, text, tone = "dark")
+  expect_equal(dark$.emoji_n_retoned, 1L)
+  expect_identical(emoji_retone(dark, text, tone = "default")$text,
+                   emoji_retone(d, text, tone = "default")$text)
+  expect_equal(dark$.emoji_n_unretonable, 0L)
+  expect_identical(dark$text, paste("ok", cp(0x1F44D, 0x1F3FF), cp(0x1F600)))
+  # every person alike, an orphan swatch and a toneless emoji left alone
+  e <- tibble::tibble(text = c(
+    cp(0x1F9D1, 0x1F3FB, 0x200D, 0x1F91D, 0x200D, 0x1F9D1, 0x1F3FF),
+    paste("a", cp(0x1F600, 0x1F3FB), "b"), NA))
+  r <- emoji_retone(e, text, tone = "medium")
+  expect_identical(r$text, c(
+    cp(0x1F9D1, 0x1F3FD, 0x200D, 0x1F91D, 0x200D, 0x1F9D1, 0x1F3FD),
+    paste("a", cp(0x1F600, 0x1F3FB), "b"), NA))
+  # back to default, a two-tone handshake is the one code point it is untoned
+  h <- tibble::tibble(text = cp(0x1FAF1, 0x1F3FB, 0x200D, 0x1FAF2, 0x1F3FF))
+  expect_identical(emoji_retone(h, text)$text, cp(0x1F91D))
+  expect_error(emoji_retone(d, text, tone = "beige"), "`tone`")
+})
+
+# The 0.7.0 plan's fixtures for emoji_decompose(): each glyph, and what it is.
+decompose_fixtures <- function() {
+  f <- function(glyph, base, neutral, tone, tones, gender, hair, n_parts,
+                modifiable) {
+    list(glyph = glyph, base = base, neutral = neutral, tone = tone,
+         tones = tones, gender = gender, hair = hair, n_parts = n_parts,
+         modifiable = modifiable)
+  }
+  NA_ <- NA_character_
+  list(
+    # a single toned hand
+    f(cp(0x1F44D, 0x1F3FD), cp(0x1F44D), NA_, "medium", "medium", NA_, NA_, 1L, TRUE),
+    # two people, two tones, no gender drawn
+    f(cp(0x1F9D1, 0x1F3FB, 0x200D, 0x1F91D, 0x200D, 0x1F9D1, 0x1F3FF),
+      cp(0x1F9D1, 0x200D, 0x1F91D, 0x200D, 0x1F9D1),
+      cp(0x1F9D1, 0x200D, 0x1F91D, 0x200D, 0x1F9D1), "mixed", "light|dark",
+      "neutral", NA_, 3L, TRUE),
+    # mixed tone, mixed gender, neutral form the couple with heart
+    f(cp(0x1F469, 0x1F3FB, 0x200D, 0x2764, 0xFE0F, 0x200D, 0x1F468, 0x1F3FF),
+      cp(0x1F469, 0x200D, 0x2764, 0xFE0F, 0x200D, 0x1F468), cp(0x1F491),
+      "mixed", "light|dark", "mixed", NA_, 3L, TRUE),
+    # one tone for two people
+    f(cp(0x1F48F, 0x1F3FD), cp(0x1F48F), cp(0x1F48F), "medium", "medium",
+      "neutral", NA_, 1L, TRUE),
+    # hands: tones and no gender; the base is the handshake, one code point
+    f(cp(0x1FAF1, 0x1F3FB, 0x200D, 0x1FAF2, 0x1F3FF), cp(0x1F91D), NA_,
+      "mixed", "light|dark", NA_, NA_, 2L, TRUE),
+    # a family of four: no tones, mixed gender
+    f(cp(0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F467, 0x200D, 0x1F466),
+      cp(0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F467, 0x200D, 0x1F466),
+      cp(0x1F9D1, 0x200D, 0x1F9D1, 0x200D, 0x1F9D2, 0x200D, 0x1F9D2),
+      NA_, NA_, "mixed", NA_, 4L, FALSE),
+    # hair, with and without a tone
+    f(cp(0x1F469, 0x200D, 0x1F9B0), cp(0x1F469, 0x200D, 0x1F9B0),
+      cp(0x1F9D1, 0x200D, 0x1F9B0), "default", "default", "female", "red", 2L,
+      TRUE),
+    f(cp(0x1F9D1, 0x1F3FF, 0x200D, 0x1F9B2), cp(0x1F9D1, 0x200D, 0x1F9B2),
+      cp(0x1F9D1, 0x200D, 0x1F9B2), "dark", "dark", "neutral", "bald", 2L,
+      TRUE),
+    # a gender sign; and a tone, a gender sign and a direction (Emoji 15.1)
+    f(cp(0x1F3C3, 0x200D, 0x2640, 0xFE0F), cp(0x1F3C3, 0x200D, 0x2640, 0xFE0F),
+      cp(0x1F3C3), "default", "default", "female", NA_, 2L, TRUE),
+    f(cp(0x1F3C3, 0x1F3FD, 0x200D, 0x2642, 0xFE0F, 0x200D, 0x27A1, 0xFE0F),
+      cp(0x1F3C3, 0x200D, 0x2642, 0xFE0F, 0x200D, 0x27A1, 0xFE0F),
+      cp(0x1F3C3, 0x200D, 0x27A1, 0xFE0F), "medium", "medium", "male", NA_, 3L,
+      TRUE),
+    # the gendered set that is three different code points
+    f(cp(0x1F9D1, 0x200D, 0x1F384), cp(0x1F9D1, 0x200D, 0x1F384),
+      cp(0x1F9D1, 0x200D, 0x1F384), "default", "default", "neutral", NA_, 2L,
+      TRUE),
+    f(cp(0x1F385), cp(0x1F385), cp(0x1F9D1, 0x200D, 0x1F384), "default",
+      "default", "male", NA_, 1L, TRUE),
+    f(cp(0x1F936), cp(0x1F936), cp(0x1F9D1, 0x200D, 0x1F384), "default",
+      "default", "female", NA_, 1L, TRUE),
+    # an orphan swatch, a keycap, a flag, a bare heart read as its emoji
+    f(cp(0x1F3FD), NA_, NA_, NA_, NA_, NA_, NA_, NA_integer_, NA),
+    f(cp(0x31, 0xFE0F, 0x20E3), cp(0x31, 0xFE0F, 0x20E3), NA_, NA_, NA_, NA_,
+      NA_, 1L, FALSE),
+    f(cp(0x1F1FA, 0x1F1F8), cp(0x1F1FA, 0x1F1F8), NA_, NA_, NA_, NA_, NA_, 1L,
+      FALSE),
+    f(cp(0x2764), cp(0x2764, 0xFE0F), NA_, NA_, NA_, NA_, NA_, 1L, FALSE),
+    # a toned wrestler pair, Emoji 17.0, whose base is one code point
+    f(cp(0x1F9D1, 0x1F3FB, 0x200D, 0x1FAEF, 0x200D, 0x1F9D1, 0x1F3FC),
+      cp(0x1F93C), cp(0x1F93C), "mixed", "light|medium_light", "neutral", NA_,
+      3L, TRUE),
+    # a part D7 splits off, and a face followed by a tone it cannot take
+    f(cp(0x1F9D1, 0x1F3FD), cp(0x1F9D1), cp(0x1F9D1), "medium", "medium",
+      "neutral", NA_, 1L, TRUE),
+    f(cp(0x1F600, 0x1F3FB), cp(0x1F600), NA_, NA_, NA_, NA_, NA_, 1L, FALSE)
+  )
+}
+
+test_that("emoji_decompose() takes the plan's fixtures apart correctly", {
+  fx <- decompose_fixtures()
+  x <- vapply(fx, `[[`, character(1), "glyph")
+  out <- emoji_decompose(x)
+  expect_named(out, c("emoji", "name", "base", "neutral", "tone", "tones",
+                      "n_tones", "gender", "hair", "n_parts", "parts",
+                      "modifiable"))
+  expect_identical(out$emoji, x)
+  for (col in c("base", "neutral", "tone", "tones", "gender", "hair",
+                "n_parts", "modifiable")) {
+    want <- unlist(lapply(fx, `[[`, col))
+    expect_identical(out[[col]], want, info = col)
+  }
+  expect_identical(out$n_tones[c(1L, 2L, 5L, 7L, 6L)], c(1L, 2L, 2L, 0L, NA))
+  # canonicalised first: both spellings of the heart decompose alike
+  expect_identical(emoji_decompose(cp(0x2764))[-1L],
+                   emoji_decompose(cp(0x2764, 0xFE0F))[-1L])
+  # NA in, a row of NA out; and the typed empty result
+  na <- emoji_decompose(NA_character_)
+  expect_true(all(is.na(unlist(na))))
+  expect_identical(nrow(emoji_decompose(character(0))), 0L)
+  expect_identical(vapply(emoji_decompose(character(0)), class, ""),
+                   vapply(out, class, ""))
+  expect_error(emoji_decompose(1), "`x`")
+  expect_error(emoji_decompose(cp(0x1F600), long = NA), "`long`")
+})
+
+test_that("emoji_decompose(long = TRUE) names every component's role", {
+  couple <- cp(0x1F469, 0x1F3FB, 0x200D, 0x2764, 0xFE0F, 0x200D, 0x1F468,
+               0x1F3FF)
+  run <- cp(0x1F3C3, 0x1F3FD, 0x200D, 0x2642, 0xFE0F)
+  hair <- cp(0x1F9D1, 0x200D, 0x1F9B0)
+  l <- emoji_decompose(c(couple, run, hair, NA, "abc"), long = TRUE)
+  expect_named(l, c("emoji", "position", "component", "role",
+                    "component_name"))
+  expect_identical(l$role, c("person", "tone", "object", "person", "tone",
+                             "person", "tone", "gender_sign",
+                             "person", "hair", "other"))
+  expect_identical(l$position, c(1:5, 1:3, 1:2, 1L))
+  expect_identical(l$component_name[1:5],
+                   c("woman", "light skin tone", "red heart", "man",
+                     "dark skin tone"))
+  expect_false(NA %in% l$emoji)
+})
+
+# Shared by the sweep and its CRAN twin: the catalogue-wide invariants, over
+# every key or a sample.
+check_identity_invariants <- function(n = NULL) {
+  ref <- tidyEmoji:::emoji_reference()
+  tone_cps <- 0x1F3FB:0x1F3FF
+  has_tone <- vapply(ref$emoji, function(g) any(utf8ToInt(g) %in% tone_cps),
+                     logical(1))
+  two <- vapply(ref$emoji, function(g) {
+    length(unique(intersect(utf8ToInt(g), tone_cps))) >= 2L
+  }, logical(1))
+  # the catalogue facts the verbs rest on, pinned as the plan measured them
+  expect_identical(c(sum(has_tone), sum(two)), c(2920L, 540L))
+  x <- ref$emoji
+  if (!is.null(n)) x <- sweep_sample(x, n)
+  d <- emoji_decompose(x)
+  # every toned spelling's base is itself a catalogue spelling, and taking
+  # the tones out twice changes nothing
+  toned <- !is.na(d$base) & d$tone %in% c(tidyEmoji:::.emoji_tone_levels,
+                                          "mixed")
+  expect_true(all(d$base[toned] %in% ref$emoji))
+  b <- emoji_decompose(d$base[!is.na(d$base)])
+  expect_identical(b$base, d$base[!is.na(d$base)])
+  # the tones are the code points' own, in reading order
+  lv <- tidyEmoji:::.emoji_tone_levels
+  from_cps <- vapply(x, function(g) {
+    t <- utf8ToInt(g)
+    t <- t[t %in% tone_cps]
+    if (length(t)) paste(lv[t - 0x1F3FAL], collapse = "|") else "default"
+  }, character(1), USE.NAMES = FALSE)
+  ok <- d$modifiable %in% TRUE
+  expect_identical(d$tones[ok], from_cps[ok])
+  # neutral is NA or a glyph whose gender is neutral
+  nn <- d$neutral[!is.na(d$neutral)]
+  expect_true(all(emoji_decompose(nn)$gender == "neutral"))
+  # every tone-able base retones to every tone with a catalogue spelling
+  bases <- unique(d$base[ok])
+  t <- tibble::tibble(text = paste(bases, collapse = " "))
+  for (tone in c("default", lv)) {
+    r <- emoji_retone(t, text, tone = tone)
+    expect_identical(r$.emoji_n_unretonable, 0L, info = tone)
+    expect_identical(r$.emoji_n_retoned, length(bases), info = tone)
+    back <- emoji_decompose(tidyEmoji:::emoji_glyph_list(r$text)[[1L]])
+    expect_true(all(back$tone == tone), info = tone)
+  }
+}
+
+test_that("the identity table holds its invariants over the whole catalogue", {
+  skip_sweep(twin = "the identity table holds its invariants on a sample of the catalogue")
+  check_identity_invariants()
+})
+
+test_that("the identity table holds its invariants on a sample of the catalogue", {
+  check_identity_invariants(150L)
+})
+
+test_that("the gender rule and its list reproduce the catalogue's counts", {
+  skip_if_catalogue_moved()
+  ref <- tidyEmoji:::emoji_reference()
+  fq <- ref$emoji[ref$status == "fully-qualified"]
+  d <- emoji_decompose(fq)
+  tab <- table(d$gender, useNA = "no")
+  # 652 female and 640 male is emojibase 18.0.0's own count, which the 0.7.0
+  # plan measured; the 95 mixed are the 89 multi-person sequences the rule
+  # calls mixed and the woman and man holding hands in its six spellings;
+  # the neutral forms are this package's derivation
+  expect_identical(as.vector(tab[c("female", "male", "mixed", "neutral")]),
+                   c(652L, 640L, 95L, 640L))
+  # the list is the twelve emoji whose gender lives in one code point, and
+  # the one mixed pair
+  s <- tidyEmoji:::.emoji_gender_singles()
+  expect_identical(as_emoji_name(intToUtf8(s$cp, multiple = TRUE)), c(
+    "prince", "princess", "Santa Claus", "Mrs. Claus", "man dancing",
+    "woman dancing", "pregnant man", "pregnant woman", "men holding hands",
+    "women holding hands", "woman with headscarf", "breast-feeding",
+    "woman and man holding hands"))
+  expect_identical(table(s$gender)[c("female", "male", "mixed")],
+                   table(c(rep("female", 7L), rep("male", 5L), "mixed")))
+  # the help page names breast-feeding as the one the list takes from
+  # emojibase where Unicode's name says nothing
+  expect_match(rd_flat("emoji_decompose"), "breast-feeding", fixed = TRUE)
+})
+
+test_that("the skin tones and genders of the example corpus are pinned", {
+  st <- emoji_skin_tone(oasst_messages, text)
+  expect_identical(c(sum(st$.emoji_n_modifiable), sum(st$.emoji_n_modified)),
+                   c(181L, 42L))
+  expect_identical(
+    vapply(paste0(".emoji_n_", tidyEmoji:::.emoji_tone_levels),
+           function(cl) sum(st[[cl]]), integer(1), USE.NAMES = FALSE),
+    c(17L, 21L, 2L, 2L, 0L))
+  expect_match(rd_flat("emoji_skin_tone"), "23.2% of 181", fixed = TRUE)
+  g <- emoji_gender(oasst_messages, text)
+  expect_identical(
+    c(sum(g$.emoji_n_gender_variable), sum(g$.emoji_n_female),
+      sum(g$.emoji_n_male), sum(g$.emoji_n_neutral), sum(g$.emoji_n_mixed)),
+    c(75L, 40L, 26L, 16L, 2L))
+})
+
+# Shared by the sweep and its CRAN twin: the row counts, and whether to take
+# the cold-cache and locale axes too
+check_decompose_contracts <- function(full_axes) {
+  x <- c(cp(0x1F44D, 0x1F3FD), cp(0x1F3C3, 0x200D, 0x2640, 0xFE0F), "abc", NA)
+  sig <- function(z) vapply(z, function(v) class(v)[1L], character(1))
+  full <- emoji_decompose(x)
+  long <- emoji_decompose(x, long = TRUE)
+  for (k in c(0L, 1L, 2L, 4L)) {
+    out <- emoji_decompose(x[seq_len(k)])
+    expect_identical(sig(out), sig(full), info = k)
+    expect_identical(nrow(out), k)
+    lo <- emoji_decompose(x[seq_len(k)], long = TRUE)
+    expect_identical(sig(lo), sig(long), info = k)
+    for (cl in c(names(out), names(lo))) {
+      expect_null(names(out[[cl]]), info = paste(k, cl))
+      expect_null(names(lo[[cl]]), info = paste(k, cl))
+    }
+  }
+  # a factor reads as its labels, a "bytes" string is refused, a cold cache
+  # answers as a warm one, and the locale does not matter
+  expect_identical(emoji_decompose(factor(x)), full)
+  b <- paste0("x", cp(0x1F600))
+  Encoding(b) <- "bytes"
+  expect_error(emoji_decompose(b), "bytes")
+  if (!full_axes) return(invisible())
+  cache <- tidyEmoji:::.tidyEmoji_cache
+  saved <- as.list(cache, all.names = TRUE)
+  rm(list = ls(cache, all.names = TRUE), envir = cache)
+  cold <- emoji_decompose(x)
+  for (nm in names(saved)) assign(nm, saved[[nm]], envir = cache)
+  expect_identical(cold, full)
+  old <- Sys.getlocale("LC_CTYPE")
+  for (loc in c("C", "tr_TR.UTF-8", "en_US.UTF-8")) {
+    if (!nzchar(suppressWarnings(Sys.setlocale("LC_CTYPE", loc)))) next
+    there <- emoji_decompose(x)
+    suppressWarnings(Sys.setlocale("LC_CTYPE", old))
+    expect_identical(there, full, info = loc)
+  }
+  suppressWarnings(Sys.setlocale("LC_CTYPE", old))
+}
+
+test_that("emoji_decompose() holds the contracts every vector function does", {
+  skip_sweep(twin = "emoji_decompose() keeps one signature at every length")
+  check_decompose_contracts(TRUE)
+})
+
+test_that("emoji_decompose() keeps one signature at every length", {
+  check_decompose_contracts(FALSE)
 })

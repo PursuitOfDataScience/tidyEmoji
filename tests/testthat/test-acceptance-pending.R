@@ -11,7 +11,8 @@
 # the regression file for the version that shipped it and delete the guard.
 # 0.6.0 moved six out this way: emoji_country(), emoji_coverage(),
 # presentation = "any", emoji_keywords(), as_emoji_canonical() and
-# emoji_identical(), all now in test-regression-0.6.0.R.
+# emoji_identical(), all now in test-regression-0.6.0.R; 0.7.0 moved
+# emoji_skin_tone()'s to test-regression-0.7.0.R.
 
 smile <- intToUtf8(0x1F600)
 party <- intToUtf8(0x1F389)
@@ -20,17 +21,6 @@ has_verb <- function(nm) {
   nm %in% getNamespaceExports("tidyEmoji")
 }
 
-
-test_that("an orphan skin-tone modifier is accounted for, not counted", {
-  skip_if_not(has_verb("emoji_skin_tone"),
-              "emoji_skin_tone() is not implemented yet")
-  # A tone modifier on a base that cannot take one. 0.6.0 stopped counting
-  # the swatch as an emoji; the identity verbs still have to report it.
-  orphan <- paste0(smile, intToUtf8(0x1F3FB))
-  out <- emoji_skin_tone(tibble::tibble(text = paste("a", orphan, "b")), text)
-  expect_equal(out$.emoji_n_orphan_modifiers[1], 1L)
-  expect_equal(out$.emoji_n_modified[1], 0L)
-})
 
 test_that("emoji_runs() segments spans and flags reduplication", {
   skip_if_not(has_verb("emoji_runs"), "emoji_runs() is not implemented yet")

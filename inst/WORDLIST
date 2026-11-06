@@ -5,6 +5,7 @@ AFINN
 Alsaif
 alt
 Anagnostidis
+analyzing
 Analyzing
 arg
 arXiv
@@ -27,6 +28,7 @@ CMD
 codecov
 codepoint
 Codepoint
+color
 confounders
 CQ
 CRAN's
@@ -34,6 +36,7 @@ crosswalk
 Crosswalk
 crosswalk's
 crosswalks
+CSCW
 CSVs
 ctype
 Cui
@@ -54,6 +57,7 @@ eDiscovery
 EMNLP
 EMODIS
 emoji's
+emojibase
 EmojiSentR
 EmojiSentR's
 emojize
@@ -76,12 +80,14 @@ ggraph
 Gini
 glibc
 glibc's
+Goldwater
 Gopinadh
 GraphQL
 grep
 grepped
 hardcoded
 hardcodes
+HCI
 Herrera
 ICWSM
 idf
@@ -108,6 +114,7 @@ LLM
 LLMs
 losslessly
 Louvain
+Magdy
 Mahdi
 mahjong
 md
@@ -227,6 +234,7 @@ UTS
 vader
 VADER's
 valenced
+WildChat
 writable
 XK
 Yi

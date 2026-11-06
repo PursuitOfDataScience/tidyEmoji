@@ -5895,7 +5895,11 @@ check_first_call <- function(stride) {
     quote(emoji_sanitize(d, text, policy = "shortcode")),
     quote(emoji_version_profile(d, text)),
     quote(emoji_trend(d, text, when)), quote(emoji_adoption_lag(d, text, when)),
-    quote(emoji_incongruity(d, text, sc, scale = "none"))
+    quote(emoji_incongruity(d, text, sc, scale = "none")),
+    # 0.7.0's exports
+    quote(emoji_hidden(d, text)), quote(emoji_decompose(A)),
+    quote(emoji_skin_tone(d, text)), quote(emoji_gender(d, text)),
+    quote(emoji_retone(d, text, tone = "dark"))
   )
   for (e in calls[seq(1L, length(calls), by = stride)]) {
     rm(list = ls(cache, all.names = TRUE), envir = cache)

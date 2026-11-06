@@ -222,6 +222,33 @@ study of the move from emoticons to emoji, which needs both in one
 denominator, has to count the emoticons itself.
 }
 
+\section{Hidden payloads}{
+
+A run of variation selectors after an emoji, or a string of Unicode tag
+characters, renders as nothing and can carry a message to whatever model
+reads the text next; \code{\link[=emoji_hidden]{emoji_hidden()}} reports and decodes them, and
+\code{\link[=emoji_sanitize]{emoji_sanitize()}} and \code{\link[=emoji_to_text]{emoji_to_text()}} remove them by default. The rule
+is exact rather than a heuristic: a selector is hidden when it follows
+another, when an ideographic selector follows no CJK ideograph or when one
+of \code{U+FE00} to \code{U+FE0D} forms no standardized variation sequence, and a tag
+character when it is outside a well-formed flag.
+}
+
+\section{Glyphs, not people}{
+
+\code{\link[=emoji_decompose]{emoji_decompose()}}, \code{\link[=emoji_skin_tone]{emoji_skin_tone()}}, \code{\link[=emoji_gender]{emoji_gender()}} and
+\code{\link[=emoji_retone]{emoji_retone()}} describe what a glyph depicts: the tone it is written in,
+the gender it is drawn with, its hair. They never infer the skin colour,
+gender or identity of anyone who wrote or read it. A tone is a keyboard
+setting on some platforms and an active choice on others, a gender is a
+design that every vendor draws differently, and a neutral form is
+Unicode's, not a person's. Writers mostly choose a tone close to their own
+(Robertson, Magdy and Goldwater 2018), which makes tones informative about
+writers only in aggregate, and readers infer identity even from the
+default yellow (CSCW 2021), which is exactly why a tool must not. Report
+counts of glyphs with their denominators, and leave people out of it.
+}
+
 \section{Which spelling comes back}{
 
 Two spellings of one emoji, differing only by \code{U+FE0F}, are one emoji to
