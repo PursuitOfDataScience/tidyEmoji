@@ -42,6 +42,27 @@
   gains `.emoji_n_hidden` and `.emoji_hidden_bytes`**, added at the end.
   0.6.0 reported four bytes for an emoji that carried 112 more.
 
+### Example data
+
+- **The example corpus is now a sample of OpenAssistant Conversations
+  (OASST2), bundled as `oasst_messages` and `oasst_reactions`.** The
+  tweet corpus it replaces, `inst/extdata/ata_tweets.csv`, carried
+  offensive language into the introduction vignette’s first table and
+  had no recorded source, date or licence; its full post texts were also
+  more than the platform’s terms let a package redistribute, so it is
+  removed. The new data is Apache-2.0, pinned to a dataset revision and
+  rebuilt offline by `data-raw/oasst.R`: 1,485 messages written by
+  people between January and October 2023 in 17 languages, half of them
+  carrying emoji, each screened for toxicity, slurs, personal data and
+  length, with the screens’ counts on
+  [`?oasst_messages`](https://pursuitofdatascience.github.io/tidyEmoji/reference/oasst_messages.md).
+  `oasst_reactions` holds the reaction tally on the same messages,
+  interface skip actions and all.
+- **Every figure the help pages and vignettes quoted from the old corpus
+  is re-derived on the new one**, and the time verbs’ examples use real
+  dates instead of fabricated ones. Figures in the sections below this
+  one, for earlier releases, refer to the retired corpus.
+
 ### Lifecycle
 
 - **[`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
