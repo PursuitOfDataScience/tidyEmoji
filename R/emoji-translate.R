@@ -19,6 +19,10 @@
 #'   exactly `:shortcode:`; a `wrap` that does not produce that token leaves
 #'   the shortcode in the text as an ordinary word, silently. See
 #'   [emoji_sanitize()] for the cases.
+#' @param hidden What to do with hidden payloads, as in [emoji_sanitize()]:
+#'   `"remove"` (the default) deletes the variation selectors and tag
+#'   characters [emoji_hidden()] reports, and `"keep"` leaves them, as every
+#'   version before 0.7.0 did.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`, and emoji with no known name are left
 #'   in place unchanged.
@@ -32,9 +36,11 @@
 #' @concept accessibility
 #' @export
 emoji_to_text <- function(data, text, format = c("name", "shortcode"),
-                          wrap = ":{x}:", presentation = "emoji") {
+                          wrap = ":{x}:", presentation = "emoji",
+                          hidden = c("remove", "keep")) {
   format <- .emoji_match_arg(format, c("name", "shortcode"), "format")
   presentation <- .emoji_check_presentation(presentation)
+  hidden <- .emoji_check_hidden(hidden)
   if (format == "shortcode" &&
       (!is.character(wrap) || length(wrap) != 1L || is.na(wrap) ||
          !grepl("{x}", wrap, fixed = TRUE))) {
@@ -50,6 +56,9 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   # inside whatever the user does with the column next.
   if (format == "shortcode") .emoji_check_string(wrap, "wrap")
   v <- .emoji_text_col(data, {{ text }})
+  # hidden payloads go first, as in emoji_sanitize(): the rewrite is of the
+  # text a reader sees
+  if (hidden == "remove") v <- .emoji_hidden_remove(v)
   was_na <- is.na(v)
   v[was_na] <- ""
 

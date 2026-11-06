@@ -49,7 +49,9 @@
 #'   regional indicators that spell no country, such as `U+1F1FD U+1F1FD`
 #'   ("XX") or a lone indicator. Both were counted as emoji before 0.6.0, so
 #'   they are what to look at when a corpus reports fewer emoji than it used
-#'   to. See the *Detection* section of [tidyEmoji].
+#'   to. See the *Detection* section of [tidyEmoji]. `n_hidden`, unlike those
+#'   two, counts *entries*: the ones carrying a hidden payload, a code point
+#'   [emoji_hidden()] reports and [emoji_sanitize()] removes by default.
 #' @seealso [emoji_filter()] to keep the emoji-bearing rows themselves;
 #'   [emoji_coverage()] for what a lexicon can score of them.
 #' @examples
@@ -82,7 +84,8 @@ emoji_summary <- function(data, text, presentation = "emoji") {
     n_with_emoji = sum(has, na.rm = TRUE),
     n_total = length(v),
     n_orphan_components = n_kind(.emoji_kind_component),
-    n_invalid_flags = n_kind(.emoji_kind_flag)
+    n_invalid_flags = n_kind(.emoji_kind_flag),
+    n_hidden = sum(lengths(.emoji_hidden_scan(v)$pos) > 0L)
   )
 }
 

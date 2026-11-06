@@ -391,19 +391,52 @@ test_that("'any' only ever adds occurrences, on a share of the corpus", {
 
 test_that("every verb that reads text takes presentation, defaulting to emoji", {
   verbs <- text_verbs()
-  # emoji_tweets() is deprecated and keeps its signature; text_to_emoji()
-  # reads shortcodes, not glyphs; the flag verbs read regional indicators and
-  # tag sequences, which have no text-presentation form
+  # emoji_tweets() is defunct and keeps its signature; text_to_emoji() reads
+  # shortcodes, not glyphs; the flag verbs read regional indicators and tag
+  # sequences, which have no text-presentation form; and emoji_hidden()'s two
+  # rules do not depend on what the caller counts as an emoji (0.7.0)
   exempt <- c("emoji_tweets", "text_to_emoji", "emoji_country",
-              "emoji_subdivision")
+              "emoji_subdivision", "emoji_hidden")
   expect_gt(length(verbs), 35L)
+  # Where `presentation` stood in each verb in 0.6.0, when it was always the
+  # last argument. 0.7.0 appends its new arguments after it, by rule, so no
+  # positional call written for 0.6.0 changes meaning: the position may not
+  # move, and anything after it must be one of the arguments 0.7.0 named.
+  pos_060 <- c(
+    emoji_adoption_lag = 4L, emoji_categorize = 3L, emoji_collocations = 6L,
+    emoji_congruence = 8L, emoji_context = 6L, emoji_cooccurrence = 6L,
+    emoji_coverage = 4L, emoji_density = 3L, emoji_dfm = 5L,
+    emoji_emotion = 5L, emoji_emotion_label = 4L, emoji_extract_nest = 3L,
+    emoji_extract_unnest = 3L, emoji_faceness = 3L, emoji_filter = 3L,
+    emoji_flag_ambiguous = 5L, emoji_frequency = 3L, emoji_incongruity = 8L,
+    emoji_incongruity_profile = 9L, emoji_ngrams = 5L, emoji_pairs = 7L,
+    emoji_position = 3L, emoji_ratio = 3L, emoji_risk = 5L,
+    emoji_sanitize = 6L, emoji_score = 6L, emoji_seasonality = 5L,
+    emoji_sentiment = 5L, emoji_summary = 3L, emoji_to_text = 5L,
+    emoji_token_cost = 4L, emoji_tokens = 3L, emoji_trend = 7L,
+    emoji_turnover = 6L, emoji_type = 3L, emoji_version_profile = 3L,
+    top_n_emojis = 6L)
+  added_070 <- c("hidden")
   for (v in setdiff(verbs, exempt)) {
     f <- formals(get(v, envir = ns))
     expect_true("presentation" %in% names(f), info = v)
     expect_identical(f$presentation, "emoji", info = v)
-    # it is the last argument, so no positional call written for 0.5.0 moves
-    expect_identical(utils::tail(names(f), 1L), "presentation", info = v)
+    at <- match("presentation", names(f))
+    if (v %in% names(pos_060)) {
+      expect_identical(at, pos_060[[v]], info = v)
+      expect_true(all(utils::tail(names(f), -at) %in% added_070), info = v)
+    } else {
+      # a verb new in 0.7.0 puts it last, as every verb did in 0.6.0
+      expect_identical(utils::tail(names(f), 1L), "presentation", info = v)
+    }
   }
+  # the verbs that gained an argument after it are exactly the two that
+  # rewrite text and now remove hidden payloads
+  gained <- setdiff(verbs, exempt)[vapply(setdiff(verbs, exempt), function(v) {
+    nm <- names(formals(get(v, envir = ns)))
+    match("presentation", nm) < length(nm)
+  }, logical(1))]
+  expect_setequal(gained, c("emoji_sanitize", "emoji_to_text"))
   expect_error(emoji_summary(data.frame(text = "a"), text,
                              presentation = "emojis"),
                "`presentation`")

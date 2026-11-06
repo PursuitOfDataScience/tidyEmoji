@@ -56,7 +56,9 @@ follows a base that cannot take one; \code{n_invalid_flags} is the runs of
 regional indicators that spell no country, such as \verb{U+1F1FD U+1F1FD}
 ("XX") or a lone indicator. Both were counted as emoji before 0.6.0, so
 they are what to look at when a corpus reports fewer emoji than it used
-to. See the \emph{Detection} section of \link{tidyEmoji}.
+to. See the \emph{Detection} section of \link{tidyEmoji}. \code{n_hidden}, unlike those
+two, counts \emph{entries}: the ones carrying a hidden payload, a code point
+\code{\link[=emoji_hidden]{emoji_hidden()}} reports and \code{\link[=emoji_sanitize]{emoji_sanitize()}} removes by default.
 }
 \description{
 \code{emoji_summary()} reports how many entries in a text column contain at least

@@ -51,10 +51,10 @@ it: do not skip it.
 
 ## The skip inventory
 
-Run as CRAN runs it, **56** tests skip on R 4.4.1, and none of them
+Run as CRAN runs it, **58** tests skip on R 4.4.1, and none of them
 is a test that might fail.
 
-* **39 are sweeps, behind `skip_sweep()`**: the exhaustive tests (every
+* **41 are sweeps, behind `skip_sweep()`**: the exhaustive tests (every
   catalogue spelling, every verb, hundreds of random strings) that took most
   of CRAN's check time before 0.7.0. Each names its *twin*, a test that does
   run on CRAN and asserts the same property over a deterministic sample of

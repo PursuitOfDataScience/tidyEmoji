@@ -10,7 +10,8 @@ emoji_sanitize(
   policy = "keep",
   placeholder = "[emoji]",
   wrap = ":{x}:",
-  presentation = "emoji"
+  presentation = "emoji",
+  hidden = c("remove", "keep")
 )
 }
 \arguments{
@@ -62,6 +63,12 @@ one number. Every verb that counts, scores or rewrites the emoji in a
 text column takes this argument, so counts still agree across the
 package for whichever value you use. The flag verbs do not need it,
 since a flag has no text-presentation form.}
+
+\item{hidden}{What to do with hidden payloads: \code{"remove"} (the default,
+under every policy) deletes every variation selector and tag character
+that carries no visible meaning, the code points \code{\link[=emoji_hidden]{emoji_hidden()}}
+reports; \code{"keep"} leaves them, which is what every version before 0.7.0
+did. See \emph{Hidden payloads} below.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same
@@ -135,6 +142,7 @@ put the emoji back after the model call.\tabular{llll}{
    \code{"name"} \tab \verb{great grinning face work} \tab no \tab the delimiters; the name is now ordinary words \cr
    \code{"placeholder"} \tab \verb{great [emoji] work} \tab no \tab \emph{which} emoji -- the position survives \cr
    \code{"strip"} \tab \verb{great work} \tab no \tab that there was an emoji at all \cr
+   any, with \code{hidden = "remove"} \tab the same, less any hidden payload \tab no \tab the payload, by design \cr
 }
 
 
@@ -215,6 +223,23 @@ emoji was here" as a model feature and not enough to reconstruct the text.
 is what a screen reader announces.
 }
 
+\section{Hidden payloads}{
+
+A run of variation selectors after an emoji, or a string of Unicode tag
+characters, is invisible in every renderer and survives copy and paste,
+and each of those code points can carry a byte of a message to whatever
+reads the text next. That is the best-documented emoji attack on language
+model pipelines: smuggling a prompt this way evaded six production
+guardrails in up to 100\% of attempts (Hackett et al., 2025). Since 0.7.0
+every policy, \code{"keep"} included, deletes those code points by default:
+\code{"keep"} means keep the emoji, and a payload is not part of any emoji. The
+rules are exact, so a lone \code{U+FE0E} or \code{U+FE0F}, the selectors of Japanese
+names, Unicode's standardized variants and the England, Scotland and Wales
+flags all stay. Text with nothing hidden in it comes back byte for byte as
+before; \code{hidden = "keep"} restores 0.6.0 exactly. \code{\link[=emoji_hidden]{emoji_hidden()}} reports
+what was there, and decodes it.
+}
+
 \section{Why a policy, and why written down}{
 
 An emoji reaching a language model unexamined is a measurable risk rather
@@ -238,6 +263,11 @@ emoji_sanitize(df, text, policy = "name")
 emoji_sanitize(df, text, policy = "placeholder")
 }
 \references{
+Hackett W, Birch L, Trawicki S, Suri N, Garraghan P (2025).
+Bypassing LLM Guardrails: An Empirical Analysis of Evasion Attacks
+against Prompt Injection and Jailbreak Detection Systems.
+arXiv:2504.11168.
+
 Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
 Context-Dependent Emoji Disambiguation in Large Language Models.
 arXiv:2511.07193.

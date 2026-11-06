@@ -9,7 +9,8 @@ emoji_to_text(
   text,
   format = c("name", "shortcode"),
   wrap = ":{x}:",
-  presentation = "emoji"
+  presentation = "emoji",
+  hidden = c("remove", "keep")
 )
 }
 \arguments{
@@ -64,6 +65,11 @@ one number. Every verb that counts, scores or rewrites the emoji in a
 text column takes this argument, so counts still agree across the
 package for whichever value you use. The flag verbs do not need it,
 since a flag has no text-presentation form.}
+
+\item{hidden}{What to do with hidden payloads, as in \code{\link[=emoji_sanitize]{emoji_sanitize()}}:
+\code{"remove"} (the default) deletes the variation selectors and tag
+characters \code{\link[=emoji_hidden]{emoji_hidden()}} reports, and \code{"keep"} leaves them, as every
+version before 0.7.0 did.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same

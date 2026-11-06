@@ -13,7 +13,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags"]
+          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
         },
         {
           "type": "integer",
@@ -26,7 +26,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags"]
+              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
             }
           },
           "value": [
@@ -39,6 +39,11 @@
               "type": "integer",
               "attributes": {},
               "value": [2000]
+            },
+            {
+              "type": "integer",
+              "attributes": {},
+              "value": [0]
             },
             {
               "type": "integer",
@@ -70,7 +75,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags"]
+          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
         },
         {
           "type": "integer",
@@ -83,7 +88,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags"]
+              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
             }
           },
           "value": [
@@ -106,6 +111,11 @@
               "type": "integer",
               "attributes": {},
               "value": [1]
+            },
+            {
+              "type": "integer",
+              "attributes": {},
+              "value": [0]
             }
           ]
         }

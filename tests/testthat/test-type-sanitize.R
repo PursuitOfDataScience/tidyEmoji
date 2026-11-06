@@ -154,7 +154,11 @@ test_that("emoji_token_cost measures bytes, code points and graphemes", {
   df <- data.frame(text = c(paste0("hi ", grin), family, "plain", NA))
   out <- emoji_token_cost(df, text)
   expect_named(out, c("text", ".emoji_n", ".emoji_bytes", ".emoji_codepoints",
-                      ".emoji_graphemes", ".emoji_token_estimate"))
+                      ".emoji_graphemes", ".emoji_token_estimate",
+                      ".emoji_n_hidden", ".emoji_hidden_bytes"))
+  # nothing is hidden in ordinary text (0.7.0's two columns)
+  expect_equal(out$.emoji_n_hidden, c(0L, 0L, 0L, 0L))
+  expect_equal(out$.emoji_hidden_bytes, c(0L, 0L, 0L, 0L))
   expect_equal(out$.emoji_n, c(1L, 1L, 0L, 0L))
   expect_equal(out$.emoji_bytes, c(4L, 25L, 0L, 0L))
   expect_equal(out$.emoji_codepoints, c(1L, 7L, 0L, 0L))

@@ -92,6 +92,7 @@
 #' | `"name"` | `great grinning face work` | no | the delimiters; the name is now ordinary words |
 #' | `"placeholder"` | `great [emoji] work` | no | *which* emoji -- the position survives |
 #' | `"strip"` | `great work` | no | that there was an emoji at all |
+#' | any, with `hidden = "remove"` | the same, less any hidden payload | no | the payload, by design |
 #'
 #' So if the pipeline has to restore emoji downstream, `"shortcode"` is the
 #' only policy that permits it, and it holds up on the awkward cases:
@@ -167,6 +168,21 @@
 #' `"name"` is the accessibility answer rather than the reversible one -- it
 #' is what a screen reader announces.
 #'
+#' @section Hidden payloads:
+#' A run of variation selectors after an emoji, or a string of Unicode tag
+#' characters, is invisible in every renderer and survives copy and paste,
+#' and each of those code points can carry a byte of a message to whatever
+#' reads the text next. That is the best-documented emoji attack on language
+#' model pipelines: smuggling a prompt this way evaded six production
+#' guardrails in up to 100% of attempts (Hackett et al., 2025). Since 0.7.0
+#' every policy, `"keep"` included, deletes those code points by default:
+#' `"keep"` means keep the emoji, and a payload is not part of any emoji. The
+#' rules are exact, so a lone `U+FE0E` or `U+FE0F`, the selectors of Japanese
+#' names, Unicode's standardized variants and the England, Scotland and Wales
+#' flags all stay. Text with nothing hidden in it comes back byte for byte as
+#' before; `hidden = "keep"` restores 0.6.0 exactly. [emoji_hidden()] reports
+#' what was there, and decodes it.
+#'
 #' @section Why a policy, and why written down:
 #' An emoji reaching a language model unexamined is a measurable risk rather
 #' than a matter of taste, and three independent lines of work now say so.
@@ -181,7 +197,12 @@
 #' (Gopinadh, 2026). None of these says which policy is right for
 #' a given pipeline; all of them say the choice is worth recording.
 #'
-#' @references Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
+#' @references Hackett W, Birch L, Trawicki S, Suri N, Garraghan P (2025).
+#'   Bypassing LLM Guardrails: An Empirical Analysis of Evasion Attacks
+#'   against Prompt Injection and Jailbreak Detection Systems.
+#'   arXiv:2504.11168.
+#'
+#'   Huang J, Yu N, Yi X (2025). EMODIS: A Benchmark for
 #'   Context-Dependent Emoji Disambiguation in Large Language Models.
 #'   arXiv:2511.07193.
 #'
@@ -201,6 +222,11 @@
 #' @param wrap Template for `policy = "shortcode"`, with `{x}` standing for the
 #'   shortcode. Default `":{x}:"`. Ignored under the other four policies, as
 #'   it is in [emoji_to_text()] for `format = "name"`.
+#' @param hidden What to do with hidden payloads: `"remove"` (the default,
+#'   under every policy) deletes every variation selector and tag character
+#'   that carries no visible meaning, the code points [emoji_hidden()]
+#'   reports; `"keep"` leaves them, which is what every version before 0.7.0
+#'   did. See *Hidden payloads* below.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`.
 #' @seealso `vignette("reversible-preprocessing", package = "tidyEmoji")`
@@ -217,9 +243,11 @@
 #' @export
 emoji_sanitize <- function(data, text, policy = "keep",
                            placeholder = "[emoji]", wrap = ":{x}:",
-                           presentation = "emoji") {
+                           presentation = "emoji",
+                           hidden = c("remove", "keep")) {
   policy <- .emoji_match_arg(policy, .emoji_sanitize_policies(), "policy")
   presentation <- .emoji_check_presentation(presentation)
+  hidden <- .emoji_check_hidden(hidden)
   # resolve the column even for "keep", so a typo is an error under every
   # policy rather than only under the ones that rewrite
   col_name <- .emoji_col_name(data, {{ text }})
@@ -231,15 +259,31 @@ emoji_sanitize <- function(data, text, policy = "keep",
     # tibble where every other policy refuses. A guard that one policy skips
     # is a guard the caller cannot rely on.
     .emoji_text_col(data, {{ text }})
-    return(.emoji_as_tibble(data))
+    out <- .emoji_as_tibble(data)
+    # "keep" keeps the emoji, and a hidden payload is not part of any emoji,
+    # so it goes under this policy too unless the caller asks otherwise. A
+    # column with nothing hidden in it is returned exactly as it came, type
+    # and all, which is every column 0.6.0 ever saw.
+    if (hidden == "remove") {
+      orig <- out[[col_name]]
+      clean <- .emoji_hidden_remove_col(orig)
+      if (!identical(clean, orig)) {
+        out[[col_name]] <- clean
+        out <- .emoji_regroup(out, col_name)
+      }
+    }
+    return(out)
   }
   if (policy %in% c("name", "shortcode")) {
     return(emoji_to_text(data, {{ text }}, format = policy, wrap = wrap,
-                         presentation = presentation))
+                         presentation = presentation, hidden = hidden))
   }
   if (policy == "placeholder") .emoji_check_string(placeholder, "placeholder")
 
   v <- .emoji_text_col(data, {{ text }})
+  # hidden payloads first, so the policy then works on text that is what a
+  # reader sees
+  if (hidden == "remove") v <- .emoji_hidden_remove(v)
   was_na <- is.na(v)
   v[was_na] <- ""
   # Every span, the stand-alone components and stray regional indicators D1
@@ -332,7 +376,12 @@ emoji_sanitize <- function(data, text, policy = "keep",
 #'   than read, since `lengths()` on one counts its columns rather than
 #'   its tokens.
 #' @return `data`, as a tibble, with added columns `.emoji_n`, `.emoji_bytes`,
-#'   `.emoji_codepoints`, `.emoji_graphemes` and `.emoji_token_estimate`.
+#'   `.emoji_codepoints`, `.emoji_graphemes` and `.emoji_token_estimate`,
+#'   and, since 0.7.0, `.emoji_n_hidden` and `.emoji_hidden_bytes`: the code
+#'   points riding invisibly in the row (see [emoji_hidden()]) and their
+#'   UTF-8 bytes. They reach a tokenizer and belong to no emoji, so
+#'   `.emoji_bytes` and the token estimate leave them out, as they always
+#'   did; add the two to see the whole bill.
 #' @seealso [emoji_sanitize()] for acting on the answer; [emoji_ratio()] for
 #'   the share of the text that is emoji;
 #'   `vignette("reversible-preprocessing", package = "tidyEmoji")` for the
@@ -404,11 +453,20 @@ emoji_token_cost <- function(data, text, tokenizer = NULL,
     est[!nzchar(joined)] <- 0L
   }
 
+  hid <- .emoji_hidden_scan(v)
+  hid_bytes <- vapply(seq_along(v), function(i) {
+    p <- hid$pos[[i]]
+    if (!length(p)) return(0L)
+    as.integer(sum(ifelse(hid$cps[[i]][p] > 0xFFFFL, 4L, 3L)))
+  }, integer(1))
+
   out <- .emoji_as_tibble(data)
   out$.emoji_n <- as.integer(lengths(lst))
   out$.emoji_bytes <- n_bytes
   out$.emoji_codepoints <- n_chars
   out$.emoji_graphemes <- as.integer(lengths(lst))
   out$.emoji_token_estimate <- est
+  out$.emoji_n_hidden <- as.integer(lengths(hid$pos))
+  out$.emoji_hidden_bytes <- hid_bytes
   out
 }

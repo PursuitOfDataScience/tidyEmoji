@@ -59,7 +59,7 @@ that drop straight into a `dplyr`/`ggplot2` workflow:
 | Time | `emoji_trend()`, `emoji_turnover()`, `emoji_seasonality()`, `emoji_version_profile()`, `emoji_adoption_lag()` |
 | Text-emoji mismatch | `emoji_incongruity()`, `emoji_congruence()`, `emoji_incongruity_profile()` |
 | Model features | `emoji_dfm()` |
-| LLM pipelines | `emoji_sanitize()`, `emoji_token_cost()` |
+| LLM pipelines | `emoji_sanitize()`, `emoji_token_cost()`, `emoji_hidden()` |
 | Provenance | `emoji_provenance()`, `emoji_unicode_version()`, `emoji_unicode_releases()` |
 
 ### Find the verb for your question
@@ -85,6 +85,7 @@ other index. Every help page also carries the matching keyword, so
 | What will a screen reader announce? (accessibility) | `emoji_to_text()`, `as_emoji_name()` |
 | Faces or objects? (crisis communication, marketing) | `emoji_type()`, `emoji_faceness()` |
 | What should a language-model pipeline do with emoji? | `emoji_sanitize()`, `emoji_token_cost()` |
+| Is something hidden in this text? (prompt injection, phishing) | `emoji_hidden()`, `emoji_sanitize()` |
 | How does a model's own output use emoji? (LLM output auditing) | `emoji_ratio()`, `emoji_position()` |
 | What features does a classifier need? (stylometry, ML) | `emoji_dfm()` |
 | Which catalogue and lexicons produced this result? | `emoji_provenance()` |

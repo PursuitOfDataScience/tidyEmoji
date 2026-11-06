@@ -78,6 +78,13 @@ test data file:
 
 Source:    emoji-test.txt, Unicode Emoji 18.0 (file dated 2026-04-30),
            https://www.unicode.org/Public/emoji/latest/emoji-test.txt
+
+The table of standardized variation sequences the hidden-payload scanner
+reads (since 0.7.0, also in R/sysdata.rda) is derived from the Unicode
+Character Database:
+
+Source:    StandardizedVariants.txt, Unicode 18.0.0 (file dated 2026-07-29),
+           https://www.unicode.org/Public/18.0.0/ucd/StandardizedVariants.txt
 Rebuilt:   data-raw/crosswalks.R in the package's source repository
 Licence:   Unicode License V3, reproduced below.
            https://www.unicode.org/license.txt

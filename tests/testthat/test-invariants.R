@@ -5328,22 +5328,28 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   skip_if_not_installed("tidyr")
 
   old <- Sys.getenv(c("TIDYEMOJI_WRITE", "TIDYEMOJI_EMOJI_TEST",
-                      "TIDYEMOJI_FETCH"), unset = NA)
+                      "TIDYEMOJI_FETCH", "TIDYEMOJI_STD_VARIANTS"),
+                    unset = NA)
   on.exit({
     for (v in names(old)) {
       if (is.na(old[[v]])) Sys.unsetenv(v) else
         do.call(Sys.setenv, stats::setNames(list(old[[v]]), v))
     }
   }, add = TRUE)
+  # the UCD's standardized variation sequences (0.7.0), read beside it
+  sv <- testthat::test_path("..", "..", "data-raw", "StandardizedVariants.txt")
+  skip_if(!file.exists(sv), "data-raw/ not available")
   Sys.setenv(TIDYEMOJI_WRITE = "false",
              TIDYEMOJI_EMOJI_TEST = normalizePath(input),
+             TIDYEMOJI_STD_VARIANTS = normalizePath(sv),
              TIDYEMOJI_FETCH = "false")
   env <- new.env(parent = globalenv())
   suppressMessages(sys.source(script, envir = env))
 
   ns <- asNamespace("tidyEmoji")
   for (nm in c("emoji_unicode_crosswalk", "category_unicode_crosswalk",
-               ".emoji_catalogue", ".emoji_catalogue_meta")) {
+               ".emoji_catalogue", ".emoji_catalogue_meta",
+               ".emoji_std_variants", ".emoji_std_variants_meta")) {
     expect_identical(get(nm, envir = env), get(nm, envir = ns), info = nm)
   }
   # the version recorded is the one the file says it is

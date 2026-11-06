@@ -59,7 +59,12 @@ since a flag has no text-presentation form.}
 }
 \value{
 \code{data}, as a tibble, with added columns \code{.emoji_n}, \code{.emoji_bytes},
-\code{.emoji_codepoints}, \code{.emoji_graphemes} and \code{.emoji_token_estimate}.
+\code{.emoji_codepoints}, \code{.emoji_graphemes} and \code{.emoji_token_estimate},
+and, since 0.7.0, \code{.emoji_n_hidden} and \code{.emoji_hidden_bytes}: the code
+points riding invisibly in the row (see \code{\link[=emoji_hidden]{emoji_hidden()}}) and their
+UTF-8 bytes. They reach a tokenizer and belong to no emoji, so
+\code{.emoji_bytes} and the token estimate leave them out, as they always
+did; add the two to see the whole bill.
 }
 \description{
 \code{emoji_token_cost()} measures the size of the emoji in each row: bytes, code

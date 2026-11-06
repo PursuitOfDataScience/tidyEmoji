@@ -125,6 +125,26 @@ Two policies survive, and only one of them is a real preprocessing step:
 the only policy that both removes the emoji from the model's input and lets
 you reconstruct the user's text afterwards.
 
+One thing no rung restores, by design: a hidden payload. A run of variation
+selectors after an emoji, or a string of Unicode tag characters, is
+invisible, survives copy and paste, and can carry a message to the model.
+Since 0.7.0 every policy, `"keep"` included, deletes those code points by
+default, and a round trip cannot bring them back. Text with nothing hidden in
+it, which is all of the text above, is untouched; `emoji_hidden()` says what
+was there, and `hidden = "keep"` leaves it.
+
+```{r}
+# "yes" hidden after a thumbs up, one variation selector per byte
+hide <- function(s) {
+  b <- as.integer(charToRaw(s))
+  intToUtf8(ifelse(b < 16L, 0xFE00L + b, 0xE0100L + b - 16L))
+}
+sneaky <- tibble::tibble(text = paste0("ok ", intToUtf8(0x1F44D), hide("yes")))
+emoji_hidden(sneaky, text)$.emoji_hidden_payload
+nchar(sneaky$text)
+nchar(emoji_sanitize(sneaky, text, policy = "keep")$text)
+```
+
 ### It holds on the awkward cases
 
 ```{r}

@@ -3,7 +3,9 @@
 # Builds the emoji catalogue tidyEmoji detects and joins against, and the two
 # crosswalk datasets derived from it:
 #   * R/sysdata.rda              the catalogue itself (.emoji_catalogue) and
-#                                where it came from (.emoji_catalogue_meta)
+#                                where it came from (.emoji_catalogue_meta),
+#                                and the standardized variation sequences the
+#                                hidden-payload scanner reads (0.7.0)
 #   * emoji_unicode_crosswalk    one row per (shortcode, glyph) pair
 #   * category_unicode_crosswalk one row per category, glyphs collapsed by "|"
 #
@@ -136,6 +138,52 @@ if (!isTRUE(all.equal(top, as.numeric(file_version)))) {
   rows = nrow(.emoji_catalogue)
 )
 
+# Standardized variation sequences (0.7.0) -----------------------------------
+# The hidden-payload scanner (R/emoji-hidden.R) calls a variation selector in
+# U+FE00..U+FE0D hidden when the sequence it forms with the code point before
+# it is not one Unicode defines, and StandardizedVariants.txt in the UCD is
+# the list of the ones it defines (mathematical symbols, CJK compatibility
+# forms, Mongolian, Phags-pa and the rest). U+FE0E and U+FE0F are not in it:
+# emoji presentation sequences are in emoji-variation-sequences.txt, and a
+# single one of those two is never hidden anyway. Read from the UCD of the
+# same Unicode version as the catalogue, committed beside it, and refreshed
+# with it.
+sv_input <- Sys.getenv("TIDYEMOJI_STD_VARIANTS",
+                       file.path("data-raw", "StandardizedVariants.txt"))
+if (identical(tolower(Sys.getenv("TIDYEMOJI_FETCH")), "true")) {
+  utils::download.file(
+    paste0("https://www.unicode.org/Public/", file_version,
+           ".0/ucd/StandardizedVariants.txt"),
+    sv_input, mode = "wb", quiet = TRUE)
+}
+stopifnot(file.exists(sv_input))
+sv_lines <- readLines(sv_input, encoding = "UTF-8", warn = FALSE)
+sv_head <- sv_lines[1L]
+if (!grepl(paste0("^# StandardizedVariants-", file_version, "\\.0\\.txt$"),
+           sv_head)) {
+  stop("StandardizedVariants.txt is not the UCD file for Unicode ",
+       file_version, ".0: its first line is ", sv_head)
+}
+sv_data <- grep("^[0-9A-F]+ [0-9A-F]+;", sv_lines, value = TRUE)
+sv_pair <- sub(";.*$", "", sv_data)
+sv_cps <- lapply(strsplit(trimws(sv_pair), " ", fixed = TRUE), strtoi, 16L)
+stopifnot(all(lengths(sv_cps) == 2L))
+sv_vs <- vapply(sv_cps, `[[`, integer(1), 2L)
+keep <- sv_vs >= 0xFE00L & sv_vs <= 0xFE0DL
+# "base selector" in upper-case hex without padding, the shape emoji_key()
+# writes, so a lookup is one paste() away
+.emoji_std_variants <- unique(vapply(sv_cps[keep], function(c) {
+  paste(sprintf("%X", c), collapse = " ")
+}, character(1)))
+.emoji_std_variants_meta <- list(
+  file = sub("^# ", "", sv_head),
+  date = sub("^# Date: ([0-9-]+).*$", "\\1",
+             grep("^# Date:", sv_lines, value = TRUE)[1L]),
+  sequences = length(.emoji_std_variants)
+)
+message("standardized variants:      ", .emoji_std_variants_meta$file, ", ",
+        length(.emoji_std_variants), " sequences with U+FE00..U+FE0D")
+
 # Vocabulary -------------------------------------------------------------------
 # The GitHub-style aliases, by exact spelling. A glyph newer than {emoji} has
 # none, and keeps none: shortcodes are not invented here.
@@ -180,7 +228,8 @@ message("category_unicode_crosswalk: ", nrow(category_unicode_crosswalk),
         " rows")
 
 if (!identical(tolower(Sys.getenv("TIDYEMOJI_WRITE")), "false")) {
-  save(.emoji_catalogue, .emoji_catalogue_meta,
+  save(.emoji_catalogue, .emoji_catalogue_meta, .emoji_std_variants,
+       .emoji_std_variants_meta,
        file = file.path("R", "sysdata.rda"), compress = "xz")
   save(emoji_unicode_crosswalk,
        file = file.path("data", "emoji_unicode_crosswalk.rda"), compress = "xz")
