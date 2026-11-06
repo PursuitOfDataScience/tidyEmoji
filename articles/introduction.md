@@ -183,8 +183,9 @@ keeps only the rows whose text contains at least one emoji, preserving
 every original column. This is useful when you want to compare
 emoji-bearing and emoji-free text, or restrict an analysis to the emoji
 subset.
-([`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
-is a deprecated synonym: it warns, and it is removed in 0.7.0.)
+([`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md),
+its old name, is defunct: since 0.7.0 it stops with an error naming
+[`emoji_filter()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md).)
 
 ``` r
 

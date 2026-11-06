@@ -4,6 +4,18 @@
 
 *In development. This section is filled in as the 0.7.0 work lands.*
 
+### Lifecycle
+
+- **[`emoji_tweets()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
+  is defunct, as 0.6.0 promised.** It stops with an error naming
+  [`emoji_filter()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.md)
+  instead of warning and answering. It stays exported for this one
+  release so that an old script fails with that message rather than
+  “could not find function”, and it is deleted in 0.8.0.
+- **`top_n_emojis(duplicated_unicode = )` is defunct** after warning
+  since 0.2.0: supplying it, whatever the value, stops with an error
+  naming `duplicated`. It leaves the signature in 0.8.0.
+
 ### Infrastructure
 
 - **The test suite fits CRAN’s clock.** CRAN’s x86_64 flavours spent 219

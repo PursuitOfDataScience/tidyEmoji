@@ -57,10 +57,9 @@ top_n_emojis(
 
 - duplicated_unicode:
 
-  **\[deprecated\]** Use `duplicated` instead. Accepts only the values
-  it ever meant – `TRUE`, `FALSE`, `"yes"` or `"no"` – and errors on
-  anything else rather than reading it as `FALSE`, which is what
-  `"TRUE"` and `1` used to get.
+  **\[defunct\]** Use `duplicated` instead. Deprecated in 0.2.0 and
+  defunct since 0.7.0: supplying it is an error that names `duplicated`,
+  whatever the value. It leaves the signature in 0.8.0.
 
 - presentation:
 

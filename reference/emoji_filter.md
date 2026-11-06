@@ -1,9 +1,10 @@
 # Keep only the rows whose text contains emoji
 
 `emoji_filter()` returns the rows of `data` whose text column contains
-at least one emoji, preserving every original column. `emoji_tweets()`
-is a deprecated synonym: it has warned since 0.6.0, after four releases
-of soft deprecation, and it will be removed in 0.7.0.
+at least one emoji, preserving every original column. `emoji_tweets()`,
+its old name, is defunct: deprecated in 0.2.1 and warning through 0.6.0,
+it stops since 0.7.0 with an error naming `emoji_filter()`, and it is
+deleted in 0.8.0.
 
 ## Usage
 

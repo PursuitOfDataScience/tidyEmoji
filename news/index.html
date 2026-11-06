@@ -39,6 +39,13 @@
 <h2 class="pkg-version" data-toc-text="0.7.0" id="tidyemoji-070">tidyEmoji 0.7.0<a class="anchor" aria-label="anchor" href="#tidyemoji-070"></a></h2>
 <p><em>In development. This section is filled in as the 0.7.0 work lands.</em></p>
 <div class="section level3">
+<h3 id="lifecycle-0-7-0">Lifecycle<a class="anchor" aria-label="anchor" href="#lifecycle-0-7-0"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/emoji_filter.html">emoji_tweets()</a></code> is defunct, as 0.6.0 promised.</strong> It stops with an error naming <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code> instead of warning and answering. It stays exported for this one release so that an old script fails with that message rather than “could not find function”, and it is deleted in 0.8.0.</li>
+<li>
+<strong><code>top_n_emojis(duplicated_unicode = )</code> is defunct</strong> after warning since 0.2.0: supplying it, whatever the value, stops with an error naming <code>duplicated</code>. It leaves the signature in 0.8.0.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="infrastructure-0-7-0">Infrastructure<a class="anchor" aria-label="anchor" href="#infrastructure-0-7-0"></a></h3>
 <ul><li>
 <strong>The test suite fits CRAN’s clock.</strong> CRAN’s x86_64 flavours spent 219 to 237 s of CPU on 0.6.0’s tests, and one of them 680 s on the whole check. Run as CRAN runs it, the suite now takes 49.4 s of CPU on the reference machine against 165.5 s for 0.6.0, and the tests step of <code>R CMD check</code> 51 s. The 39 exhaustive tests that cost most of the time (every catalogue spelling, every verb, hundreds of random strings) stand down on CRAN through <code>skip_sweep()</code>, and each names a <em>twin</em> that runs there instead and asserts the same property over a deterministic sample of the catalogue, always including a fixed list of hard cases. A test fails if a twin goes missing, every sweep still runs on every push in CI, and a new <code>cran-budget</code> job times the suite in CRAN mode and fails over its ceiling, or over 1 s for any single test.</li>
