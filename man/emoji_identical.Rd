@@ -18,8 +18,9 @@ With \code{details = FALSE}, a logical vector: \code{TRUE} where the two
 glyphs are the same emoji, \code{NA} where either is \code{NA}. With
 \code{details = TRUE}, a tibble with columns \code{x}, \code{y}, \code{identical} (the same
 vector), \code{exact} (the code points are identical, selector included),
-\code{difference} (\code{"none"}, \code{"variation selector"}, \code{"skin tone"} or
-\code{"different"}), and \code{x_codepoints} and \code{y_codepoints}, the two code-point
+\code{difference} (\code{"none"}, \code{"variation selector"}, \code{"skin tone"},
+\code{"different"} or \code{"not one emoji"}), and \code{x_codepoints} and
+\code{y_codepoints}, the two code-point
 sequences written out (\code{"U+2764 U+FE0F"}) for the record.
 }
 \description{
@@ -28,6 +29,14 @@ pair is the same emoji, which means the same code points once the variation
 selectors \code{U+FE0F} and \code{U+FE0E} are set aside. With \code{details = TRUE} it also
 says how two glyphs differ: not at all, only in a selector, only in skin
 tone, or in the emoji itself.
+}
+\details{
+The comparison is by code points and nothing else, so it answers for any
+two strings: two that are not emoji are \code{identical} when their code points
+are. \code{difference} says so. When either side, in its canonical spelling, is
+not a catalogue spelling, it is \code{"not one emoji"}, whatever else is true:
+a grinning face followed by a skin tone (\verb{U+1F600 U+1F3FB}) is a face and
+a swatch the face cannot take, never a toned variant of the face.
 }
 \section{What this can and cannot tell you}{
 

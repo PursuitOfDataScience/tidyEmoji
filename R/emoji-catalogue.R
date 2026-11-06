@@ -48,11 +48,13 @@
   }, character(1), USE.NAMES = FALSE)
 }
 
-.emoji_check_glyphs <- function(x, arg = "x") {
+# `what` is what the vector should hold, in the words of the message, so a
+# verb that takes more than glyphs can say so.
+.emoji_check_glyphs <- function(x, arg = "x", what = "emoji glyphs") {
   if (is.factor(x)) x <- as.character(x)
   if (!is.character(x) && !(is.logical(x) && all(is.na(x)))) {
-    stop(sprintf("`%s` must be a character vector of emoji glyphs, not %s.",
-                 arg, class(x)[1L]), call. = FALSE)
+    stop(sprintf("`%s` must be a character vector of %s, not %s.",
+                 arg, what, class(x)[1L]), call. = FALSE)
   }
   x <- as.character(x)
   bad <- !is.na(x) & Encoding(x) == "bytes"
@@ -219,6 +221,13 @@ as_emoji_canonical <- function(x) {
 #' says how two glyphs differ: not at all, only in a selector, only in skin
 #' tone, or in the emoji itself.
 #'
+#' The comparison is by code points and nothing else, so it answers for any
+#' two strings: two that are not emoji are `identical` when their code points
+#' are. `difference` says so. When either side, in its canonical spelling, is
+#' not a catalogue spelling, it is `"not one emoji"`, whatever else is true:
+#' a grinning face followed by a skin tone (`U+1F600 U+1F3FB`) is a face and
+#' a swatch the face cannot take, never a toned variant of the face.
+#'
 #' @section What this can and cannot tell you:
 #' This is the comparison a forensic or legal question needs, and it has a
 #' hard limit that belongs here rather than in a footnote. **tidyEmoji can say
@@ -243,8 +252,9 @@ as_emoji_canonical <- function(x) {
 #'   glyphs are the same emoji, `NA` where either is `NA`. With
 #'   `details = TRUE`, a tibble with columns `x`, `y`, `identical` (the same
 #'   vector), `exact` (the code points are identical, selector included),
-#'   `difference` (`"none"`, `"variation selector"`, `"skin tone"` or
-#'   `"different"`), and `x_codepoints` and `y_codepoints`, the two code-point
+#'   `difference` (`"none"`, `"variation selector"`, `"skin tone"`,
+#'   `"different"` or `"not one emoji"`), and `x_codepoints` and
+#'   `y_codepoints`, the two code-point
 #'   sequences written out (`"U+2764 U+FE0F"`) for the record.
 #' @seealso [as_emoji_canonical()], [emoji_properties()].
 #' @examples
@@ -285,6 +295,13 @@ emoji_identical <- function(x, y, details = FALSE) {
     ifelse(same, "variation selector",
            ifelse(!is.na(tone_x) & !is.na(tone_y) & tone_x == tone_y,
                   "skin tone", "different")))
+  # Two strings that are not both emoji have no emoji difference to report:
+  # 0.6.0 called a grinning face and the same face with a swatch after it a
+  # "skin tone" variant, which a face that takes no tone cannot have (N8)
+  spellings <- emoji_reference()$emoji
+  one <- as_emoji_canonical(x) %in% spellings &
+    as_emoji_canonical(y) %in% spellings
+  difference[!one] <- "not one emoji"
   difference[na] <- NA_character_
   tibble::tibble(
     x = x,
@@ -397,7 +414,9 @@ emoji_keywords <- function(x = NULL) {
 #' package's table has no keywords at all, so it is never found here; see
 #' [emoji_keywords()].
 #'
-#' @param terms A character vector of keywords to look for.
+#' @param terms A character vector of keywords to look for. Terms that differ
+#'   only in case are one term, reported in the spelling given first. An empty
+#'   vector finds nothing; `NA` and `""` are errors.
 #' @param match `"any"` (default) to return emoji carrying at least one of the
 #'   terms, `"all"` for emoji carrying every one of them.
 #' @return A tibble with one row per emoji found, under its canonical
@@ -413,8 +432,7 @@ emoji_keywords <- function(x = NULL) {
 #' @export
 emoji_find <- function(terms, match = c("any", "all")) {
   match <- .emoji_match_arg(match, c("any", "all"), "match")
-  if (!is.character(terms) || !length(terms) || anyNA(terms) ||
-      !all(nzchar(terms))) {
+  if (!is.character(terms) || anyNA(terms) || !all(nzchar(terms))) {
     stop("`terms` must be a character vector of non-empty keywords.",
          call. = FALSE)
   }
@@ -423,8 +441,18 @@ emoji_find <- function(terms, match = c("any", "all")) {
          "characters. Convert it with iconv() from whatever encoding those ",
          "bytes really are.", call. = FALSE)
   }
-  terms <- unique(terms)
+  none <- tibble::tibble(emoji = character(), name = character(),
+                         group = character(), matched = character(),
+                         n_matched = integer())
+  # no terms find nothing, as a query that matches nothing does
+  if (!length(terms)) return(none)
+  # one term per keyword: "cat" and "CAT" are folded first and kept once, in
+  # the spelling given first, or one keyword would count twice towards
+  # n_matched and satisfy match = "all" on its own
   folded <- .emoji_fold(terms)
+  first <- !duplicated(folded)
+  terms <- terms[first]
+  folded <- folded[first]
   sets <- .emoji_keyword_sets()$folded
   bk <- .emoji_by_key()
   hits <- lapply(bk$key, function(k) {
@@ -434,11 +462,7 @@ emoji_find <- function(terms, match = c("any", "all")) {
   })
   n_hit <- lengths(hits)
   keep <- if (match == "any") n_hit > 0L else n_hit == length(terms)
-  if (!any(keep)) {
-    return(tibble::tibble(emoji = character(), name = character(),
-                          group = character(), matched = character(),
-                          n_matched = integer()))
-  }
+  if (!any(keep)) return(none)
   idx <- which(keep)
   glyph <- bk$canonical[idx]
   ref <- emoji_reference()

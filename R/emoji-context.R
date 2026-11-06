@@ -394,7 +394,8 @@ emoji_context <- function(data, text, window = 5, unit = c("word", "char"),
 #'   descending, then by `n` descending (by `pmi` when `measure = "count"`),
 #'   then by the glyph and the word, so the order is fully determined. Ties in
 #'   `pmi` are common: every pair seen the same number of times with the same
-#'   marginals scores alike.
+#'   marginals scores alike. A result with no rows has the same columns, the
+#'   `measure` column included, so it binds to a populated one.
 #' @seealso [emoji_context()] for the occurrence-level windows this aggregates.
 #' @examples
 #' df <- data.frame(text = c("cold coffee \U0001f622",
@@ -416,8 +417,12 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
     stop("`min_n` must be a single non-negative whole number.", call. = FALSE)
   }
   .emoji_warn_grouped(data, "emoji_collocations", "0.4.0")
+  # The empty result has the populated one's columns, measure included: until
+  # 0.7.0 it stopped at `pmi`, so a group filtered down to nothing could not
+  # be bound to one that was not (D9)
   empty <- tibble::tibble(emoji = character(), word = character(),
                           n = integer(), pmi = numeric())
+  if (!measure %in% c("pmi", "count")) empty[[measure]] <- numeric()
   ctx <- emoji_context(data, {{ text }}, window = window, unit = "word",
                        presentation = presentation)
   if (!nrow(ctx)) return(empty)

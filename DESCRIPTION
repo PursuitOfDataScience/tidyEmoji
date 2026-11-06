@@ -71,7 +71,8 @@ Suggests:
     ggplot2,
     forcats,
     stringr,
-    igraph
+    igraph,
+    ISOcodes
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.1

@@ -69,7 +69,8 @@ is neither \code{"pmi"} nor \code{"count"}. Rows are sorted by \code{measure}
 descending, then by \code{n} descending (by \code{pmi} when \code{measure = "count"}),
 then by the glyph and the word, so the order is fully determined. Ties in
 \code{pmi} are common: every pair seen the same number of times with the same
-marginals scores alike.
+marginals scores alike. A result with no rows has the same columns, the
+\code{measure} column included, so it binds to a populated one.
 }
 \description{
 \code{emoji_collocations()} counts the words that appear near each emoji across a

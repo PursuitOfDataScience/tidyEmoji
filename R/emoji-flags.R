@@ -11,6 +11,15 @@
 
 .emoji_ri_offset <- 127397L
 
+# The ten catalogue flags whose code is not an assigned ISO 3166-1 alpha-2
+# code: the European Union and the United Nations; seven codes ISO reserves
+# for territories it does not list as countries (Ascension Island,
+# Clipperton Island, Sark, Diego Garcia, Ceuta and Melilla, the Canary
+# Islands, Tristan da Cunha); and Kosovo's XK, a user-assigned code. A test
+# derives the same ten from the ISOcodes package, so the list cannot rot.
+.emoji_non_iso_flags <- c("AC", "CP", "CQ", "DG", "EA", "EU", "IC", "TA",
+                          "UN", "XK")
+
 # The catalogue's country and subdivision flags, cached: glyph, code and
 # region name.
 .emoji_flag_table <- function() {
@@ -102,10 +111,15 @@
 #' "iso2c", "country.name")`, or join it to a map's ISO column, and a corpus
 #' of flags is a choropleth. Two things to know before you do:
 #'
-#' * Not every valid flag is a country. `EU` (European Union) and `UN`
-#'   (United Nations) are flags but not ISO 3166-1 countries, and `AC`,
-#'   `CP`, `DG`, `EA`, `IC` and `TA` are codes ISO reserves for territories
-#'   it does not list as countries. A country-level tool will not map them.
+#' * Not every valid flag is a country, and `.emoji_iso3166` says which are
+#'   not, so you can filter before a country-level join rather than lose ten
+#'   rows in it. Ten of the 259 flags have no assigned ISO 3166-1 code: `EU`
+#'   (European Union) and `UN` (United Nations); `AC` (Ascension Island),
+#'   `CP` (Clipperton Island), `CQ` (Sark), `DG` (Diego Garcia), `EA` (Ceuta
+#'   and Melilla), `IC` (Canary Islands) and `TA` (Tristan da Cunha), codes
+#'   ISO reserves for territories it does not list as countries; and `XK`
+#'   (Kosovo), a user-assigned code that ISO does not define. A country-level
+#'   tool will not map them.
 #' * `.emoji_country_name` is the Unicode (CLDR) English name, kept for
 #'   reading the output, and it changes between Unicode versions: three
 #'   names did between Emoji 16.0 and 18.0. Join on the code.
@@ -116,7 +130,9 @@
 #' @inheritParams emoji_summary
 #' @return A tibble with the columns of `data` plus `.emoji` (the flag as it
 #'   appears in the text), `.emoji_iso2` (the two-letter code, `NA` for a
-#'   pair that spells no flag) and `.emoji_country_name`. One row per flag,
+#'   pair that spells no flag), `.emoji_country_name` and `.emoji_iso3166`
+#'   (`TRUE` where the code is an assigned ISO 3166-1 alpha-2 code, `FALSE`
+#'   for the ten above, `NA` for a pair that spells no flag). One row per flag,
 #'   in reading order; rows without one are dropped. A grouped input stays
 #'   grouped, as it does through [emoji_tokens()].
 #' @seealso [emoji_flag()] to convert between codes and flags,
@@ -144,6 +160,8 @@ emoji_country <- function(data, text) {
   idx <- match(out$.emoji, ft$emoji)
   out$.emoji_iso2 <- ft$code[idx]
   out$.emoji_country_name <- ft$name[idx]
+  out$.emoji_iso3166 <- !out$.emoji_iso2 %in% .emoji_non_iso_flags
+  out$.emoji_iso3166[is.na(out$.emoji_iso2)] <- NA
   out
 }
 
@@ -227,7 +245,9 @@ emoji_subdivision <- function(data, text) {
 #' @concept flags
 #' @export
 emoji_flag <- function(x) {
-  x <- .emoji_check_glyphs(x)
+  # its main input is codes, so the message names both (N6)
+  x <- .emoji_check_glyphs(
+    x, what = "region codes (\"US\", \"GB-SCT\") or flag emoji")
   ft <- .emoji_flag_table()
   glyphs <- c(ft$country$emoji, ft$subdivision$emoji)
   codes <- c(ft$country$code, ft$subdivision$code)

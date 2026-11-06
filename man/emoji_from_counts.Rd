@@ -4,7 +4,7 @@
 \alias{emoji_from_counts}
 \title{Turn a tally of emoji into text the other verbs can read}
 \usage{
-emoji_from_counts(data, emoji, n, id = NULL)
+emoji_from_counts(data, emoji, n, id = NULL, unknown = c("error", "drop"))
 }
 \arguments{
 \item{data}{A data frame with one row per (item, emoji) count.}
@@ -15,6 +15,13 @@ emoji_from_counts(data, emoji, n, id = NULL)
 
 \item{id}{Optional unquoted column identifying the item each count belongs
 to. Without it the whole table is one document.}
+
+\item{unknown}{What to do with a value of \code{emoji} that resolves to no
+emoji: \code{"error"} (the default) stops and names it, since a silent drop
+changes answers; \code{"drop"} removes its rows and warns once, naming each
+such value with the total count it carried. Real tallies need it: the
+OASST2 one bundled as \link{oasst_reactions} records interface actions
+(\code{"_skip_reply"}) beside the emoji.}
 }
 \value{
 A tibble with one row per item, in order of first appearance: the
@@ -41,18 +48,30 @@ those spaces, and have nothing to say about a tally.
 
 The \code{emoji} column can hold glyphs in any spelling, the names of GitHub's
 eight reactions (\code{"+1"}, \code{"-1"}, \code{"laugh"}, \code{"hooray"}, \code{"confused"},
-\code{"heart"}, \code{"rocket"}, \code{"eyes"}, as its API returns them), shortcodes with
-or without their colons, or Unicode names. Every glyph is written in its
-canonical spelling, so a bare \code{U+2764} in the tally is read by the default
-\code{presentation}. A value that resolves to no emoji is an error naming it,
-rather than a silent zero.
+\code{"heart"}, \code{"rocket"}, \code{"eyes"}, as its REST API returns them, or
+\code{"THUMBS_UP"}, \code{"THUMBS_DOWN"} and the rest, as its GraphQL API does, in
+any case), shortcodes with or without their colons, Slack's toned names
+(\code{"thumbsup::skin-tone-2"}, tone 2 light to 6 dark), or Unicode names.
+Every glyph is written in its canonical spelling, so a bare \code{U+2764} in the
+tally is read by the default \code{presentation}. A value that resolves to no
+emoji is an error naming it, rather than a silent zero, unless
+\code{unknown = "drop"}; a Slack tone on an emoji that takes none resolves to
+no emoji.
 
 \code{n} must be a whole number of at least 0. A fractional count, such as a
 survey weight or an average, is refused rather than rounded: a text cannot hold
 2.5 emoji, and truncating it would change the answer without saying so.
 An item whose counts are all zero keeps its row, with an empty text, so it
 still counts as a document wherever the number of documents matters (the
-inverse document frequency of \code{\link[=emoji_dfm]{emoji_dfm()}}, for one).
+inverse document frequency of \code{\link[=emoji_dfm]{emoji_dfm()}}, for one). So does an item
+whose every row \code{unknown = "drop"} removed.
+
+One item's text is one R string, which holds at most 2,147,483,647 bytes.
+A tally that would write more for one item, about 430 million thumbs-up,
+is refused before anything is built, with the item and the size named. A
+count that size is a weight over a corpus rather than a tally of one
+item's reactions, and a text cannot carry a weight; score the glyph once
+and multiply instead.
 
 \strong{What a reaction count measures.} A tally records which buttons were
 pressed, and the set of buttons is the platform's: GitHub offers eight, so
@@ -70,6 +89,15 @@ reactions <- data.frame(
 txt <- emoji_from_counts(reactions, reaction, count, id = pr)
 txt
 emoji_sentiment(txt, text)
+
+# GraphQL names and Slack's tones resolve too
+emoji_from_counts(data.frame(r = c("THUMBS_UP", "thumbsup::skin-tone-4"),
+                             n = 1), r, n)
+
+# a real tally, with the interface's skip actions set aside
+oasst <- emoji_from_counts(oasst_reactions, reaction, n, id = message_id,
+                           unknown = "drop")
+emoji_frequency(oasst, text)
 }
 \seealso{
 \code{\link[=emoji_dfm]{emoji_dfm()}}, \code{\link[=emoji_sentiment]{emoji_sentiment()}} and \code{\link[=emoji_frequency]{emoji_frequency()}} for what

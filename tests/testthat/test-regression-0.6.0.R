@@ -579,7 +579,8 @@ test_that("emoji_keywords() and emoji_find() search the keywords (moved)", {
   expect_gt(nrow(anyof), nrow(both))
   expect_false(is.unsorted(-anyof$n_matched))
   expect_identical(nrow(emoji_find("zzzz-no-such-keyword")), 0L)
-  expect_error(emoji_find(character(0)), "`terms`")
+  # an empty term list finds nothing since 0.7.0 (N5); NA is still an error
+  expect_identical(nrow(emoji_find(character(0))), 0L)
   expect_error(emoji_find(c("cat", NA)), "`terms`")
   # every emoji emoji_find() returns does carry the keyword
   found <- emoji_find("pizza")

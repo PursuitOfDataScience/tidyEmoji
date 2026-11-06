@@ -7,7 +7,9 @@
 emoji_find(terms, match = c("any", "all"))
 }
 \arguments{
-\item{terms}{A character vector of keywords to look for.}
+\item{terms}{A character vector of keywords to look for. Terms that differ
+only in case are one term, reported in the spelling given first. An empty
+vector finds nothing; \code{NA} and \code{""} are errors.}
 
 \item{match}{\code{"any"} (default) to return emoji carrying at least one of the
 terms, \code{"all"} for emoji carrying every one of them.}

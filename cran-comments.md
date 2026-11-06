@@ -47,7 +47,7 @@ it: do not skip it.
 
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, the three vignettes, README.md and NEWS.md, with the
-  208 entries in `inst/WORDLIST`.
+  233 entries in `inst/WORDLIST`.
 
 ## The skip inventory
 

@@ -383,7 +383,8 @@ surface_070 <- function() {
     token_cost_hidden = function(d, col) emoji_token_cost(d, !!col),
     summary_n_hidden = function(d, col) emoji_summary(d, !!col),
     summary_n_unlisted_any = function(d, col)
-      emoji_summary(d, !!col, presentation = "any")
+      emoji_summary(d, !!col, presentation = "any"),
+    country_iso3166 = function(d, col) emoji_country(d, !!col)
   )
 }
 
@@ -394,13 +395,15 @@ surface_070_aggregators <- function() {
 
 # Row 3 carries one of each 0.7.0 detection case besides the hidden payload
 # in row 1: a symbol with a stray U+FE0F (D6), adult and girl joined (D7) and
-# a star asking for its text form (D10).
+# a star asking for its text form (D10); and two flags, one of them no ISO
+# country (N2).
 surface_fixture <- function() {
   data.frame(
     id = 1:4,
     text = c(paste0("hi ", cp(0x1F600), vs_encode("x")), "plain",
              paste(cp(0x1F44B), cp(0x2764, 0xFE0F), cp(0x2605, 0xFE0F),
-                   cp(0x1F9D1, 0x200D, 0x1F467), cp(0x2B50, 0xFE0E)), NA),
+                   cp(0x1F9D1, 0x200D, 0x1F467), cp(0x2B50, 0xFE0E),
+                   cp(0x1F1FA, 0x1F1F8), cp(0x1F1EA, 0x1F1FA)), NA),
     stringsAsFactors = FALSE)
 }
 
@@ -995,4 +998,185 @@ test_that("rewriting and counting verbs agree on what every span is", {
     expect_identical(emoji_hidden(tibble::tibble(text = st), text)$.emoji_n_hidden,
                      rep(0L, length(fx)), info = info)
   }
+})
+
+
+# --- M6: the small repairs -----------------------------------------------------------
+
+test_that("emoji_collocations() keeps its measure column at zero rows (D9)", {
+  for (m in c("ppmi", "dice", "logdice", "llr", "tscore")) {
+    z <- emoji_collocations(tibble::tibble(text = character(0)), text,
+                            min_n = 1, measure = m)
+    expect_true(m %in% names(z), info = m)
+    expect_equal(nrow(z), 0L, info = m)
+  }
+  # every way to reach zero rows, against the populated shape
+  shape <- function(z) vapply(z, function(x) class(x)[1L], character(1))
+  full <- tibble::tibble(text = c(paste("cold coffee", cp(0x1F622)),
+                                  paste("coffee again", cp(0x1F622))))
+  for (m in c("pmi", "count", "ppmi", "dice", "logdice", "llr", "tscore")) {
+    p <- emoji_collocations(full, text, min_n = 1, measure = m)
+    expect_gt(nrow(p), 0L)
+    empties <- list(
+      full[0, ], tibble::tibble(text = NA_character_),
+      tibble::tibble(text = cp(0x1F622)))
+    for (d in empties) {
+      z <- emoji_collocations(d, text, min_n = 1, measure = m)
+      expect_identical(nrow(z), 0L, info = m)
+      expect_identical(shape(z), shape(p), info = m)
+    }
+    z <- emoji_collocations(full, text, min_n = 99, measure = m)
+    expect_identical(shape(z), shape(p), info = m)
+    # and an empty result binds to a populated one
+    expect_identical(nrow(rbind(z, p)), nrow(p))
+  }
+})
+
+test_that("GraphQL reaction names score like their REST twins (N1)", {
+  rest <- data.frame(e = c("+1", "hooray"), n = c(2, 1))
+  gql  <- data.frame(e = c("THUMBS_UP", "HOORAY"), n = c(2, 1))
+  expect_identical(emoji_from_counts(gql, e, n)$text,
+                   emoji_from_counts(rest, e, n)$text)
+  # all eight, in any case
+  r <- c("+1", "-1", "laugh", "hooray", "confused", "heart", "rocket", "eyes")
+  g <- c("THUMBS_UP", "THUMBS_DOWN", "LAUGH", "HOORAY", "CONFUSED", "HEART",
+         "ROCKET", "EYES")
+  as_text <- function(v) emoji_from_counts(data.frame(e = v, n = 1), e, n)$text
+  expect_identical(as_text(g), as_text(r))
+  expect_identical(as_text(c("thumbs_up", "Thumbs_Down")), as_text(c("+1", "-1")))
+})
+
+test_that("Slack's skin-tone suffix resolves to the toned spelling (N4)", {
+  one <- function(v) emoji_from_counts(data.frame(e = v, n = 1), e, n)$text
+  expect_identical(one("thumbsup::skin-tone-2"), cp(0x1F44D, 0x1F3FB))
+  expect_identical(one(":thumbsup::skin-tone-6:"), cp(0x1F44D, 0x1F3FF))
+  # every person in a multi-person sequence takes the tone
+  expect_identical(one("people_holding_hands::skin-tone-3"),
+                   cp(0x1F9D1, 0x1F3FC, 0x200D, 0x1F91D, 0x200D, 0x1F9D1,
+                      0x1F3FC))
+  # refused when the base takes no tone, and when the tone is out of range
+  expect_error(one("grinning::skin-tone-2"), "grinning::skin-tone-2")
+  expect_error(one("thumbsup::skin-tone-7"), "thumbsup::skin-tone-7")
+})
+
+test_that("unknown = 'drop' keeps a messy real tally usable (N3)", {
+  t <- data.frame(id = c(1, 1, 2), r = c("+1", "_skip_reply", "-1"),
+                  n = c(3, 5, 1))
+  expect_error(emoji_from_counts(t, r, n, id = id), "unknown")
+  expect_warning(out <- emoji_from_counts(t, r, n, id = id, unknown = "drop"),
+                 "_skip_reply")
+  expect_equal(nrow(out), 2L)
+  expect_identical(out$text, c(paste(rep(cp(0x1F44D), 3L), collapse = " "),
+                               cp(0x1F44E)))
+  # an item every row of which is dropped keeps its row, with no emoji
+  t2 <- rbind(t, data.frame(id = 3, r = "_skip_reply", n = 2))
+  out2 <- suppressWarnings(emoji_from_counts(t2, r, n, id = id,
+                                             unknown = "drop"))
+  expect_identical(out2$text[3L], "")
+  # the warning names each value with the count it carried, largest first
+  w <- tryCatch(emoji_from_counts(oasst_reactions, reaction, n,
+                                  id = message_id, unknown = "drop"),
+                warning = conditionMessage)
+  r <- oasst_reactions
+  bad <- c("_skip_labeling", "_skip_reply", "_skip_ranking", "red_flag")
+  tot <- vapply(bad, function(b) sum(r$n[r$reaction == b]), numeric(1))
+  for (b in bad) expect_match(w, sprintf("`%s` (%s)", b, format(tot[[b]],
+                                         big.mark = ",")), fixed = TRUE)
+  # and what is kept is exactly the tally with those rows removed by hand
+  kept <- suppressWarnings(emoji_from_counts(r, reaction, n, id = message_id,
+                                             unknown = "drop"))
+  hand <- emoji_from_counts(r[!r$reaction %in% bad, ], reaction, n,
+                            id = message_id)
+  kept <- kept[kept$message_id %in% hand$message_id, ]
+  expect_identical(kept[order(kept$message_id, method = "radix"), ],
+                   hand[order(hand$message_id, method = "radix"), ])
+  expect_identical(
+    nrow(suppressWarnings(emoji_from_counts(r, reaction, n, id = message_id,
+                                            unknown = "drop"))),
+    length(unique(r$message_id)))
+  expect_error(emoji_from_counts(t, r, n, unknown = "skip"), "`unknown`")
+})
+
+test_that("unknown = holds the contracts every argument does", {
+  t <- data.frame(id = c(1, 1, 2, 3), r = c("+1", "_skip_reply", "-1", "eyes"),
+                  n = c(3, 5, 1, 0))
+  f <- function(d) suppressWarnings(
+    emoji_from_counts(d, r, n, id = id, unknown = "drop"))
+  sig <- function(z) vapply(z, function(x) class(x)[1L], character(1))
+  full <- f(t)
+  for (k in c(0L, 1L, 2L, 4L)) {
+    out <- f(t[seq_len(k), , drop = FALSE])
+    expect_identical(sig(out), sig(full), info = k)
+    for (cl in names(out)) expect_null(names(out[[cl]]), info = paste(k, cl))
+  }
+  # a factor column reads as its labels
+  tf <- t
+  tf$r <- factor(tf$r)
+  expect_identical(f(tf), full)
+})
+
+test_that("the ten non-ISO flag codes are flagged, not lost (N2)", {
+  codes <- c("AC", "CP", "CQ", "DG", "EA", "EU", "IC", "TA", "UN", "XK", "US")
+  out <- emoji_country(
+    tibble::tibble(text = paste(emoji_flag(codes), collapse = " ")), text)
+  expect_equal(out$.emoji_iso3166, c(rep(FALSE, 10), TRUE))
+  # added at the end, and NA for a pair that spells no flag
+  stray <- emoji_country(tibble::tibble(text = cp(0x1F1FD, 0x1F1FD)), text)
+  expect_identical(names(stray)[ncol(stray)], ".emoji_iso3166")
+  expect_true(is.na(stray$.emoji_iso3166))
+})
+
+test_that("the non-ISO flags are exactly the catalogue's flags ISO does not assign", {
+  skip_if_not_installed("ISOcodes")
+  ft <- tidyEmoji:::.emoji_flag_table()$country
+  iso <- ISOcodes::ISO_3166_1$Alpha_2
+  expect_setequal(setdiff(ft$code, iso), tidyEmoji:::.emoji_non_iso_flags)
+  expect_match(rd_flat("emoji_country"), "Ten of the 259 flags", fixed = TRUE)
+})
+
+test_that("an empty term list finds nothing rather than failing (N5)", {
+  out <- emoji_find(character(0))
+  expect_equal(nrow(out), 0L)
+  expect_identical(names(out), names(emoji_find("cat")))
+  expect_error(emoji_find(NA_character_), "`terms`")
+  expect_error(emoji_find(""), "`terms`")
+})
+
+test_that("case-variant terms are one term (N7)", {
+  # 0.6.0: n_matched = 2 and matched = "cat, CAT" for a single keyword
+  out <- emoji_find(c("cat", "CAT"))
+  expect_true(all(out$n_matched == 1L))
+  expect_true(all(out$matched == "cat"))
+  # so one keyword no longer satisfies match = "all" twice over
+  expect_identical(emoji_find(c("cat", "CAT"), match = "all"),
+                   emoji_find("cat", match = "all"))
+})
+
+test_that("emoji_flag()'s type error names both inputs it takes (N6)", {
+  expect_error(emoji_flag(1), "region codes", fixed = TRUE)
+  expect_error(emoji_flag(1), "flag emoji", fixed = TRUE)
+})
+
+test_that("an orphan swatch is not reported as a skin-tone variant (N8)", {
+  # 0.6.0: difference = "skin tone"
+  odd <- emoji_identical(cp(0x1F600), cp(0x1F600, 0x1F3FB), details = TRUE)
+  expect_equal(odd$difference, "not one emoji")
+  real <- emoji_identical(cp(0x1F44D), cp(0x1F44D, 0x1F3FD), details = TRUE)
+  expect_equal(real$difference, "skin tone")
+  # the comparison stays by code points, for any string
+  txt <- emoji_identical("abc", "abc", details = TRUE)
+  expect_true(txt$identical)
+  expect_identical(txt$difference, "not one emoji")
+  expect_match(rd_flat("emoji_identical"), "by code points and nothing else",
+               fixed = TRUE)
+})
+
+test_that("a tally past R's string limit is refused by name (N9)", {
+  expect_error(emoji_from_counts(data.frame(e = "+1", n = 6e8), e, n), "`n`")
+  e <- tryCatch(emoji_from_counts(data.frame(id = c("a", "b"), e = "+1",
+                                             n = c(1, 6e8)), e, n, id = id),
+                error = conditionMessage)
+  expect_match(e, "item `b`", fixed = TRUE)
+  expect_match(e, "2,999,999,999 bytes", fixed = TRUE)
+  expect_match(e, "weight", fixed = TRUE)
 })

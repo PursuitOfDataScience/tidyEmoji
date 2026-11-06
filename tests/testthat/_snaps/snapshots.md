@@ -899,7 +899,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["text", ".emoji", ".emoji_iso2", ".emoji_country_name"]
+          "value": ["text", ".emoji", ".emoji_iso2", ".emoji_country_name", ".emoji_iso3166"]
         },
         {
           "type": "integer",
@@ -912,7 +912,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["text", ".emoji", ".emoji_iso2", ".emoji_country_name"]
+              "value": ["text", ".emoji", ".emoji_iso2", ".emoji_country_name", ".emoji_iso3166"]
             }
           },
           "value": [
@@ -935,6 +935,11 @@
               "type": "character",
               "attributes": {},
               "value": ["Japan", null]
+            },
+            {
+              "type": "logical",
+              "attributes": {},
+              "value": [true, null]
             }
           ]
         }

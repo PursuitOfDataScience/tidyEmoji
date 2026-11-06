@@ -407,6 +407,14 @@ test_that("zero-row output has the same column types as populated output", {
   expect_true(same_types(function(d) emoji_tokens(d, text)))
   expect_true(same_types(function(d) emoji_position(d, text)))
   expect_true(same_types(function(d) emoji_sentiment(d, text)))
+  # emoji_collocations() under every measure, names as well as types: its
+  # measures arrived after this test was written, and at zero rows the
+  # measure column went missing (D9, fixed in 0.7.0)
+  for (m in c("pmi", "count", "ppmi", "dice", "logdice", "llr", "tscore")) {
+    f <- function(d) emoji_collocations(d, text, min_n = 1, measure = m)
+    expect_identical(names(f(empty)), names(f(full)), info = m)
+    expect_true(same_types(f), info = m)
+  }
 })
 
 test_that("the zero-row types are the documented ones, not just consistent", {
