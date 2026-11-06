@@ -16,7 +16,11 @@ Authors@R:
              comment = "OASST2 example data in data/oasst_*.rda"),
       person(given = "emoji authors",
              role = "cph",
-             comment = "snapshot of the emoji package's data in R/sysdata.rda"))
+             comment = "snapshot of the emoji package's data in R/sysdata.rda"),
+      person(given = "Miles",
+             family = "Johnson",
+             role = "cph",
+             comment = "emojibase data in R/sysdata.rda and the crosswalk"))
 Description: A tidy toolkit for working with the emoji in any text column, such
     as social-media posts, product reviews, chat logs or survey responses.
     Unicode is awkward to handle and not every code point is an emoji, which
@@ -75,6 +79,7 @@ Suggests:
     stringr,
     igraph,
     ISOcodes,
+    jsonlite,
     emoji (>= 16.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

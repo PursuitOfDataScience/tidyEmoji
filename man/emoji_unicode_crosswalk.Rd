@@ -16,29 +16,30 @@ A data frame with four columns:
 \source{
 The glyphs and categories come from Unicode's \code{emoji-test.txt},
 the catalogue \code{\link[=emoji_properties]{emoji_properties()}} reports, and the names from the
-GitHub-style aliases of the \pkg{emoji} package; rebuilt by
-\code{data-raw/crosswalks.R}. An emoji newer than \pkg{emoji}'s own table has
-no alias, so it is in the catalogue but not in this table.
+GitHub-style aliases of the \pkg{emoji} package, and, for the 182
+emoji of Emoji 17.0 and 18.0 that \pkg{emoji} has none for, from
+emojibase's CLDR-style shortcodes (since 0.7.0, which added their 202
+rows and changed no other); rebuilt by \code{data-raw/crosswalks.R}.
 }
 \usage{
 emoji_unicode_crosswalk
 }
 \description{
 A table with one row per (name, glyph) \emph{pair}, not one row per name and not
-one row per glyph. 5761 rows cover 4698 distinct names and 4853 distinct
+one row per glyph. 5963 rows cover 4880 distinct names and 5055 distinct
 glyphs, because the mapping is many-to-many in both directions:
 }
 \details{
 \itemize{
 \item a glyph appears once for every GitHub-style name it is known by (the
 grinning face is both "grinning" and "grinning_face"), and
-\item a name appears once for every \emph{spelling} of the emoji it names -- 973 do,
+\item a name appears once for every \emph{spelling} of the emoji it names -- 993 do,
 because the qualified and unqualified forms of an emoji are separate rows
 that share one alias (\code{A_button_blood_type_} names both
 \verb{U+1F170 U+FE0F} and the bare \verb{U+1F170}).
 }
 
-So a join by \code{emoji_name} duplicates rows for those 973 names. Join on \code{key}
+So a join by \code{emoji_name} duplicates rows for those 993 names. Join on \code{key}
 -- which collapses the spellings -- or \code{dplyr::distinct()} the columns you
 need first.
 }

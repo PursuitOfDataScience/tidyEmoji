@@ -73,11 +73,13 @@ test_that("the 182 emoji added in 17.0 and 18.0 are detected, in context too", {
       all(gl[[i]] == new[[i]])
     }, logical(1))))
   }
-  # and named by the catalogue, with no shortcode from {emoji}
+  # and named by the catalogue; {emoji} gives them no shortcode, and since
+  # 0.7.0 emojibase's CLDR-style ones fill the gap
   freq <- emoji_frequency(data.frame(text = paste(new, collapse = " ")), text)
   expect_identical(nrow(freq), 182L)
   expect_false(anyNA(freq$name))
-  expect_true(all(is.na(freq$shortcode)))
+  expect_false(anyNA(freq$shortcode))
+  expect_false(any(new %in% upstream()$emoji))
   # the 20 minimally-qualified 17.0 spellings too
   mq <- p$emoji[p$status == "minimally-qualified" &
                   as.numeric(p$version) >= 17]
@@ -181,23 +183,25 @@ test_that("the vocabulary columns {emoji} supplies are there, loudly", {
 
 # Shared by the sweep and its CRAN twin: the catalogue, or a sample of it
 check_keys_resolve_both <- function(n = NULL) {
-  # The bug class this release was predicted to introduce: join asymmetry
-  # between the two sources. A glyph from emoji-test.txt either has keywords
-  # from {emoji}, or has them as an explicit NA, never as an empty string.
+  # The bug class 0.6.0 was predicted to introduce: join asymmetry between
+  # the two sources. A glyph from emoji-test.txt has keywords, or an explicit
+  # NA, never an empty string.
   all_g <- ns$emoji_reference()$emoji
   kw <- emoji_keywords(if (is.null(n)) all_g else sweep_sample(all_g, n))
   expect_false(any(!is.na(kw$keyword) & !nzchar(kw$keyword)))
-  # NA exactly for the emoji {emoji} does not know
+  # Since 0.7.0 the symmetry is complete (the plan's join-symmetry test):
+  # every catalogue key has a name, at least one keyword and at least one
+  # shortcode, the 182 newer than {emoji} included, which had neither
   p <- emoji_properties()
-  canon <- p[!duplicated(p$key), ]
+  canon <- p[!duplicated(p$key) & p$status != "component", ]
   n_new <- sum(as.numeric(canon$version) >= 17)
   if (!is.null(n)) canon <- canon[sweep_rows(canon$emoji, n), , drop = FALSE]
   none <- emoji_keywords(canon$emoji)
-  missing <- unique(none$emoji[is.na(none$keyword)])
-  newer <- canon$emoji[as.numeric(canon$version) >= 17]
-  expect_true(all(newer %in% missing))
+  expect_false(anyNA(none$keyword))
+  expect_setequal(unique(none$emoji), canon$emoji)
+  expect_false(anyNA(as_emoji_name(canon$emoji)))
+  expect_false(anyNA(as_emoji_shortcode(canon$emoji)))
   expect_identical(n_new, 182L)
-  expect_gt(length(newer), 0L)
   # every glyph {emoji} knows is in the catalogue, spelled the same
   expect_true(all(upstream()$emoji %in% p$emoji))
 }
@@ -561,14 +565,16 @@ test_that("emoji_keywords() and emoji_find() search the keywords (moved)", {
   kw <- emoji_keywords(smile)
   expect_s3_class(kw, "tbl_df")
   expect_gt(nrow(kw), 0L)
-  expect_named(kw, c("emoji", "name", "keyword"))
+  expect_named(kw, c("emoji", "name", "keyword", "source"))
   # the bare and the qualified heart carry one set
   expect_identical(emoji_keywords(heart_bare)$keyword,
                    emoji_keywords(heart)$keyword)
-  # a glyph with no vocabulary is one NA row, never ""
+  # a string with no vocabulary is one NA row, never ""; since 0.7.0 the
+  # newest emoji have CLDR's keywords, so only the non-emoji is NA
   none <- emoji_keywords(c(g(0x1FAEA), "abc"))
-  expect_identical(nrow(none), 2L)
-  expect_true(all(is.na(none$keyword)))
+  expect_identical(nrow(none), 7L)
+  expect_identical(sum(is.na(none$keyword)), 1L)
+  expect_identical(none$source[none$emoji == g(0x1FAEA)], rep("cldr", 6L))
   party <- g(0x1F389)
   expect_true(party %in% emoji_find("celebration")$emoji)
   expect_true(party %in% emoji_find("CELEBRATION")$emoji)
@@ -972,10 +978,11 @@ test_that("emoji_keywords() with no argument covers the whole catalogue", {
   p <- emoji_properties()
   expect_identical(length(unique(kw$emoji)), length(unique(p$key)))
   expect_false(any(!is.na(kw$keyword) & !nzchar(kw$keyword)))
-  # the emoji with no vocabulary are exactly the ones newer than {emoji}
-  none <- unique(kw$emoji[is.na(kw$keyword)])
+  # every emoji has keywords since 0.7.0, the ones newer than {emoji} among
+  # them, which until then had none
+  expect_false(anyNA(kw$keyword))
   newer <- unique(as_emoji_canonical(p$emoji[as.numeric(p$version) >= 17]))
-  expect_true(all(newer %in% none))
+  expect_true(all(newer %in% kw$emoji[kw$source == "cldr"]))
 })
 
 test_that("the new verbs refuse unreadable input by name", {

@@ -52,7 +52,10 @@
 #' @return A one-row tibble with columns `tidyEmoji`, `emoji_pkg`,
 #'   `unicode_emoji`, `unicode_emoji_date` (the date in the header of the
 #'   catalogue's data file, a `Date`), `n_emoji` (rows of the reference table;
-#'   see Details), `sentiment_lexicon`, `emotion_lexicon` and `R`.
+#'   see Details), `sentiment_lexicon`, `emotion_lexicon`, `R`, and, since
+#'   0.7.0, `cldr` (the CLDR release the keywords come from) and `emojibase`
+#'   (the emojibase-data release of the shortcodes for the newest emoji and of
+#'   Slack's names).
 #' @seealso [emoji_unicode_version()], [emoji_unicode_releases()],
 #'   [emoji_lexicons()].
 #' @examples
@@ -70,6 +73,8 @@ emoji_provenance <- function() {
                                 nrow(emoji_sentiment_lexicon)),
     emotion_lexicon = sprintf("emotag1200 (%d emoji)",
                               nrow(emoji_emotion_lexicon)),
-    R = paste(R.version$major, R.version$minor, sep = ".")
+    R = paste(R.version$major, R.version$minor, sep = "."),
+    cldr = .emoji_vocab$cldr_version,
+    emojibase = .emoji_vocab$emojibase_version
   )
 }

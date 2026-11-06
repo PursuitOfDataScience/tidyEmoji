@@ -25,13 +25,14 @@ keywords, ready for further inspection or piping into other verbs.
 }
 \details{
 \code{shortcode} is the \emph{matched row's} first alias, and it is \code{NA} when the
-matched spelling has none: 391 of the catalogue's 5244 rows carry no
-GitHub-style alias at all, so a search that hits one (9 of the 200 rows
-\code{emoji_search("face")} returns, for instance) has nothing to put in that
-column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
-\pkg{emoji} package supplying the aliases and keywords does not know yet:
-they are found by name, and only by name, because they have no keywords
-either. Use the \code{emoji} column for those, or \code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}, which
+matched spelling has none: 189 of the catalogue's 5244 rows carry no alias
+of their own, all of them spellings with a selector left out, so a search
+that hits one (7 of the 235 rows \code{emoji_search("face")} returns, for
+instance) has nothing to put in that column. The Emoji 17.0 and 18.0
+additions, which the \pkg{emoji} package's aliases and keywords stop short
+of, have emojibase's shortcodes and CLDR's keywords since 0.7.0, so they
+are found like any other emoji. Use the \code{emoji} column for the 189, or
+\code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}, which
 is keyed on the emoji rather than on the row and so can borrow the alias of
 the glyph's other spelling. For the same reason the two can disagree even
 when both answer -- see \code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}.

@@ -99,18 +99,16 @@
 #' So if the pipeline has to restore emoji downstream, `"shortcode"` is the
 #' only policy that permits it, and it holds up on the awkward cases:
 #' skin-tone modifiers, flags, ZWJ sequences and keycaps all come back.
-#' Measured against the whole catalogue: for all 3790 emoji that have a
-#' shortcode, in their canonical (fully qualified) spelling, which is the
-#' spelling a keyboard emits and text normally holds, **the round trip returns the
-#' original text byte for byte, 100% of the time**.
+#' Measured against the whole catalogue: for all 3972 emoji, in their
+#' canonical (fully qualified) spelling, which is the spelling a keyboard
+#' emits and text normally holds, **the round trip returns the original text
+#' byte for byte, 100% of the time**.
 #'
-#' **The other 182 have no shortcode, and `"shortcode"` leaves them in the
-#' text.** They are the Emoji 17.0 and 18.0 additions: the catalogue knows
-#' them, but the shortcodes come from the \pkg{emoji} package, which does not
-#' yet. They survive the round trip trivially, but a column sanitised with
-#' `"shortcode"` can still hold them, so if the point was to keep emoji away
-#' from a model, check with [emoji_summary()] or use `"name"`, which reaches
-#' them because they do have names.
+#' **Every emoji has a shortcode since 0.7.0.** The 182 of Emoji 17.0 and
+#' 18.0, which the \pkg{emoji} package's aliases stop short of, take
+#' emojibase's CLDR-style ones (`:distorted_face:`), so `"shortcode"` no
+#' longer leaves them in the text as it did; no shortcode an earlier release
+#' wrote has changed.
 #'
 #' **That row of the table assumes the default `wrap`.** Restoring the text
 #' means [text_to_emoji()] can find the token, and it reads exactly
@@ -159,8 +157,8 @@
 #' Unicode also lists shorter spellings of the same emoji, with the `U+FE0F`
 #' presentation selectors omitted. Feed one of those in and the round trip
 #' returns the *canonical* spelling instead: `U+270C` comes back as
-#' `U+270C U+FE0F`. Across all 4853 spellings that have a shortcode that is
-#' 79.5% byte-identical, and the remaining 20.5% differ by `U+FE0F` alone,
+#' `U+270C U+FE0F`. Across all 5055 spellings that have a shortcode that is
+#' 79.9% byte-identical, and the remaining 20.1% differ by `U+FE0F` alone,
 #' never by more. The emoji is always the same emoji, and every tidyEmoji lookup
 #' treats the two spellings as one, so this matters only if you are diffing raw
 #' bytes on text that had its selectors stripped upstream.

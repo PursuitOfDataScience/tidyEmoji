@@ -24,9 +24,9 @@ is built, not inferred from where it was downloaded: Unicode serves the
 current file at an unversioned address, so the address says nothing about
 what it held. \code{\link[=emoji_provenance]{emoji_provenance()}} adds the file's date.
 
-The shortcodes and keywords still come from \pkg{emoji}, so a glyph newer
-than that package's own catalogue is detected and named but has no
-shortcode and no keywords.
+The shortcodes and keywords come from \pkg{emoji}'s frozen data, which stops
+at Emoji 16.0, so since 0.7.0 the newer emoji take theirs from emojibase and
+CLDR: every emoji in the catalogue has a shortcode and keywords.
 }
 \examples{
 emoji_unicode_version()

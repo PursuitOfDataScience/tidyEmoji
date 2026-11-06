@@ -10,7 +10,10 @@ emoji_provenance()
 A one-row tibble with columns \code{tidyEmoji}, \code{emoji_pkg},
 \code{unicode_emoji}, \code{unicode_emoji_date} (the date in the header of the
 catalogue's data file, a \code{Date}), \code{n_emoji} (rows of the reference table;
-see Details), \code{sentiment_lexicon}, \code{emotion_lexicon} and \code{R}.
+see Details), \code{sentiment_lexicon}, \code{emotion_lexicon}, \code{R}, and, since
+0.7.0, \code{cldr} (the CLDR release the keywords come from) and \code{emojibase}
+(the emojibase-data release of the shortcodes for the newest emoji and of
+Slack's names).
 }
 \description{
 \code{emoji_provenance()} reports every version an emoji result depends on:

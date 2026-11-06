@@ -249,6 +249,179 @@ aliases <- .emoji_upstream$aliases[match(.emoji_catalogue$emoji,
                                          .emoji_upstream$emoji)]
 aliases[vapply(aliases, is.null, logical(1))] <- list(character(0))
 
+# CLDR and emojibase (0.7.0, V) ----------------------------------------------------
+# Two sources fill what {emoji} cannot, and change nothing it already says.
+# CLDR 49's English annotations add keywords to every emoji, unioned after
+# {emoji}'s, which stay first, and give CLDR's own names, whose differences
+# from the catalogue's are listed rather than applied. emojibase-data 18.0.0
+# gives shortcodes to the emoji {emoji} has none for (its `cldr` preset, the
+# CLDR-slug style {emoji}'s own aliases use), Slack's names as an input
+# dialect for emoji_from_counts() (its `iamcal` preset), and the gender each
+# person emoji is drawn with, which emoji_gender()'s rule is checked against.
+# Both are pinned by tag and committed xz-compressed under data-raw/vocabulary/
+# so the build repeats offline; TIDYEMOJI_FETCH=true downloads them again.
+voc_dir <- Sys.getenv("TIDYEMOJI_VOCABULARY",
+                      file.path("data-raw", "vocabulary"))
+cldr_version <- "49.0.0"
+emojibase_version <- "18.0.0"
+cldr_url <- paste0("https://raw.githubusercontent.com/unicode-org/cldr-json/",
+                   cldr_version, "/cldr-json/")
+emojibase_url <- paste0("https://cdn.jsdelivr.net/npm/emojibase-data@",
+                        emojibase_version, "/en/")
+voc_sources <- list(
+  annotations = c(paste0("cldr-", cldr_version, "-annotations-en.json.xz"),
+                  paste0(cldr_url, "cldr-annotations-full/annotations/en/",
+                         "annotations.json")),
+  derived = c(paste0("cldr-", cldr_version, "-annotations-derived-en.json.xz"),
+              paste0(cldr_url, "cldr-annotations-derived-full/",
+                     "annotationsDerived/en/annotations.json")),
+  data = c(paste0("emojibase-", emojibase_version, "-en-data.json.xz"),
+           paste0(emojibase_url, "data.json")),
+  cldr = c(paste0("emojibase-", emojibase_version,
+                  "-en-shortcodes-cldr.json.xz"),
+           paste0(emojibase_url, "shortcodes/cldr.json")),
+  iamcal = c(paste0("emojibase-", emojibase_version,
+                    "-en-shortcodes-iamcal.json.xz"),
+             paste0(emojibase_url, "shortcodes/iamcal.json")),
+  github = c(paste0("emojibase-", emojibase_version,
+                    "-en-shortcodes-github.json.xz"),
+             paste0(emojibase_url, "shortcodes/github.json"))
+)
+if (identical(tolower(Sys.getenv("TIDYEMOJI_FETCH")), "true")) {
+  for (src in voc_sources) {
+    tmp <- tempfile(fileext = ".json")
+    utils::download.file(src[[2L]], tmp, mode = "wb", quiet = TRUE)
+    con <- xzfile(file.path(voc_dir, src[[1L]]), open = "wb", compression = 9)
+    writeBin(readBin(tmp, "raw", file.info(tmp)$size), con)
+    close(con)
+  }
+}
+read_voc <- function(name) {
+  con <- xzfile(file.path(voc_dir, voc_sources[[name]][[1L]]), open = "rb")
+  on.exit(close(con))
+  jsonlite::fromJSON(paste(readLines(con, encoding = "UTF-8", warn = FALSE),
+                           collapse = "\n"), simplifyVector = FALSE)
+}
+key_of <- function(g) tidyEmoji:::emoji_key(g)
+# emojibase writes "0023-FE0F-20E3"; a key is "23 20E3", unpadded, selectors
+# set aside, which is what emoji_key() makes of the glyph
+hex_key <- function(h) {
+  t <- strsplit(h, "-", fixed = TRUE)
+  vapply(t, function(x) {
+    x <- sprintf("%X", strtoi(x, 16L))
+    paste(x[!x %in% c("FE0F", "FE0E")], collapse = " ")
+  }, character(1))
+}
+cat_keys <- unique(key_of(.emoji_catalogue$emoji))
+emoji_keys <- unique(key_of(.emoji_catalogue$emoji[
+  .emoji_catalogue$status != "component"]))
+# CLDR: keywords and names, by key, for the catalogue's keys
+ann <- c(read_voc("annotations")$annotations$annotations,
+         read_voc("derived")$annotationsDerived$annotations)
+ann_key <- key_of(names(ann))
+keep <- !is.na(ann_key) & ann_key %in% cat_keys & !duplicated(ann_key)
+cldr_keywords <- lapply(ann[keep], function(a) unlist(a$default))
+names(cldr_keywords) <- ann_key[keep]
+cldr_names <- vapply(ann[keep], function(a) {
+  if (length(a$tts)) a$tts[[1L]] else NA_character_
+}, character(1))
+names(cldr_names) <- ann_key[keep]
+# emojibase: shortcode presets and gender, by key
+preset <- function(name) {
+  x <- read_voc(name)
+  out <- lapply(x, function(v) as.character(unlist(v)))
+  names(out) <- hex_key(names(x))
+  out[names(out) %in% cat_keys]
+}
+eb_cldr <- preset("cldr")
+eb_iamcal <- preset("iamcal")
+eb_github <- preset("github")
+eb_data <- read_voc("data")
+flat <- do.call(c, lapply(eb_data, function(e) c(list(e), e$skins)))
+eb_gender <- unlist(lapply(flat, function(e) {
+  if (is.null(e$gender)) return(NULL)
+  stats::setNames(if (e$gender == 0L) "female" else "male", hex_key(e$hexcode))
+}))
+eb_gender <- eb_gender[names(eb_gender) %in% cat_keys &
+                         !duplicated(names(eb_gender))]
+# what {emoji} already has, by key
+up_alias <- split(aliases, factor(key_of(.emoji_catalogue$emoji),
+                                  levels = cat_keys))
+up_alias <- lapply(up_alias, function(l) unique(unlist(l)))
+up_kw_raw <- .emoji_upstream$keywords[match(.emoji_catalogue$emoji,
+                                            .emoji_upstream$emoji)]
+up_kw <- split(up_kw_raw, factor(key_of(.emoji_catalogue$emoji),
+                                 levels = cat_keys))
+up_kw <- lapply(up_kw, function(l) unique(unlist(l)))
+lacking <- names(up_alias)[lengths(up_alias) == 0L]
+# The equivalence the 0.7.0 plan measured, re-derived here and pinned by the
+# tests: what the two sources add, and that they take nothing away.
+# over the 3,781 emoji {emoji} knows, an empty keyword set included
+up_keys <- names(up_alias)[lengths(up_alias) > 0L &
+                             names(up_alias) %in% emoji_keys]
+jac <- vapply(up_keys, function(k) {
+  a <- up_kw[[k]]
+  b <- cldr_keywords[[k]]
+  if (is.null(b)) b <- character(0)
+  length(intersect(a, b)) / length(union(a, b))
+}, numeric(1))
+newest <- unique(key_of(.emoji_catalogue$emoji[
+  as.numeric(.emoji_catalogue$version) >= 17]))
+gh_shared <- intersect(names(eb_github), names(up_alias)[lengths(up_alias) > 0L])
+cat_names <- stats::setNames(.emoji_catalogue$name,
+                             key_of(.emoji_catalogue$emoji))
+cat_names <- cat_names[!duplicated(names(cat_names))]
+renamed <- names(cldr_names)[names(cldr_names) %in% emoji_keys &
+                               cldr_names != cat_names[names(cldr_names)]]
+equivalence <- c(
+  emoji_keys = length(emoji_keys),
+  cldr_keys = sum(emoji_keys %in% names(cldr_keywords)),
+  cldr_newest = sum(newest %in% names(cldr_keywords)),
+  upstream_keys = length(up_keys),
+  upstream_keywords_per_key = mean(lengths(up_kw[up_keys])),
+  cldr_keywords_per_key = mean(lengths(cldr_keywords[up_keys])),
+  identical_keyword_sets = sum(vapply(up_keys, function(k) {
+    setequal(up_kw[[k]], cldr_keywords[[k]])
+  }, logical(1))),
+  median_jaccard = stats::median(jac),
+  no_shared_keyword = sum(jac == 0),
+  cldr_renames = length(renamed),
+  upstream_alias_keys = sum(lengths(up_alias[emoji_keys]) > 0L),
+  github_keys = length(intersect(names(eb_github), emoji_keys)),
+  github_newest = sum(newest %in% names(eb_github)),
+  github_identical = sum(vapply(gh_shared, function(k) {
+    setequal(eb_github[[k]], up_alias[[k]])
+  }, logical(1))),
+  cldr_shortcode_keys = length(intersect(names(eb_cldr), emoji_keys)),
+  cldr_shortcode_newest = sum(newest %in% names(eb_cldr)),
+  iamcal_keys = length(intersect(names(eb_iamcal), emoji_keys)),
+  iamcal_newest = sum(newest %in% names(eb_iamcal)),
+  lacking_aliases = length(lacking),
+  lacking_filled = sum(lacking %in% names(eb_cldr)),
+  emojibase_female = sum(eb_gender == "female"),
+  emojibase_male = sum(eb_gender == "male")
+)
+.emoji_vocab <- list(
+  cldr_version = cldr_version,
+  emojibase_version = emojibase_version,
+  cldr_keywords = cldr_keywords,
+  cldr_renames = stats::setNames(cldr_names[renamed], renamed),
+  shortcodes = eb_cldr[intersect(lacking, names(eb_cldr))],
+  slack = eb_iamcal,
+  gender = eb_gender,
+  equivalence = equivalence
+)
+# The crosswalk gains the emojibase shortcodes of the emoji {emoji} has
+# none for, every spelling of them, and no existing row changes.
+cat_key <- key_of(.emoji_catalogue$emoji)
+fill <- lengths(aliases) == 0L & cat_key %in% names(.emoji_vocab$shortcodes)
+aliases[fill] <- unname(.emoji_vocab$shortcodes[cat_key[fill]])
+message("vocabulary:                 CLDR ", cldr_version, " keywords for ",
+        equivalence[["cldr_keys"]], " of ", equivalence[["emoji_keys"]],
+        " emoji; emojibase ", emojibase_version, " shortcodes for ",
+        equivalence[["lacking_filled"]], " of the ",
+        equivalence[["lacking_aliases"]], " keys without one")
+
 # emoji_unicode_crosswalk -----------------------------------------------------
 # Historically this table has one row per *alias* (GitHub-style shortcode), so a
 # single glyph can appear under several names (e.g. "grinning", "grinning_face").
@@ -288,6 +461,7 @@ message("category_unicode_crosswalk: ", nrow(category_unicode_crosswalk),
 if (!identical(tolower(Sys.getenv("TIDYEMOJI_WRITE")), "false")) {
   save(.emoji_catalogue, .emoji_catalogue_meta, .emoji_std_variants,
        .emoji_std_variants_meta, .emoji_text_style_bases, .emoji_upstream,
+       .emoji_vocab,
        file = file.path("R", "sysdata.rda"), compress = "xz")
   save(emoji_unicode_crosswalk,
        file = file.path("data", "emoji_unicode_crosswalk.rda"), compress = "xz")

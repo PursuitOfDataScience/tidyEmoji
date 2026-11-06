@@ -50,8 +50,10 @@ The \code{emoji} column can hold glyphs in any spelling, the names of GitHub's
 eight reactions (\code{"+1"}, \code{"-1"}, \code{"laugh"}, \code{"hooray"}, \code{"confused"},
 \code{"heart"}, \code{"rocket"}, \code{"eyes"}, as its REST API returns them, or
 \code{"THUMBS_UP"}, \code{"THUMBS_DOWN"} and the rest, as its GraphQL API does, in
-any case), shortcodes with or without their colons, Slack's toned names
-(\code{"thumbsup::skin-tone-2"}, tone 2 light to 6 dark), or Unicode names.
+any case), shortcodes with or without their colons, Slack's names (its
+own set, from emojibase's \code{iamcal} preset, read here and nowhere else) and
+its toned names (\code{"thumbsup::skin-tone-2"}, tone 2 light to 6 dark), or
+Unicode names.
 Every glyph is written in its canonical spelling, so a bare \code{U+2764} in the
 tally is read by the default \code{presentation}. A value that resolves to no
 emoji is an error naming it, rather than a silent zero, unless

@@ -66,6 +66,11 @@
     if (any(miss)) {
       r[miss] <- as_emoji_canonical(as_emoji(sub("^:(.+):$", "\\1", v[miss])))
     }
+    # Slack's own names last, so they never displace another reading
+    miss <- is.na(r)
+    if (any(miss)) {
+      r[miss] <- unname(.emoji_slack_map()[sub("^:(.+):$", "\\1", v[miss])])
+    }
     r
   }
   todo <- is.na(out)
@@ -111,8 +116,10 @@
 #' eight reactions (`"+1"`, `"-1"`, `"laugh"`, `"hooray"`, `"confused"`,
 #' `"heart"`, `"rocket"`, `"eyes"`, as its REST API returns them, or
 #' `"THUMBS_UP"`, `"THUMBS_DOWN"` and the rest, as its GraphQL API does, in
-#' any case), shortcodes with or without their colons, Slack's toned names
-#' (`"thumbsup::skin-tone-2"`, tone 2 light to 6 dark), or Unicode names.
+#' any case), shortcodes with or without their colons, Slack's names (its
+#' own set, from emojibase's `iamcal` preset, read here and nowhere else) and
+#' its toned names (`"thumbsup::skin-tone-2"`, tone 2 light to 6 dark), or
+#' Unicode names.
 #' Every glyph is written in its canonical spelling, so a bare `U+2764` in the
 #' tally is read by the default `presentation`. A value that resolves to no
 #' emoji is an error naming it, rather than a silent zero, unless

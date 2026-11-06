@@ -174,12 +174,10 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' Feeding the whole emoji catalogue through
 #' `emoji_to_text(format = "shortcode")` and back returns an identical
 #' code-point key for all 5244 entries and identical bytes for 80% of them.
-#' The other 1040 differ **by `U+FE0F` alone, never by more**: they come back
+#' The other 1060 differ **by `U+FE0F` alone, never by more**: they come back
 #' as the spelling this verb's shortcode table carries. A second round trip
 #' changes nothing, so the result is stable either way -- but compare with
-#' \code{emoji_key()}, never with string equality. The 202 spellings added in
-#' Emoji 17.0 and 18.0 are among the identical ones for a duller reason: they
-#' have no shortcode, so [emoji_to_text()] left them in place.
+#' \code{emoji_key()}, never with string equality.
 #'
 #' Which 80% is *not* the same question as which were already fully qualified,
 #' and the two sets genuinely differ in both directions. The bare heart
@@ -188,7 +186,7 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' (`U+1F575 U+FE0F U+200D U+2642`) does not, because it comes back with a
 #' second selector on the gender sign. If your text holds the *canonical*
 #' spelling of each emoji -- what a keyboard emits -- the round trip is
-#' byte-exact for all 3790 that have a shortcode; see [emoji_sanitize()],
+#' byte-exact for all 3972; see [emoji_sanitize()],
 #' which tabulates both denominators.
 #'
 #' @inheritParams emoji_summary
@@ -210,7 +208,7 @@ text_to_emoji <- function(data, text) {
   v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
-  name_map <- .emoji_upstream$name   # named vector: name -> glyph
+  name_map <- .emoji_name_map()   # named vector: name -> glyph
   # Match only the characters GitHub-style aliases actually use. A permissive
   # ":[^:]+:" lets an unrelated colon pair (a URL, a clock time, "note: ...")
   # consume the opening colon of a real shortcode and silently skip it.
@@ -256,16 +254,16 @@ text_to_emoji <- function(data, text) {
 #' a search result is a row -- so the two verbs can disagree on the same glyph.
 #' Both resolve back to the same emoji through [text_to_emoji()], which reads
 #' every alias, so where both answer the disagreement is cosmetic. Where they
-#' differ in substance is the 189 rows of the Emoji 16.0 catalogue that have
-#' no alias: [emoji_search()] reports `NA` for those, while
-#' `as_emoji_shortcode()` still answers for all 189, having borrowed the alias
-#' of the glyph's other spelling. The 202 spellings added in Emoji 17.0 and
-#' 18.0 have no alias on any spelling, since the aliases come from the
-#' \pkg{emoji} package and it has not caught up, so both return `NA` for
-#' them; they still have a name.
+#' differ in substance is the 189 rows that have no alias of their own, all of
+#' them spellings with a selector left out: [emoji_search()] reports `NA` for
+#' those, while `as_emoji_shortcode()` still answers for all 189, having
+#' borrowed the alias of the glyph's other spelling. The 202 spellings added
+#' in Emoji 17.0 and 18.0, which the \pkg{emoji} package's aliases stop short
+#' of, have emojibase's CLDR-style shortcodes since 0.7.0, so both answer for
+#' them too.
 #'
 #' @details
-#' `as_emoji()` accepts either namespace in the same argument, and 464 strings
+#' `as_emoji()` accepts either namespace in the same argument, and 471 strings
 #' belong to both -- they are the exact Unicode name of one emoji and a
 #' shortcode alias of another. It resolves them in a fixed order: **exact
 #' Unicode name first**, then shortcode, then \pkg{emoji}'s own name table. An
@@ -273,7 +271,7 @@ text_to_emoji <- function(data, text) {
 #' actually *named* "dog" (a dog, `U+1F415`), not the one whose alias is
 #' `:dog:` (a dog face, `U+1F436`).
 #'
-#' For 17 of those 464 strings the two namespaces disagree, and there
+#' For 17 of those 471 strings the two namespaces disagree, and there
 #' `as_emoji()` and [text_to_emoji()] differ *by design*: a `:dog:` token is
 #' explicitly delimited as a shortcode, so [text_to_emoji()] reads it in the
 #' shortcode namespace and produces the dog face. The pattern is an emoji whose
@@ -318,7 +316,7 @@ as_emoji <- function(x) {
   by_short <- stats::setNames(ref$emoji, ref$shortcode)
   out <- unname(by_name[x])
   miss <- is.na(out); out[miss] <- unname(by_short[x[miss]])
-  miss <- is.na(out); out[miss] <- unname(.emoji_upstream$name[x[miss]])
+  miss <- is.na(out); out[miss] <- unname(.emoji_name_map()[x[miss]])
   out
 }
 

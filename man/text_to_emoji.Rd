@@ -55,12 +55,10 @@ share one shortcode and only one of the two spellings can come back.
 Feeding the whole emoji catalogue through
 \code{emoji_to_text(format = "shortcode")} and back returns an identical
 code-point key for all 5244 entries and identical bytes for 80\% of them.
-The other 1040 differ \strong{by \code{U+FE0F} alone, never by more}: they come back
+The other 1060 differ \strong{by \code{U+FE0F} alone, never by more}: they come back
 as the spelling this verb's shortcode table carries. A second round trip
 changes nothing, so the result is stable either way -- but compare with
-\code{emoji_key()}, never with string equality. The 202 spellings added in
-Emoji 17.0 and 18.0 are among the identical ones for a duller reason: they
-have no shortcode, so \code{\link[=emoji_to_text]{emoji_to_text()}} left them in place.
+\code{emoji_key()}, never with string equality.
 
 Which 80\% is \emph{not} the same question as which were already fully qualified,
 and the two sets genuinely differ in both directions. The bare heart
@@ -69,7 +67,7 @@ and the two sets genuinely differ in both directions. The bare heart
 (\verb{U+1F575 U+FE0F U+200D U+2642}) does not, because it comes back with a
 second selector on the gender sign. If your text holds the \emph{canonical}
 spelling of each emoji -- what a keyboard emits -- the round trip is
-byte-exact for all 3790 that have a shortcode; see \code{\link[=emoji_sanitize]{emoji_sanitize()}},
+byte-exact for all 3972; see \code{\link[=emoji_sanitize]{emoji_sanitize()}},
 which tabulates both denominators.
 }
 \examples{

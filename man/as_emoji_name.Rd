@@ -33,7 +33,7 @@ All three resolve through \code{emoji_key()}, so qualified emoji (carrying
 \code{U+FE0F}) and unqualified forms resolve identically. Unmatched inputs return
 \code{NA}.
 
-\code{as_emoji()} accepts either namespace in the same argument, and 464 strings
+\code{as_emoji()} accepts either namespace in the same argument, and 471 strings
 belong to both -- they are the exact Unicode name of one emoji and a
 shortcode alias of another. It resolves them in a fixed order: \strong{exact
 Unicode name first}, then shortcode, then \pkg{emoji}'s own name table. An
@@ -41,7 +41,7 @@ exact name match is the stronger signal, so \code{as_emoji("dog")} is the emoji
 actually \emph{named} "dog" (a dog, \verb{U+1F415}), not the one whose alias is
 \verb{:dog:} (a dog face, \verb{U+1F436}).
 
-For 17 of those 464 strings the two namespaces disagree, and there
+For 17 of those 471 strings the two namespaces disagree, and there
 \code{as_emoji()} and \code{\link[=text_to_emoji]{text_to_emoji()}} differ \emph{by design}: a \verb{:dog:} token is
 explicitly delimited as a shortcode, so \code{\link[=text_to_emoji]{text_to_emoji()}} reads it in the
 shortcode namespace and produces the dog face. The pattern is an emoji whose
@@ -66,13 +66,13 @@ where the bare \code{U+2764} row's own first alias is \code{"red_heart"}.
 a search result is a row -- so the two verbs can disagree on the same glyph.
 Both resolve back to the same emoji through \code{\link[=text_to_emoji]{text_to_emoji()}}, which reads
 every alias, so where both answer the disagreement is cosmetic. Where they
-differ in substance is the 189 rows of the Emoji 16.0 catalogue that have
-no alias: \code{\link[=emoji_search]{emoji_search()}} reports \code{NA} for those, while
-\code{as_emoji_shortcode()} still answers for all 189, having borrowed the alias
-of the glyph's other spelling. The 202 spellings added in Emoji 17.0 and
-18.0 have no alias on any spelling, since the aliases come from the
-\pkg{emoji} package and it has not caught up, so both return \code{NA} for
-them; they still have a name.
+differ in substance is the 189 rows that have no alias of their own, all of
+them spellings with a selector left out: \code{\link[=emoji_search]{emoji_search()}} reports \code{NA} for
+those, while \code{as_emoji_shortcode()} still answers for all 189, having
+borrowed the alias of the glyph's other spelling. The 202 spellings added
+in Emoji 17.0 and 18.0, which the \pkg{emoji} package's aliases stop short
+of, have emojibase's CLDR-style shortcodes since 0.7.0, so both answer for
+them too.
 }
 
 \examples{

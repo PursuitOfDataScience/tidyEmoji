@@ -1146,8 +1146,11 @@ test_that("emoji_search matches on each of its three fields", {
   expect_gt(alias_only("grinning_face"), 0L)
   expect_gt(nrow(emoji_search("grinning_face")), 0L)
   expect_gt(nrow(emoji_search("thumbsup")), 0L)
-  # "+1" is a shortcode whose regex metacharacter must also survive
-  expect_equal(nrow(emoji_search("+1")), 1L)
+  # "+1" is a shortcode whose regex metacharacter must also survive; since
+  # 0.7.0 it is a CLDR keyword of every toned thumbs-up too
+  plus <- emoji_search("+1")
+  expect_equal(nrow(plus), 6L)
+  expect_true(all(startsWith(as_emoji_name(plus$emoji), "thumbs up")))
 
   # name-only and keyword-only queries also return hits
   expect_gt(nrow(emoji_search("with tears of joy")), 0L)   # a name substring
@@ -1879,13 +1882,14 @@ test_that("the shortcode round trip holds on a sample of the catalogue", {
   sleuth <- "\U0001F575\uFE0F\u200D\u2642"
   expect_identical(trip(sleuth), paste0(sleuth, "\uFE0F"))
   # and the pages still make the claims the sweeps hold to figures
-  expect_match(rd_flat("emoji_sanitize"), "79.5% byte-identical", fixed = TRUE)
+  expect_match(rd_flat("emoji_sanitize"), "79.9% byte-identical", fixed = TRUE)
   expect_match(rd_flat("text_to_emoji"), "entries", fixed = TRUE)
 })
 
 # Round 103: ?emoji_sanitize quotes the round-trip share as "across all 4853
 # catalogued spellings that is 79.5% byte-identical, and the remaining 20.5%
-# differ by U+FE0F alone -- never by more". All three numbers were correct and
+# differ by U+FE0F alone -- never by more" (5055, 79.9% and 20.1% since 0.7.0
+# gave the newest emoji shortcodes). All three numbers were correct and
 # none was pinned: the test above asserts only mean(back == emoji) > 0.75 over
 # a different denominator (all 5042 rows, not the 4853 that have an alias), so
 # the figure could have drifted several points either way without failing. It
@@ -1893,28 +1897,29 @@ test_that("the shortcode round trip holds on a sample of the catalogue", {
 # measurement is 79% end-to-end and 75% over canonical spellings, and those are
 # three different denominators, not three estimates of one number. Pin it both
 # ways: derive it from the data, and require the rendered page to state it.
-test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
+test_that("?emoji_sanitize's 79.9% round-trip share is what the data gives", {
   skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   has_alias <- !is.na(ref$shortcode) & nzchar(ref$shortcode)
   g <- ref$emoji[has_alias]
-  # 4853 is the denominator the sentence names: the spellings that have an
-  # alias, i.e. all 5042 less the 189 with none
-  expect_identical(length(g), 4853L)
-  expect_identical(nrow(ref) - sum(!has_alias), 4853L)
+  # 5055 is the denominator the sentence names: the spellings that have an
+  # alias, i.e. all 5244 less the 189 with none (4853 until 0.7.0 gave the 202
+  # spellings of Emoji 17.0 and 18.0 their shortcodes)
+  expect_identical(length(g), 5055L)
+  expect_identical(nrow(ref) - sum(!has_alias), 5055L)
 
   sc <- emoji_to_text(data.frame(text = g, stringsAsFactors = FALSE), text,
                       format = "shortcode")$text
   back <- text_to_emoji(data.frame(text = sc, stringsAsFactors = FALSE),
                         text)$text
   same <- back == g
-  expect_identical(sum(same), 3859L)
-  expect_identical(round(100 * mean(same), 1), 79.5)
-  expect_identical(sum(!same), 994L)
-  expect_identical(round(100 * mean(!same), 1), 20.5)
+  expect_identical(sum(same), 4041L)
+  expect_identical(round(100 * mean(same), 1), 79.9)
+  expect_identical(sum(!same), 1014L)
+  expect_identical(round(100 * mean(!same), 1), 20.1)
 
-  # "never by more": every one of the 994 differs by U+FE0F and nothing else
+  # "never by more": every one of the 1014 differs by U+FE0F and nothing else
   strip_vs <- function(x) vapply(x, function(y) {
     cp <- utf8ToInt(y)
     paste(sprintf("%X", cp[cp != 0xFE0F]), collapse = " ")
@@ -1926,10 +1931,10 @@ test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
   # the page has to say so
   txt <- rd_flat("emoji_sanitize")
   skip_if(is.na(txt), "emoji_sanitize.Rd not available")
-  expect_true(grepl("all 4853 spellings that have a shortcode", txt,
+  expect_true(grepl("all 5055 spellings that have a shortcode", txt,
                     fixed = TRUE))
-  expect_true(grepl("79.5% byte-identical", txt, fixed = TRUE))
-  expect_true(grepl("remaining 20.5%", txt, fixed = TRUE))
+  expect_true(grepl("79.9% byte-identical", txt, fixed = TRUE))
+  expect_true(grepl("remaining 20.1%", txt, fixed = TRUE))
 })
 
 # Shared by the sweep and its CRAN twin: the whole catalogue, or every
@@ -4104,11 +4109,12 @@ test_that("a deprecation warns once per session, not once per call", {
 # to state it. ?emoji_search's list of the 17 is also named in full here -- it
 # gave 11 of them, punctuated as if that were the set.
 
-test_that("the name/shortcode overlap is 464, and 17 of them disagree", {
+test_that("the name/shortcode overlap is 471, and 17 of them disagree", {
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   both <- intersect(unique(ref$name), unique(ref$shortcode))
-  expect_identical(length(both), 464L)
+  # 464 until 0.7.0, whose shortcodes for the newest emoji add seven
+  expect_identical(length(both), 471L)
 
   # the disagreement is behavioural, not a property of a lookup table:
   # as_emoji() resolves by Unicode name first, text_to_emoji() by shortcode
@@ -4124,7 +4130,7 @@ test_that("the name/shortcode overlap is 464, and 17 of them disagree", {
       "pig", "rabbit", "satellite", "snowman", "sunglasses", "tiger", "train",
       "umbrella", "whale")
   )
-  # and on the other 447 the two agree, so "17" is the whole difference
+  # and on the other 454 the two agree, so "17" is the whole difference
   expect_true(all(tidyEmoji:::emoji_key(by_name[!differ]) ==
                     tidyEmoji:::emoji_key(by_code[!differ])))
   expect_false(anyNA(by_name))
@@ -4146,15 +4152,16 @@ test_that("the documented round-trip byte share is the catalogue's", {
   expect_identical(nrow(ref), 5244L)
   # ... and 80% of them recover the same bytes
   same <- round_trip == ref$emoji
-  expect_identical(sum(same), 4204L)
+  expect_identical(sum(same), 4184L)
   expect_identical(round(100 * mean(same)), 80)
-  expect_identical(sum(!same), 1040L)
-  # 202 of the identical ones are the Emoji 17.0 and 18.0 spellings, which
-  # have no shortcode and so are left where they are
+  expect_identical(sum(!same), 1060L)
+  # the 202 Emoji 17.0 and 18.0 spellings have shortcodes since 0.7.0, so they
+  # make the round trip like the rest: 182 come back byte for byte, and the
+  # 20 written with a selector left out come back with it
   new_rows <- tidyEmoji:::.emoji_version_num(ref$version) >= 17
   expect_identical(sum(new_rows), 202L)
-  expect_true(all(is.na(ref$shortcode[new_rows])))
-  expect_true(all(same[new_rows]))
+  expect_false(anyNA(ref$shortcode[new_rows]))
+  expect_identical(sum(same[new_rows]), 182L)
 
   # The claim the help page used to make -- that the 79% are "the ones that
   # were already fully qualified" -- is false, and plausible enough that it
@@ -4165,7 +4172,7 @@ test_that("the documented round-trip byte share is the catalogue's", {
   paired <- ref$key %in% ref$key[duplicated(ref$key)]
   fully_qualified <- has_fe0f | !paired
   expect_false(identical(same, fully_qualified))
-  expect_identical(sum(same & !fully_qualified), 232L)
+  expect_identical(sum(same & !fully_qualified), 212L)
   expect_identical(sum(fully_qualified & !same), 92L)
   expect_identical(round(100 * mean(fully_qualified)), 77)
   # and it is not the canonical-spelling share (3972 / 5244) either
@@ -4195,8 +4202,9 @@ test_that("the documented round-trip byte share is the catalogue's", {
   # denominator ?emoji_sanitize quotes
   canonical <- ref$emoji[!duplicated(ref$key)]
   expect_identical(length(canonical), 3972L)
-  # 3790 of them have a shortcode, the denominator ?emoji_sanitize quotes
-  expect_identical(sum(!is.na(ref$shortcode[!duplicated(ref$key)])), 3790L)
+  # all 3972 of them have a shortcode since 0.7.0 (3790 before), the
+  # denominator ?emoji_sanitize quotes
+  expect_identical(sum(!is.na(ref$shortcode[!duplicated(ref$key)])), 3972L)
   canon_rt <- text_to_emoji(
     emoji_to_text(data.frame(text = canonical, stringsAsFactors = FALSE),
                   text, format = "shortcode"), text
@@ -4373,12 +4381,13 @@ test_that("as_emoji_shortcode() is keyed on the emoji, emoji_search() on the row
 
   hit <- emoji_search("face")
   expect_gt(nrow(hit), 0L)
-  expect_identical(sum(is.na(hit$shortcode)), 9L)
-  # seven are 16.0 rows with no alias, and two are 17.0 and 18.0 faces that
-  # {emoji} does not know at all, so no spelling of them has one
+  expect_identical(sum(is.na(hit$shortcode)), 7L)
+  # all seven are rows with no alias of their own; the two 17.0 and 18.0
+  # faces that {emoji} does not know at all, which made it nine until 0.7.0,
+  # have emojibase's shortcodes now
   na_hit <- hit$emoji[is.na(hit$shortcode)]
   expect_identical(sum(na_hit %in% upstream()$emoji[no_alias]), 7L)
-  expect_identical(sum(!na_hit %in% upstream()$emoji), 2L)
+  expect_identical(sum(!na_hit %in% upstream()$emoji), 0L)
 
   # every non-NA shortcode a search reports is a token text_to_emoji() reads,
   # and it recovers that row's emoji
@@ -5167,9 +5176,9 @@ test_that("emoji_unicode_crosswalk's row unit is a (name, glyph) pair", {
   # name". It is neither one row per name nor one per glyph: the mapping is
   # many-to-many both ways, so a join by emoji_name silently duplicates.
   eu <- emoji_unicode_crosswalk
-  expect_identical(nrow(eu), 5761L)
-  expect_identical(length(unique(eu$emoji_name)), 4698L)
-  expect_identical(length(unique(eu$unicode)), 4853L)
+  expect_identical(nrow(eu), 5963L)
+  expect_identical(length(unique(eu$emoji_name)), 4880L)
+  expect_identical(length(unique(eu$unicode)), 5055L)
 
   # the row unit: (name, glyph) pairs are unique, (name, key) pairs are not
   expect_identical(nrow(unique(eu[, c("emoji_name", "unicode")])), nrow(eu))
@@ -5179,7 +5188,7 @@ test_that("emoji_unicode_crosswalk's row unit is a (name, glyph) pair", {
   # a name on several rows means several *spellings* of one emoji, never two
   # different emoji -- which is why joining on `key` is the fix
   repeated <- names(which(table(eu$emoji_name) > 1L))
-  expect_identical(length(repeated), 973L)
+  expect_identical(length(repeated), 993L)
   keys_per_name <- tapply(eu$key, eu$emoji_name, function(k) length(unique(k)))
   expect_true(all(keys_per_name == 1L))
 
@@ -5327,7 +5336,7 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   old <- Sys.getenv(c("TIDYEMOJI_WRITE", "TIDYEMOJI_EMOJI_TEST",
                       "TIDYEMOJI_FETCH", "TIDYEMOJI_STD_VARIANTS",
                       "TIDYEMOJI_EMOJI_VARIATIONS", "TIDYEMOJI_EMOJI_UPSTREAM",
-                      "TIDYEMOJI_SNAPSHOT"),
+                      "TIDYEMOJI_SNAPSHOT", "TIDYEMOJI_VOCABULARY"),
                     unset = NA)
   on.exit({
     for (v in names(old)) {
@@ -5340,15 +5349,19 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   sv <- testthat::test_path("..", "..", "data-raw", "StandardizedVariants.txt")
   evs <- testthat::test_path("..", "..", "data-raw",
                              "emoji-variation-sequences.txt")
-  # and the snapshot of the {emoji} data (0.7.0)
+  # and the snapshot of the {emoji} data and the CLDR and emojibase sources
+  # (0.7.0)
   ups <- testthat::test_path("..", "..", "data-raw", "emoji-upstream.rds")
-  skip_if(!file.exists(sv) || !file.exists(evs) || !file.exists(ups),
-          "data-raw/ not available")
+  voc <- testthat::test_path("..", "..", "data-raw", "vocabulary")
+  skip_if(!file.exists(sv) || !file.exists(evs) || !file.exists(ups) ||
+            !dir.exists(voc), "data-raw/ not available")
+  skip_if_not_installed("jsonlite")
   Sys.setenv(TIDYEMOJI_WRITE = "false",
              TIDYEMOJI_EMOJI_TEST = normalizePath(input),
              TIDYEMOJI_STD_VARIANTS = normalizePath(sv),
              TIDYEMOJI_EMOJI_VARIATIONS = normalizePath(evs),
              TIDYEMOJI_EMOJI_UPSTREAM = normalizePath(ups),
+             TIDYEMOJI_VOCABULARY = normalizePath(voc),
              TIDYEMOJI_SNAPSHOT = "false",
              TIDYEMOJI_FETCH = "false")
   env <- new.env(parent = globalenv())
@@ -5358,7 +5371,7 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   for (nm in c("emoji_unicode_crosswalk", "category_unicode_crosswalk",
                ".emoji_catalogue", ".emoji_catalogue_meta",
                ".emoji_std_variants", ".emoji_std_variants_meta",
-               ".emoji_text_style_bases", ".emoji_upstream")) {
+               ".emoji_text_style_bases", ".emoji_upstream", ".emoji_vocab")) {
     expect_identical(get(nm, envir = env), get(nm, envir = ns), info = nm)
   }
   # the version recorded is the one the file says it is
@@ -5617,7 +5630,9 @@ test_that("every alias resolves, including the 751 only the fallback knows", {
   all_alias <- unique(unlist(upstream()$aliases))
   shortcodes <- unique(ref$shortcode[!is.na(ref$shortcode)])
   expect_identical(length(all_alias), 4698L)
-  expect_identical(length(shortcodes), 3947L)
+  # 3947 until 0.7.0 gave the newest emoji shortcodes of emojibase's, which
+  # are not {emoji}'s and so leave the 751 alone
+  expect_identical(length(shortcodes), 4129L)
   fallback_only <- setdiff(all_alias, shortcodes)
   expect_identical(length(fallback_only), 751L)
   # the three the entry names
@@ -8144,19 +8159,15 @@ check_naming_branches <- function(n_rows = NULL) {
   single <- stats::setNames(one$emoji_name, one$unicode)
   g <- names(single)
   expect_true(all(g %in% names(by_glyph)))
-  # 189 of the Emoji 16.0 rows carry no alias, but canonicalisation matches
-  # on the codepoint key, so a glyph borrows the alias of its other spelling:
-  # no 16.0 glyph ends up nameless in either branch. The 182 emoji added in
-  # 17.0 and 18.0 have no alias on any spelling, and both branches report
-  # NA for exactly those.
+  # 189 rows carry no alias of their own, but canonicalisation matches on the
+  # codepoint key, so a glyph borrows the alias of its other spelling: no
+  # glyph ends up nameless in either branch. Until 0.7.0 the 182 emoji added
+  # in 17.0 and 18.0 had no alias on any spelling and both branches reported
+  # NA for them; they have emojibase's shortcodes now.
   new_keys <- unique(ref$key[E$.emoji_version_num(ref$version) >= 17])
   expect_identical(length(new_keys), 182L)
-  is_new <- E$emoji_key(names(single)) %in% new_keys
-  expect_false(anyNA(single[!is_new]))
-  expect_true(all(is.na(single[is_new])))
-  many_new <- E$emoji_key(many$unicode) %in% new_keys
-  expect_false(anyNA(many$emoji_name[!many_new]))
-  expect_true(all(is.na(many$emoji_name[many_new])))
+  expect_false(anyNA(single))
+  expect_false(anyNA(many$emoji_name))
   # the single name is the first expanded name, for every glyph
   offenders <- g[!vapply(g, function(k)
     identical(single[[k]], by_glyph[[k]][[1L]]), logical(1))]
@@ -10036,21 +10047,24 @@ test_that("the cost figures on ?emoji_cooccurrence are arithmetic", {
 
 test_that("the alias figures on ?emoji_search hold", {
   skip_if_catalogue_moved()
-  # "391 of the catalogue's 5244 rows carry no GitHub-style alias at all, so a
-  # search that hits one (9 of the 200 rows emoji_search("face") returns, for
-  # instance) has nothing to put in that column"
+  # "189 of the catalogue's 5244 rows carry no alias of their own, all of
+  # them spellings with a selector left out, so a search that hits one (7 of
+  # the 235 rows emoji_search("face") returns, for instance) has nothing to
+  # put in that column" (391, 9 and 200 until 0.7.0 gave the newest emoji
+  # shortcodes and keywords)
   ref <- asNamespace("tidyEmoji")$emoji_reference()
-  expect_identical(sum(is.na(ref$shortcode)), 391L)
+  expect_identical(sum(is.na(ref$shortcode)), 189L)
   expect_identical(nrow(ref), 5244L)
-  # "202 of the 391 are the Emoji 17.0 and 18.0 additions"
+  expect_true(all(ref$status[is.na(ref$shortcode)] %in%
+                    c("unqualified", "minimally-qualified")))
   new_rows <- asNamespace("tidyEmoji")$.emoji_version_num(ref$version) >= 17
-  expect_identical(sum(is.na(ref$shortcode) & new_rows), 202L)
+  expect_identical(sum(is.na(ref$shortcode) & new_rows), 0L)
   f <- emoji_search("face")
-  expect_identical(nrow(f), 200L)
-  expect_identical(sum(is.na(f$shortcode)), 9L)
+  expect_identical(nrow(f), 235L)
+  expect_identical(sum(is.na(f$shortcode)), 7L)
   rd <- rd_flat("emoji_search")
-  expect_match(rd, "391 of the catalogue's 5244 rows", fixed = TRUE)
-  expect_match(rd, "9 of the 200 rows", fixed = TRUE)
+  expect_match(rd, "189 of the catalogue's 5244 rows", fixed = TRUE)
+  expect_match(rd, "7 of the 235 rows", fixed = TRUE)
 })
 
 test_that("?emoji_density's figures describe the example corpus", {
@@ -10718,7 +10732,7 @@ check_four_figures <- function(n = NULL) {
                fixed = TRUE)
 
   # ?emoji_to_text: "returns an identical code-point key for all 5244 entries
-  # and identical bytes for 80% of them. The other 1040 differ by U+FE0F
+  # and identical bytes for 80% of them. The other 1060 differ by U+FE0F
   # alone, never by more" and "A second round trip changes nothing".
   expect_identical(nrow(ref), 5244L)
   rt <- if (is.null(n)) ref else ref[sweep_rows(ref$emoji, n), , drop = FALSE]
@@ -10728,7 +10742,7 @@ check_four_figures <- function(n = NULL) {
   expect_identical(ekey(back), ekey(rt$emoji))
   differ <- back != rt$emoji
   if (is.null(n)) {
-    expect_identical(sum(differ), 1040L)
+    expect_identical(sum(differ), 1060L)
     expect_equal(round(100 * mean(!differ)), 80)
   }
   # cp[cp != 0xFE0F], not setdiff(): setdiff() also drops repeated code
@@ -10746,16 +10760,16 @@ check_four_figures <- function(n = NULL) {
                   format = "shortcode"), t)$t
   expect_identical(twice, back)
 
-  # ?emoji_unicode_crosswalk: "5761 rows cover 4698 distinct names and 4853
-  # distinct glyphs" and "a join by `emoji_name` duplicates rows for those 973
-  # names"
+  # ?emoji_unicode_crosswalk: "5963 rows cover 4880 distinct names and 5055
+  # distinct glyphs" and "a join by `emoji_name` duplicates rows for those 993
+  # names" (5761, 4698, 4853 and 973 until 0.7.0 added the newest emoji)
   x <- emoji_unicode_crosswalk
-  expect_identical(nrow(x), 5761L)
-  expect_identical(length(unique(x$emoji_name)), 4698L)
-  expect_identical(length(unique(x$unicode)), 4853L)
-  expect_identical(sum(table(x$emoji_name) > 1L), 973L)
+  expect_identical(nrow(x), 5963L)
+  expect_identical(length(unique(x$emoji_name)), 4880L)
+  expect_identical(length(unique(x$unicode)), 5055L)
+  expect_identical(sum(table(x$emoji_name) > 1L), 993L)
   cw <- rd_flat("emoji_unicode_crosswalk")
-  expect_match(cw, "5761 rows cover 4698 distinct names and 4853", fixed = TRUE)
+  expect_match(cw, "5963 rows cover 4880 distinct names and 5055", fixed = TRUE)
 
   # ?emoji_unicode_version: the example in @return is the answer, not a
   # remembered one from an older catalogue

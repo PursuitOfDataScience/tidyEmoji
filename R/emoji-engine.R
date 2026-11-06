@@ -15,14 +15,16 @@
 # by data-raw/crosswalks.R from Unicode's emoji-test.txt). The catalogue gives
 # the glyph, its qualification `status`, the emoji `version` that introduced
 # it, its CLDR `name`, `group` and `subgroup`. `shortcode` is the first
-# GitHub-style alias, the one piece read from {emoji} at run time (e.g.
-# "grinning" for the glyph Unicode names "grinning face"); a glyph newer than
-# {emoji} has none. `key` is the codepoint-normalised join key (U+FE0F
-# removed). Cached for the session.
+# GitHub-style alias, from the bundled snapshot of {emoji}'s data (e.g.
+# "grinning" for the glyph Unicode names "grinning face"), or, for an emoji
+# {emoji} gives none in any spelling (the 182 of Emoji 17.0 and 18.0), the
+# first of emojibase's CLDR-style shortcodes (0.7.0). `key` is the
+# codepoint-normalised join key (U+FE0F removed). Cached for the session.
 emoji_reference <- function() {
   if (is.null(.tidyEmoji_cache$reference)) {
     cat_tbl <- .emoji_catalogue
-    aliases <- .emoji_vocabulary_column(cat_tbl$emoji, "aliases")
+    keys <- emoji_key(cat_tbl$emoji)
+    aliases <- .emoji_vocabulary(cat_tbl$emoji, "aliases", keys)
     shortcode <- vapply(
       aliases,
       function(a) if (length(a)) a[[1L]] else NA_character_,
@@ -36,7 +38,7 @@ emoji_reference <- function() {
       subgroup  = cat_tbl$subgroup,
       version   = cat_tbl$version
     )
-    ref$key <- emoji_key(ref$emoji)
+    ref$key <- keys
     # Until 0.5.0 the reference was emoji::emojis, which records the
     # introducing version on the *unqualified* member of a variation pair and
     # leaves it NA on the fully-qualified one, so 1252 of its 5042 rows arrived
@@ -80,6 +82,47 @@ emoji_reference <- function() {
   out <- e[[column]][match(glyphs, e$emoji)]
   out[vapply(out, is.null, logical(1))] <- list(character(0))
   out
+}
+
+# Shortcode to glyph: {emoji}'s name map, then the emojibase shortcodes of
+# the emoji {emoji} has none for (0.7.0), which never displace one of
+# {emoji}'s. What text_to_emoji() and as_emoji() read.
+.emoji_name_map <- function() {
+  sc <- .emoji_vocab$shortcodes
+  bk <- .emoji_by_key()
+  extra <- stats::setNames(
+    rep(bk$canonical[match(names(sc), bk$key)], lengths(sc)),
+    unlist(sc, use.names = FALSE))
+  up <- .emoji_upstream$name
+  c(up, extra[!names(extra) %in% names(up)])
+}
+
+# Slack's names (emojibase's iamcal preset, 0.7.0) to glyph, for
+# emoji_from_counts() only: an input dialect, never an output alias.
+.emoji_slack_map <- function() {
+  sl <- .emoji_vocab$slack
+  bk <- .emoji_by_key()
+  glyph <- bk$canonical[match(names(sl), bk$key)]
+  out <- stats::setNames(rep(glyph, lengths(sl)), unlist(sl, use.names = FALSE))
+  out[!is.na(out) & !duplicated(names(out))]
+}
+
+# The whole vocabulary of `glyphs` (0.7.0, V), {emoji}'s first and never
+# changed: for "keywords", {emoji}'s keywords for the spelling and then CLDR
+# 49's for the key, unioned; for "aliases", {emoji}'s aliases for the
+# spelling, or, where the key has none in any spelling, emojibase's
+# CLDR-style shortcodes. Both additions are bundled (.emoji_vocab, built by
+# data-raw/crosswalks.R).
+.emoji_vocabulary <- function(glyphs, column, keys = emoji_key(glyphs)) {
+  up <- .emoji_vocabulary_column(glyphs, column)
+  if (column == "keywords") {
+    cl <- .emoji_vocab$cldr_keywords[keys]
+    cl[vapply(cl, is.null, logical(1))] <- list(character(0))
+    return(Map(function(a, b) unique(c(a, b)), up, cl, USE.NAMES = FALSE))
+  }
+  fill <- lengths(up) == 0L & keys %in% names(.emoji_vocab$shortcodes)
+  up[fill] <- unname(.emoji_vocab$shortcodes[keys[fill]])
+  up
 }
 
 # The cache slots computed *from* `reference`, in one place. Anything added

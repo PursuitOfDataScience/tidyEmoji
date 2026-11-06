@@ -33,11 +33,11 @@ the party popper and \code{"celebrat"} finds nothing; \code{\link[=emoji_search]
 substring search, over names and shortcodes as well as keywords. The fold
 to lower case does not depend on the session's locale.
 
-\strong{English only.} The keyword sets are the CLDR English ones, so a term in
+\strong{English only.} The keyword sets are English ones, the \pkg{emoji}
+package's and CLDR 49's together (see \code{\link[=emoji_keywords]{emoji_keywords()}}), so a term in
 another language matches nothing and an English term says nothing about how
-the emoji is read elsewhere. And an emoji newer than the \pkg{emoji}
-package's table has no keywords at all, so it is never found here; see
-\code{\link[=emoji_keywords]{emoji_keywords()}}.
+the emoji is read elsewhere. Every emoji in the catalogue has keywords, the
+newest included.
 }
 \examples{
 emoji_find("celebration")

@@ -315,24 +315,36 @@ emoji_identical <- function(x, y, details = FALSE) {
 }
 
 
-# Keywords per code-point key, from {emoji}, cached: the union over every
-# spelling of the emoji, in {emoji}'s order, so the bare and the qualified
-# heart carry the same set. A key {emoji} does not know has none. `folded`
-# holds the same sets case-folded, for emoji_find().
+# Keywords per code-point key, cached: {emoji}'s, the union over every
+# spelling of the emoji in {emoji}'s order, so the bare and the qualified
+# heart carry the same set, then CLDR 49's that {emoji} lacks (0.7.0).
+# `source` says which each keyword came from, "github" for {emoji}'s and
+# "cldr" for CLDR's, and `folded` holds the sets case-folded, for
+# emoji_find().
 .emoji_keyword_sets <- function() {
   if (is.null(.tidyEmoji_cache$vocabulary)) {
     ref <- emoji_reference()
     kw <- .emoji_vocabulary_column(ref$emoji, "keywords")
-    sets <- lapply(split(kw, factor(ref$key, levels = unique(ref$key))),
-                   function(l) {
-                     k <- unique(unlist(l, use.names = FALSE))
-                     k[!is.na(k) & nzchar(k)]
-                   })
+    keys <- unique(ref$key)
+    up <- lapply(split(kw, factor(ref$key, levels = keys)), function(l) {
+      k <- unique(unlist(l, use.names = FALSE))
+      k[!is.na(k) & nzchar(k)]
+    })
+    cl <- .emoji_vocab$cldr_keywords[keys]
+    sets <- Map(function(a, b) {
+      b <- b[!is.na(b) & nzchar(b) & !b %in% a]
+      c(a, b)
+    }, up, cl)
+    names(sets) <- keys
+    source <- Map(function(a, s) {
+      rep(c("github", "cldr"), c(length(a), length(s) - length(a)))
+    }, up, sets)
     flat <- unlist(sets, use.names = FALSE)
     folded <- split(.emoji_fold(flat),
                     factor(rep(names(sets), lengths(sets)),
                            levels = names(sets)))
-    .tidyEmoji_cache$vocabulary <- list(raw = sets, folded = folded)
+    .tidyEmoji_cache$vocabulary <- list(raw = sets, source = source,
+                                        folded = folded)
   }
   .tidyEmoji_cache$vocabulary
 }
@@ -346,24 +358,28 @@ emoji_identical <- function(x, y, details = FALSE) {
 #' them collapsed into one string per match.
 #'
 #' @details
-#' **These are the English keyword sets**, from the \pkg{emoji} package, and
-#' nothing in them says anything about how an emoji is read in another
-#' language or culture. Multilingual keywords are not bundled.
+#' **These are the English keyword sets**, and nothing in them says anything
+#' about how an emoji is read in another language or culture. Multilingual
+#' keywords are not bundled.
 #'
-#' The keywords come from \pkg{emoji} while the catalogue comes from Unicode,
-#' and the two are not equally current: an emoji newer than \pkg{emoji}'s own
-#' table (every Emoji 17.0 and 18.0 addition, at the time of writing) is
-#' detected and named but has no keywords. Such a glyph, and any string that
-#' is not an emoji at all, gets **one row with `keyword = NA`**, never a row
-#' with an empty string, so `is.na(keyword)` is the test for "no vocabulary".
+#' Since 0.7.0 each emoji's set is the union of two sources, and `source` says
+#' which a keyword came from: `"github"`, the GitHub-style set the \pkg{emoji}
+#' package carried, which every earlier release used and which comes first,
+#' unchanged; and `"cldr"`, the keywords of Unicode's CLDR 49 annotations that
+#' set lacks. The union only adds: every emoji in the catalogue has keywords
+#' now, the 182 of Emoji 17.0 and 18.0 included, which had none, and no
+#' keyword an earlier release returned is gone. A string that is not an emoji
+#' gets **one row with `keyword = NA`**, never a row with an empty string, so
+#' `is.na(keyword)` is the test for "no vocabulary".
 #'
 #' Keywords belong to the emoji, not to one spelling of it, so the bare and
 #' the qualified heart return the same set.
 #'
 #' @param x A character vector of glyphs. The default, `NULL`, returns every
 #'   emoji in the catalogue, each under its canonical spelling.
-#' @return A tibble with columns `emoji`, `name` and `keyword`, one row per
-#'   keyword, in the order of `x` and then of the keyword set.
+#' @return A tibble with columns `emoji`, `name`, `keyword` and `source`
+#'   (`"github"` or `"cldr"`, `NA` with a `NA` keyword), one row per keyword,
+#'   in the order of `x` and then of the keyword set.
 #' @seealso [emoji_find()] to go the other way, from keywords to emoji;
 #'   [emoji_search()] for a substring search over keywords, names and
 #'   shortcodes.
@@ -377,20 +393,25 @@ emoji_keywords <- function(x = NULL) {
   } else {
     x <- .emoji_check_glyphs(x)
   }
-  sets <- .emoji_keyword_sets()$raw
+  vs <- .emoji_keyword_sets()
   keys <- emoji_key(x)
-  kw <- lapply(keys, function(k) {
+  pick <- function(sets) lapply(keys, function(k) {
     if (is.na(k)) return(character(0))
     s <- sets[[k]]
     if (is.null(s)) character(0) else s
   })
+  kw <- pick(vs$raw)
+  src <- pick(vs$source)
   n <- pmax(lengths(kw), 1L)
-  keyword <- unlist(lapply(kw, function(k) if (length(k)) k else NA_character_),
-                    use.names = FALSE)
+  flat <- function(l) {
+    unlist(lapply(l, function(k) if (length(k)) k else NA_character_),
+           use.names = FALSE)
+  }
   tibble::tibble(
     emoji = rep(x, n),
     name = rep(as_emoji_name(x), n),
-    keyword = as.character(keyword)
+    keyword = as.character(flat(kw)),
+    source = as.character(flat(src))
   )
 }
 
@@ -408,11 +429,11 @@ emoji_keywords <- function(x = NULL) {
 #' substring search, over names and shortcodes as well as keywords. The fold
 #' to lower case does not depend on the session's locale.
 #'
-#' **English only.** The keyword sets are the CLDR English ones, so a term in
+#' **English only.** The keyword sets are English ones, the \pkg{emoji}
+#' package's and CLDR 49's together (see [emoji_keywords()]), so a term in
 #' another language matches nothing and an English term says nothing about how
-#' the emoji is read elsewhere. And an emoji newer than the \pkg{emoji}
-#' package's table has no keywords at all, so it is never found here; see
-#' [emoji_keywords()].
+#' the emoji is read elsewhere. Every emoji in the catalogue has keywords, the
+#' newest included.
 #'
 #' @param terms A character vector of keywords to look for. Terms that differ
 #'   only in case are one term, reported in the spelling given first. An empty

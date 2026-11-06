@@ -9,13 +9,14 @@
 #'   against keywords, name and shortcodes.
 #' @details
 #' `shortcode` is the *matched row's* first alias, and it is `NA` when the
-#' matched spelling has none: 391 of the catalogue's 5244 rows carry no
-#' GitHub-style alias at all, so a search that hits one (9 of the 200 rows
-#' `emoji_search("face")` returns, for instance) has nothing to put in that
-#' column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
-#' \pkg{emoji} package supplying the aliases and keywords does not know yet:
-#' they are found by name, and only by name, because they have no keywords
-#' either. Use the `emoji` column for those, or [as_emoji_shortcode()], which
+#' matched spelling has none: 189 of the catalogue's 5244 rows carry no alias
+#' of their own, all of them spellings with a selector left out, so a search
+#' that hits one (7 of the 235 rows `emoji_search("face")` returns, for
+#' instance) has nothing to put in that column. The Emoji 17.0 and 18.0
+#' additions, which the \pkg{emoji} package's aliases and keywords stop short
+#' of, have emojibase's shortcodes and CLDR's keywords since 0.7.0, so they
+#' are found like any other emoji. Use the `emoji` column for the 189, or
+#' [as_emoji_shortcode()], which
 #' is keyed on the emoji rather than on the row and so can borrow the alias of
 #' the glyph's other spelling. For the same reason the two can disagree even
 #' when both answer -- see [as_emoji_shortcode()].
@@ -109,8 +110,8 @@ emoji_search <- function(query) {
 .emoji_search_index <- function() {
   if (is.null(.tidyEmoji_cache$search)) {
     ref <- emoji_reference()
-    kw <- .emoji_vocabulary_column(ref$emoji, "keywords")
-    al <- .emoji_vocabulary_column(ref$emoji, "aliases")
+    kw <- .emoji_vocabulary(ref$emoji, "keywords", ref$key)
+    al <- .emoji_vocabulary(ref$emoji, "aliases", ref$key)
     kw_flat <- unlist(kw, use.names = FALSE)
     al_flat <- unlist(al, use.names = FALSE)
     .tidyEmoji_cache$search <- list(

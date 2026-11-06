@@ -47,7 +47,7 @@ it: do not skip it.
 
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, the three vignettes, README.md and NEWS.md, with the
-  256 entries in `inst/WORDLIST`.
+  258 entries in `inst/WORDLIST`.
 
 ## The skip inventory
 
@@ -102,9 +102,9 @@ whenever a verb lands or a test is added.
 
 The bundled datasets contain emoji glyphs and are therefore marked UTF-8, and a
 plain `R CMD check` (without `--as-cran`, which suppresses it) reports
-`Note: found 8006 marked UTF-8 strings`. Every one of those strings is an emoji
+`Note: found 8208 marked UTF-8 strings`. Every one of those strings is an emoji
 glyph in a glyph column or a message in the example corpus:
-`emoji_unicode_crosswalk$unicode` 5761, `emoji_sentiment_lexicon$emoji` 969,
+`emoji_unicode_crosswalk$unicode` 5963, `emoji_sentiment_lexicon$emoji` 969,
 `emoji_emotion_lexicon$emoji` 150, `category_unicode_crosswalk$unicodes` 10,
 and `oasst_messages$text` 1116, the messages that hold emoji or are written
 in a script other than ASCII. No other column in any dataset carries a marked

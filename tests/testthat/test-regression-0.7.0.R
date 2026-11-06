@@ -1702,3 +1702,143 @@ test_that("the access help pages quote the example corpus's figures", {
 test_that("the access help pages quote the example corpus's run count", {
   check_access_corpus_figures(FALSE)
 })
+
+
+# --- V: the vocabulary completed ----------------------------------------------------
+#
+# {emoji}'s keywords and aliases, unchanged and first; CLDR 49's keywords
+# unioned after them; emojibase 18.0.0's shortcodes for the 182 emoji {emoji}
+# has none for; Slack's names as an input dialect of emoji_from_counts() only.
+
+test_that("the vocabulary only grows (V)", {
+  newest <- cp(0x1FAEA)                          # distorted face, Emoji 17.0
+  kw <- emoji_keywords(newest)
+  expect_false(anyNA(kw$keyword))
+  expect_true("cldr" %in% kw$source)
+  expect_false(is.na(as_emoji_shortcode(newest)))
+  expect_gt(nrow(emoji_search("happy")), 27L)    # 27 in 0.6.0, none lost
+})
+
+test_that("no keyword or shortcode an earlier release gave is gone or changed (V)", {
+  ref <- tidyEmoji:::emoji_reference()
+  up_kw <- tidyEmoji:::.emoji_vocabulary_column(ref$emoji, "keywords")
+  up_al <- tidyEmoji:::.emoji_vocabulary_column(ref$emoji, "aliases")
+  all_kw <- tidyEmoji:::.emoji_vocabulary(ref$emoji, "keywords", ref$key)
+  all_al <- tidyEmoji:::.emoji_vocabulary(ref$emoji, "aliases", ref$key)
+  # {emoji}'s keywords come first and unchanged, in every spelling
+  expect_true(all(mapply(function(a, b) identical(b[seq_along(a)], a),
+                         up_kw, all_kw)))
+  # and an alias set {emoji} gave is the alias set now
+  had <- lengths(up_al) > 0L
+  expect_identical(all_al[had], up_al[had])
+  # the additions go only where {emoji} had nothing, the 182 newest emoji
+  added <- unique(ref$key[!had & lengths(all_al) > 0L])
+  new_keys <- unique(ref$key[tidyEmoji:::.emoji_version_num(ref$version) >= 17])
+  expect_setequal(added, new_keys)
+  # emoji_search("happy") finds the 27 emoji it found in 0.6.0 and 15 more
+  # (the old answer derived here from {emoji}'s vocabulary alone)
+  old_hit <- vapply(seq_along(ref$emoji), function(i) {
+    any(grepl("happy", c(tolower(up_kw[[i]]), tolower(up_al[[i]]),
+                         tolower(ref$name[[i]])), fixed = TRUE))
+  }, logical(1))
+  old_keys <- unique(ref$key[old_hit])
+  new_hits <- unique(tidyEmoji:::emoji_key(emoji_search("happy")$emoji))
+  expect_identical(length(old_keys), 27L)
+  expect_identical(length(new_hits), 42L)
+  expect_true(all(old_keys %in% new_hits))
+})
+
+test_that("the crosswalk gains the newest emoji and changes no other row (V)", {
+  ref <- tidyEmoji:::emoji_reference()
+  x <- emoji_unicode_crosswalk
+  up_al <- tidyEmoji:::.emoji_vocabulary_column(ref$emoji, "aliases")
+  old <- data.frame(emoji_name = unlist(up_al),
+                    unicode = rep(ref$emoji, lengths(up_al)),
+                    stringsAsFactors = FALSE)
+  old <- unique(old)
+  new_keys <- unique(ref$key[tidyEmoji:::.emoji_version_num(ref$version) >= 17])
+  kept <- x[!x$key %in% new_keys, c("emoji_name", "unicode")]
+  expect_identical(nrow(kept), 5761L)
+  expect_identical(
+    sort(paste(kept$emoji_name, kept$unicode), method = "radix"),
+    sort(paste(old$emoji_name, old$unicode), method = "radix"))
+  expect_identical(sum(x$key %in% new_keys), 202L)
+  expect_setequal(unique(x$key[x$key %in% new_keys]), new_keys)
+})
+
+test_that("the newest emoji round-trip through their shortcodes (V)", {
+  p <- emoji_properties()
+  new <- p$emoji[p$status == "fully-qualified" & as.numeric(p$version) >= 17]
+  d <- tibble::tibble(text = paste("a", new, "b"))
+  sc <- emoji_sanitize(d, text, policy = "shortcode")
+  expect_identical(sum(tidyEmoji:::emoji_has(sc$text)), 0L)
+  expect_identical(text_to_emoji(sc, text)$text, d$text)
+  expect_identical(as_emoji("distorted_face"), cp(0x1FAEA))
+})
+
+test_that("Slack's names are read by emoji_from_counts() and nowhere else (V)", {
+  # radioactive_sign and flag-ac are Slack's, in no other vocabulary
+  t <- data.frame(r = c("radioactive_sign", "flag-ac", "white_check_mark"),
+                  n = c(1, 2, 1))
+  out <- emoji_from_counts(t, r, n)$text
+  expect_identical(out, paste(cp(0x2622, 0xFE0F), cp(0x1F1E6, 0x1F1E8),
+                              cp(0x1F1E6, 0x1F1E8), cp(0x2705)))
+  # never an output alias, never read by text_to_emoji()
+  expect_false("radioactive_sign" %in% emoji_unicode_crosswalk$emoji_name)
+  expect_identical(
+    text_to_emoji(tibble::tibble(text = ":radioactive_sign:"), text)$text,
+    ":radioactive_sign:")
+})
+
+test_that("emojibase's gender agrees with emoji_gender()'s rule on every spelling", {
+  # emojibase-data 18.0.0 marks 652 spellings female and 640 male. The
+  # code-point rule plus the bundled list of twelve must agree on all of
+  # them, and any disagreement names its glyphs here.
+  v <- tidyEmoji:::.emoji_vocab
+  expect_identical(c(sum(v$gender == "female"), sum(v$gender == "male")),
+                   c(652L, 640L))
+  bk <- tidyEmoji:::.emoji_by_key()
+  glyph <- bk$canonical[match(names(v$gender), bk$key)]
+  expect_false(anyNA(glyph))
+  ours <- emoji_decompose(glyph)$gender
+  bad <- glyph[ours != unname(v$gender) | is.na(ours)]
+  expect_identical(bad, character(0))
+  # and the list is what the rule needs: the code points alone (a sign or a
+  # gendered person) judge 1,220 of them, and the 72 they cannot are the
+  # twelve listed bases in their six spellings each
+  gendered <- c(0x2640, 0x2642, 0x1F469, 0x1F468, 0x1F467, 0x1F466, 0x1F475,
+                0x1F474)
+  by_cp <- vapply(glyph, function(g) any(utf8ToInt(g) %in% gendered),
+                  logical(1), USE.NAMES = FALSE)
+  expect_identical(c(sum(by_cp), sum(!by_cp)), c(1220L, 72L))
+  first <- vapply(glyph[!by_cp], function(g) utf8ToInt(g)[1L], integer(1))
+  expect_setequal(unique(first), tidyEmoji:::.emoji_gender_singles()$cp[1:12])
+})
+
+test_that("the vocabulary equivalence the plan measured is what the data gives (V)", {
+  eq <- tidyEmoji:::.emoji_vocab$equivalence
+  expect_identical(unname(eq[c("emoji_keys", "cldr_keys", "cldr_newest")]),
+                   c(3963, 3963, 182))
+  expect_identical(round(unname(eq[c("upstream_keywords_per_key",
+                                     "cldr_keywords_per_key")]), 2),
+                   c(2.82, 7.58))
+  expect_identical(unname(eq[c("upstream_keys", "identical_keyword_sets",
+                               "median_jaccard", "no_shared_keyword")]),
+                   c(3781, 1604, 0.5, 1875))
+  expect_identical(unname(eq[c("cldr_renames", "upstream_alias_keys",
+                               "github_keys", "github_newest",
+                               "github_identical", "cldr_shortcode_keys",
+                               "cldr_shortcode_newest", "iamcal_keys",
+                               "iamcal_newest", "lacking_aliases",
+                               "lacking_filled")]),
+                   c(108, 3781, 1870, 0, 1005, 3963, 182, 1914, 8, 182, 182))
+  # the 108 CLDR names that differ from the catalogue's are listed, not
+  # applied: every one is a direction sequence of Emoji 15.1 ("person walking
+  # facing right" against "person walking: facing right")
+  r <- tidyEmoji:::.emoji_vocab$cldr_renames
+  expect_length(r, 108L)
+  expect_true(all(grepl("facing right", r, fixed = TRUE)))
+  ref <- tidyEmoji:::emoji_reference()
+  expect_false(any(ref$name[match(names(r), ref$key)] == unname(r)))
+  expect_identical(emoji_provenance()$cldr, "49.0.0")
+})

@@ -11,8 +11,9 @@ emoji_keywords(x = NULL)
 emoji in the catalogue, each under its canonical spelling.}
 }
 \value{
-A tibble with columns \code{emoji}, \code{name} and \code{keyword}, one row per
-keyword, in the order of \code{x} and then of the keyword set.
+A tibble with columns \code{emoji}, \code{name}, \code{keyword} and \code{source}
+(\code{"github"} or \code{"cldr"}, \code{NA} with a \code{NA} keyword), one row per keyword,
+in the order of \code{x} and then of the keyword set.
 }
 \description{
 \code{emoji_keywords()} returns the CLDR keywords attached to each glyph in long
@@ -21,16 +22,19 @@ or a word cloud wants. \code{\link[=emoji_search]{emoji_search()}} reads the sam
 them collapsed into one string per match.
 }
 \details{
-\strong{These are the English keyword sets}, from the \pkg{emoji} package, and
-nothing in them says anything about how an emoji is read in another
-language or culture. Multilingual keywords are not bundled.
+\strong{These are the English keyword sets}, and nothing in them says anything
+about how an emoji is read in another language or culture. Multilingual
+keywords are not bundled.
 
-The keywords come from \pkg{emoji} while the catalogue comes from Unicode,
-and the two are not equally current: an emoji newer than \pkg{emoji}'s own
-table (every Emoji 17.0 and 18.0 addition, at the time of writing) is
-detected and named but has no keywords. Such a glyph, and any string that
-is not an emoji at all, gets \strong{one row with \code{keyword = NA}}, never a row
-with an empty string, so \code{is.na(keyword)} is the test for "no vocabulary".
+Since 0.7.0 each emoji's set is the union of two sources, and \code{source} says
+which a keyword came from: \code{"github"}, the GitHub-style set the \pkg{emoji}
+package carried, which every earlier release used and which comes first,
+unchanged; and \code{"cldr"}, the keywords of Unicode's CLDR 49 annotations that
+set lacks. The union only adds: every emoji in the catalogue has keywords
+now, the 182 of Emoji 17.0 and 18.0 included, which had none, and no
+keyword an earlier release returned is gone. A string that is not an emoji
+gets \strong{one row with \code{keyword = NA}}, never a row with an empty string, so
+\code{is.na(keyword)} is the test for "no vocabulary".
 
 Keywords belong to the emoji, not to one spelling of it, so the bare and
 the qualified heart return the same set.
