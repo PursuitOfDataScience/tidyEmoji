@@ -41,6 +41,11 @@ reference:
   - emoji_sentiment
   - emoji_emotion
   - emoji_emotion_label
+- title: Sequences and accessibility
+  contents:
+  - emoji_runs
+  - emoji_features
+  - emoji_a11y_check
 - title: Identity
   contents:
   - emoji_decompose

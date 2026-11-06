@@ -30,8 +30,16 @@
 #'   splits into, in order and separated by spaces ("grinning face fire"), or
 #'   as their shortcodes (":grinning::fire:"): the parts every other verb
 #'   counts since 0.7.0. If any part has no name the sequence stays as it is.
+#' @section A preview of what a screen reader says:
+#' `format = "name"` writes the text a screen reader that reads CLDR names,
+#' as NVDA does, will speak. That *Preview* is the design the sighted writers
+#' in Griggio, Gorman and Tigwell (CSCW 2024) preferred to warnings, because
+#' it leaves the judgement to them, so the package offers it here rather
+#' than in a verb of its own; [emoji_a11y_check()] reports the facts their
+#' taxonomy is built from.
 #' @seealso [text_to_emoji()] for the inverse (emojize); [as_emoji_name()],
-#'   [as_emoji_shortcode()], [as_emoji()] for vector helpers.
+#'   [as_emoji_shortcode()], [as_emoji()] for vector helpers;
+#'   [emoji_a11y_check()].
 #' @examples
 #' df <- data.frame(text = "great \U0001f600 love \u2764\ufe0f")
 #' emoji_to_text(df, text, format = "name")

@@ -387,7 +387,10 @@ surface_070 <- function() {
     country_iso3166 = function(d, col) emoji_country(d, !!col),
     skin_tone = function(d, col) emoji_skin_tone(d, !!col),
     gender = function(d, col) emoji_gender(d, !!col),
-    retone_dark = function(d, col) emoji_retone(d, !!col, tone = "dark")
+    retone_dark = function(d, col) emoji_retone(d, !!col, tone = "dark"),
+    runs_adjacent = function(d, col) emoji_runs(d, !!col, sep = "adjacent"),
+    features = function(d, col) emoji_features(d, !!col),
+    a11y_max_name = function(d, col) emoji_a11y_check(d, !!col, max_name = 10L)
   )
 }
 
@@ -1545,4 +1548,157 @@ test_that("emoji_decompose() holds the contracts every vector function does", {
 
 test_that("emoji_decompose() keeps one signature at every length", {
   check_decompose_contracts(FALSE)
+})
+
+
+# --- Access: emoji_runs(), emoji_features(), emoji_a11y_check() -------------------
+
+test_that("emoji_runs() segments spans and flags reduplication", {
+  s <- cp(0x1F600)
+  p <- cp(0x1F389)
+  d <- tibble::tibble(text = c(paste0("wow ", s, s, s), paste0(s, " ok ", p),
+                               paste0(s, p)))
+  out <- emoji_runs(d, text)
+  expect_equal(nrow(out), 4L)
+  # the reserved .emoji_ namespace and lower-case positions, as every other
+  # column and vocabulary in the package (0.7.0 roadmap, decisions 3 and 4)
+  expect_equal(out$.emoji_run_length, c(3L, 1L, 1L, 2L))
+  expect_equal(out$.emoji_run_is_reduplication, c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(out$.emoji_run_position, c("end", "begin", "end", "only"))
+  expect_identical(out$.row_number, c(1L, 2L, 2L, 3L))
+  expect_identical(out$.emoji_run, c(1L, 1L, 2L, 1L))
+  expect_identical(out$.emoji_run_glyphs[1L], paste0(s, s, s))
+  expect_identical(c(out$.emoji_run_start[1L], out$.emoji_run_end[1L]),
+                   c(5L, 7L))
+})
+
+test_that("emoji_runs() reads sep, the D7 parts and grouping as documented", {
+  s <- cp(0x1F600)
+  spaced <- tibble::tibble(text = paste(s, s, "x", s))
+  expect_identical(emoji_runs(spaced, text)$.emoji_run_length, c(2L, 1L))
+  expect_identical(emoji_runs(spaced, text, sep = "adjacent")$.emoji_run_length,
+                   c(1L, 1L, 1L))
+  # a no-break space is white space; a zero-width space is not
+  nb <- tibble::tibble(text = c(paste0(s, cp(0xA0), s), paste0(s, cp(0x200B), s)))
+  expect_identical(emoji_runs(nb, text)$.emoji_run_length, c(2L, 1L, 1L))
+  # a sequence counted as its parts is one run of them
+  fam <- tibble::tibble(text = cp(0x1F9D1, 0x200D, 0x1F467, 0x200D, 0x1F466))
+  r <- emoji_runs(fam, text, sep = "adjacent")
+  expect_identical(c(nrow(r), r$.emoji_run_length, r$.emoji_run_n_distinct),
+                   c(1L, 3L, 3L))
+  # rows without emoji contribute none, and the columns are typed at zero
+  z <- emoji_runs(tibble::tibble(id = 1:2, text = c("none", NA)), text)
+  full <- emoji_runs(tibble::tibble(id = 1L, text = s), text)
+  expect_identical(nrow(z), 0L)
+  expect_identical(vapply(z, class, ""), vapply(full, class, ""))
+  expect_error(emoji_runs(spaced, text, sep = "comma"), "`sep`")
+  # punctuation does not stop a run being at the begin or the end
+  q <- tibble::tibble(text = paste0("(", s, ")!"))
+  expect_identical(emoji_runs(q, text)$.emoji_run_position, "only")
+})
+
+test_that("emoji_features() flags an emoji inside a word", {
+  s <- cp(0x1F600)
+  d <- tibble::tibble(text = paste0("h", s, "ow are you ", s))
+  out <- emoji_features(d, text)
+  expect_equal(out$.emoji_intraword, c(TRUE, FALSE))
+  expect_equal(out$.emoji_zone, c("mid", "end"))
+  expect_identical(out$.emoji_prev, c("word", "word"))
+  expect_identical(out$.emoji_next, c("word", "none"))
+  expect_identical(out$.emoji_prev_space, c(FALSE, TRUE))
+  # neighbours that are emoji or punctuation, and the catalogue cues
+  e <- tibble::tibble(text = paste0(s, cp(0x1F389), "!"))
+  f <- emoji_features(e, text)
+  expect_identical(f$.emoji_prev, c("none", "emoji"))
+  expect_identical(f$.emoji_next, c("emoji", "punct"))
+  expect_identical(f$.emoji_group, c("Smileys & Emotion", "Activities"))
+  expect_identical(f$.emoji_run_length, c(2L, 2L))
+  # the per-occurrence positions average to emoji_position()'s
+  m <- tibble::tibble(text = c(paste("a", s, "b", s, "c"), s, "none"))
+  pos <- emoji_position(m, text)$.emoji_rel_position
+  fm <- emoji_features(m, text)
+  expect_equal(as.vector(tapply(fm$.emoji_rel_position, fm$.row_number, mean)),
+               pos[1:2])
+})
+
+test_that("emoji_a11y_check() reports the CSCW 2024 taxonomy as facts", {
+  j <- cp(0x1F602)
+  p <- cp(0x1F389)
+  h <- cp(0x2764, 0xFE0F)
+  d <- tibble::tibble(text = c(
+    paste0("lol ", j, j, j, j),              # 1a: one emoji four times, a run of 4
+    paste0(p, h, " yes ", p, h),             # 1b: a two-emoji sequence, twice
+    paste0("so ", p, " much fun")            # 2a: inside the text
+  ))
+  out <- emoji_a11y_check(d, text)
+  expect_equal(out$.emoji_max_repeat, c(4L, 2L, 1L))
+  expect_equal(out$.emoji_n_repeated_seqs, c(0L, 1L, 0L))
+  expect_equal(out$.emoji_longest_run, c(4L, 2L, 1L))
+  expect_equal(out$.emoji_n_mid, c(0L, 0L, 1L))
+  expect_equal(out$.emoji_spoken_chars[1], 4L * nchar("face with tears of joy"))
+  expect_equal(out$.emoji_n_char, nchar(d$text))
+})
+
+test_that("emoji_a11y_check() counts letters, payloads, names and modifiers", {
+  facepalm <- cp(0x1F926, 0x1F3FB, 0x200D, 0x2640, 0xFE0F)
+  d <- tibble::tibble(text = c(
+    paste("x", cp(0x1F1FD, 0x1F1FD), "y", cp(0x1F1FA)),     # XX, and a lone U
+    paste0("hi ", cp(0x1F600), vs_encode("go")),             # a payload
+    paste("oh", facepalm, cp(0x1F926), cp(0x1F3C3, 0x200D, 0x2642, 0xFE0F)),
+    NA))
+  out <- emoji_a11y_check(d, text)
+  expect_identical(out$.emoji_n_ri_letters, c(3L, 0L, 0L, 0L))
+  expect_identical(out$.emoji_n_hidden, c(0L, 2L, 0L, 0L))
+  # the toned woman facepalming and the man running carry modified names;
+  # the person facepalming does not
+  expect_identical(out$.emoji_n_modifier_names, c(0L, 0L, 2L, 0L))
+  expect_identical(out$.emoji_n_char, c(nchar(d$text[1:3]), NA))
+  # max_name is a threshold on the name's characters
+  nm <- nchar(as_emoji_name(facepalm))
+  at <- emoji_a11y_check(d[3, ], text, max_name = nm - 1L)
+  expect_identical(at$.emoji_n_long_names, 1L)
+  expect_identical(emoji_a11y_check(d[3, ], text, max_name = nm)$.emoji_n_long_names, 0L)
+  expect_error(emoji_a11y_check(d, text, max_name = -1), "`max_name`")
+  expect_error(emoji_a11y_check(d, text, max_name = 2.5), "`max_name`")
+})
+
+check_access_corpus_figures <- function(full) {
+  m <- oasst_messages
+  r <- emoji_runs(m, text)
+  expect_identical(nrow(r), 1038L)
+  rd <- rd_flat("emoji_runs")
+  expect_match(rd, "1,038 runs under the default and 1,148", fixed = TRUE)
+  expect_match(rd, "37.5% of its 1,454 emoji", fixed = TRUE)
+  expect_match(rd, "19 of its 129 such runs", fixed = TRUE)
+  ra <- rd_flat("emoji_a11y_check")
+  expect_match(ra, "from 147,742 characters to 171,606, 16.2% more", fixed = TRUE)
+  expect_match(ra, "50 of its 750", fixed = TRUE)
+  expect_match(ra, "only 1 of the sample's 1,454 occurrences", fixed = TRUE)
+  if (!full) return(invisible())
+  expect_identical(nrow(emoji_runs(m, text, sep = "adjacent")), 1148L)
+  multi <- r$.emoji_run_length > 1L
+  expect_identical(c(sum(r$.emoji_run_length), sum(r$.emoji_run_length[multi]),
+                     sum(multi), sum(r$.emoji_run_is_reduplication)),
+                   c(1454L, 545L, 129L, 19L))
+  expect_identical(length(unique(r$.row_number[r$.emoji_run_length >= 3L])),
+                   50L)
+  bear <- tidyEmoji:::emoji_has(m$text)
+  named <- emoji_to_text(m[bear, ], text)$text
+  expect_identical(c(sum(nchar(m$text[bear])), sum(nchar(named))),
+                   c(147742L, 171606L))
+  a <- emoji_a11y_check(m, text)
+  expect_identical(sum(a$.emoji_n_long_names), 1L)
+  # the spoken length is the names' characters, nothing more
+  expect_identical(sum(a$.emoji_spoken_chars[bear]),
+                   sum(nchar(named)) - sum(nchar(m$text[bear])) +
+                     sum(nchar(unlist(tidyEmoji:::emoji_glyph_list(m$text)))))
+}
+
+test_that("the access help pages quote the example corpus's figures", {
+  skip_sweep(twin = "the access help pages quote the example corpus's run count")
+  check_access_corpus_figures(TRUE)
+})
+
+test_that("the access help pages quote the example corpus's run count", {
+  check_access_corpus_figures(FALSE)
 })

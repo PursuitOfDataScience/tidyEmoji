@@ -78,6 +78,7 @@ emoji_ngrams(df, text, n = 3)
 }
 \seealso{
 \code{\link[=emoji_pairs]{emoji_pairs()}} for order-free co-occurrence;
-\code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}} for the underlying one-emoji-per-row form.
+\code{\link[=emoji_extract_unnest]{emoji_extract_unnest()}} for the underlying one-emoji-per-row form;
+\code{\link[=emoji_runs]{emoji_runs()}} for maximal runs rather than windows of a fixed length.
 }
 \concept{sequences}

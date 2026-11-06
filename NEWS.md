@@ -107,6 +107,26 @@ section, *Glyphs, not people*, that each of their help pages links to.
   how a model treats skin tones. Every rewrite is a catalogue spelling, and
   on Emoji 18.0 every tone-able emoji has one in every tone.
 
+**How emoji sit in a text, and what a screen reader makes of them.**
+
+* **`emoji_runs()`** returns one row per run of emoji, the unit the sequence
+  literature annotates, with its length, its distinct glyphs, whether it is
+  a reduplication, and whether it opens, ends or fills its text. `sep`
+  decides whether white space may sit inside a run: on the bundled sample
+  that is 1,038 runs against 1,148.
+* **`emoji_features()`** returns one row per emoji with the cues a classifier
+  of emoji function reads (its zone, what stands on either side, its run,
+  its Unicode group) and no label, since the published labels are not
+  accurate enough to ship. `.emoji_intraword` marks an emoji written inside
+  a word, the signature of the "Emoji Attack" on language-model judges.
+* **`emoji_a11y_check()`** reports, per row, the facts behind the CSCW 2024
+  emoji-accessibility taxonomy: repeats, repeated sequences, the longest
+  run, placement, ambiguous emoji, names a tone or a gender makes long, the
+  characters a screen reader would say, regional indicators read out letter
+  by letter, and hidden code points. Facts, no verdicts: naming every emoji
+  in the bundled sample adds 16.2% to the characters of its emoji-bearing
+  rows.
+
 ## Example data
 
 * **The example corpus is now a sample of OpenAssistant Conversations

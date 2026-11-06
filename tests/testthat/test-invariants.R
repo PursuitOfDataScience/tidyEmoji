@@ -5899,7 +5899,9 @@ check_first_call <- function(stride) {
     # 0.7.0's exports
     quote(emoji_hidden(d, text)), quote(emoji_decompose(A)),
     quote(emoji_skin_tone(d, text)), quote(emoji_gender(d, text)),
-    quote(emoji_retone(d, text, tone = "dark"))
+    quote(emoji_retone(d, text, tone = "dark")),
+    quote(emoji_runs(d, text)), quote(emoji_features(d, text)),
+    quote(emoji_a11y_check(d, text))
   )
   for (e in calls[seq(1L, length(calls), by = stride)]) {
     rm(list = ls(cache, all.names = TRUE), envir = cache)

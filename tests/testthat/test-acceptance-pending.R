@@ -12,7 +12,7 @@
 # 0.6.0 moved six out this way: emoji_country(), emoji_coverage(),
 # presentation = "any", emoji_keywords(), as_emoji_canonical() and
 # emoji_identical(), all now in test-regression-0.6.0.R; 0.7.0 moved
-# emoji_skin_tone()'s to test-regression-0.7.0.R.
+# emoji_skin_tone()'s and emoji_runs()'s to test-regression-0.7.0.R.
 
 smile <- intToUtf8(0x1F600)
 party <- intToUtf8(0x1F389)
@@ -21,22 +21,6 @@ has_verb <- function(nm) {
   nm %in% getNamespaceExports("tidyEmoji")
 }
 
-
-test_that("emoji_runs() segments spans and flags reduplication", {
-  skip_if_not(has_verb("emoji_runs"), "emoji_runs() is not implemented yet")
-  d <- tibble::tibble(text = c(
-    paste0("wow ", smile, smile, smile),   # one run, length 3, reduplication
-    paste0(smile, " ok ", party),          # two runs, length 1 each
-    paste0(smile, party)                   # one run, length 2, not reduplication
-  ))
-  out <- emoji_runs(d, text)
-  expect_equal(nrow(out), 4L)
-  # the reserved .emoji_ namespace and lower-case positions, as every other
-  # column and vocabulary in the package (0.7.0 roadmap, decisions 3 and 4)
-  expect_equal(out$.emoji_run_length, c(3L, 1L, 1L, 2L))
-  expect_equal(out$.emoji_run_is_reduplication, c(TRUE, FALSE, FALSE, FALSE))
-  expect_equal(out$.emoji_run_position[1], "end")
-})
 
 test_that("emoji_sentiment_role() classifies a mitigation", {
   skip_if_not(has_verb("emoji_sentiment_role"),

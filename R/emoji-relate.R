@@ -243,7 +243,8 @@ emoji_cooccurrence <- function(data, text, doc_id = NULL, diagonal = FALSE,
 #'   corpus-wide verbs this one does not pool your rows, so there is no
 #'   per-group answer being silently turned into a global one.
 #' @seealso [emoji_pairs()] for order-free co-occurrence;
-#'   [emoji_extract_unnest()] for the underlying one-emoji-per-row form.
+#'   [emoji_extract_unnest()] for the underlying one-emoji-per-row form;
+#'   [emoji_runs()] for maximal runs rather than windows of a fixed length.
 #' @examples
 #' df <- data.frame(text = c("\U0001f602\U0001f60d\U0001f389", "\U0001f602"))
 #' emoji_ngrams(df, text)

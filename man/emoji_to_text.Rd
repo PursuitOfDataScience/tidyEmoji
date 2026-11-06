@@ -87,6 +87,16 @@ accessibility (screen readers) and as an NLP normalisation step before
 tokenising. Detection is grapheme-aware and joins go through \code{emoji_key()},
 so emoji carrying the \code{U+FE0F} variation selector still resolve.
 }
+\section{A preview of what a screen reader says}{
+
+\code{format = "name"} writes the text a screen reader that reads CLDR names,
+as NVDA does, will speak. That \emph{Preview} is the design the sighted writers
+in Griggio, Gorman and Tigwell (CSCW 2024) preferred to warnings, because
+it leaves the judgement to them, so the package offers it here rather
+than in a verb of its own; \code{\link[=emoji_a11y_check]{emoji_a11y_check()}} reports the facts their
+taxonomy is built from.
+}
+
 \examples{
 df <- data.frame(text = "great \U0001f600 love \u2764\ufe0f")
 emoji_to_text(df, text, format = "name")
@@ -94,7 +104,8 @@ emoji_to_text(df, text, format = "shortcode")
 }
 \seealso{
 \code{\link[=text_to_emoji]{text_to_emoji()}} for the inverse (emojize); \code{\link[=as_emoji_name]{as_emoji_name()}},
-\code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}, \code{\link[=as_emoji]{as_emoji()}} for vector helpers.
+\code{\link[=as_emoji_shortcode]{as_emoji_shortcode()}}, \code{\link[=as_emoji]{as_emoji()}} for vector helpers;
+\code{\link[=emoji_a11y_check]{emoji_a11y_check()}}.
 }
 \concept{accessibility}
 \concept{translation}
