@@ -10271,11 +10271,13 @@ test_that("every figure an Rd references is actually shipped", {
   expect_true(all(file.size(file.path(dir, refs)) > 0L))
 
   # the two references that exist today, pinned so neither can vanish
-  # unnoticed either: the package logo and the deprecation badge
-  expect_setequal(refs, c("logo.png", "lifecycle-deprecated.svg"))
+  # unnoticed either: the package logo and the deprecation badge. roxygen2 8
+  # links the logo's SVG master, man/figures/logo.svg, where 7.3 linked the
+  # PNG; the README still shows the PNG, below.
+  expect_setequal(refs, c("logo.svg", "lifecycle-deprecated.svg"))
   expect_match(rd_flat("top_n_emojis"), "lifecycle-deprecated.svg",
                fixed = TRUE)
-  expect_match(rd_flat("tidyEmoji-package"), "logo.png", fixed = TRUE)
+  expect_match(rd_flat("tidyEmoji-package"), "logo.svg", fixed = TRUE)
 
   # the README points at the logo by its repository path, which is what makes
   # it render on the CRAN package page, and that file is shipped
