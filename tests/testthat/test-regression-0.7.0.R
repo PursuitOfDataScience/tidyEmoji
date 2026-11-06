@@ -607,20 +607,25 @@ test_that("the pkgdown reference index lists every help topic", {
                     listed))
 })
 
-test_that("the help pages quote the example corpus's figures", {
+# Shared by the sweep and its CRAN twin: the collocation and pair figures
+# need the whole corpus pushed through two of the slower verbs, so the twin
+# re-derives the cheap coverage figure and holds the pages to the rest.
+check_help_corpus_figures <- function(full) {
   # Each of these sentences cited "the corpus behind the introduction
   # vignette", the tweet corpus 0.7.0 retired, and each is re-derived on the
   # OASST2 sample and pinned both ways: computed here, and required of the
   # page that states it.
   m <- oasst_messages
-  col <- emoji_collocations(m, text)
-  tied <- mean(duplicated(col$pmi) | duplicated(col$pmi, fromLast = TRUE))
-  expect_identical(round(100 * tied, 1), 43.4)
+  if (full) {
+    col <- emoji_collocations(m, text)
+    tied <- mean(duplicated(col$pmi) | duplicated(col$pmi, fromLast = TRUE))
+    expect_identical(round(100 * tied, 1), 43.4)
+    pr <- emoji_pairs(m, text)
+    expect_identical(c(sum(pr$n == 1L), nrow(pr)), c(4042L, 4314L))
+    expect_identical(round(100 * mean(pr$n == 1L), 1), 93.7)
+  }
   expect_match(rd_flat("emoji_collocations"), "43.4% of the rows share",
                fixed = TRUE)
-  pr <- emoji_pairs(m, text)
-  expect_identical(c(sum(pr$n == 1L), nrow(pr)), c(4042L, 4314L))
-  expect_identical(round(100 * mean(pr$n == 1L), 1), 93.7)
   expect_match(rd_flat("emoji_pairs"),
                "4,042 of the 4,314 edges (93.7%) have", fixed = TRUE)
   cv <- emoji_coverage(m, text)
@@ -637,4 +642,13 @@ test_that("the help pages quote the example corpus's figures", {
     expect_false(grepl("corpus behind the introduction vignette",
                        rd_flat(topic), fixed = TRUE), info = topic)
   }
+}
+
+test_that("the help pages quote the example corpus's figures", {
+  skip_sweep(twin = "the help pages quote the example corpus's coverage figures")
+  check_help_corpus_figures(TRUE)
+})
+
+test_that("the help pages quote the example corpus's coverage figures", {
+  check_help_corpus_figures(FALSE)
 })
