@@ -412,7 +412,7 @@ test_that("?emoji_trend keeps the `share` paragraph out of the list above it", {
   # roxygen's markdown folds an unindented line straight after a list item
   # into that item, so the paragraph defining `share` rendered as part of the
   # emoji_seasonality() bullet
-  rd <- tools::Rd_db("tidyEmoji")[["emoji_trend.Rd"]]
+  rd <- rd_db()[["emoji_trend.Rd"]]
   tag <- function(x) {
     a <- attr(x, "Rd_tag")
     if (is.null(a)) "" else a

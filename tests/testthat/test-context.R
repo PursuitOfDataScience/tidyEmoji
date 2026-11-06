@@ -173,7 +173,9 @@ test_that(".position means a code-point offset here and an emoji index there", {
   expect_match(rd_flat("emoji_ngrams"), "within the row's emoji", fixed = TRUE)
 })
 
-test_that("the indexed window path answers exactly what cutting the text did", {
+# The comparison below, over `n_random` random texts plus the shapes a random
+# corpus will not reliably produce. The sweep draws 400; its CRAN twin 25.
+check_indexed_window <- function(n_random) {
   # emoji_context() used to cut the masked text once per occurrence with
   # substr(), which rescans a multi-byte string from its first byte, so the
   # verb was quadratic in the emoji per row -- 3200 emoji in one row cost
@@ -200,7 +202,7 @@ test_that("the indexed window path answers exactly what cutting the text did", {
   words <- c("the", "caf\u00e9", "\u4f60\u597d", "re-do", "x.y", "!!!", "a")
 
   set.seed(20260917)
-  txt <- vapply(seq_len(400), function(i) {
+  txt <- vapply(seq_len(n_random), function(i) {
     paste(sample(c(emo, words), sample(0:10, 1L), replace = TRUE),
           collapse = sample(seps, 1L))
   }, character(1))
@@ -213,7 +215,7 @@ test_that("the indexed window path answers exactly what cutting the text did", {
   masked <- ns$.emoji_mask(txt, locs)
   occ <- ns$.emoji_occurrences(txt)
   len <- nchar(masked)
-  expect_gt(nrow(occ), 500L)
+  expect_gt(nrow(occ), n_random)
 
   index <- lapply(masked, row_index)
   # every row here is valid UTF-8, so the index path must be available for
@@ -239,4 +241,13 @@ test_that("the indexed window path answers exactly what cutting the text did", {
       expect_identical(ind_r, cut_r, info = info)
     }
   }
+}
+
+test_that("the indexed window path answers exactly what cutting the text did", {
+  skip_sweep(twin = "the indexed window path agrees with cutting, on a sample")
+  check_indexed_window(400L)
+})
+
+test_that("the indexed window path agrees with cutting, on a sample", {
+  check_indexed_window(25L)
 })

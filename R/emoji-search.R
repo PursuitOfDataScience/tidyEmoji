@@ -65,24 +65,17 @@ emoji_search <- function(query) {
   # keywords and shortcodes, aligned by spelling: the same split every other
   # verb uses, so a name found here is the name they report. An emoji newer
   # than {emoji} is found by its name alone.
-  ref <- emoji_reference()
-  e <- list(emoji = ref$emoji, name = ref$name, group = ref$group,
-            keywords = .emoji_vocabulary_column(ref$emoji, "keywords"),
-            aliases = .emoji_vocabulary_column(ref$emoji, "aliases"))
+  ix <- .emoji_search_index()
   pat <- .emoji_fold(query)
 
   # Fixed (non-regex) substring matching on folded text, so queries containing
   # regex metacharacters (e.g. the "+1" alias) are safe. .emoji_fold() rather
   # than tolower(): the latter honours LC_CTYPE, which under a Turkish locale
   # folds "I" to a dotless i and made any query containing it miss.
-  kw_hit <- vapply(e$keywords,
-                   function(k) any(grepl(pat, .emoji_fold(k), fixed = TRUE)),
-                   logical(1))
-  nm_hit <- grepl(pat, .emoji_fold(e$name), fixed = TRUE)
-  al_hit <- vapply(e$aliases,
-                   function(a) any(grepl(pat, .emoji_fold(a), fixed = TRUE)),
-                   logical(1))
-  hit <- kw_hit | nm_hit | al_hit
+  kw_match <- grepl(pat, ix$kw_fold, fixed = TRUE)
+  hit <- grepl(pat, ix$nm_fold, fixed = TRUE)
+  hit[ix$kw_row[kw_match]] <- TRUE
+  hit[ix$al_row[grepl(pat, ix$al_fold, fixed = TRUE)]] <- TRUE
 
   if (!any(hit)) {
     return(tibble::tibble(emoji = character(), name = character(),
@@ -90,21 +83,50 @@ emoji_search <- function(query) {
                           keyword = character()))
   }
 
-  matched_kw <- vapply(which(hit), function(i) {
-    k <- unlist(e$keywords[[i]])
-    k <- k[grepl(pat, .emoji_fold(k), fixed = TRUE)]
+  # each hit row's matching keywords, in the row's own order, de-duplicated
+  rows <- which(hit)
+  per_row <- split(ix$kw[kw_match],
+                   factor(ix$kw_row[kw_match], levels = rows))
+  matched_kw <- vapply(per_row, function(k) {
     if (!length(k)) "" else paste(unique(k), collapse = ", ")
-  }, character(1))
-
-  shortcode <- vapply(e$aliases[hit], function(a) {
-    if (length(a)) a[[1L]] else NA_character_
-  }, character(1))
+  }, character(1), USE.NAMES = FALSE)
 
   tibble::tibble(
-    emoji     = e$emoji[hit],
-    name      = e$name[hit],
-    shortcode = shortcode,
-    group     = e$group[hit],
+    emoji     = ix$emoji[hit],
+    name      = ix$name[hit],
+    shortcode = ix$shortcode[hit],
+    group     = ix$group[hit],
     keyword   = matched_kw
   )
+}
+
+# What emoji_search() matches against, folded once per session rather than
+# once per call: every keyword and alias flattened into one vector beside the
+# row it belongs to, and every name. Folding the 5244 rows' vocabularies one
+# list element at a time cost a quarter of a second on every call; the
+# matching itself is three vectorised grepl()s. Derived from the reference, so
+# it is one of .emoji_derived_cache_slots().
+.emoji_search_index <- function() {
+  if (is.null(.tidyEmoji_cache$search)) {
+    ref <- emoji_reference()
+    kw <- .emoji_vocabulary_column(ref$emoji, "keywords")
+    al <- .emoji_vocabulary_column(ref$emoji, "aliases")
+    kw_flat <- unlist(kw, use.names = FALSE)
+    al_flat <- unlist(al, use.names = FALSE)
+    .tidyEmoji_cache$search <- list(
+      emoji = ref$emoji,
+      name = ref$name,
+      group = ref$group,
+      shortcode = vapply(al, function(a) {
+        if (length(a)) a[[1L]] else NA_character_
+      }, character(1), USE.NAMES = FALSE),
+      kw = as.character(kw_flat),
+      kw_fold = .emoji_fold(as.character(kw_flat)),
+      kw_row = rep.int(seq_along(kw), lengths(kw)),
+      al_fold = .emoji_fold(as.character(al_flat)),
+      al_row = rep.int(seq_along(al), lengths(al)),
+      nm_fold = .emoji_fold(ref$name)
+    )
+  }
+  .tidyEmoji_cache$search
 }

@@ -16,3 +16,4 @@
 ^\.claude$
 ^tidyEmoji\.Rcheck$
 ^tidyEmoji_.*\.tar\.gz$
+^tests/testthat/testthat-problems\.rds$

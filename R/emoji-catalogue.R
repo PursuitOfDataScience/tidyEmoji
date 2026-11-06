@@ -126,10 +126,19 @@
 emoji_properties <- function(x = NULL) {
   ref <- emoji_reference()
   if (is.null(x)) {
-    x <- ref$emoji
-  } else {
-    x <- .emoji_check_glyphs(x)
+    # The whole catalogue is the same table every time it is asked for, and
+    # building it costs a quarter of a second, so it is built once per
+    # session. Derived from the reference, so .emoji_derived_cache_slots()
+    # names it and a rebuilt reference drops it.
+    if (is.null(.tidyEmoji_cache$properties)) {
+      .tidyEmoji_cache$properties <- .emoji_properties_of(ref$emoji, ref)
+    }
+    return(.tidyEmoji_cache$properties)
   }
+  .emoji_properties_of(.emoji_check_glyphs(x), ref)
+}
+
+.emoji_properties_of <- function(x, ref) {
   keys <- emoji_key(x)
   bk <- .emoji_by_key()
   kidx <- match(keys, ref$key)

@@ -10,3 +10,4 @@ README.html
 tidyEmoji.Rcheck/
 tidyEmoji_*.tar.gz
 next_release.md
+tests/testthat/testthat-problems.rds

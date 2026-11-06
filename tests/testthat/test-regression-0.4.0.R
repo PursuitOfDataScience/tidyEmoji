@@ -724,6 +724,7 @@ test_that("the category crosswalk matches the reference table's groups", {
 # ---------------------------------------------------------------------------
 
 test_that("the shortcode round trip is byte-exact for canonical spellings", {
+  skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   # the strong form of the claim, and the one that stops moving every time
   # detection improves: over the spelling real text holds, nothing changes
   ref <- tidyEmoji:::emoji_reference()
@@ -737,6 +738,7 @@ test_that("the shortcode round trip is byte-exact for canonical spellings", {
 })
 
 test_that("an alternate spelling round-trips to the canonical one", {
+  skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   ref <- tidyEmoji:::emoji_reference()
   glyphs <- ref$emoji[!is.na(ref$shortcode)]
   src <- paste0("x ", glyphs, " y")
@@ -1006,7 +1008,8 @@ test_that("real corpus text leaves no joiner orphaned", {
   expect_false(anyNA(as_emoji_name(glyphs)))
 })
 
-test_that("a lone match grows over the joiners the merge rules cannot reach", {
+# Shared by the sweep and its CRAN twin: every ZWJ spelling, or a sample with the two that lose a joiner
+check_lone_match_grows <- function(n = NULL) {
   # a sequence whose only detectable component is one of its parts yields one
   # match, so there is no pair to merge and it used to arrive as that part
   Z <- "\u200D"
@@ -1023,6 +1026,10 @@ test_that("a lone match grows over the joiners the merge rules cannot reach", {
   # the same reason: `<= 2` would accept a regression from 0.
   ref <- tidyEmoji:::emoji_reference()
   zwj <- ref$emoji[grepl(Z, ref$emoji, fixed = TRUE)]
+  if (!is.null(n)) {
+    zwj <- union(sweep_sample(zwj, n),
+                 c("\U0001F441\u200D\U0001F5E8", "\U0001F3F3\u200D\u26A7"))
+  }
   losing <- zwj[orphaned_joiners(zwj) > 0L]
   expect_identical(
     sort(losing),
@@ -1033,6 +1040,15 @@ test_that("a lone match grows over the joiners the merge rules cannot reach", {
     sort(losing),
     sort(zwj[lengths(tidyEmoji:::emoji_glyph_list(zwj)) == 0L])
   )
+}
+
+test_that("a lone match grows over the joiners the merge rules cannot reach", {
+  skip_sweep(twin = "a lone match grows over the joiners, on a sample of ZWJ spellings")
+  check_lone_match_grows()
+})
+
+test_that("a lone match grows over the joiners, on a sample of ZWJ spellings", {
+  check_lone_match_grows(150L)
 })
 
 test_that("growing a lone match never swallows a neighbour", {

@@ -31,8 +31,9 @@ run that has happened for this version.*
   - windows-latest: R-release
 * GitHub Actions, additionally: two collation jobs running the same check with
   `LC_COLLATE` set to `C` and to `en_US.UTF-8` and nothing else varied, a
-  `ctype` job running it under `LC_ALL=C`, a weekly URL, spelling and
-  catalogue job, and a coverage job
+  `ctype` job running it under `LC_ALL=C`, a `cran-budget` job timing the
+  suite in CRAN mode against a ceiling, a weekly URL, spelling and catalogue
+  job, and a coverage job
 * win-builder: R-devel and R-release
 
 ## R CMD check results
@@ -50,9 +51,18 @@ it: do not skip it.
 
 ## The skip inventory
 
-Run as CRAN runs it, **seventeen** tests skip on R 4.4.1, and none of them
+Run as CRAN runs it, **56** tests skip on R 4.4.1, and none of them
 is a test that might fail.
 
+* **39 are sweeps, behind `skip_sweep()`**: the exhaustive tests (every
+  catalogue spelling, every verb, hundreds of random strings) that took most
+  of CRAN's check time before 0.7.0. Each names its *twin*, a test that does
+  run on CRAN and asserts the same property over a deterministic sample of
+  the catalogue, always including a fixed list of hard cases (keycaps, country
+  and tag flags, the code points newer than the bundled detection regex, ZWJ
+  families, toned couples), so no property goes unchecked there. A test fails
+  if a sweep names a twin that does not exist, and every sweep runs on every
+  push in CI, where `NOT_CRAN` is true.
 * **eight are `skip_on_cran()`**: they read the checking machine rather than
   the package. The declared R minimum against an installable tree, a
   `select()`-avoidance benchmark comparing two wall-clock timings, four that

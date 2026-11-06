@@ -273,7 +273,8 @@ test_that("a repaired glyph is one emoji to every counting verb", {
 # than a convention to remember.
 # ---------------------------------------------------------------------------
 
-test_that("no ordered output depends on LC_COLLATE", {
+# Shared by the sweep and its CRAN twin: which collations to try, and how many
+check_collation_free_order <- function(locales, max_tried) {
   skip_if_catalogue_moved()
   A <- laugh
   B <- heart_eyes
@@ -367,8 +368,7 @@ test_that("no ordered output depends on LC_COLLATE", {
   # Danish puts a-ring after z, Czech puts ch after h, Estonian puts z before
   # o-tilde: three genuinely different answers about the fixture words, where
   # C and en_US agree with each other.
-  for (loc in c("C", "en_US.UTF-8", "en_US.utf8", "da_DK.utf8", "cs_CZ.utf8",
-                "et_EE.utf8")) {
+  for (loc in locales) {
     available <- tryCatch({
       suppressWarnings(Sys.setlocale("LC_COLLATE", loc))
       identical(Sys.getlocale("LC_COLLATE"), loc)
@@ -376,6 +376,7 @@ test_that("no ordered output depends on LC_COLLATE", {
     if (!available) next
     tried <- c(tried, loc)
     expect_identical(snapshot(), baseline)
+    if (length(tried) >= max_tried) break
   }
   skip_if(length(tried) == 0L, "no alternative collation available")
 
@@ -393,6 +394,16 @@ test_that("no ordered output depends on LC_COLLATE", {
   }
   skip_if(!reorders, "no reached locale re-orders the fixture words")
   expect_true(reorders)
+}
+
+test_that("no ordered output depends on LC_COLLATE", {
+  skip_sweep(twin = "no ordered output depends on LC_COLLATE, in one re-ordering collation")
+  check_collation_free_order(c("C", "en_US.UTF-8", "en_US.utf8", "da_DK.utf8", "cs_CZ.utf8",
+                               "et_EE.utf8"), Inf)
+})
+
+test_that("no ordered output depends on LC_COLLATE, in one re-ordering collation", {
+  check_collation_free_order(c("da_DK.utf8", "cs_CZ.utf8", "et_EE.utf8"), 1L)
 })
 
 test_that("tied counts break deterministically and not by input order", {
@@ -1626,7 +1637,8 @@ test_that(".emoji_slice falls back when utf8ToInt() cannot represent the string"
   expect_true(grepl("caf", emoji_sanitize(d, text)$text[1], fixed = TRUE))
 })
 
-test_that(".emoji_window_at equals the window taken from the whole side", {
+# Shared by the sweep and its CRAN twin: which of the eight fixtures to read
+check_window_at <- function(pick) {
   A <- "\U0001F602"
   fixtures <- c(
     paste("aaa", A, "bbb", A, "ccc"),
@@ -1638,7 +1650,7 @@ test_that(".emoji_window_at equals the window taken from the whole side", {
     paste0("   ", A, "   "),
     A
   )
-  for (s in fixtures) {
+  for (s in fixtures[pick]) {
     locs <- tidyEmoji:::.emoji_locations(s)
     masked <- tidyEmoji:::.emoji_mask(s, locs)
     occ <- tidyEmoji:::.emoji_occurrences(s)
@@ -1667,6 +1679,15 @@ test_that(".emoji_window_at equals the window taken from the whole side", {
       }
     }
   }
+}
+
+test_that(".emoji_window_at equals the window taken from the whole side", {
+  skip_sweep(twin = ".emoji_window_at equals the whole side, on the short fixtures")
+  check_window_at(seq_len(8L))
+})
+
+test_that(".emoji_window_at equals the whole side, on the short fixtures", {
+  check_window_at(c(1L, 2L, 3L, 7L, 8L))
 })
 
 test_that("verb output does not depend on which slicing path ran", {
@@ -1788,6 +1809,7 @@ test_that("the trailing-emoji run is unchanged by the shared gap helper", {
 # ---------------------------------------------------------------------------
 
 test_that("the shortcode round trip preserves every emoji in the catalogue", {
+  skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
@@ -1813,6 +1835,52 @@ test_that("the shortcode round trip preserves every emoji in the catalogue", {
   expect_identical(back2, back)
 })
 
+test_that("the shortcode round trip holds on a sample of the catalogue", {
+  # The CRAN twin of the catalogue-wide round-trip sweeps (here and in
+  # test-regression-0.4.0.R): their properties over every spelling of a
+  # sample of keys, and the same help-page claims, without the figures, which
+  # only the whole catalogue can give.
+  skip_if_catalogue_moved()
+  ref <- tidyEmoji:::emoji_reference()
+  ref <- ref[ref$key %in% ref$key[sweep_rows(ref$emoji, 150L)], , drop = FALSE]
+  ekey <- tidyEmoji:::emoji_key
+  trip <- function(x) {
+    sc <- emoji_to_text(data.frame(text = x, stringsAsFactors = FALSE), text,
+                        format = "shortcode")$text
+    text_to_emoji(data.frame(text = sc, stringsAsFactors = FALSE), text)$text
+  }
+  back <- trip(ref$emoji)
+  # every spelling comes back as the same emoji ...
+  expect_identical(ekey(back), ekey(ref$emoji))
+  expect_false(anyNA(ekey(back)))
+  # ... byte for byte, or differing by U+FE0F alone, and the sample holds both
+  drop_fe0f <- function(x) {
+    vapply(x, function(g) {
+      cp <- utf8ToInt(g)
+      intToUtf8(cp[cp != 0xFE0F])
+    }, character(1), USE.NAMES = FALSE)
+  }
+  expect_identical(drop_fe0f(back), drop_fe0f(ref$emoji))
+  expect_true(any(back != ref$emoji))
+  expect_true(any(back == ref$emoji))
+  # a second trip changes nothing
+  expect_identical(trip(back), back)
+  # each sampled emoji's canonical spelling is byte-exact, in context too
+  canon <- ref$emoji[!duplicated(ref$key) & !is.na(ref$shortcode)]
+  expect_identical(trip(paste0("x ", canon, " y")), paste0("x ", canon, " y"))
+  # spellings with no shortcode (Emoji 17.0 and 18.0) stay where they are
+  new <- tidyEmoji:::.emoji_version_num(ref$version) >= 17
+  expect_true(any(new))
+  expect_true(all(back[new] == ref$emoji[new]))
+  # the two worked examples ?emoji_to_text gives
+  expect_identical(trip("\u2764"), "\u2764")
+  sleuth <- "\U0001F575\uFE0F\u200D\u2642"
+  expect_identical(trip(sleuth), paste0(sleuth, "\uFE0F"))
+  # and the pages still make the claims the sweeps hold to figures
+  expect_match(rd_flat("emoji_sanitize"), "79.5% byte-identical", fixed = TRUE)
+  expect_match(rd_flat("text_to_emoji"), "entries", fixed = TRUE)
+})
+
 # Round 103: ?emoji_sanitize quotes the round-trip share as "across all 4853
 # catalogued spellings that is 79.5% byte-identical, and the remaining 20.5%
 # differ by U+FE0F alone -- never by more". All three numbers were correct and
@@ -1824,6 +1892,7 @@ test_that("the shortcode round trip preserves every emoji in the catalogue", {
 # three different denominators, not three estimates of one number. Pin it both
 # ways: derive it from the data, and require the rendered page to state it.
 test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
+  skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   has_alias <- !is.na(ref$shortcode) & nzchar(ref$shortcode)
@@ -1861,19 +1930,33 @@ test_that("?emoji_sanitize's 79.5% round-trip share is what the data gives", {
   expect_true(grepl("remaining 20.5%", txt, fixed = TRUE))
 })
 
-test_that("colliding names and shortcodes only ever share a code-point key", {
+# Shared by the sweep and its CRAN twin: the whole catalogue, or every
+# spelling of a sample of its keys, which is where the collisions are.
+check_label_collisions <- function(n = NULL, min_dup = 100L) {
   ref <- tidyEmoji:::emoji_reference()
+  if (!is.null(n)) {
+    ref <- ref[ref$key %in% ref$key[sweep_rows(ref$emoji, n)], , drop = FALSE]
+  }
   d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
   for (fmt in c("name", "shortcode")) {
     lab <- emoji_to_text(d, text, format = fmt)$text
     dup <- unique(lab[duplicated(lab)])
     # as above: no duplicates would mean this test asserted nothing
-    expect_gt(length(dup), 100L)
+    expect_gt(length(dup), min_dup)
     # two glyphs may share a label, but only if they are the same emoji
     for (x in dup) {
       expect_length(unique(tidyEmoji:::emoji_key(ref$emoji[lab == x])), 1L)
     }
   }
+}
+
+test_that("colliding names and shortcodes only ever share a code-point key", {
+  skip_sweep(twin = "colliding labels share a code-point key, on a sample of keys")
+  check_label_collisions()
+})
+
+test_that("colliding labels share a code-point key, on a sample of keys", {
+  check_label_collisions(150L, 10L)
 })
 
 test_that("the text-rewriting verbs are idempotent", {
@@ -2162,7 +2245,8 @@ test_that("emoji_lexicons() columns carry no element names after registration", 
   })
 })
 
-test_that("no verb returns a column carrying element names", {
+# Shared by the sweep and its CRAN twin: which row counts, and every how-many-th verb
+check_no_element_names <- function(pick, stride) {
   with_clean_registry({
     A <- "\U0001F602"
     B <- "\U0001F621"
@@ -2181,8 +2265,8 @@ test_that("no verb returns a column carrying element names", {
     # on four. The four-row fixture this test used to have alone could never
     # show it.
     for (d in list(d4, d4[1, , drop = FALSE], d4[2, , drop = FALSE],
-                   d4[0, , drop = FALSE])) {
-      outs <- list(
+                   d4[0, , drop = FALSE])[pick]) {
+      outs <- sweep_calls(.stride = stride,
         emoji_sentiment(d, text), emoji_score(d, text), emoji_emotion(d, text),
         emoji_emotion(d, text, long = TRUE), emoji_emotion_label(d, text),
         emoji_sentiment(d, text, se = TRUE),
@@ -2215,6 +2299,15 @@ test_that("no verb returns a column carrying element names", {
       }
     }
   })
+}
+
+test_that("no verb returns a column carrying element names", {
+  skip_sweep(twin = "no verb returns element names on one row, on a sample of verbs")
+  check_no_element_names(1:4, 1L)
+})
+
+test_that("no verb returns element names on one row, on a sample of verbs", {
+  check_no_element_names(2L, 5L)
 })
 
 test_that("registering a lexicon leaves every other verb untouched", {
@@ -2390,7 +2483,8 @@ test_that("emoji_search() agrees with the rest of the package", {
   expect_true(any(res$keyword == ""))
 })
 
-test_that("a version recorded on only one spelling reaches both", {
+# Shared by the sweep and its CRAN twin: the profile over the catalogue, or a sample
+check_version_reaches_both <- function(n = NULL) {
   ref <- tidyEmoji:::emoji_reference()
   # upstream attaches the introducing version to the unqualified member of a
   # variation pair; the version belongs to the emoji, not to one spelling
@@ -2411,11 +2505,21 @@ test_that("a version recorded on only one spelling reaches both", {
 
   # emoji_version_profile() therefore has no unknown bucket, and still
   # accounts for exactly the glyphs detection found
-  d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
+  d <- data.frame(text = if (is.null(n)) ref$emoji else
+                    sweep_sample(ref$emoji, n), stringsAsFactors = FALSE)
   vp <- emoji_version_profile(d, text)
   expect_false(anyNA(vp$version))
   expect_identical(sum(vp$n_tokens), sum(emoji_sentiment(d, text)$.emoji_n))
   expect_true(all(vp$version %in% emoji_unicode_releases()$version))
+}
+
+test_that("a version recorded on only one spelling reaches both", {
+  skip_sweep(twin = "a version recorded on one spelling reaches both, profiled on a sample")
+  check_version_reaches_both()
+})
+
+test_that("a version recorded on one spelling reaches both, profiled on a sample", {
+  check_version_reaches_both(200L)
 })
 
 test_that(".emoji_fill_by_key only fills gaps and never overwrites", {
@@ -3173,7 +3277,8 @@ test_that("a row-preserving verb answers from its own row alone", {
   }
 })
 
-test_that("an aggregator's answer does not depend on input row order", {
+# Shared by the sweep and its CRAN twin: every aggregator, or every stride-th
+check_row_order_free <- function(stride) {
   # Round 110 pinned that the documented *sorts* are stable under a
   # permutation of the input. This is the stronger question it did not ask:
   # whether row order leaks into the values at all. It only holds
@@ -3218,7 +3323,7 @@ test_that("an aggregator's answer does not depend on input row order", {
   # the permutation must actually move rows, or every comparison is trivial
   expect_false(identical(perm, seq_len(nrow(d))))
 
-  for (nm in names(aggregators)) {
+  for (nm in names(aggregators)[seq(1L, length(aggregators), by = stride)]) {
     f <- aggregators[[nm]]
     a <- as.data.frame(suppressWarnings(f(d)))
     b <- as.data.frame(suppressWarnings(f(shuffled)))
@@ -3232,6 +3337,15 @@ test_that("an aggregator's answer does not depend on input row order", {
     expect_equal(a, b, info = nm)
     expect_gt(nrow(a), 0L)
   }
+}
+
+test_that("an aggregator's answer does not depend on input row order", {
+  skip_sweep(twin = "every third aggregator's answer does not depend on input row order")
+  check_row_order_free(1L)
+})
+
+test_that("every third aggregator's answer does not depend on input row order", {
+  check_row_order_free(3L)
 })
 
 test_that("a test comparing catalogue figures to a help page is gated", {
@@ -3248,7 +3362,7 @@ test_that("a test comparing catalogue figures to a help page is gated", {
                       full.names = TRUE)
   skip_if(length(files) == 0L, "test sources not available")
   cat_src <- c("emoji_reference", "emoji::emojis", ".emoji_ref_keys")
-  doc_src <- c("rd_text", "rd_flat", "rd_all", "Rd_db")
+  doc_src <- c("rd_text", "rd_flat", "rd_all", "rd_db", "Rd_db")
   # Exempt by name, with the reason. test-emotion.R reaches the catalogue only
   # to look a glyph up by key; the figures it holds the help page to (150
   # rows, 3 ties) come from the bundled emotion lexicon, which ships frozen
@@ -3262,7 +3376,13 @@ test_that("a test comparing catalogue figures to a help page is gated", {
     src <- attr(exprs, "srcref")
     for (i in seq_along(exprs)) {
       e <- exprs[[i]]
-      if (!(is.call(e) && identical(e[[1L]], quote(test_that)))) next
+      # a test block, or a top-level function: since 0.7.0 a sweep and its
+      # CRAN twin share their assertions through one, and the gate belongs
+      # in the function then, where both callers pass through it
+      is_test <- is.call(e) && identical(e[[1L]], quote(test_that))
+      is_fun <- is.call(e) && identical(e[[1L]], quote(`<-`)) &&
+        is.call(e[[3L]]) && identical(e[[3L]][[1L]], quote(`function`))
+      if (!is_test && !is_fun) next
       nm <- as.character(e[[2L]])
       if (nm %in% exempt) next
       txt <- paste(as.character(src[[i]]), collapse = "\n")
@@ -3580,7 +3700,11 @@ test_that("the lexicon sizes the documentation states are the data's", {
   expect_identical(lx$n[lx$name == "emotag1200"], nrow(emoji_emotion_lexicon))
 })
 
-test_that("the documented coverage figures are the ones the data gives", {
+# Shared by the sweep and its CRAN twin: the verb scores every canonical
+# spelling in the sweep, and a sample in the twin, where a glyph must be
+# scored exactly when its key is one of the lexicon's, the property the 736
+# counts.
+check_coverage_figures <- function(n = NULL) {
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   keys <- unique(ref$key)
@@ -3595,16 +3719,34 @@ test_that("the documented coverage figures are the ones the data gives", {
   expect_equal(round(100 * 736 / length(keys)), 19)
 
   # and the verb really scores that many of the detectable emoji
-  d <- data.frame(text = ref$emoji[!duplicated(ref$key)],
-                  stringsAsFactors = FALSE)
-  scored <- emoji_sentiment(d, text)$.emoji_n_scored
-  expect_identical(sum(scored > 0, na.rm = TRUE), 736L)
+  canon <- ref$emoji[!duplicated(ref$key)]
+  if (is.null(n)) {
+    d <- data.frame(text = canon, stringsAsFactors = FALSE)
+    scored <- emoji_sentiment(d, text)$.emoji_n_scored
+    expect_identical(sum(scored > 0, na.rm = TRUE), 736L)
+  } else {
+    smp <- sweep_sample(canon, n)
+    scored <- emoji_sentiment(data.frame(text = smp, stringsAsFactors = FALSE),
+                              text)$.emoji_n_scored
+    in_lex <- tidyEmoji:::emoji_key(smp) %in% sl_keys
+    expect_identical(!is.na(scored) & scored > 0, in_lex & !is.na(scored))
+    expect_true(any(in_lex))
+  }
 
   # ?emoji_emotion_lexicon: "150 glyphs, about 4%" -- every row resolves here,
   # which is why that one needs no 736-style decomposition
   el_keys <- emoji_emotion_lexicon$key
   expect_identical(sum(!(el_keys %in% keys)), 0L)
   expect_equal(round(100 * nrow(emoji_emotion_lexicon) / length(keys)), 4)
+}
+
+test_that("the documented coverage figures are the ones the data gives", {
+  skip_sweep(twin = "the documented coverage figures hold, scoring a sample")
+  check_coverage_figures()
+})
+
+test_that("the documented coverage figures hold, scoring a sample", {
+  check_coverage_figures(300L)
 })
 
 test_that("DESCRIPTION, emoji_lexicons() and the help pages name one licence each", {
@@ -3738,7 +3880,8 @@ collect_conditions <- function(f) {
        error = if (inherits(res, "collected_error")) as.character(res) else NULL)
 }
 
-test_that("no verb warns on input that is entirely ordinary", {
+# Shared by the sweep and its CRAN twin: every verb on every shape, or a rotating share
+check_no_ordinary_warnings <- function(stride) {
   A <- "\U0001F602"
   B <- "\U0001F621"
   base <- data.frame(
@@ -3825,6 +3968,7 @@ test_that("no verb warns on input that is entirely ordinary", {
   for (shape in names(shapes)) {
     d <- shapes[[shape]]
     cl <- c(calls(d), if (identical(shape, "ordinary")) no_arg else NULL)
+    cl <- sweep_rotate(cl, match(shape, names(shapes)), stride)
     for (nm in names(cl)) {
       got <- collect_conditions(cl[[nm]])
       expect_identical(got$warnings, character(0),
@@ -3835,6 +3979,15 @@ test_that("no verb warns on input that is entirely ordinary", {
       expect_null(got$error, info = paste(shape, nm, got$error))
     }
   }
+}
+
+test_that("no verb warns on input that is entirely ordinary", {
+  skip_sweep(twin = "no verb warns on ordinary input, on a rotating sample")
+  check_no_ordinary_warnings(1L)
+})
+
+test_that("no verb warns on ordinary input, on a rotating sample", {
+  check_no_ordinary_warnings(9L)
 })
 
 test_that("no deprecation tells the user to report a bug against tidyEmoji", {
@@ -3967,6 +4120,7 @@ test_that("the name/shortcode overlap is 464, and 17 of them disagree", {
 })
 
 test_that("the documented round-trip byte share is the catalogue's", {
+  skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
   d <- data.frame(text = ref$emoji, stringsAsFactors = FALSE)
@@ -4046,6 +4200,7 @@ test_that("the documented round-trip byte share is the catalogue's", {
 })
 
 test_that("the help pages state the overlap figures the data gives", {
+  skip_sweep(twin = "the shortcode round trip holds on a sample of the catalogue")
   # Every figure below is derived from the *live* catalogue and then required
   # of a help page, so all of them move the day `emoji` ships a new release --
   # and DESCRIPTION sets no upper bound on it. Without this gate that is a
@@ -4471,7 +4626,8 @@ test_that("a non-finite text_score cannot destroy the other rows", {
   expect_silent(emoji_incongruity(dn, text, sc, scale = "zscore"))
 })
 
-test_that("the bounded context window equals reading the whole side", {
+# Shared by the sweep and its CRAN twin: random strings, every window and unit
+check_window_bound <- function(n_trials, min_cmp) {
   # .emoji_window_at() slices a bounded piece of the masked text instead of the
   # whole prefix/suffix, on the argument that the answer only depends on the
   # `window` tokens nearest the glyph. That is a claimed equivalence; this is
@@ -4486,7 +4642,7 @@ test_that("the bounded context window equals reading the whole side", {
   words <- c("a", "bb", "ccc", "hello", "world", "-", "...", "the")
   ws <- c(" ", "  ", "\t", " \t ", "\n")
   n_cmp <- 0L
-  for (trial in 1:120) {
+  for (trial in seq_len(n_trials)) {
     parts <- character(0)
     for (i in seq_len(sample(1:10, 1))) {
       parts <- c(parts, sample(c(words, emo, ws, ".", "()"), 1))
@@ -4511,10 +4667,20 @@ test_that("the bounded context window equals reading the whole side", {
       }
     }
   }
-  expect_gt(n_cmp, 1000L)
+  expect_gt(n_cmp, min_cmp)
+}
+
+test_that("the bounded context window equals reading the whole side", {
+  skip_sweep(twin = "the bounded context window equals the whole side, on a sample")
+  check_window_bound(120L, 1000L)
 })
 
-test_that("the trailing-run walk-back matches a direct search", {
+test_that("the bounded context window equals the whole side, on a sample", {
+  check_window_bound(4L, 20L)
+})
+
+# Shared by the sweep and its CRAN twin: random strings against the direct search
+check_walk_back <- function(n_trials) {
   # .emoji_final_glyphs() walks back over blank gaps. The direct statement of
   # the same rule is "the longest suffix of glyphs with nothing but whitespace
   # outside them from its first glyph onwards"; the two must agree.
@@ -4551,7 +4717,7 @@ test_that("the trailing-run walk-back matches a direct search", {
            "\U0001F468\u200D\U0001F469\u200D\U0001F467")
   tok <- c("a", "word", ".", ",", ")", "\"", "!", "-", "the")
   ws <- c(" ", "  ", "\t", "\n", " \t")
-  for (i in 1:300) {
+  for (i in seq_len(n_trials)) {
     parts <- character(0)
     for (j in seq_len(sample(0:8, 1))) {
       parts <- c(parts, sample(c(tok, emo), 1))
@@ -4561,6 +4727,15 @@ test_that("the trailing-run walk-back matches a direct search", {
     expect_identical(tidyEmoji:::.emoji_final_glyphs(s)[[1]], ref_final(s),
                      info = encodeString(s, quote = "\""))
   }
+}
+
+test_that("the trailing-run walk-back matches a direct search", {
+  skip_sweep(twin = "the trailing-run walk-back matches a direct search, on a sample")
+  check_walk_back(300L)
+})
+
+test_that("the trailing-run walk-back matches a direct search, on a sample", {
+  check_walk_back(30L)
 })
 
 test_that("emoji_emotion(long = TRUE) returns what its @return says", {
@@ -4598,19 +4773,26 @@ test_that("emoji_emotion(long = TRUE) returns what its @return says", {
 # undetectable), which is the same trap the 79%/75% round-trip figures set --
 # so pin both, and pin that they are not equal.
 
-test_that("the documented undetectable-spelling figures are the data's", {
+# Shared by the sweep and its CRAN twin: the figures need the whole catalogue,
+# and the properties behind them hold on any sample of it.
+check_undetectable_figures <- function(n = NULL) {
   skip_if_catalogue_moved()
   ref <- tidyEmoji:::emoji_reference()
+  full <- is.null(n)
+  if (!full) ref <- ref[sweep_rows(ref$emoji, n), , drop = FALSE]
   detected <- lengths(tidyEmoji:::emoji_glyph_list(ref$emoji))
   component <- ref$status == "component"
 
   # 212 catalogue spellings are ones detection does not match, all of them
   # unqualified; the nine components are not emoji on their own either, but
   # by design rather than by spelling, so they are counted apart
-  expect_identical(sum(detected == 0L & !component), 212L)
+  if (full) {
+    expect_identical(sum(detected == 0L & !component), 212L)
+    expect_identical(sum(detected == 0L & component), 9L)
+    expect_identical(sum(component), 9L)
+  }
   expect_true(all(ref$status[detected == 0L & !component] == "unqualified"))
-  expect_identical(sum(detected == 0L & component), 9L)
-  expect_identical(sum(component), 9L)
+  expect_true(all(detected[component] == 0L))
   # ... and nothing is ever split: a catalogued glyph is one emoji or none
   expect_identical(sum(detected > 1L), 0L)
 
@@ -4619,18 +4801,26 @@ test_that("the documented undetectable-spelling figures are the data's", {
   # number; asserting both stops either being "reconciled" into the other.
   has_fe0f <- vapply(ref$emoji, function(g) 0xFE0F %in% utf8ToInt(g),
                      logical(1), USE.NAMES = FALSE)
-  expect_identical(sum(has_fe0f), 1272L)
   stripped <- vapply(ref$emoji[has_fe0f], function(g) {
     cp <- utf8ToInt(g); intToUtf8(cp[cp != 0xFE0F])
   }, character(1), USE.NAMES = FALSE)
-  expect_identical(sum(lengths(tidyEmoji:::emoji_glyph_list(stripped)) == 0L),
-                   216L)
-  expect_false(identical(216L, 212L))
+  if (full) {
+    expect_identical(sum(has_fe0f), 1272L)
+    expect_identical(
+      sum(lengths(tidyEmoji:::emoji_glyph_list(stripped)) == 0L), 216L)
+    expect_false(identical(216L, 212L))
+  } else {
+    # a stripped spelling is detected as one emoji or none, never split
+    expect_true(all(lengths(tidyEmoji:::emoji_glyph_list(stripped)) <= 1L))
+  }
 
   # and 57 of the scorable sentiment-lexicon glyphs are stored in a spelling
   # detection does not match
   sl <- emoji_sentiment_lexicon
-  scorable <- tidyEmoji:::emoji_key(sl$emoji) %in% ref$key
+  # against the whole catalogue whatever was sampled above: the lexicon is
+  # cheap to read in full
+  scorable <- tidyEmoji:::emoji_key(sl$emoji) %in%
+    tidyEmoji:::emoji_reference()$key
   expect_identical(sum(scorable), 736L)
   expect_identical(
     sum(lengths(tidyEmoji:::emoji_glyph_list(sl$emoji[scorable])) == 0L), 57L)
@@ -4642,6 +4832,15 @@ test_that("the documented undetectable-spelling figures are the data's", {
   expect_false(anyNA(tidyEmoji:::emoji_key(undetectable)))
   expect_identical(nrow(emoji_ambiguity(undetectable)),
                    length(undetectable))
+}
+
+test_that("the documented undetectable-spelling figures are the data's", {
+  skip_sweep(twin = "the undetectable-spelling properties hold on a sample")
+  check_undetectable_figures()
+})
+
+test_that("the undetectable-spelling properties hold on a sample", {
+  check_undetectable_figures(250L)
 })
 
 test_that("the keycap selector goes in the middle, not at the end", {
@@ -4691,13 +4890,14 @@ test_that("the keycap selector goes in the middle, not at the end", {
     canonical)
 })
 
-test_that("detection of a catalogued glyph does not depend on its context", {
+# Shared by the sweep and its CRAN twin: the catalogue, or a sample of it
+check_context_free_detection <- function(n = NULL) {
   skip_if_catalogue_moved()
   # Everything in the package rests on .emoji_locations() returning the same
   # spans for a glyph whether it stands alone or sits in a sentence. Tested
   # only on bare glyphs until now.
   ref <- tidyEmoji:::emoji_reference()
-  G <- ref$emoji
+  G <- if (is.null(n)) ref$emoji else sweep_sample(ref$emoji, n)
   alone <- lengths(tidyEmoji:::emoji_glyph_list(G))
   smiley <- "\U0001F600"
 
@@ -4742,6 +4942,15 @@ test_that("detection of a catalogued glyph does not depend on its context", {
                        paste0(G, zwj), paste0(zwj, G))) {
     expect_true(all(well_formed(strings)))
   }
+}
+
+test_that("detection of a catalogued glyph does not depend on its context", {
+  skip_sweep(twin = "detection of a sample of the catalogue does not depend on its context")
+  check_context_free_detection()
+})
+
+test_that("detection of a sample of the catalogue does not depend on its context", {
+  check_context_free_detection(120L)
 })
 
 test_that("entropy is never negative zero", {
@@ -5270,7 +5479,9 @@ test_that("every cross-row aggregator warns once, and names itself", {
 # rules produces 80.1%: the no-repair figure is 63.2%, and 793 is what rule 3
 # starts from, not what the three rules together start from.
 
-test_that("the staged detection figures are the ones the rules give", {
+# Shared by the sweep and its CRAN twin: the figures need all 5042 Emoji 16.0
+# spellings, and on a sample each rule can only be shown to help, never hurt.
+check_staged_detection <- function(n = NULL) {
   skip_if_catalogue_moved()
   # These are the 0.4.0 grapheme repair's figures, measured against the 5042
   # spellings of the Emoji 16.0 table it was built on, and they stay quotable
@@ -5281,6 +5492,7 @@ test_that("the staged detection figures are the ones the rules give", {
   ref <- tidyEmoji:::emoji_reference()
   G <- ref$emoji[tidyEmoji:::.emoji_version_num(ref$version) <= 16]
   expect_identical(length(G), 5042L)
+  if (!is.null(n)) G <- sweep_sample(G, n)
   Z <- "\u200D"
 
   # rule 1 on its own: UAX #29 GB11, merging two matches separated by one ZWJ
@@ -5312,9 +5524,15 @@ test_that("the staged detection figures are the ones the rules give", {
         identical(substring(G[i], m[1L, "start"], m[1L, "end"]), G[i])
     }, logical(1)))
   }
-  expect_identical(exact(raw), 3189L)
-  expect_identical(exact(r1), 3807L)
-  expect_identical(exact(now), 4830L)
+  if (!is.null(n)) {
+    expect_lte(exact(raw), exact(r1))
+    expect_lte(exact(r1), exact(now))
+    expect_gt(exact(now), exact(raw))
+  } else {
+    expect_identical(exact(raw), 3189L)
+    expect_identical(exact(r1), 3807L)
+    expect_identical(exact(now), 4830L)
+  }
   expect_identical(round(100 * 3189 / 5042, 1), 63.2)
   expect_identical(round(100 * 3807 / 5042, 1), 75.5)
   expect_identical(round(100 * 4830 / 5042, 1), 95.8)
@@ -5332,9 +5550,15 @@ test_that("the staged detection figures are the ones the rules give", {
       any(cps == Z & !inside)
     }, logical(1)))
   }
-  expect_identical(orphans(raw), 1643L)
-  expect_identical(orphans(r1), 1025L)
-  expect_identical(orphans(now), 2L)
+  if (!is.null(n)) {
+    expect_gte(orphans(raw), orphans(r1))
+    expect_gte(orphans(r1), orphans(now))
+    expect_gt(orphans(raw), orphans(now))
+  } else {
+    expect_identical(orphans(raw), 1643L)
+    expect_identical(orphans(r1), 1025L)
+    expect_identical(orphans(now), 2L)
+  }
 
   # and both documents quote the corrected pair. Not asserting the absence of
   # "80.1%": the NEWS entry recording this fix quotes the old figure in order
@@ -5348,6 +5572,15 @@ test_that("the staged detection figures are the ones the rules give", {
     expect_true(grepl("95.8%", txt, fixed = TRUE), info = f)
     expect_true(grepl("1643", txt, fixed = TRUE), info = f)
   }
+}
+
+test_that("the staged detection figures are the ones the rules give", {
+  skip_sweep(twin = "each stage of the detection repair helps, on a sample")
+  check_staged_detection()
+})
+
+test_that("each stage of the detection repair helps, on a sample", {
+  check_staged_detection(400L)
 })
 
 test_that("every alias resolves, including the 751 only the fallback knows", {
@@ -5379,7 +5612,7 @@ test_that("every exported help topic offers a route onward", {
   # point *at* (emoji_categorize, emoji_emotion_label, emoji_extract_unnest,
   # emoji_filter), so a reader arriving from the index or a search had nowhere
   # to go while the other 44 exports did.
-  db <- tools::Rd_db("tidyEmoji")
+  db <- rd_db()
   exports <- getNamespaceExports("tidyEmoji")
   bare <- character(0)
   for (nm in names(db)) {
@@ -5552,7 +5785,8 @@ test_that("README.md has not drifted from README.Rmd's prose", {
 # tibble::as_tibble() converts a bare list or a character matrix -- so the
 # is.data.frame() guard the other verbs enforce never saw the original object.
 
-test_that("every verb rejects a `data` that is not a data frame", {
+# Shared by the sweep and its CRAN twin: every wrong type per verb, or one rotating type
+check_data_rejected <- function(stride) {
   A <- "\U0001F600"
   wrong <- list(
     "NULL" = NULL,
@@ -5573,7 +5807,7 @@ test_that("every verb rejects a `data` that is not a data frame", {
              "emoji_token_cost", "emoji_score", "emoji_faceness",
              "emoji_risk", "emoji_emotion", "emoji_cooccurrence")
   for (v in verbs) {
-    for (nm in names(wrong)) {
+    for (nm in sweep_rotate(names(wrong), match(v, verbs), stride)) {
       expect_error(
         suppressWarnings(do.call(v, list(wrong[[nm]], rlang::sym("text")))),
         "`data` must be a data frame",
@@ -5601,9 +5835,19 @@ test_that("every verb rejects a `data` that is not a data frame", {
                    emoji_tokens(d, text))
   grouped <- dplyr::group_by(d, id)
   expect_true(dplyr::is_grouped_df(emoji_tokens(grouped, text)))
+}
+
+test_that("every verb rejects a `data` that is not a data frame", {
+  skip_sweep(twin = "every verb rejects one rotating kind of non-data-frame `data`")
+  check_data_rejected(1L)
 })
 
-test_that("every export works as the first call in a session", {
+test_that("every verb rejects one rotating kind of non-data-frame `data`", {
+  check_data_rejected(7L)
+})
+
+# Shared by the sweep and its CRAN twin: every export, or every stride-th
+check_first_call <- function(stride) {
   # Several verbs populate a shared cache lazily. If one read an entry another
   # populates, it would work only when something else had been called first --
   # invisible in a suite that runs them in order. Checked here by clearing the
@@ -5638,10 +5882,19 @@ test_that("every export works as the first call in a session", {
     quote(emoji_trend(d, text, when)), quote(emoji_adoption_lag(d, text, when)),
     quote(emoji_incongruity(d, text, sc, scale = "none"))
   )
-  for (e in calls) {
+  for (e in calls[seq(1L, length(calls), by = stride)]) {
     rm(list = ls(cache, all.names = TRUE), envir = cache)
     expect_no_error(suppressWarnings(eval(e)))
   }
+}
+
+test_that("every export works as the first call in a session", {
+  skip_sweep(twin = "every eighth export works as the first call in a session")
+  check_first_call(1L)
+})
+
+test_that("every eighth export works as the first call in a session", {
+  check_first_call(8L)
 })
 
 # ---------------------------------------------------------------------------
@@ -5676,7 +5929,8 @@ test_that("emoji_cooccurrence differs from emoji_pairs exactly as documented", {
                    emoji_pairs(d, text))
 })
 
-test_that("every enum and flag combination the verbs accept works", {
+# Shared by the sweep and its CRAN twin: every call, or every stride-th
+check_enum_combinations <- function(stride) {
   skip_if_catalogue_moved()
   A <- "\U0001F600"; H <- "\U0001F60D"; F1 <- "\U0001F525"
   d <- data.frame(
@@ -5691,6 +5945,7 @@ test_that("every enum and flag combination the verbs accept works", {
   n <- 0L
   ok <- function(expr) {
     n <<- n + 1L
+    if ((n - 1L) %% stride) return(invisible())
     v <- suppressWarnings(eval(expr))
     expect_s3_class(v, "data.frame")
     # a returned column must always be nameable
@@ -5770,6 +6025,15 @@ test_that("every enum and flag combination the verbs accept works", {
   }
   for (se in c(TRUE, FALSE)) ok(bquote(emoji_sentiment(d, text, se = .(se))))
   expect_gt(n, 170L)
+}
+
+test_that("every enum and flag combination the verbs accept works", {
+  skip_sweep(twin = "every ninth enum and flag combination the verbs accept works")
+  check_enum_combinations(1L)
+})
+
+test_that("every ninth enum and flag combination the verbs accept works", {
+  check_enum_combinations(9L)
 })
 
 # ---------------------------------------------------------------------------
@@ -6815,15 +7079,17 @@ test_that("emoji_incongruity_profile's statistics are the row gaps aggregated", 
   expect_true(all(p5$n >= 5L))
 })
 
-test_that("emoji_dfm holds up at its widest", {
+# Shared by the sweep and its CRAN twin: every distinct emoji, or a sample.
+check_dfm_widest <- function(n = NULL) {
   skip_if_catalogue_moved()
-  # Runs on CRAN: it is deterministic and about two seconds, and a table
-  # 3964 columns wide is exactly the shape most likely to behave differently
-  # on a flavour we cannot test here. The nine components are not emoji on
-  # their own, so they make no column.
+  # A table 3964 columns wide is exactly the shape most likely to behave
+  # differently on a flavour we cannot test here, so its twin, a few hundred
+  # columns wide, runs on CRAN. The nine components are not emoji on their
+  # own, so they make no column.
   ref <- tidyEmoji:::emoji_reference()
   canon <- ref$emoji[!duplicated(ref$key) & ref$status != "component"]
   expect_identical(length(canon), 3963L)
+  if (!is.null(n)) canon <- sweep_sample(canon, n)
   # one document containing every distinct emoji: the widest table possible
   one <- data.frame(text = paste(canon, collapse = " "),
                     stringsAsFactors = FALSE)
@@ -6849,6 +7115,15 @@ test_that("emoji_dfm holds up at its widest", {
   cs <- colSums(as.matrix(m[, -1L]))
   glyph <- names(m)[-1L]
   expect_identical(order(-cs, glyph, method = "radix"), seq_along(glyph))
+}
+
+test_that("emoji_dfm holds up at its widest", {
+  skip_sweep(twin = "emoji_dfm holds up a few hundred columns wide")
+  check_dfm_widest()
+})
+
+test_that("emoji_dfm holds up a few hundred columns wide", {
+  check_dfm_widest(300L)
 })
 
 test_that("a missing column is reported the same way for all four arguments", {
@@ -6912,7 +7187,8 @@ test_that("the missing-column message stays short however wide the data is", {
   }
 })
 
-test_that("only one example touches the lexicon registry", {
+# Shared by the sweep and its CRAN twin: every topic's example, or every stride-th
+check_one_registering_example <- function(stride) {
   # R CMD check runs every example in one session, so a registration in one
   # topic's example is visible to every topic that sorts after it.
   # ?register_emoji_lexicon legitimately registers one -- that is what it
@@ -6920,14 +7196,15 @@ test_that("only one example touches the lexicon registry", {
   # would depend on alphabetical luck. Today `register_emoji_lexicon` sorts
   # after every lexicon-using topic; this keeps that from mattering.
   #
-  # Runs on CRAN, deliberately: the hazard it guards against is created by
-  # R CMD check running every example in one session, so the place it most
-  # needs to hold is a CRAN flavour rather than this machine.
+  # The hazard is created by R CMD check running every example in one
+  # session, so it matters most on a CRAN flavour. Every example is run off
+  # CRAN; CRAN itself runs the twin, every sixth topic and the one that
+  # registers.
   cache <- tidyEmoji:::.tidyEmoji_cache
   saved <- cache$lexicons
   on.exit(assign("lexicons", saved, envir = cache), add = TRUE)
 
-  db <- tools::Rd_db("tidyEmoji")
+  db <- rd_db()
   code_of <- function(o) {
     f <- tempfile(fileext = ".R")
     tools::Rd2ex(o, out = f)
@@ -6938,7 +7215,10 @@ test_that("only one example touches the lexicon registry", {
     paste(src, collapse = "\n")
   }
   mutators <- character(0)
-  for (nm in sort(names(db))) {
+  topics <- sort(names(db))
+  topics <- union(topics[seq(1L, length(topics), by = stride)],
+                  "register_emoji_lexicon.Rd")
+  for (nm in topics) {
     code <- code_of(db[[nm]])
     if (is.null(code)) next
     assign("lexicons", saved, envir = cache)
@@ -6949,6 +7229,9 @@ test_that("only one example touches the lexicon registry", {
       mutators <- c(mutators, nm)
     }
   }
+  # The last example run may have been the one that registers; put the
+  # registry back before anything below snapshots it.
+  assign("lexicons", saved, envir = cache)
   expect_identical(mutators, "register_emoji_lexicon.Rd")
 
   # and in a clean registry the bundled table is exactly the two lexicons
@@ -6962,6 +7245,15 @@ test_that("only one example touches the lexicon registry", {
   lx <- emoji_lexicons()
   expect_identical(lx$name, c("novak2015", "emotag1200"))
   expect_identical(nrow(lx), 2L)
+}
+
+test_that("only one example touches the lexicon registry", {
+  skip_sweep(twin = "only one example touches the lexicon registry, on a sample of topics")
+  check_one_registering_example(1L)
+})
+
+test_that("only one example touches the lexicon registry, on a sample of topics", {
+  check_one_registering_example(6L)
 })
 
 # ---------------------------------------------------------------------------
@@ -7132,11 +7424,12 @@ test_that("a list column is refused for every column argument", {
     right = paste(utils::head(rw, window), collapse = " "))
 }
 
-test_that("emoji_context() window content matches an independent reference", {
-  # seeded, so this is reproducible rather than flaky, and it runs on CRAN:
-  # a platform whose grapheme or regex build differs is precisely what would
-  # move a window boundary, and only a machine that is not this one can show
-  # that. Trial count is set so the pair costs about a second.
+# Shared by the sweep and its CRAN twin: random strings against the reference
+check_word_window_reference <- function(n_trials, min_cmp) {
+  # seeded, so this is reproducible rather than flaky, and its twin runs on
+  # CRAN: a platform whose grapheme or regex build differs is precisely what
+  # would move a window boundary, and only a machine that is not this one can
+  # show that.
   E <- asNamespace("tidyEmoji")
   A <- "\U0001F600"
   B <- "\U0001F622"
@@ -7146,7 +7439,7 @@ test_that("emoji_context() window content matches an independent reference", {
               "  ", "\t", "x")
   set.seed(71)
   compared <- 0L
-  for (trial in 1:30) {
+  for (trial in seq_len(n_trials)) {
     s <- paste(sample(c(pieces, A, B, FAM, HEART), sample(3:12, 1L),
                       replace = TRUE), collapse = " ")
     locs <- E$.emoji_locations(s)[[1L]]
@@ -7164,7 +7457,16 @@ test_that("emoji_context() window content matches an independent reference", {
       }
     }
   }
-  expect_gt(compared, 100L)
+  expect_gt(compared, min_cmp)
+}
+
+test_that("emoji_context() window content matches an independent reference", {
+  skip_sweep(twin = "emoji_context() window content matches the reference, on a sample")
+  check_word_window_reference(30L, 100L)
+})
+
+test_that("emoji_context() window content matches the reference, on a sample", {
+  check_word_window_reference(4L, 8L)
 })
 
 test_that("no neighbouring emoji ever leaks into a context window", {
@@ -7786,15 +8088,17 @@ test_that("the bundled lexicon paths are unaffected by the new guards", {
 # the collation test. Over a corpus holding every catalogued glyph, the
 # single name must be the *first* of the expanded ones.
 
-test_that("top_n_emojis()'s two naming branches agree", {
+# Shared by the sweep and its CRAN twin: the whole catalogue, or a sample
+check_naming_branches <- function(n_rows = NULL) {
   skip_if_catalogue_moved()
-  # deterministic and about two seconds, so it runs on CRAN: the branches
-  # join against the installed emoji package's catalogue, and a build whose
-  # aliases differ from this one is exactly what would break the agreement
+  # the branches join against the installed emoji package's catalogue, and
+  # a build whose aliases differ from this one is exactly what would break
+  # the agreement, which is why the twin runs on CRAN
   E <- asNamespace("tidyEmoji")
   ref <- E$emoji_reference()
-  d <- tibble::tibble(text = ref$emoji)
-  n <- nrow(ref)
+  d <- tibble::tibble(text = if (is.null(n_rows)) ref$emoji else
+                        sweep_sample(ref$emoji, n_rows))
+  n <- nrow(d)
   one <- top_n_emojis(d, text, n = n)
   many <- top_n_emojis(d, text, n = n, duplicated = TRUE)
 
@@ -7829,6 +8133,15 @@ test_that("top_n_emojis()'s two naming branches agree", {
   m1 <- match(one$unicode, many$unicode)
   expect_identical(one$n, many$n[m1])
   expect_identical(one$emoji_category, many$emoji_category[m1])
+}
+
+test_that("top_n_emojis()'s two naming branches agree", {
+  skip_sweep(twin = "top_n_emojis()'s two naming branches agree on a sample")
+  check_naming_branches()
+})
+
+test_that("top_n_emojis()'s two naming branches agree on a sample", {
+  check_naming_branches(250L)
 })
 
 test_that("top_n_emojis() cuts on distinct emoji, not on rows", {
@@ -7882,7 +8195,8 @@ test_that("top_n_emojis() cuts on distinct emoji, not on rows", {
     right = if (!nr) "" else substr(right, 1L, min(window, nr)))
 }
 
-test_that("emoji_context(unit = 'char') matches an independent reference", {
+# Shared by the sweep and its CRAN twin: random strings against the reference
+check_char_window_reference <- function(n_trials, min_cmp) {
   E <- asNamespace("tidyEmoji")
   A <- "\U0001F600"
   B <- "\U0001F622"
@@ -7894,7 +8208,7 @@ test_that("emoji_context(unit = 'char') matches an independent reference", {
   compared <- 0L
   # window 25 exceeds the 4 * window + 16 first slice for short strings and
   # not for long ones, so both the bounded and the full path are exercised
-  for (trial in 1:40) {
+  for (trial in seq_len(n_trials)) {
     s <- paste(sample(c(pieces, A, B, FAM, HEART), sample(3:12, 1L),
                       replace = TRUE), collapse = " ")
     locs <- E$.emoji_locations(s)[[1L]]
@@ -7912,7 +8226,16 @@ test_that("emoji_context(unit = 'char') matches an independent reference", {
       }
     }
   }
-  expect_gt(compared, 150L)
+  expect_gt(compared, min_cmp)
+}
+
+test_that("emoji_context(unit = 'char') matches an independent reference", {
+  skip_sweep(twin = "emoji_context(unit = 'char') matches the reference, on a sample")
+  check_char_window_reference(40L, 150L)
+})
+
+test_that("emoji_context(unit = 'char') matches the reference, on a sample", {
+  check_char_window_reference(3L, 8L)
 })
 
 test_that("a char window never quotes a neighbouring emoji's own bytes", {
@@ -8014,28 +8337,45 @@ test_that("emoji_provenance()$n_emoji is the reference table's row count", {
                            " emoji)"), p$emotion_lexicon, fixed = TRUE))
 })
 
-test_that("no emoji is lost to an undetectable spelling", {
+# Shared by the sweep and its CRAN twin: the whole catalogue, or the spellings
+# of a sample of its keys (every spelling of each, so the reachability question
+# can still be asked of them).
+check_no_emoji_lost <- function(n = NULL) {
   skip_if_catalogue_moved()
   # The claim that makes n_emoji's overstatement harmless rather than a bug:
   # 212 spellings are undetectable, but every distinct emoji is reachable
   # through at least one spelling that is not.
   E <- asNamespace("tidyEmoji")
   ref <- E$emoji_reference()
-  det <- vapply(ref$emoji,
-                function(x) length(E$emoji_glyph_list(x)[[1L]]) > 0L,
-                logical(1), USE.NAMES = FALSE)
+  if (!is.null(n)) {
+    ref <- ref[ref$key %in% ref$key[sweep_rows(ref$emoji, n)], , drop = FALSE]
+  }
+  # one call over the vector rather than one per glyph: detection answers
+  # each element from that element alone, which test-invariants.R pins
+  det <- lengths(E$emoji_glyph_list(ref$emoji)) > 0L
   component <- ref$status == "component"
   # the nine components are not emoji on their own, by design since 0.6.0,
   # and are the only keys no spelling reaches
-  expect_identical(sum(!det & !component), 212L)
-  expect_identical(sum(!det & component), 9L)
-  expect_identical(sum(det), 5023L)
+  if (is.null(n)) {
+    expect_identical(sum(!det & !component), 212L)
+    expect_identical(sum(!det & component), 9L)
+    expect_identical(sum(det), 5023L)
+  }
   # no key is reachable only via an undetectable spelling
   orphaned <- setdiff(unique(ref$key[!det & !component]),
                       unique(ref$key[det]))
   expect_identical(orphaned, character())
   expect_identical(length(unique(ref$key[det])),
                    length(unique(ref$key[!component])))
+}
+
+test_that("no emoji is lost to an undetectable spelling", {
+  skip_sweep(twin = "no emoji in a sample of keys is lost to an undetectable spelling")
+  check_no_emoji_lost()
+})
+
+test_that("no emoji in a sample of keys is lost to an undetectable spelling", {
+  check_no_emoji_lost(150L)
 })
 
 test_that("emoji_provenance()'s Rd names the quantity n_emoji counts", {
@@ -8394,7 +8734,9 @@ test_that(".emoji_match_arg() keeps match.arg()'s accepting behaviour", {
 # classification is a contract here so a new verb cannot join the silent
 # category by accident.
 
-test_that("every data-first verb keeps a grouping, warns, or is a reshaper", {
+# Shared by the sweep and its CRAN twin: every data-first verb, or every
+# stride-th one plus the reshapers, whose silence is the point.
+check_grouping_kept <- function(stride, min_n) {
   # the reshapers: they return `.row_number` instead of the caller's columns,
   # so there is no grouping column to carry. A closed list on purpose --
   # adding a fourth has to be a deliberate edit here.
@@ -8402,6 +8744,7 @@ test_that("every data-first verb keeps a grouping, warns, or is a reshaper", {
   d <- dplyr::group_by(cbind(contract_fixture(), g = c("a", "b")), g)
   verbs <- data_first_verbs()
   expect_gt(length(verbs), 30L)
+  verbs <- union(verbs[seq(1L, length(verbs), by = stride)], reshapers)
 
   kept <- character()
   warned <- character()
@@ -8433,14 +8776,23 @@ test_that("every data-first verb keeps a grouping, warns, or is a reshaper", {
     expect_false("text" %in% names(out), info = n)
   }
   # both other groups are populated, so the classification is not vacuous
-  expect_gt(length(kept), 5L)
-  expect_gt(length(warned), 5L)
+  expect_gt(length(kept), min_n)
+  expect_gt(length(warned), min_n)
   # a verb that warns must not also return the grouping column: that would be
   # the confusing middle case, warning about a grouping it went on to keep
   for (n in warned) {
     out <- suppressWarnings(call_verb(n, d))
     expect_false(dplyr::is_grouped_df(out), info = n)
   }
+}
+
+test_that("every data-first verb keeps a grouping, warns, or is a reshaper", {
+  skip_sweep(twin = "every third data-first verb keeps a grouping, warns, or is a reshaper")
+  check_grouping_kept(1L, 5L)
+})
+
+test_that("every third data-first verb keeps a grouping, warns, or is a reshaper", {
+  check_grouping_kept(3L, 1L)
 })
 
 test_that("the reshapers document that they drop the caller's columns", {
@@ -8904,6 +9256,16 @@ test_that("cran-comments.md's own figures match the package", {
                     fixed = TRUE),
               info = paste("cran-comments.md should say", words[n_soc],
                            "are `skip_on_cran()`"))
+  # And the sweeps, which since 0.7.0 are most of what CRAN skips: each is a
+  # skip_sweep() statement of its own, the shape test-regression-0.7.0.R's
+  # twin check reads, so count those lines. Digits rather than a word, since
+  # there are too many to spell.
+  n_sweep <- sum(grepl("^\\s*skip_sweep\\(twin = ", lines))
+  expect_gt(n_sweep, 20L)
+  expect_true(grepl(paste(n_sweep, "are sweeps, behind `skip_sweep()`"), txt,
+                    fixed = TRUE),
+              info = paste("cran-comments.md should say", n_sweep,
+                           "are sweeps, behind `skip_sweep()`"))
   # The total a CRAN run prints is larger than that, because some tests read
   # a file the tarball does not carry and stand down. Those are not
   # skip_on_cran() and cannot be counted from the sources, so the file names
@@ -9129,19 +9491,43 @@ test_that("every test_that block contains at least one expectation", {
   skip_if(!length(files), "test sources not available")
   empty <- character()
   n_blocks <- 0L
+  n_shared <- 0L
   for (f in files) {
-    for (e in suppressWarnings(parse(f, keep.source = FALSE))) {
+    exprs <- suppressWarnings(parse(f, keep.source = FALSE))
+    # A sweep and its CRAN twin share their assertions through a function
+    # defined at the top level of the file (0.7.0's time budget), so a block
+    # that calls one of those functions has expectations too. Only functions
+    # whose own body holds one count, so a helper that merely builds data
+    # cannot stand in for an assertion.
+    checkers <- character()
+    for (e in exprs) {
+      if (is.call(e) && identical(as.character(e[[1L]])[1L], "<-") &&
+          is.call(e[[3L]]) && identical(as.character(e[[3L]][[1L]])[1L],
+                                        "function") &&
+          grepl("expect_", paste(deparse(e[[3L]]), collapse = "\n"),
+                fixed = TRUE)) {
+        checkers <- c(checkers, as.character(e[[2L]]))
+      }
+    }
+    for (e in exprs) {
       if (!is.call(e) || !identical(as.character(e[[1L]])[1L], "test_that")) next
       n_blocks <- n_blocks + 1L
       txt <- paste(deparse(e), collapse = "\n")
+      calls_checker <- length(checkers) &&
+        any(vapply(checkers, function(fn) {
+          grepl(paste0(fn, "("), txt, fixed = TRUE)
+        }, logical(1)))
+      if (calls_checker) n_shared <- n_shared + 1L
       if (!grepl("expect_", txt, fixed = TRUE) &&
-            !grepl("succeed(", txt, fixed = TRUE)) {
+            !grepl("succeed(", txt, fixed = TRUE) && !calls_checker) {
         empty <- c(empty, paste0(basename(f), ": ",
                                  as.character(e[[2L]])[1L]))
       }
     }
   }
   expect_identical(empty, character())
+  # the shared-assertion route is in use, so the exemption is not dead code
+  expect_gt(n_shared, 0L)
   # the sweep really looked at the whole suite
   expect_gt(n_blocks, 400L)
 })
@@ -9582,9 +9968,11 @@ test_that("one document yields exactly one row per pair of distinct emoji", {
   # spellings canonicalise, so count keys rather than glyphs: 800 spellings
   # are only 726 emoji, and it is the emoji the cost model is about
   glyphs <- unique(ref$emoji[!duplicated(ref$key)])
-  glyphs <- glyphs[vapply(glyphs,
-                          function(x) length(E$emoji_glyph_list(x)[[1L]]) > 0L,
-                          logical(1))]
+  # Only the first 40 detectable glyphs are used, so only enough of the
+  # catalogue to find them is tested for detectability, in one call: 0.7.0's
+  # time budget, and the same 40 glyphs as before.
+  glyphs <- utils::head(glyphs, 120L)
+  glyphs <- glyphs[lengths(E$emoji_glyph_list(glyphs)) > 0L]
   skip_if(length(glyphs) < 40L, "too few detectable glyphs in this build")
   for (k in c(5L, 12L, 40L)) {
     g <- glyphs[seq_len(k)]
@@ -10108,7 +10496,8 @@ test_that("a lexicon's unusable values behave the same whichever kind they are",
   expect_true(any(is.na(long$.emoji_score)))
 })
 
-test_that("duplicating the corpus leaves every rate alone, and scales the gap", {
+# Shared by the sweep and its CRAN twin: a corpus of 2m rows, and every stride-th per-row verb
+check_duplication_invariance <- function(m, stride) {
   # The strongest no-information transformation there is: every row twice.
   # Counts double, per-row measures and every share hold still, and PMI is
   # scale-invariant. The two relative scalings are the documented exception,
@@ -10117,12 +10506,12 @@ test_that("duplicating the corpus leaves every rate alone, and scales the gap", 
   skip_if_catalogue_moved()
   set.seed(5)
   ref <- asNamespace("tidyEmoji")$emoji_reference()
-  G <- sample(ref$emoji[!is.na(ref$version)], 25L)
+  G <- sample(ref$emoji[!is.na(ref$version)], m)
   d <- data.frame(
     text = c(paste("alpha beta", G), paste("gamma delta", sample(G))),
-    sc = rep(c(0.4, -0.4), each = 25L),
-    when = rep(as.Date(c("2024-01-05", "2024-02-05")), each = 25L),
-    id = rep(1:10, 5L), stringsAsFactors = FALSE
+    sc = rep(c(0.4, -0.4), each = m),
+    when = rep(as.Date(c("2024-01-05", "2024-02-05")), each = m),
+    id = rep_len(1:10, 2L * m), stringsAsFactors = FALSE
   )
   d2 <- rbind(d, d)
   d2$id <- c(d$id, d$id + 100L)
@@ -10135,9 +10524,10 @@ test_that("duplicating the corpus leaves every rate alone, and scales the gap", 
   expect_identical(s2$n_with_emoji, 2L * s1$n_with_emoji)
   expect_identical(s2$n_total, 2L * s1$n_total)
 
-  for (v in c("emoji_sentiment", "emoji_position", "emoji_density",
-              "emoji_ratio", "emoji_faceness", "emoji_risk",
-              "emoji_token_cost", "emoji_score")) {
+  for (v in sweep_rotate(c("emoji_sentiment", "emoji_position",
+                            "emoji_density", "emoji_ratio",
+                            "emoji_faceness", "emoji_risk",
+                            "emoji_token_cost", "emoji_score"), 1L, stride)) {
     a <- do.call(v, list(d, rlang::sym("text")))
     b <- do.call(v, list(d2, rlang::sym("text")))
     for (cl in setdiff(names(a), names(d))) {
@@ -10184,6 +10574,15 @@ test_that("duplicating the corpus leaves every rate alone, and scales the gap", 
   }
   expect_match(rd_flat("emoji_incongruity"),
                "multiplies every rank gap by", fixed = TRUE)
+}
+
+test_that("duplicating the corpus leaves every rate alone, and scales the gap", {
+  skip_sweep(twin = "duplicating a small corpus leaves every rate alone, and scales the gap")
+  check_duplication_invariance(25L, 1L)
+})
+
+test_that("duplicating a small corpus leaves every rate alone, and scales the gap", {
+  check_duplication_invariance(8L, 3L)
 })
 
 test_that("every documented sort actually orders the output it describes", {
@@ -10271,7 +10670,10 @@ test_that("every documented sort actually orders the output it describes", {
                "so the order is fully determined", fixed = TRUE)
 })
 
-test_that("the four documented figures no test had ever held to hold", {
+# Shared by the sweep and its CRAN twin: the round trip over the whole
+# catalogue, which gives the figures, or over a sample, which can only show the
+# properties behind them. The other three figures are cheap and always run.
+check_four_figures <- function(n = NULL) {
   # Found by listing every number in the roxygen prose and grepping the suite
   # for it: 78 distinct figures, 8 mentioned nowhere in a test. Three of the
   # eight are soft (a paper's sample size, a prose "post-2018"); these are the
@@ -10303,13 +10705,16 @@ test_that("the four documented figures no test had ever held to hold", {
   # and identical bytes for 80% of them. The other 1040 differ by U+FE0F
   # alone, never by more" and "A second round trip changes nothing".
   expect_identical(nrow(ref), 5244L)
-  d <- data.frame(t = ref$emoji, stringsAsFactors = FALSE)
+  rt <- if (is.null(n)) ref else ref[sweep_rows(ref$emoji, n), , drop = FALSE]
+  d <- data.frame(t = rt$emoji, stringsAsFactors = FALSE)
   back <- text_to_emoji(emoji_to_text(d, t, format = "shortcode"), t)$t
   ekey <- asNamespace("tidyEmoji")$emoji_key
-  expect_identical(ekey(back), ekey(ref$emoji))
-  differ <- back != ref$emoji
-  expect_identical(sum(differ), 1040L)
-  expect_equal(round(100 * mean(!differ)), 80)
+  expect_identical(ekey(back), ekey(rt$emoji))
+  differ <- back != rt$emoji
+  if (is.null(n)) {
+    expect_identical(sum(differ), 1040L)
+    expect_equal(round(100 * mean(!differ)), 80)
+  }
   # cp[cp != 0xFE0F], not setdiff(): setdiff() also drops repeated code
   # points, so two ZWJ sequences with the same set of code points in another
   # order or multiplicity would have compared equal
@@ -10319,7 +10724,7 @@ test_that("the four documented figures no test had ever held to hold", {
       intToUtf8(cp[cp != 0xFE0F])
     }, character(1), USE.NAMES = FALSE)
   }
-  expect_identical(drop_fe0f(back[differ]), drop_fe0f(ref$emoji[differ]))
+  expect_identical(drop_fe0f(back[differ]), drop_fe0f(rt$emoji[differ]))
   twice <- text_to_emoji(
     emoji_to_text(data.frame(t = back, stringsAsFactors = FALSE), t,
                   format = "shortcode"), t)$t
@@ -10341,6 +10746,15 @@ test_that("the four documented figures no test had ever held to hold", {
   expect_identical(emoji_unicode_version(), "18.0")
   expect_match(rd_flat("emoji_unicode_version"),
                "such as \\code{\"18.0\"}", fixed = TRUE)
+}
+
+test_that("the four documented figures no test had ever held to hold", {
+  skip_sweep(twin = "the four documented figures hold, the round trip on a sample")
+  check_four_figures()
+})
+
+test_that("the four documented figures hold, the round trip on a sample", {
+  check_four_figures(200L)
 })
 
 test_that("the bundled corpus carries no direct identifiers", {
@@ -10562,7 +10976,7 @@ test_that("package code and examples depend only on Imports", {
   }
 
   # and the examples, which R CMD check runs on those same flavours
-  db <- tools::Rd_db("tidyEmoji")
+  db <- rd_db()
   skip_if(!length(db), "help database not available")
   offenders <- character()
   for (nm in names(db)) {

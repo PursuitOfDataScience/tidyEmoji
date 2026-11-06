@@ -85,18 +85,31 @@ test_that("the 182 emoji added in 17.0 and 18.0 are detected, in context too", {
   expect_true(all(lengths(ns$emoji_glyph_list(mq)) == 1L))
 })
 
-test_that("every fully- and minimally-qualified spelling is exactly one emoji", {
+# Shared by the sweep and its CRAN twin: every such spelling, or those in a sample
+check_qualified_exactly_one <- function(n = NULL) {
   p <- emoji_properties()
   sel <- p$status %in% c("fully-qualified", "minimally-qualified")
+  n_sel <- sum(sel)
+  if (!is.null(n)) sel <- sel & seq_along(sel) %in% sweep_rows(p$emoji, n)
   gl <- ns$emoji_glyph_list(p$emoji[sel])
   exact <- vapply(seq_along(gl), function(i) {
     length(gl[[i]]) == 1L && identical(gl[[i]][[1L]], p$emoji[sel][[i]])
   }, logical(1))
   expect_true(all(exact))
-  expect_identical(sum(sel), 4992L)
+  expect_identical(n_sel, 4992L)
+}
+
+test_that("every fully- and minimally-qualified spelling is exactly one emoji", {
+  skip_sweep(twin = "every qualified spelling in a sample is exactly one emoji")
+  check_qualified_exactly_one()
 })
 
-test_that("default detection of Emoji 16.0 text is what 0.5.0 found", {
+test_that("every qualified spelling in a sample is exactly one emoji", {
+  check_qualified_exactly_one(300L)
+})
+
+# Shared by the sweep and its CRAN twin: every Emoji 16.0 spelling, or a sample
+check_e16_detection_unchanged <- function(n = NULL) {
   skip_if_catalogue_moved()
   # The prefix .emoji_detect_rx() adds can only match at a code point the
   # upstream regex cannot, so on every 16.0 spelling, alone and in context,
@@ -108,6 +121,7 @@ test_that("default detection of Emoji 16.0 text is what 0.5.0 found", {
     l
   }
   e16 <- emoji::emojis$emoji
+  if (!is.null(n)) e16 <- sweep_sample(e16, n)
   for (x in list(e16, paste0("a", e16, "b"), paste0(e16, e16))) {
     a <- old(x)
     b <- ns$.emoji_matches(x)
@@ -118,6 +132,15 @@ test_that("default detection of Emoji 16.0 text is what 0.5.0 found", {
   rx <- ns$.emoji_detect_rx()
   expect_true(startsWith(rx, "(?:"))
   expect_true(endsWith(rx, emoji::emoji_rx))
+}
+
+test_that("default detection of Emoji 16.0 text is what 0.5.0 found", {
+  skip_sweep(twin = "default detection of a sample of Emoji 16.0 text is what 0.5.0 found")
+  check_e16_detection_unchanged()
+})
+
+test_that("default detection of a sample of Emoji 16.0 text is what 0.5.0 found", {
+  check_e16_detection_unchanged(250L)
 })
 
 test_that("an {emoji} that catches up empties the detection prefix", {
@@ -157,22 +180,36 @@ test_that("the vocabulary columns {emoji} supplies are there, loudly", {
                "no_such_column")
 })
 
-test_that("every catalogue key resolves in both sources, or to NA (fixture 3)", {
+# Shared by the sweep and its CRAN twin: the catalogue, or a sample of it
+check_keys_resolve_both <- function(n = NULL) {
   # The bug class this release was predicted to introduce: join asymmetry
   # between the two sources. A glyph from emoji-test.txt either has keywords
   # from {emoji}, or has them as an explicit NA, never as an empty string.
-  kw <- emoji_keywords(ns$emoji_reference()$emoji)
+  all_g <- ns$emoji_reference()$emoji
+  kw <- emoji_keywords(if (is.null(n)) all_g else sweep_sample(all_g, n))
   expect_false(any(!is.na(kw$keyword) & !nzchar(kw$keyword)))
   # NA exactly for the emoji {emoji} does not know
   p <- emoji_properties()
   canon <- p[!duplicated(p$key), ]
+  n_new <- sum(as.numeric(canon$version) >= 17)
+  if (!is.null(n)) canon <- canon[sweep_rows(canon$emoji, n), , drop = FALSE]
   none <- emoji_keywords(canon$emoji)
   missing <- unique(none$emoji[is.na(none$keyword)])
   newer <- canon$emoji[as.numeric(canon$version) >= 17]
   expect_true(all(newer %in% missing))
-  expect_identical(length(newer), 182L)
+  expect_identical(n_new, 182L)
+  expect_gt(length(newer), 0L)
   # every glyph {emoji} knows is in the catalogue, spelled the same
   expect_true(all(emoji::emojis$emoji %in% p$emoji))
+}
+
+test_that("every catalogue key resolves in both sources, or to NA (fixture 3)", {
+  skip_sweep(twin = "a sample of catalogue keys resolves in both sources, or to NA")
+  check_keys_resolve_both()
+})
+
+test_that("a sample of catalogue keys resolves in both sources, or to NA", {
+  check_keys_resolve_both(200L)
 })
 
 test_that("the catalogue-currency canary (roadmap fixture 1)", {
@@ -208,7 +245,8 @@ test_that("an orphan skin tone is no longer counted (D1, pinned both sides)", {
   expect_identical(s$n_orphan_components, 1L)
   expect_identical(s$n_invalid_flags, 0L)
   # every component, standing alone, is accounted for and not counted
-  comps <- emoji_properties()$emoji[emoji_properties()$status == "component"]
+  props <- emoji_properties()
+  comps <- props$emoji[props$status == "component"]
   expect_identical(length(comps), 9L)
   d <- tibble::tibble(text = paste("a", comps, "b"))
   expect_identical(sum(emoji_sentiment(d, text)$.emoji_n), 0L)
@@ -320,12 +358,14 @@ test_that("'any' reads all 243 unqualified spellings except three", {
   expect_identical(ns$emoji_glyph_list(paste("no.", kc), "any")[[1L]], kc)
 })
 
-test_that("'any' only ever adds occurrences to what 'emoji' finds", {
+# Shared by the sweep and its CRAN twin: the corpus and a seventh of the catalogue, or a share of both
+check_any_only_adds <- function(stride) {
   corpus <- utils::read.csv(
     system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
     stringsAsFactors = FALSE, encoding = "UTF-8")$full_text
   p <- emoji_properties()
-  mixed <- c(corpus, paste(p$emoji[seq(1, nrow(p), by = 7)], collapse = " "),
+  mixed <- c(corpus[seq(1L, length(corpus), by = stride)],
+             paste(p$emoji[seq(1, nrow(p), by = 7L * stride)], collapse = " "),
              paste0(heart_bare, smile, heart_bare, g(0x263A), tone1))
   a <- ns$.emoji_locations(mixed, "emoji")
   b <- ns$.emoji_locations(mixed, "any")
@@ -334,8 +374,19 @@ test_that("'any' only ever adds occurrences to what 'emoji' finds", {
   added <- sum(vapply(b, nrow, integer(1))) - sum(vapply(a, nrow, integer(1)))
   expect_gt(added, 0L)
   # on the vignette corpus the difference is eight bare glyphs
-  ca <- emoji_coverage(data.frame(text = corpus), text)
-  expect_identical(unique(ca$n_text_presentation), 8L)
+  if (stride == 1L) {
+    ca <- emoji_coverage(data.frame(text = corpus), text)
+    expect_identical(unique(ca$n_text_presentation), 8L)
+  }
+}
+
+test_that("'any' only ever adds occurrences to what 'emoji' finds", {
+  skip_sweep(twin = "'any' only ever adds occurrences, on a share of the corpus")
+  check_any_only_adds(1L)
+})
+
+test_that("'any' only ever adds occurrences, on a share of the corpus", {
+  check_any_only_adds(6L)
 })
 
 test_that("every verb that reads text takes presentation, defaulting to emoji", {
@@ -771,10 +822,12 @@ test_that("collocation measures agree on n and differ on ranking", {
   expect_named(b, c("emoji", "word", "n", "pmi", "logdice"))
 })
 
-test_that("each association measure is the textbook formula", {
+# Shared by the sweep and its CRAN twin: the whole corpus, or its first rows
+check_association_formulas <- function(n = NULL) {
   corpus <- utils::read.csv(
     system.file("extdata", "ata_tweets.csv", package = "tidyEmoji"),
     stringsAsFactors = FALSE, encoding = "UTF-8")
+  if (!is.null(n)) corpus <- corpus[seq_len(n), , drop = FALSE]
   base <- emoji_collocations(corpus, full_text, min_n = 1)
   ctx <- emoji_context(corpus, full_text)
   words <- lapply(ctx$.emoji_context, function(s) {
@@ -802,7 +855,7 @@ test_that("each association measure is the textbook formula", {
   }
   # log-likelihood, cell by cell, against a direct two-by-two computation
   llr <- emoji_collocations(corpus, full_text, min_n = 1, measure = "llr")
-  i <- match(paste(base$emoji, base$word), paste(llr$emoji, llr$word))[1:25]
+  i <- match(paste(base$emoji, base$word), paste(llr$emoji, llr$word))[seq_len(min(25L, nrow(base)))]
   for (k in seq_along(i)) {
     j <- i[[k]]
     O <- matrix(c(llr$n[j], r[[llr$emoji[j]]] - llr$n[j],
@@ -813,6 +866,15 @@ test_that("each association measure is the textbook formula", {
     expect_equal(abs(llr$llr[j]), g2)
     expect_identical(sign(llr$llr[j]), sign(O[1, 1] - E[1, 1]))
   }
+}
+
+test_that("each association measure is the textbook formula", {
+  skip_sweep(twin = "each association measure is the textbook formula, on part of the corpus")
+  check_association_formulas()
+})
+
+test_that("each association measure is the textbook formula, on part of the corpus", {
+  check_association_formulas(120L)
 })
 
 test_that("emoji_pairs() measures score against document frequencies", {
@@ -860,7 +922,7 @@ test_that("emoji_tweets() now warns, and names the release that removes it", {
 })
 
 test_that("every help page carries a research-question concept tag", {
-  db <- tools::Rd_db("tidyEmoji")
+  db <- rd_db()
   exported <- getNamespaceExports("tidyEmoji")
   pages <- names(db)
   tagged <- vapply(db, function(rd) {

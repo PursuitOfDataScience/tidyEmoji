@@ -50,7 +50,8 @@ test_that("top_n_emojis n counts distinct emoji, not rows", {
   expect_equal(out$n, 2L)
 })
 
-test_that("duplicated = TRUE settles the tie the @return rule leaves open", {
+# The tie-break below, over `n_glyphs` glyphs drawn from the catalogue.
+check_duplicated_ties <- function(n_glyphs) {
   # Several rows then share both `n` and `unicode`, so "ties broken by the
   # glyph" does not determine the order. ?top_n_emojis now says what does:
   # the crosswalk's order for the glyph's key, first row matching the name
@@ -60,10 +61,10 @@ test_that("duplicated = TRUE settles the tie the @return rule leaves open", {
   ref <- asNamespace("tidyEmoji")$emoji_reference()
   ekey <- asNamespace("tidyEmoji")$emoji_key
   set.seed(7)
-  glyphs <- sample(ref$emoji[!is.na(ref$shortcode)], 200L)
+  glyphs <- sample(ref$emoji[!is.na(ref$shortcode)], n_glyphs)
   d <- data.frame(text = glyphs, stringsAsFactors = FALSE)
-  many <- top_n_emojis(d, text, n = 200L, duplicated = TRUE)
-  one <- top_n_emojis(d, text, n = 200L)
+  many <- top_n_emojis(d, text, n = n_glyphs, duplicated = TRUE)
+  one <- top_n_emojis(d, text, n = n_glyphs)
   cw <- emoji_unicode_crosswalk
   for (u in unique(many$unicode)) {
     got <- many$emoji_name[many$unicode == u]
@@ -73,7 +74,7 @@ test_that("duplicated = TRUE settles the tie the @return rule leaves open", {
   # and the order does not depend on the order of the rows it came from
   expect_identical(
     many,
-    top_n_emojis(d[rev(seq_len(nrow(d))), , drop = FALSE], text, n = 200L,
+    top_n_emojis(d[rev(seq_len(nrow(d))), , drop = FALSE], text, n = n_glyphs,
                  duplicated = TRUE))
 
   # the worked example the help page gives: an unqualified spelling collects
@@ -85,6 +86,15 @@ test_that("duplicated = TRUE settles the tie the @return rule leaves open", {
   expect_true("woman_bouncing_ball" %in% out$emoji_name)
   expect_match(rd_flat("top_n_emojis"),
                "aliases of \\emph{every} spelling of itself", fixed = TRUE)
+}
+
+test_that("duplicated = TRUE settles the tie the @return rule leaves open", {
+  skip_sweep(twin = "duplicated = TRUE settles the tie, on a sample")
+  check_duplicated_ties(200L)
+})
+
+test_that("duplicated = TRUE settles the tie, on a sample", {
+  check_duplicated_ties(15L)
 })
 
 test_that("top_n_emojis(duplicated = TRUE) uses left_join so alias-less emoji survive", {

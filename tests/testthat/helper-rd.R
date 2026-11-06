@@ -10,8 +10,18 @@
 # as.character() on a parsed Rd object reconstructs the markup, so
 # `\code{...}` matches still work. One difference from reading the .Rd file:
 # a literal percent comes back as `%`, not the source's escaped `\%`.
+# The installed help database, read once per run. tools::Rd_db() parses every
+# topic on each call, about 0.07 s, and the suite asks for it from some
+# seventy places, several of them in loops over every topic; the database
+# cannot change while the suite runs, so one read serves them all.
+.rd_cache <- new.env(parent = emptyenv())
+rd_db <- function() {
+  if (is.null(.rd_cache$db)) .rd_cache$db <- tools::Rd_db("tidyEmoji")
+  .rd_cache$db
+}
+
 rd_text <- function(topic) {
-  db <- tools::Rd_db("tidyEmoji")
+  db <- rd_db()
   key <- if (topic %in% names(db)) topic else paste0(topic, ".Rd")
   if (!key %in% names(db)) {
     return(NA_character_)
@@ -36,7 +46,7 @@ rd_flat <- function(topic) {
 
 # Every topic's Rd text, named by file, for the sweeps that look at all of them.
 rd_all <- function() {
-  db <- tools::Rd_db("tidyEmoji")
+  db <- rd_db()
   stats::setNames(
     lapply(db, function(o) paste(as.character(o), collapse = "")),
     names(db)

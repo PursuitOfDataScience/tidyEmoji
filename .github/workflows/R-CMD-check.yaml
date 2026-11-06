@@ -190,3 +190,81 @@ jobs:
           LC_ALL: C
         with:
           upload-snapshots: false
+
+  # CRAN's check time is a budget, and since 0.7.0 a release criterion. CRAN
+  # runs the tests with NOT_CRAN unset, so every sweep stands down behind
+  # skip_sweep() and its twin runs instead; r-lib/actions sets NOT_CRAN=true,
+  # so until this job nothing here had ever timed what CRAN runs. This one
+  # runs the suite in CRAN mode, fails over a ceiling on the whole and on any
+  # single block, and keeps the per-block timings as an artifact, so a slow
+  # new test is found from the run that added it. It runs from the source
+  # checkout, which reaches a few files a CRAN tarball does not carry, so it
+  # times slightly more than CRAN does, never less. `total_s` is 1.5 times the
+  # median of five runs of this job; cran-comments.md records them.
+  cran-budget:
+    runs-on: ubuntu-latest
+
+    name: ubuntu-latest (release, CRAN-mode test budget)
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::testthat, local::.
+          needs: check
+
+      - name: Time the suite the way CRAN runs it
+        run: |
+          # r-lib/actions exports NOT_CRAN=true to every step; CRAN does not.
+          Sys.unsetenv("NOT_CRAN")
+          total_s <- 80
+          block_s <- 1
+          t0 <- proc.time()
+          res <- as.data.frame(testthat::test_dir(
+            "tests/testthat", package = "tidyEmoji",
+            load_package = "installed", reporter = "summary",
+            stop_on_failure = FALSE
+          ))
+          tt <- proc.time() - t0
+          tab <- res[order(-res$real),
+                     c("file", "test", "real", "user", "nb", "failed",
+                       "skipped", "error")]
+          utils::write.csv(tab, "cran-budget.csv", row.names = FALSE)
+          cat(sprintf(
+            "\nCRAN mode: %.1f s elapsed, %.1f s user, %d blocks, %d skipped\n",
+            tt[["elapsed"]], tt[["user.self"]], nrow(res), sum(res$skipped)))
+          print(utils::head(tab[, c("file", "test", "real")], 15),
+                right = FALSE, row.names = FALSE)
+          if (sum(res$failed) || any(res$error)) {
+            stop("The suite fails in CRAN mode; see the summary above.")
+          }
+          slow <- tab[tab$real > block_s, , drop = FALSE]
+          if (nrow(slow)) {
+            stop(sprintf(paste0(
+              "%d block(s) take more than %g s in CRAN mode, the most %.2f s ",
+              "(%s). Make it a sweep: skip_sweep(twin = ) and a sampled twin, ",
+              "as tests/testthat/helper-sweep.R describes."),
+              nrow(slow), block_s, slow$real[1L], slow$test[1L]))
+          }
+          if (tt[["elapsed"]] > total_s) {
+            stop(sprintf(paste0(
+              "The CRAN-mode suite took %.1f s, over its %g s budget. The ",
+              "per-block timings are in the cran-budget-timings artifact."),
+              tt[["elapsed"]], total_s))
+          }
+          cat("Within budget.\n")
+        shell: Rscript {0}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cran-budget-timings
+          path: cran-budget.csv
