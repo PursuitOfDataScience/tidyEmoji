@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
     <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
+    <li><a class="dropdown-item" href="../articles/what-an-emoji-carries.html">What an emoji carries</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/tidyEmoji"><span class="fa fa-github fa-lg"></span></a></li>
@@ -119,6 +120,17 @@
 <strong><code><a href="../reference/emoji_filter.html">emoji_tweets()</a></code> is defunct, as 0.6.0 promised.</strong> It stops with an error naming <code><a href="../reference/emoji_filter.html">emoji_filter()</a></code> instead of warning and answering. It stays exported for this one release so that an old script fails with that message rather than “could not find function”, and it is deleted in 0.8.0.</li>
 <li>
 <strong><code>top_n_emojis(duplicated_unicode = )</code> is defunct</strong> after warning since 0.2.0: supplying it, whatever the value, stops with an error naming <code>duplicated</code>. It leaves the signature in 0.8.0.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-7-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-7-0"></a></h3>
+<ul><li>
+<strong>A fourth vignette, <code><a href="../articles/what-an-emoji-carries.html">vignette("what-an-emoji-carries")</a></code></strong>: skin tones with their denominator (the share of tone-able emoji carrying a tone differs tenfold between corpora), gender and decomposition, retoning as a paired experiment, and a hidden payload built, found, decoded and removed. It builds offline in about two seconds.</li>
+<li>
+<strong>The introduction’s section on model output is rebuilt on WildChat-1M</strong>, in a chunk that is not run, since the dataset’s licence does not cover redistributing its text: counted naively, a lock and an unlock are the two most frequent emoji in its GPT turns, because a jailbreak template asks for them, so deduplicate by conversation and by template before counting.</li>
+<li>
+<strong>The networks vignette draws its graph</strong> with <code>igraph</code>’s own <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>, as 0.6.0 left open, labelled by name so that it renders on any device.</li>
+<li>
+<strong><code><a href="../reference/tidyEmoji-package.html">?tidyEmoji</a></code> gains</strong> the 0.7.0 detection rules, a section <em>Glyphs, not people</em> that every identity page links to, and the hidden-payload rule. The introduction’s question index names every new verb, which a test now requires, and the README gains the hidden-payload example and stays short.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="infrastructure-0-7-0">Infrastructure<a class="anchor" aria-label="anchor" href="#infrastructure-0-7-0"></a></h3>

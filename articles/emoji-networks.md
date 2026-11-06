@@ -170,19 +170,33 @@ split(igraph::V(g)$name, igraph::membership(communities))
 #> [1] "🌍"   "👨‍💻" "🔬"   "🌐"   "📦"   "💡"   "🚀"   "🤖"
 ```
 
-Drawing it is a job for a graph-plotting package. With `ggraph`
-installed, and `ragg` as the graphics device so the glyphs render in
-colour:
+Drawing it needs nothing beyond `igraph`’s own
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html). The glyphs
+draw only where the graphics device has a colour emoji font, so the
+labels here are the emoji’s names, given to the best-connected emoji of
+each community only so they can be read; the nodes are as large as their
+degree, the edges as wide as their Dice association, and the colours are
+the communities:
 
 ``` r
 
-library(ggraph)
-ggraph(g, layout = "fr") +
-  geom_edge_link(aes(width = dice), alpha = 0.4) +
-  geom_node_text(aes(label = name), size = 6) +
-  scale_edge_width(range = c(0.3, 2)) +
-  theme_void()
+set.seed(2026)
+layout <- igraph::layout_with_fr(g, weights = igraph::E(g)$dice)
+deg <- igraph::degree(g)
+community <- igraph::membership(communities)
+top <- deg == stats::ave(deg, community, FUN = max) &
+  !duplicated(data.frame(community, deg))
+plot(g, layout = layout,
+     vertex.label = ifelse(top, as_emoji_name(igraph::V(g)$name), NA),
+     vertex.label.cex = 0.75, vertex.label.color = "black",
+     vertex.label.dist = 1,
+     vertex.size = 3 + 2 * sqrt(deg),
+     vertex.color = community,
+     edge.width = 6 * igraph::E(g)$dice, edge.color = "grey75",
+     margin = 0)
 ```
+
+![](emoji-networks_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Sanity checks for a bigger corpus
 

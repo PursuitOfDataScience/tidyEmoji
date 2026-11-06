@@ -8,3 +8,5 @@
   tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/articles/introduction.md):
 - [Reversible emoji preprocessing for language
   models](https://pursuitofdatascience.github.io/tidyEmoji/articles/reversible-preprocessing.md):
+- [What an emoji
+  carries](https://pursuitofdatascience.github.io/tidyEmoji/articles/what-an-emoji-carries.md):

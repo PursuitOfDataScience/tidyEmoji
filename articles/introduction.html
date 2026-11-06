@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/introduction.html">Introduction to tidyEmoji</a></li>
     <li><a class="dropdown-item" href="../articles/reversible-preprocessing.html">Reversible emoji preprocessing for language models</a></li>
     <li><a class="dropdown-item" href="../articles/emoji-networks.html">Emoji networks: edges worth drawing</a></li>
+    <li><a class="dropdown-item" href="../articles/what-an-emoji-carries.html">What an emoji carries</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -1940,6 +1941,46 @@ model positions itself towards the user.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> v1          2          1          0     1          1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> v2          2          2          1     4          4</span></span></code></pre></div>
 </div>
+<div class="section level3">
+<h3 id="real-model-output-deduplicate-before-you-count">Real model output: deduplicate before you count<a class="anchor" aria-label="anchor" href="#real-model-output-deduplicate-before-you-count"></a>
+</h3>
+<p>WildChat-1M (Zhao et al. 2024) logs a million real conversations with
+GPT-3.5 and GPT-4 from April 2023 on. Its licence, ODC-BY 1.0, covers
+the database and not the text of each conversation, so it is not
+bundled; the chunk below fetches one of its fourteen shards, about 200
+MB, and is not run here. The figures after it were measured on that
+shard.</p>
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("arrow")</span></span>
+<span><span class="va">url</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https://huggingface.co/datasets/allenai/WildChat-1M/"</span>,</span>
+<span>              <span class="st">"resolve/main/data/train-00000-of-00014.parquet"</span><span class="op">)</span></span>
+<span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".parquet"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="va">url</span>, <span class="va">f</span>, mode <span class="op">=</span> <span class="st">"wb"</span><span class="op">)</span></span>
+<span><span class="va">shard</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu">read_parquet</span><span class="op">(</span><span class="va">f</span>, col_select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"conversation_hash"</span>, <span class="st">"model"</span>,</span>
+<span>                                                <span class="st">"conversation"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">turns</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/unnest.html" class="external-link">unnest</a></span><span class="op">(</span><span class="va">shard</span>, <span class="va">conversation</span><span class="op">)</span>   <span class="co"># one row per turn</span></span>
+<span><span class="va">assistant</span> <span class="op">&lt;-</span> <span class="va">turns</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">role</span> <span class="op">==</span> <span class="st">"assistant"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># counted as they come, the top two are a lock and an unlock ...</span></span>
+<span><span class="fu"><a href="../reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">assistant</span>, <span class="va">content</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co"># ... because a jailbreak template asks for them; deduplicate by</span></span>
+<span><span class="co"># conversation and set the template's echoes aside first</span></span>
+<span><span class="va">assistant</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="va">conversation_hash</span>, <span class="va">content</span>, .keep_all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"Developer Mode"</span>, <span class="va">content</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/emoji_frequency.html">emoji_frequency</a></span><span class="op">(</span><span class="va">content</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p>On that shard emoji appear in 0.96% of assistant turns against 0.44%
+of user turns, and in 1.05% of <code>gpt-4-0314</code>’s against 0.93%
+of <code>gpt-3.5-turbo-0301</code>’s. Counted naively, the two most
+frequent emoji in the assistant turns are the unlocked padlock (474) and
+the locked one (371), and 200 of the 592 turns holding the unlocked
+padlock carry the “Developer Mode” jailbreak template’s tags. A
+frequency table of model output surfaces prompt templates before it
+surfaces style, which is the first thing to know about auditing it:
+deduplicate by <code>conversation_hash</code> and by template, then
+count.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="recording-provenance">Recording provenance<a class="anchor" aria-label="anchor" href="#recording-provenance"></a>
@@ -1948,7 +1989,7 @@ model positions itself towards the user.</p>
 called and which lexicon scored them all depend on versions, and a
 result is not reproducible without them. <code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code>
 puts the lot in one row you can paste into a methods section:</p>
-<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 1</span></span>
 <span><span class="co">#&gt; Columns: 10</span></span>
@@ -2023,6 +2064,9 @@ measure.</p>
 <p>Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the
 Association between Emojis and Emotions. <em>EMNLP 2020</em>. <a href="https://aclanthology.org/2020.emnlp-main.720/" class="external-link uri">https://aclanthology.org/2020.emnlp-main.720/</a>. The
 EmoTag1200 data is distributed under the MIT licence.</p>
+<p>Zhao W, Ren X, Hessel J, Cardie C, Choi Y, Deng Y (2024). WildChat:
+1M ChatGPT Interaction Logs in the Wild. <em>ICLR 2024</em>. <a href="https://huggingface.co/datasets/allenai/WildChat-1M" class="external-link uri">https://huggingface.co/datasets/allenai/WildChat-1M</a>,
+distributed under ODC-BY 1.0.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
