@@ -606,3 +606,35 @@ test_that("the pkgdown reference index lists every help topic", {
   expect_true(all(c("emoji_hidden", "oasst_messages", "oasst_reactions") %in%
                     listed))
 })
+
+test_that("the help pages quote the example corpus's figures", {
+  # Each of these sentences cited "the corpus behind the introduction
+  # vignette", the tweet corpus 0.7.0 retired, and each is re-derived on the
+  # OASST2 sample and pinned both ways: computed here, and required of the
+  # page that states it.
+  m <- oasst_messages
+  col <- emoji_collocations(m, text)
+  tied <- mean(duplicated(col$pmi) | duplicated(col$pmi, fromLast = TRUE))
+  expect_identical(round(100 * tied, 1), 43.4)
+  expect_match(rd_flat("emoji_collocations"), "43.4% of the rows share",
+               fixed = TRUE)
+  pr <- emoji_pairs(m, text)
+  expect_identical(c(sum(pr$n == 1L), nrow(pr)), c(4042L, 4314L))
+  expect_identical(round(100 * mean(pr$n == 1L), 1), 93.7)
+  expect_match(rd_flat("emoji_pairs"),
+               "4,042 of the 4,314 edges (93.7%) have", fixed = TRUE)
+  cv <- emoji_coverage(m, text)
+  s <- cv[cv$lexicon == "novak2015", ]
+  cov <- rd_flat("emoji_coverage")
+  expect_match(cov, sprintf("%.1f%% of occurrences against %.1f%% of types",
+                            100 * s$occurrence_coverage,
+                            100 * s$type_coverage), fixed = TRUE)
+  expect_match(cov, sprintf("%d of the %d rows", s$n_rows_unscored,
+                            s$n_rows_with_emoji), fixed = TRUE)
+  # and no page still points at the corpus that is gone
+  for (topic in c("emoji_collocations", "emoji_pairs", "emoji_coverage",
+                  "emoji_density")) {
+    expect_false(grepl("corpus behind the introduction vignette",
+                       rd_flat(topic), fixed = TRUE), info = topic)
+  }
+})

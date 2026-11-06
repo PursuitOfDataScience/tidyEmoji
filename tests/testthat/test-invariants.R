@@ -10018,30 +10018,23 @@ test_that("the alias figures on ?emoji_search hold", {
   expect_match(rd, "9 of the 200 rows", fixed = TRUE)
 })
 
-test_that("?emoji_density's figures describe the vignette corpus", {
-  # "115 of the 560 emoji-bearing rows in the corpus behind the introduction
-  # vignette contain a multi-code-point emoji" -- the sentence that stops a
-  # reader dismissing the code-point basis as a corner case
-  # the corpus is installed (inst/extdata), so this resolves inside
-  # R CMD check too, where ../../vignettes does not exist
-  path <- system.file("extdata", "ata_tweets.csv", package = "tidyEmoji")
-  skip_if_not(file.exists(path), "vignette corpus not available")
-  # the corpus is UTF-8; say so, or a non-UTF-8 session reads the emoji as
-  # native bytes and finds none of them
-  d <- utils::read.csv(path, stringsAsFactors = FALSE, encoding = "UTF-8")
-  expect_true("full_text" %in% names(d))
-  lst <- asNamespace("tidyEmoji")$emoji_glyph_list(d$full_text)
+test_that("?emoji_density's figures describe the example corpus", {
+  # "79 of the 750 emoji-bearing rows in the example corpus contain a
+  # multi-code-point emoji" -- the sentence that stops a reader dismissing
+  # the code-point basis as a corner case (0.6.0 quoted 115 of 560, on the
+  # tweet corpus 0.7.0 retired)
+  lst <- asNamespace("tidyEmoji")$emoji_glyph_list(oasst_messages$text)
   bearing <- lengths(lst) > 0L
-  expect_identical(sum(bearing), 560L)
+  expect_identical(sum(bearing), 750L)
   multi <- vapply(lst, function(g) {
     if (!length(g)) return(FALSE)
     any(vapply(g, function(x) length(utf8ToInt(x)) > 1L, logical(1)))
   }, logical(1))
-  expect_identical(sum(multi), 115L)
+  expect_identical(sum(multi), 79L)
   # every row with a multi-code-point emoji is by definition emoji-bearing
   expect_identical(sum(multi & bearing), sum(multi))
   rd <- rd_flat("emoji_density")
-  expect_match(rd, "115 of the 560 emoji-bearing rows", fixed = TRUE)
+  expect_match(rd, "79 of the 750 emoji-bearing rows", fixed = TRUE)
 })
 
 test_that("each verb is on the side of the spelling rule ?tidyEmoji puts it", {

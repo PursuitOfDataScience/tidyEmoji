@@ -69,8 +69,8 @@ The same visible text therefore gives different answers depending on how the
 emoji is built: \code{"hi <emoji>"} is four graphemes either way, but
 \code{.emoji_per_char} is 0.25 for a single-code-point smiley, 0.200 for a
 two-code-point flag and 0.100 for a seven-code-point ZWJ family. It is not
-exotic -- 115 of the 560 emoji-bearing rows in the corpus behind the
-introduction vignette contain a multi-code-point emoji.
+exotic -- 79 of the 750 emoji-bearing rows in the example corpus,
+\link{oasst_messages}, contain a multi-code-point emoji.
 
 This is the same basis \code{\link[=emoji_ratio]{emoji_ratio()}} uses and states, and the opposite of
 the one \code{\link[=emoji_position]{emoji_position()}} uses: \code{.emoji_rel_position} counts each emoji as

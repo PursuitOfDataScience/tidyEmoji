@@ -575,10 +575,10 @@ emoji_reference <- function() {
 #   one, inconsistently.
 # * A token holding no letter and no digit is not a word. That is what the
 #   empty result of the old trim achieved for a stray U+FE0F next to a
-#   masked glyph, which the bundled corpus has 15 of, and keeping \p{M}
-#   would otherwise promote such a token to a collocate.
+#   masked glyph, which the tweet corpus bundled until 0.7.0 had 15 of, and
+#   keeping \p{M} would otherwise promote such a token to a collocate.
 #
-# The pair is byte-identical to the old code on the bundled corpus in a UTF-8
+# The pair was byte-identical to the old code on that corpus in a UTF-8
 # locale. The one deliberate difference is a superscript digit, which \p{N}
 # keeps where glibc's alnum cut it.
 .emoji_word_edge <- "^[^\\p{L}\\p{N}\\p{M}]+|[^\\p{L}\\p{N}\\p{M}]+$"
