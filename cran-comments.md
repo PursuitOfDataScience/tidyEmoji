@@ -63,7 +63,7 @@ is a test that might fail.
   families, toned couples), so no property goes unchecked there. A test fails
   if a sweep names a twin that does not exist, and every sweep runs on every
   push in CI, where `NOT_CRAN` is true.
-* **eight are `skip_on_cran()`**: they read the checking machine rather than
+* **nine are `skip_on_cran()`**: eight read the checking machine rather than
   the package. The declared R minimum against an installable tree, a
   `select()`-avoidance benchmark comparing two wall-clock timings, four that
   read files a tarball does not carry (`data-raw/` for rebuilding the
@@ -71,9 +71,8 @@ is a test that might fail.
   twice for its own claims), one asserting the installed `emoji` release is
   the exact one the documented vocabulary figures came from, and the
   catalogue canary, which is also gated on an environment variable only the
-  weekly job sets.
-* **One holds the output snapshots**, which testthat does not compare on
-  CRAN.
+  weekly job sets. The ninth holds the output snapshots, which testthat does
+  not compare on CRAN in any case.
 * **Five stand down because the tarball does not carry the file they read**,
   and each says which file. Their messages are, on one line each so they stay
   greppable:

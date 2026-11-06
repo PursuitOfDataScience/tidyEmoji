@@ -32,6 +32,11 @@ snap_shape <- function(df, n = 8L) {
 }
 
 test_that("the 0.6.0 output shapes hold", {
+  # testthat compares no snapshot on CRAN, so stand down before building
+  # anything: left to the first expect_snapshot_value(), the skip came after
+  # the corpus was read and the snapshot machinery loaded, which took more
+  # than a second on a GitHub runner for a test that then did nothing
+  skip_on_cran()
   corpus <- snap_corpus()
   g <- function(...) intToUtf8(c(...))
   orphans <- data.frame(text = c(paste0(g(0x1F600), g(0x1F3FB)),
