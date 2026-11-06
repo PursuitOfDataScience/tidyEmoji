@@ -2,6 +2,8 @@
 
 ## tidyEmoji 0.6.0
 
+CRAN release: 2026-11-05
+
 **The catalogue is now Unicode’s own, current to Emoji 18.0, and the
 package says exactly what a glyph is and what it could not measure.**
 Until 0.5.0 tidyEmoji detected against the table inside the `emoji`
