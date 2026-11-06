@@ -55,9 +55,10 @@ through \code{\link[dplyr:filter]{dplyr::filter()}}.
 }
 \description{
 \code{emoji_filter()} returns the rows of \code{data} whose text column contains at
-least one emoji, preserving every original column. \code{emoji_tweets()} is a
-deprecated synonym: it has warned since 0.6.0, after four releases of soft
-deprecation, and it will be removed in 0.7.0.
+least one emoji, preserving every original column. \code{emoji_tweets()}, its
+old name, is defunct: deprecated in 0.2.1 and warning through 0.6.0, it
+stops since 0.7.0 with an error naming \code{emoji_filter()}, and it is deleted
+in 0.8.0.
 }
 \examples{
 df <- data.frame(text = c("hi \U0001f600", "no emoji", "bye \U0001f44b"))

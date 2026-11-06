@@ -27,10 +27,11 @@ test_that("top_n_emojis(duplicated = TRUE) lists multiple names per glyph", {
   expect_true(all(dup$unicode == "\U0001f637"))
 })
 
-test_that("deprecated duplicated_unicode still works but warns", {
+test_that("the defunct duplicated_unicode stops rather than answering", {
   df <- data.frame(text = "\U0001f637")
-  expect_warning(top_n_emojis(df, text, duplicated_unicode = "yes"),
-                 class = "lifecycle_warning_deprecated")
+  # 0.6.0: it warned and was read as `duplicated`
+  expect_error(top_n_emojis(df, text, duplicated_unicode = "yes"),
+               class = "defunctError")
 })
 
 test_that("emoji_categorize keeps emoji rows and labels categories", {

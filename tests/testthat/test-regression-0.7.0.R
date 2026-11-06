@@ -130,3 +130,25 @@ test_that("the sample a twin draws is deterministic and keeps the hard cases", {
   expect_gt(length(hard), 20L)
   expect_lt(length(a), 200L + length(hard) + 1L)
 })
+
+# --- M7: lifecycle, as promised ------------------------------------------------
+
+test_that("emoji_tweets() and duplicated_unicode are defunct, naming what replaces them", {
+  # 0.6.0 promised emoji_tweets() would be removed in 0.7.0. It is defunct
+  # rather than deleted, so an old script stops with the replacement named
+  # instead of "could not find function"; it is deleted in 0.8.0. 0.6.0:
+  # both warned and answered.
+  d <- tibble::tibble(text = c(paste("hi", cp(0x1F600)), "no"))
+  expect_true("emoji_tweets" %in% getNamespaceExports("tidyEmoji"))
+  e <- tryCatch(emoji_tweets(d, text), error = identity)
+  expect_s3_class(e, "defunctError")
+  expect_match(conditionMessage(e), "emoji_filter()", fixed = TRUE)
+  expect_match(conditionMessage(e), "0.8.0", fixed = TRUE)
+  e2 <- tryCatch(top_n_emojis(d, text, duplicated_unicode = TRUE),
+                 error = identity)
+  expect_s3_class(e2, "defunctError")
+  expect_match(conditionMessage(e2), "`duplicated`", fixed = TRUE)
+  # and the help pages say so where a reader looks
+  expect_match(rd_flat("emoji_filter"), "is defunct", fixed = TRUE)
+  expect_match(rd_flat("top_n_emojis"), "defunct since 0.7.0", fixed = TRUE)
+})

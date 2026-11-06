@@ -1528,10 +1528,12 @@ test_that("se = TRUE is NA for a row whose emoji carry no annotation counts", {
 
 data_first_verbs <- function() {
   ns <- asNamespace("tidyEmoji")
+  # emoji_tweets() keeps the signature but is defunct since 0.7.0: it stops
+  # for any input, so it is a verb no contract can be asked of
   Filter(function(n) {
     f <- get(n, envir = ns)
     is.function(f) && identical(head(names(formals(f)), 2L), c("data", "text"))
-  }, sort(getNamespaceExports("tidyEmoji")))
+  }, setdiff(sort(getNamespaceExports("tidyEmoji")), "emoji_tweets"))
 }
 
 call_verb <- function(name, d) {
@@ -4006,34 +4008,38 @@ test_that("no deprecation tells the user to report a bug against tidyEmoji", {
                   text = c(paste("hi", A), "plain", paste(A, A)),
                   stringsAsFactors = FALSE)
 
+  # Since 0.7.0 the grouped-input warning is the one deprecate_warn() path;
+  # the deprecated argument and verb are defunct, so they stop instead, and
+  # their errors are held to the same rule.
   probes <- list(
     grouped_helper = function() emoji_summary(dplyr::group_by(d, id), text),
-    deprecated_arg = function() top_n_emojis(d, text,
-                                             duplicated_unicode = TRUE),
-    deprecated_verb = function() emoji_tweets(d, text)
+    defunct_arg = function() top_n_emojis(d, text,
+                                          duplicated_unicode = TRUE),
+    defunct_verb = function() emoji_tweets(d, text)
   )
   # and the same three reached through a wrapper, which adds a frame between
   # the user and the verb
   wrapped <- list(
     grouped_helper = function() (function(x) emoji_summary(
       dplyr::group_by(x, id), text))(d),
-    deprecated_arg = function() (function(x) top_n_emojis(
+    defunct_arg = function() (function(x) top_n_emojis(
       x, text, duplicated_unicode = TRUE))(d),
-    deprecated_verb = function() (function(x) emoji_tweets(x, text))(d)
+    defunct_verb = function() (function(x) emoji_tweets(x, text))(d)
   )
 
   for (set in list(direct = probes, wrapped = wrapped)) {
     for (nm in names(set)) {
       got <- collect_conditions(set[[nm]])
-      # the positive control: each of these really does warn, so the
+      # the positive control: each of these really does warn or stop, so the
       # absence-of-"report" assertion below is not vacuous
-      expect_length(got$warnings, 1L)
-      expect_false(grepl("report the issue", got$warnings[1], fixed = TRUE),
-                   info = paste(nm, got$warnings[1]))
+      said <- if (startsWith(nm, "defunct")) got$error else got$warnings
+      expect_length(said, 1L)
+      expect_false(grepl("report the issue", said[1], fixed = TRUE),
+                   info = paste(nm, said[1]))
       expect_false(grepl("likely used in the tidyEmoji package",
-                         got$warnings[1], fixed = TRUE), info = nm)
+                         said[1], fixed = TRUE), info = nm)
       # it names the user's verb, not an internal helper
-      expect_false(grepl(".emoji_warn_grouped", got$warnings[1], fixed = TRUE),
+      expect_false(grepl(".emoji_warn_grouped", said[1], fixed = TRUE),
                    info = nm)
     }
   }
@@ -4050,10 +4056,10 @@ test_that("no deprecation tells the user to report a bug against tidyEmoji", {
   expect_true(grepl("deprecate_warn", helper, fixed = TRUE))
   expect_true(grepl("env = verb_env", helper, fixed = TRUE))
   expect_true(grepl("user_env = caller_env", helper, fixed = TRUE))
-  # the verbs that call deprecate_warn() directly need no such argument,
-  # since lifecycle's defaults already point one frame above the verb
+  # the verbs that call lifecycle directly need no such argument, since its
+  # defaults already point one frame above the verb
   direct_body <- paste(deparse(body(top_n_emojis)), collapse = " ")
-  expect_true(grepl("deprecate_warn", direct_body, fixed = TRUE))
+  expect_true(grepl("deprecate_stop", direct_body, fixed = TRUE))
 })
 
 test_that("a deprecation warns once per session, not once per call", {
@@ -4067,8 +4073,10 @@ test_that("a deprecation warns once per session, not once per call", {
   # unique-enough topic by clearing the option to the default first.
   op <- options(lifecycle_verbosity = NULL)
   on.exit(options(op), add = TRUE)
+  # the grouped-input warning, the deprecate_warn() path left since 0.7.0
+  # made the deprecated argument defunct
   got <- collect_conditions(function() {
-    for (i in 1:5) top_n_emojis(d, text, duplicated_unicode = TRUE)
+    for (i in 1:5) top_n_emojis(dplyr::group_by(d, id), text)
     invisible(NULL)
   })
   expect_lte(length(got$warnings), 1L)
@@ -6838,14 +6846,15 @@ test_that("every warning names the argument it is about", {
   expect_length(w2, 1L)
   expect_true(grepl("`text_score`", w2, fixed = TRUE))
 
-  # the deprecations name what to use instead
-  w3 <- seen(function() emoji_tweets(
-    data.frame(text = paste("a", A), stringsAsFactors = FALSE), text))
-  expect_true(any(grepl("emoji_filter()", w3, fixed = TRUE)))
-  w4 <- seen(function() top_n_emojis(
+  # the defunct interfaces name what to use instead
+  e3 <- tryCatch(emoji_tweets(
+    data.frame(text = paste("a", A), stringsAsFactors = FALSE), text),
+    error = conditionMessage)
+  expect_true(any(grepl("emoji_filter()", e3, fixed = TRUE)))
+  e4 <- tryCatch(top_n_emojis(
     data.frame(text = paste("a", A), stringsAsFactors = FALSE), text,
-    duplicated_unicode = TRUE))
-  expect_true(any(grepl("`duplicated`", w4, fixed = TRUE)))
+    duplicated_unicode = TRUE), error = conditionMessage)
+  expect_true(any(grepl("`duplicated`", e4, fixed = TRUE)))
 })
 
 # ---------------------------------------------------------------------------
@@ -8521,64 +8530,33 @@ test_that("the lexicon guard describes what it accepts, and NULL is not it", {
 
 
 # Round 83: the deprecated `duplicated_unicode` converted with
-# `isTRUE(x) || identical(x, "yes")`, which collapses everything it does not
-# recognise to FALSE. So `duplicated_unicode = "TRUE"` and `= 1` -- both
-# plausible for an argument that once took a string -- silently returned the
-# *opposite* of what was asked, and NA and character(0) passed unnoticed.
-# The replacement `duplicated` rejects all of them through .emoji_check_flag(),
-# so the deprecated spelling was the more permissive of the two.
+# `isTRUE(x) || identical(x, "yes")`, which collapsed everything it did not
+# recognise to FALSE, so `"TRUE"` and `1` silently returned the opposite of
+# what was asked. 0.6.0 accepted only the four values the argument ever meant
+# and refused the rest. Since 0.7.0 it is defunct, so every value, meant or
+# not, stops with the same error, naming the replacement.
 
-test_that("the deprecated flag still accepts every value it ever meant", {
+test_that("the defunct flag stops whatever it is given, naming duplicated", {
   A <- "\U0001F600"
   d <- tibble::tibble(text = c(paste(A, A), "plain"))
-  wide <- suppressWarnings(top_n_emojis(d, text, duplicated = TRUE))
-  narrow <- top_n_emojis(d, text, duplicated = FALSE)
-  expect_gt(nrow(wide), nrow(narrow))   # the fixture separates the two modes
-
-  # TRUE / FALSE / "yes" / "no" are the values this argument ever took, and
-  # each still gives exactly what the modern spelling gives
-  for (v in list(TRUE, "yes")) {
-    expect_identical(suppressWarnings(
-      top_n_emojis(d, text, duplicated_unicode = v)), wide,
-      info = paste(class(v), v))
+  for (v in list(TRUE, FALSE, "yes", "no", "TRUE", 1, NA, character(0),
+                 list())) {
+    expect_error(top_n_emojis(d, text, duplicated_unicode = v),
+                 class = "defunctError",
+                 info = paste(class(v)[1L], length(v)))
   }
-  for (v in list(FALSE, "no")) {
-    expect_identical(suppressWarnings(
-      top_n_emojis(d, text, duplicated_unicode = v)), narrow,
-      info = paste(class(v), v))
-  }
-  # and it is deprecated, so it warns. lifecycle dedups per call site, and the
-  # loop above already spent that budget, so force verbosity as the other
-  # deprecation tests in this file do.
-  op <- options(lifecycle_verbosity = "warning")
-  on.exit(options(op), add = TRUE)
-  expect_warning(top_n_emojis(d, text, duplicated_unicode = TRUE),
-                 "duplicated_unicode")
-  expect_warning(top_n_emojis(d, text, duplicated_unicode = "no"),
-                 "duplicated_unicode")
-})
-
-test_that("the deprecated flag no longer swallows what it cannot read", {
-  A <- "\U0001F600"
-  d <- tibble::tibble(text = c(paste(A, A), "plain"))
-  # every one of these used to return the narrow form without complaint --
-  # the opposite answer, for the two that plainly mean TRUE
-  for (v in list("TRUE", "true", "Yes", 1, 0, NA, NA_character_,
-                 character(0), c(TRUE, TRUE), list())) {
-    expect_error(
-      suppressWarnings(top_n_emojis(d, text, duplicated_unicode = v)),
-      "takes TRUE, FALSE",
-      info = paste(class(v)[1L], length(v)))
-  }
-  # the message names the replacement, since the argument is deprecated anyway
-  m <- tryCatch(suppressWarnings(
-    top_n_emojis(d, text, duplicated_unicode = 1)), error = conditionMessage)
-  expect_match(m, "duplicated = TRUE", fixed = TRUE)
+  m <- tryCatch(top_n_emojis(d, text, duplicated_unicode = TRUE),
+                error = conditionMessage)
+  expect_match(m, "duplicated", fixed = TRUE)
+  expect_match(m, "defunct", fixed = TRUE)
   # and the modern argument is unchanged: still strictly TRUE or FALSE
   expect_error(top_n_emojis(d, text, duplicated = "yes"),
                "must be TRUE or FALSE")
   expect_error(top_n_emojis(d, text, duplicated = NA),
                "must be TRUE or FALSE")
+  wide <- top_n_emojis(d, text, duplicated = TRUE)
+  narrow <- top_n_emojis(d, text, duplicated = FALSE)
+  expect_gt(nrow(wide), nrow(narrow))
 })
 
 
@@ -10271,11 +10249,12 @@ test_that("every figure an Rd references is actually shipped", {
   expect_true(all(file.size(file.path(dir, refs)) > 0L))
 
   # the two references that exist today, pinned so neither can vanish
-  # unnoticed either: the package logo and the deprecation badge. roxygen2 8
-  # links the logo's SVG master, man/figures/logo.svg, where 7.3 linked the
-  # PNG; the README still shows the PNG, below.
-  expect_setequal(refs, c("logo.svg", "lifecycle-deprecated.svg"))
-  expect_match(rd_flat("top_n_emojis"), "lifecycle-deprecated.svg",
+  # unnoticed either: the package logo and the defunct badge (deprecated
+  # until 0.7.0 made `duplicated_unicode` defunct). roxygen2 8 links the
+  # logo's SVG master, man/figures/logo.svg, where 7.3 linked the PNG; the
+  # README still shows the PNG, below.
+  expect_setequal(refs, c("logo.svg", "lifecycle-defunct.svg"))
+  expect_match(rd_flat("top_n_emojis"), "lifecycle-defunct.svg",
                fixed = TRUE)
   expect_match(rd_flat("tidyEmoji-package"), "logo.svg", fixed = TRUE)
 

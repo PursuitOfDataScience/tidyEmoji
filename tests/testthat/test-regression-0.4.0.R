@@ -129,14 +129,13 @@ test_that("logical arguments reject values that are not TRUE or FALSE", {
   expect_error(emoji_sentiment(df, text, se = NA), "TRUE or FALSE")
 })
 
-test_that("the deprecated duplicated_unicode = \"yes\" still works", {
-  # the legacy argument documented the string "yes", so the new check has to
-  # run after the lifecycle conversion, not before it
+test_that("duplicated_unicode = \"yes\", which 0.4.0 still read, is defunct", {
+  # The legacy argument documented the string "yes", which 0.4.0 had to keep
+  # accepting while it warned. Since 0.7.0 the argument is defunct, so the
+  # same call stops, naming the argument to use.
   df <- data.frame(text = c(laugh, laugh, rage))
-  expect_warning(out <- top_n_emojis(df, text, duplicated_unicode = "yes"),
-                 class = "lifecycle_warning_deprecated")
-  expect_gt(nrow(out), 0L)
-  expect_true("emoji_name" %in% names(out))
+  expect_error(top_n_emojis(df, text, duplicated_unicode = "yes"),
+               "duplicated", class = "defunctError")
 })
 
 

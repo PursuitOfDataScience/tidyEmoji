@@ -90,9 +90,10 @@ emoji_summary <- function(data, text, presentation = "emoji") {
 #' Keep only the rows whose text contains emoji
 #'
 #' `emoji_filter()` returns the rows of `data` whose text column contains at
-#' least one emoji, preserving every original column. `emoji_tweets()` is a
-#' deprecated synonym: it has warned since 0.6.0, after four releases of soft
-#' deprecation, and it will be removed in 0.7.0.
+#' least one emoji, preserving every original column. `emoji_tweets()`, its
+#' old name, is defunct: deprecated in 0.2.1 and warning through 0.6.0, it
+#' stops since 0.7.0 with an error naming `emoji_filter()`, and it is deleted
+#' in 0.8.0.
 #'
 #' @inheritParams emoji_summary
 #' @return A tibble containing only the rows with at least one emoji, with
@@ -121,14 +122,12 @@ emoji_filter <- function(data, text, presentation = "emoji") {
 #' @rdname emoji_filter
 #' @export
 emoji_tweets <- function(data, text) {
-  # Soft-deprecated from 0.2.1 to 0.5.0, which is longer than the lifecycle
-  # guidance intends: a soft deprecation only warns the code that calls it
-  # directly from a package's tests, so a script could use this for four
-  # releases without hearing about it once. It warns now, and says when it
-  # goes.
-  lifecycle::deprecate_warn(
+  # Soft-deprecated from 0.2.1 to 0.5.0, warned in 0.6.0, which announced its
+  # removal in 0.7.0. It is defunct rather than deleted: still exported for
+  # one release, so an old script fails here, with the replacement named,
+  # instead of with "could not find function". Deleted in 0.8.0.
+  lifecycle::deprecate_stop(
     "0.2.1", "emoji_tweets()", "emoji_filter()",
-    details = "emoji_tweets() will be removed in tidyEmoji 0.7.0."
+    details = "emoji_tweets() is deleted in tidyEmoji 0.8.0."
   )
-  emoji_filter(data, {{ text }})
 }

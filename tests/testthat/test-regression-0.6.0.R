@@ -910,16 +910,6 @@ test_that("emoji_pairs() measures score against document frequencies", {
 # Lifecycle and documentation.
 # ---------------------------------------------------------------------------
 
-test_that("emoji_tweets() now warns, and names the release that removes it", {
-  rlang::local_options(lifecycle_verbosity = "warning")
-  d <- tibble::tibble(text = c(paste("hi", smile), "no"))
-  expect_warning(out <- emoji_tweets(d, text),
-                 class = "lifecycle_warning_deprecated")
-  expect_identical(out, emoji_filter(d, text))
-  w <- tryCatch(emoji_tweets(d, text), warning = function(w) conditionMessage(w))
-  expect_match(w, "0.7.0", fixed = TRUE)
-  expect_match(rd_flat("emoji_filter"), "removed in 0.7.0", fixed = TRUE)
-})
 
 test_that("every help page carries a research-question concept tag", {
   db <- rd_db()

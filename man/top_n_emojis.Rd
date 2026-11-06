@@ -35,10 +35,10 @@ people, code points that are emoji only when they carry \code{U+FE0F}.}
 \item{duplicated}{If \code{TRUE}, emoji with several names occupy several rows.
 Default \code{FALSE}.}
 
-\item{duplicated_unicode}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{duplicated}
-instead. Accepts only the values it ever meant -- \code{TRUE}, \code{FALSE},
-\code{"yes"} or \code{"no"} -- and errors on anything else rather than reading it as
-\code{FALSE}, which is what \code{"TRUE"} and \code{1} used to get.}
+\item{duplicated_unicode}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#defunct}{\figure{lifecycle-defunct.svg}{options: alt='[Defunct]'}}}{\strong{[Defunct]}} Use \code{duplicated}
+instead. Deprecated in 0.2.0 and defunct since 0.7.0: supplying it is an
+error that names \code{duplicated}, whatever the value. It leaves the
+signature in 0.8.0.}
 
 \item{presentation}{Which code points count as emoji: \code{"emoji"} (the
 default) or \code{"any"}.

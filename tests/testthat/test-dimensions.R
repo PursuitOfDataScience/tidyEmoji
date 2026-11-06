@@ -17,12 +17,11 @@ test_that("emoji_summary counts emoji and total entries", {
   expect_equal(dplyr::pull(s, n_total), 5)
 })
 
-test_that("emoji_filter / emoji_tweets keep only emoji rows and return a tibble", {
+test_that("emoji_filter keeps only emoji rows, and its old name is defunct", {
   expect_equal(nrow(emoji_filter(df, tweets)), 3)
   expect_s3_class(emoji_filter(df, tweets), "tbl_df")
-  expect_warning(via_synonym <- emoji_tweets(df, tweets),
-                 class = "lifecycle_warning_deprecated")
-  expect_identical(via_synonym, emoji_filter(df, tweets))
+  # 0.6.0: emoji_tweets() warned and returned emoji_filter()'s answer
+  expect_error(emoji_tweets(df, tweets), class = "defunctError")
 })
 
 test_that("top_n_emojis returns the most frequent emoji by canonical shortcode", {
