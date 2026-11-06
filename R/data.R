@@ -133,3 +133,108 @@
 #'   Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 #'   licence. Processed by `data-raw/emoji_sentiment_lexicon.R`.
 "emoji_sentiment_lexicon"
+
+
+#' OpenAssistant messages: a dated, multilingual example corpus
+#'
+#' 1,485 messages from OpenAssistant Conversations (OASST2): every eligible
+#' message that carries an emoji (750) and as many emoji-free ones (735),
+#' written between 2023-01-17 and 2023-10-30 in 17 languages, by people
+#' asking (`"prompter"`, 508) and by people writing the assistant's replies
+#' (`"assistant"`, 977). It is the example data of the vignettes and help
+#' pages since 0.7.0, and the reaction tallies on the same messages are in
+#' [oasst_reactions].
+#'
+#' Emoji are rare in real text, so the sample is stratified on them: about
+#' half the rows carry one, where 1.03% of all OASST2 messages do. Figures
+#' computed on it describe this sample, not OASST2, and not chat in general.
+#'
+#' @section How the sample was drawn:
+#' From the 135,174 messages of the "ready" release, in this order: messages
+#' marked deleted (4,376) and synthetic (0) were dropped; then those whose
+#' largest detoxify score is 0.1 or more (2,092); those matching a word-list
+#' screen for slurs (23); those holding an e-mail address, a phone-number
+#' shape or a URL with a query string (1,021); and those longer than 600 code
+#' points (36,614), so printed examples stay readable. That left 91,048
+#' messages, 751 of them carrying an emoji.
+#'
+#' The toxicity scores and the word list are English-centred, and 107 of the
+#' 751 emoji-bearing messages had no detoxify score at all (Portuguese,
+#' Chinese, German, Japanese and Ukrainian among them). Each of those was read
+#' in full before the data was committed, as was every row an example or a
+#' vignette prints, and a message was to be removed if it was sexual, hateful
+#' or harassing or held personal data the automatic screens missed: one was,
+#' for describing the sexual abuse of minors. `data-raw/oasst-read-out.csv`
+#' lists it with its rule.
+#'
+#' The sample is every remaining emoji-bearing message and an equal number of
+#' emoji-free ones, allocated across month by role by language in proportion
+#' to the emoji-free messages and drawn with `set.seed(20261106)`. "Carries
+#' an emoji" is the package's own detection when the extract was built.
+#'
+#' @format A tibble with 1,485 rows and 6 columns:
+#' \describe{
+#'   \item{message_id}{OASST2's identifier for the message.}
+#'   \item{parent_id}{The message this one replies to, so replies can be told
+#'     from opening prompts (117 have `NA`). The parent need not be in the
+#'     sample: 1,315 rows reply to a message that is not.}
+#'   \item{created_at}{When the message was written, a `POSIXct` in UTC.}
+#'   \item{role}{`"prompter"` or `"assistant"`. Both are written by people;
+#'     OASST2's model-written messages are excluded with the synthetic ones.}
+#'   \item{lang}{The language OASST2 records, as a BCP 47 tag (`"en"`,
+#'     `"pt-BR"`).}
+#'   \item{text}{The message as written, line breaks included.}
+#' }
+#' @source Kopf A, Kilcher Y, von Rutte D, Anagnostidis S, Tam ZR, Stevens K,
+#'   et al. (2023). OpenAssistant Conversations: Democratizing Large Language
+#'   Model Alignment. *NeurIPS 2023 Datasets and Benchmarks*.
+#'   <https://arxiv.org/abs/2304.07327>. Data from
+#'   <https://huggingface.co/datasets/OpenAssistant/oasst2>, file
+#'   `2023-11-05_oasst2_ready.messages.jsonl.gz` at revision
+#'   `179dd21fc55192153d94adb0e0ce8f69e222bf75`, released under the Apache
+#'   License 2.0, whose text `inst/LICENSE.note` reproduces. Processed by
+#'   `data-raw/oasst.R`, which rebuilds the sample offline from a committed
+#'   extract of the eligible messages.
+#' @seealso [oasst_reactions] for the tallies; [emoji_trend()] and
+#'   [emoji_from_counts()] for the verbs that need what the old example
+#'   corpus lacked, a date and a tally.
+#' @examples
+#' emoji_summary(oasst_messages, text)
+#' table(oasst_messages$role)
+#' @concept example data
+"oasst_messages"
+
+
+#' Reaction tallies on the OpenAssistant messages
+#'
+#' The reactions OASST2 records on the messages in [oasst_messages], in long
+#' form: 2,469 rows over 1,294 of the messages, one per message and name,
+#' with the number of people who used it.
+#'
+#' The names are OASST2's own, and they are realistically messy. `"+1"`
+#' (2,323 uses), `"-1"` (802) and `"red_flag"` (48) are reactions, the first
+#' two under GitHub's names. `"_skip_reply"` (1,365), `"_skip_labeling"` (857)
+#' and `"_skip_ranking"` (396) are not: they are the interface's skip actions,
+#' stored beside the reactions, and kept here because a real tally holds such
+#' things and an analysis has to decide what to do with them.
+#' [emoji_from_counts()] refuses a name it cannot resolve, by name, rather
+#' than counting it as nothing.
+#'
+#' @format A tibble with 2,469 rows and 3 columns:
+#' \describe{
+#'   \item{message_id}{The message, as in [oasst_messages].}
+#'   \item{reaction}{The name OASST2 records.}
+#'   \item{n}{How many times it was used on the message, an integer.}
+#' }
+#' @source As [oasst_messages]: the `emojis` field of the same OASST2 file,
+#'   Apache License 2.0, processed by `data-raw/oasst.R`.
+#' @seealso [emoji_from_counts()], which turns a tally into text the other
+#'   verbs read.
+#' @examples
+#' head(oasst_reactions)
+#' # the reactions alone, as text every verb can read
+#' votes <- oasst_reactions[oasst_reactions$reaction %in% c("+1", "-1"), ]
+#' emoji_frequency(emoji_from_counts(votes, reaction, n, id = message_id), text)
+#' @concept example data
+#' @concept tallies
+"oasst_reactions"

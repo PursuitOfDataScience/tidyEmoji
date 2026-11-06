@@ -51,7 +51,7 @@ it: do not skip it.
 
 ## The skip inventory
 
-Run as CRAN runs it, **58** tests skip on R 4.4.1, and none of them
+Run as CRAN runs it, **60** tests skip on R 4.4.1, and none of them
 is a test that might fail.
 
 * **41 are sweeps, behind `skip_sweep()`**: the exhaustive tests (every
@@ -63,15 +63,17 @@ is a test that might fail.
   families, toned couples), so no property goes unchecked there. A test fails
   if a sweep names a twin that does not exist, and every sweep runs on every
   push in CI, where `NOT_CRAN` is true.
-* **nine are `skip_on_cran()`**: eight read the checking machine rather than
+* **eleven are `skip_on_cran()`**: ten read the checking machine rather than
   the package. The declared R minimum against an installable tree, a
-  `select()`-avoidance benchmark comparing two wall-clock timings, four that
-  read files a tarball does not carry (`data-raw/` for rebuilding the
-  catalogue and crosswalks, `README.Rmd` for re-rendering it, and this file
-  twice for its own claims), one asserting the installed `emoji` release is
+  `select()`-avoidance benchmark comparing two wall-clock timings, six that
+  read files a tarball does not carry (`data-raw/` twice, for rebuilding the
+  catalogue and crosswalks and for rebuilding the example datasets,
+  `README.Rmd` for re-rendering it, `_pkgdown.yml` for the site's reference
+  index, and this file twice for its own claims),
+  one asserting the installed `emoji` release is
   the exact one the documented vocabulary figures came from, and the
   catalogue canary, which is also gated on an environment variable only the
-  weekly job sets. The ninth holds the output snapshots, which testthat does
+  weekly job sets. The eleventh holds the output snapshots, which testthat does
   not compare on CRAN in any case.
 * **Five stand down because the tarball does not carry the file they read**,
   and each says which file. Their messages are, on one line each so they stay
@@ -100,11 +102,13 @@ whenever a verb lands or a test is added.
 
 The bundled datasets contain emoji glyphs and are therefore marked UTF-8, and a
 plain `R CMD check` (without `--as-cran`, which suppresses it) reports
-`Note: found 6890 marked UTF-8 strings`. Every one of those strings is an emoji
-glyph in a glyph column: `emoji_unicode_crosswalk$unicode` 5761,
-`emoji_sentiment_lexicon$emoji` 969, `emoji_emotion_lexicon$emoji` 150,
-`category_unicode_crosswalk$unicodes` 10. No other column in any dataset
-carries a marked string. It is recorded because it is inherent to emoji data
+`Note: found 8006 marked UTF-8 strings`. Every one of those strings is an emoji
+glyph in a glyph column or a message in the example corpus:
+`emoji_unicode_crosswalk$unicode` 5761, `emoji_sentiment_lexicon$emoji` 969,
+`emoji_emotion_lexicon$emoji` 150, `category_unicode_crosswalk$unicodes` 10,
+and `oasst_messages$text` 1116, the messages that hold emoji or are written
+in a script other than ASCII. No other column in any dataset carries a marked
+string. It is recorded because it is inherent to emoji data
 rather than a defect, and because the figure should be verifiable rather than
 asserted.
 

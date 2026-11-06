@@ -9286,7 +9286,8 @@ test_that("cran-comments.md's own figures match the package", {
     emoji_sentiment_lexicon = marked("emoji_sentiment_lexicon", "emoji"),
     emoji_emotion_lexicon = marked("emoji_emotion_lexicon", "emoji"),
     category_unicode_crosswalk = marked("category_unicode_crosswalk",
-                                        "unicodes"))
+                                        "unicodes"),
+    oasst_messages = marked("oasst_messages", "text"))
   for (nm in names(parts)) {
     expect_true(grepl(paste0("\\b", parts[[nm]], "\\b"), txt), info = nm)
   }
@@ -9300,7 +9301,8 @@ test_that("cran-comments.md's own figures match the package", {
   ds <- utils::data(package = "tidyEmoji")$results[, "Item"]
   ds <- sub(" .*$", "", ds)
   expect_setequal(ds, c("category_unicode_crosswalk", "emoji_emotion_lexicon",
-                        "emoji_sentiment_lexicon", "emoji_unicode_crosswalk"))
+                        "emoji_sentiment_lexicon", "emoji_unicode_crosswalk",
+                        "oasst_messages", "oasst_reactions"))
   checked <- 0L
   for (nm in ds) {
     d <- get(nm, envir = ns)
@@ -9310,17 +9312,18 @@ test_that("cran-comments.md's own figures match the package", {
       v <- d[[cc]]
       if (!is.character(v)) next
       checked <- checked + 1L
-      if (cc %in% c("unicode", "emoji", "unicodes")) next
+      if (cc %in% c("unicode", "emoji", "unicodes", "text")) next
       expect_identical(sum(Encoding(v) == "UTF-8"), 0L,
                        info = paste(nm, cc))
     }
   }
   # The loop really did run, and over exactly the columns there are: 2 in
   # category_unicode_crosswalk, 3 in emoji_emotion_lexicon, 4 in
-  # emoji_sentiment_lexicon, 4 in emoji_unicode_crosswalk. Pinning the count
-  # rather than a floor means a new character column fires this test and has
-  # to be classified as a glyph column or not.
-  expect_identical(checked, 13L)
+  # emoji_sentiment_lexicon, 4 in emoji_unicode_crosswalk, 5 in
+  # oasst_messages and 2 in oasst_reactions. Pinning the count rather than a
+  # floor means a new character column fires this test and has to be
+  # classified as a glyph or text column or not.
+  expect_identical(checked, 20L)
   # the version it says is published, and the licence it says DESCRIPTION has
   desc <- utils::packageDescription("tidyEmoji")
   expect_true(grepl(desc$License, txt, fixed = TRUE))

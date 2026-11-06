@@ -115,6 +115,8 @@ reference:
   - emoji_unicode_releases
 - title: Data
   contents:
+  - oasst_messages
+  - oasst_reactions
   - emoji_sentiment_lexicon
   - emoji_emotion_lexicon
   - emoji_unicode_crosswalk

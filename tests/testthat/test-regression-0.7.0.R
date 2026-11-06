@@ -497,3 +497,112 @@ test_that("the 0.7.0 surface holds every contract the 0.6.0 surface does", {
 test_that("the 0.7.0 surface keeps one signature at every row count", {
   check_surface_070(stride = 2L)
 })
+
+# --- M2: a licensed, dated example corpus ---------------------------------------
+
+test_that("the example datasets are what their help pages say", {
+  m <- oasst_messages
+  r <- oasst_reactions
+  expect_s3_class(m, "tbl_df")
+  expect_named(m, c("message_id", "parent_id", "created_at", "role", "lang",
+                    "text"))
+  expect_named(r, c("message_id", "reaction", "n"))
+  expect_s3_class(m$created_at, "POSIXct")
+  expect_identical(attr(m$created_at, "tzone"), "UTC")
+  expect_type(r$n, "integer")
+  # the figures ?oasst_messages states, derived here
+  n_emoji <- sum(tidyEmoji:::emoji_has(m$text))
+  expect_identical(nrow(m), 1485L)
+  expect_identical(n_emoji, 750L)
+  expect_identical(nrow(m) - n_emoji, 735L)
+  expect_identical(as.vector(table(m$role)[c("prompter", "assistant")]),
+                   c(508L, 977L))
+  expect_identical(length(unique(m$lang)), 17L)
+  expect_identical(format(range(m$created_at), "%Y-%m-%d"),
+                   c("2023-01-17", "2023-10-30"))
+  expect_identical(sum(is.na(m$parent_id)), 117L)
+  expect_identical(sum(!is.na(m$parent_id) & !m$parent_id %in% m$message_id),
+                   1315L)
+  expect_false(anyDuplicated(m$message_id) > 0L)
+  expect_lte(max(stringi::stri_length(m$text)), 600L)
+  expect_true(all(m$role %in% c("prompter", "assistant")))
+  rd <- rd_flat("oasst_messages")
+  for (fig in c("1,485", "750", "735", "508", "977", "17 languages",
+                "135,174", "4,376", "2,092", "1,021", "36,614", "91,048",
+                "751", "107", "117", "1,315", "2023-01-17", "2023-10-30",
+                "179dd21fc55192153d94adb0e0ce8f69e222bf75", "Apache")) {
+    expect_match(rd, fig, fixed = TRUE, info = fig)
+  }
+  # and the tallies ?oasst_reactions states
+  expect_identical(nrow(r), 2469L)
+  expect_identical(length(unique(r$message_id)), 1294L)
+  expect_true(all(r$message_id %in% m$message_id))
+  expect_true(all(r$n >= 1L))
+  tot <- tapply(r$n, r$reaction, sum)
+  expect_identical(
+    as.vector(tot[c("+1", "-1", "red_flag", "_skip_reply", "_skip_labeling",
+                    "_skip_ranking")]),
+    c(2323L, 802L, 48L, 1365L, 857L, 396L))
+  rr <- rd_flat("oasst_reactions")
+  for (fig in c("2,469", "1,294", "2,323", "802", "48", "1,365", "857",
+                "396")) {
+    expect_match(rr, fig, fixed = TRUE, info = fig)
+  }
+  # nothing hidden rides in the example data
+  expect_identical(emoji_summary(m, text)$n_hidden, 0L)
+})
+
+test_that("the example datasets are what data-raw/oasst.R builds", {
+  skip_on_cran()
+  root <- normalizePath(testthat::test_path("..", ".."))
+  script <- file.path(root, "data-raw", "oasst.R")
+  extract <- file.path(root, "data-raw", "oasst2-eligible.rds")
+  skip_if(!file.exists(script) || !file.exists(extract),
+          "data-raw/ not available")
+  old <- setwd(root)
+  on.exit(setwd(old), add = TRUE)
+  old_env <- Sys.getenv(c("TIDYEMOJI_WRITE", "TIDYEMOJI_FETCH"), unset = NA)
+  on.exit({
+    for (v in names(old_env)) {
+      if (is.na(old_env[[v]])) Sys.unsetenv(v) else
+        do.call(Sys.setenv, stats::setNames(list(old_env[[v]]), v))
+    }
+  }, add = TRUE)
+  Sys.setenv(TIDYEMOJI_WRITE = "false", TIDYEMOJI_FETCH = "false")
+  env <- new.env(parent = globalenv())
+  suppressMessages(sys.source("data-raw/oasst.R", envir = env))
+  expect_identical(env$oasst_messages, oasst_messages)
+  expect_identical(env$oasst_reactions, oasst_reactions)
+  # the screens it records are the ones the help page reports
+  meta <- attr(readRDS(extract), "oasst")
+  removed <- meta$removed
+  expect_identical(removed$all, c(4376L, 0L, 2092L, 23L, 1021L, 36614L))
+  expect_identical(meta$messages, 135174L)
+  expect_identical(meta$emoji_messages, 1389L)
+  # and the slur screen leaves nothing behind in what ships
+  words <- readLines(file.path("data-raw", "oasst-screen.txt"), warn = FALSE)
+  words <- chartr("abcdefghijklmnopqrstuvwxyz", "nopqrstuvwxyzabcdefghijklm",
+                  words[nzchar(words) & !startsWith(words, "#")])
+  rx <- paste0("\\b(", paste(words, collapse = "|"), ")\\b")
+  expect_false(any(stringi::stri_detect_regex(oasst_messages$text, rx,
+                                              case_insensitive = TRUE)))
+})
+
+test_that("the pkgdown reference index lists every help topic", {
+  # pkgdown refuses to build a site with a topic no section lists, and the
+  # 0.7.0 cycle met that twice in CI: emoji_hidden() and the example
+  # datasets each arrived without an entry. Held here, from the source tree,
+  # so the next new topic fails the suite instead of the site build.
+  skip_on_cran()
+  f <- testthat::test_path("..", "..", "_pkgdown.yml")
+  skip_if(!file.exists(f), "_pkgdown.yml not available")
+  y <- readLines(f, warn = FALSE)
+  listed <- trimws(sub("^\\s*-\\s*", "",
+                       grep("^\\s+- [A-Za-z_.][A-Za-z0-9_.]*\\s*$", y,
+                            value = TRUE)))
+  topics <- setdiff(sub("[.]Rd$", "", names(rd_db())), "tidyEmoji-package")
+  expect_gt(length(topics), 50L)
+  expect_identical(setdiff(topics, listed), character(0))
+  expect_true(all(c("emoji_hidden", "oasst_messages", "oasst_reactions") %in%
+                    listed))
+})

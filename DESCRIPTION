@@ -7,7 +7,13 @@ Authors@R:
     c(person(given = "Youzhi",
              family = "Yu",
              role = c("aut", "cre"),
-             email = "yuyouzhi666@icloud.com"))
+             email = "yuyouzhi666@icloud.com"),
+      person(given = "Unicode, Inc.",
+             role = "cph",
+             comment = "Unicode emoji and character data in R/sysdata.rda"),
+      person(given = "OpenAssistant contributors",
+             role = "cph",
+             comment = "OASST2 example data in data/oasst_*.rda"))
 Description: A tidy toolkit for working with the emoji in any text column, such
     as social-media posts, product reviews, chat logs or survey responses.
     Unicode is awkward to handle and not every code point is an emoji, which
@@ -32,7 +38,9 @@ Description: A tidy toolkit for working with the emoji in any text column, such
     <doi:10.1371/journal.pone.0144296>, released under CC BY-SA 4.0; the emotion
     lexicon is from EmoTag1200 of Shoeb & de Melo (2020)
     <https://aclanthology.org/2020.emnlp-main.720/>, released under the MIT
-    licence.
+    licence. The example data, dated and multilingual, is a sample of
+    OpenAssistant Conversations (Kopf et al., 2023)
+    <arXiv:2304.07327>, released under the Apache License 2.0.
 License: GPL (>= 3)
 URL: https://pursuitofdatascience.github.io/tidyEmoji/,
     https://github.com/PursuitOfDataScience/tidyEmoji

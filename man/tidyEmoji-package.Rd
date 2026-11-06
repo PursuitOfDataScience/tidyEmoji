@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.svg}{options: style='float: right' alt='logo' width='120'}}
 
-A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. 'tidyEmoji' extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a 'tidyverse' workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. Its emoji catalogue is the Unicode emoji test data, bundled and current to Emoji 18.0, so it can also say what a glyph is, map flag emoji to ISO 3166 codes, report how much of a corpus each lexicon can score, and read reaction tallies as well as text. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) \doi{10.1371/journal.pone.0144296}, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb & de Melo (2020) \url{https://aclanthology.org/2020.emnlp-main.720/}, released under the MIT licence.
+A tidy toolkit for working with the emoji in any text column, such as social-media posts, product reviews, chat logs or survey responses. Unicode is awkward to handle and not every code point is an emoji, which makes emoji statistics fiddly to obtain. 'tidyEmoji' extracts, counts, categorises, sentiment-scores and emotion-scores emoji, converts them to and from text (for accessibility and NLP preprocessing), searches the emoji catalogue, maps emoji co-occurrence and sequences (graph-ready edge lists and n-grams), measures where and how densely emoji are used, and builds document-by-emoji feature tables for machine learning, with grapheme-aware detection (so skin-tone and multi-person sequences stay intact), returning tidy data frames that slot straight into a 'tidyverse' workflow. It also quantifies how much annotators disagreed about an emoji (interpretation risk), extracts the words around each emoji, tracks emoji use over time, measures text-emoji sentiment mismatch, and applies explicit emoji-preprocessing policies for language-model pipelines. Its emoji catalogue is the Unicode emoji test data, bundled and current to Emoji 18.0, so it can also say what a glyph is, map flag emoji to ISO 3166 codes, report how much of a corpus each lexicon can score, and read reaction tallies as well as text. The bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of Kralj Novak et al. (2015) \doi{10.1371/journal.pone.0144296}, released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of Shoeb & de Melo (2020) \url{https://aclanthology.org/2020.emnlp-main.720/}, released under the MIT licence. The example data, dated and multilingual, is a sample of OpenAssistant Conversations (Kopf et al., 2023) \href{https://arxiv.org/abs/2304.07327}{arXiv:2304.07327}, released under the Apache License 2.0.
 }
 \section{Output and naming contract}{
 
@@ -248,6 +248,12 @@ Useful links:
 Authors:
 \itemize{
   \item Youzhi Yu \email{yuyouzhi666@icloud.com}
+}
+
+Other contributors:
+\itemize{
+  \item Unicode, Inc. (Unicode emoji and character data in R/sysdata.rda) [copyright holder]
+  \item OpenAssistant contributors (OASST2 example data in data/oasst_*.rda) [copyright holder]
 }
 
 }
