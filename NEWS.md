@@ -228,6 +228,25 @@ section, *Glyphs, not people*, that each of their help pages links to.
   0.2.0: supplying it, whatever the value, stops with an error naming
   `duplicated`. It leaves the signature in 0.8.0.
 
+## Documentation
+
+* **A fourth vignette, `vignette("what-an-emoji-carries")`**: skin tones
+  with their denominator (the share of tone-able emoji carrying a tone
+  differs tenfold between corpora), gender and decomposition, retoning as a
+  paired experiment, and a hidden payload built, found, decoded and removed.
+  It builds offline in about two seconds.
+* **The introduction's section on model output is rebuilt on WildChat-1M**,
+  in a chunk that is not run, since the dataset's licence does not cover
+  redistributing its text: counted naively, a lock and an unlock are the two
+  most frequent emoji in its GPT turns, because a jailbreak template asks
+  for them, so deduplicate by conversation and by template before counting.
+* **The networks vignette draws its graph** with `igraph`'s own `plot()`,
+  as 0.6.0 left open, labelled by name so that it renders on any device.
+* **`?tidyEmoji` gains** the 0.7.0 detection rules, a section *Glyphs, not
+  people* that every identity page links to, and the hidden-payload rule.
+  The introduction's question index names every new verb, which a test now
+  requires, and the README gains the hidden-payload example and stays short.
+
 ## Infrastructure
 
 * **The test suite fits CRAN's clock.** CRAN's x86_64 flavours spent 219 to

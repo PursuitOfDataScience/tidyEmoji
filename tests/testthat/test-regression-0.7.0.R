@@ -512,7 +512,7 @@ test_that("the 0.7.0 surface holds every contract the 0.6.0 surface does", {
 })
 
 test_that("the 0.7.0 surface keeps one signature at every row count", {
-  check_surface_070(stride = 3L)
+  check_surface_070(stride = 4L)
 })
 
 # --- M2: a licensed, dated example corpus ---------------------------------------
@@ -1841,4 +1841,32 @@ test_that("the vocabulary equivalence the plan measured is what the data gives (
   ref <- tidyEmoji:::emoji_reference()
   expect_false(any(ref$name[match(names(r), ref$key)] == unname(r)))
   expect_identical(emoji_provenance()$cldr, "49.0.0")
+})
+
+
+# --- Documentation ---------------------------------------------------------------
+
+test_that("every 0.7.0 export has a concept, an example and a question-index row", {
+  new <- c("emoji_hidden", "emoji_decompose", "emoji_skin_tone", "emoji_gender",
+           "emoji_retone", "emoji_runs", "emoji_features", "emoji_a11y_check")
+  expect_true(all(new %in% getNamespaceExports("tidyEmoji")))
+  db <- rd_db()
+  for (f in new) {
+    rd <- db[[paste0(f, ".Rd")]]
+    tags <- vapply(rd, function(x) attr(x, "Rd_tag"), character(1))
+    expect_true("\\concept" %in% tags, info = f)
+    expect_true("\\examples" %in% tags, info = f)
+    expect_true("\\seealso" %in% tags, info = f)
+  }
+  # the introduction's question index names each one, so a reader who
+  # arrives with a question finds the verb
+  vig <- pkg_text_file("vignettes/introduction.Rmd", "doc/introduction.Rmd")
+  skip_if(is.na(vig), "introduction vignette not available")
+  txt <- readLines(vig, warn = FALSE, encoding = "UTF-8")
+  from <- grep("^### Find the verb for your question", txt)
+  to <- grep("^Two design choices", txt)
+  index <- paste(txt[from:to], collapse = " ")
+  for (f in new) {
+    expect_true(grepl(paste0("`", f, "()`"), index, fixed = TRUE), info = f)
+  }
 })

@@ -146,6 +146,8 @@ navbar:
       href: articles/reversible-preprocessing.html
     - text: "Emoji networks: edges worth drawing"
       href: articles/emoji-networks.html
+    - text: What an emoji carries
+      href: articles/what-an-emoji-carries.html
   - text: News
     href: news/index.html
   right:

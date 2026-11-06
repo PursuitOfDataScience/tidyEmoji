@@ -9450,7 +9450,10 @@ test_that("README.md's shown output is what the package now produces", {
   }
   fresh <- out_lines(file.path(wd, "README.md"))
   shipped <- out_lines(md)
-  expect_gt(length(shipped), 15L)          # the README really does show output
+  # the README really does show output, so the comparison below is not
+  # between two empty vectors: since 0.7.0 kept it under 70 lines it is the
+  # six lines of one tibble and the one line of a decoded payload
+  expect_identical(length(shipped), 7L)
   expect_identical(length(fresh), length(shipped))
   expect_identical(fresh, shipped)
 })

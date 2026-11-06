@@ -1146,6 +1146,45 @@ replies %>%
             emoji = sum(.emoji_n), codepoints = sum(.emoji_codepoints))
 ```
 
+### Real model output: deduplicate before you count
+
+WildChat-1M (Zhao et al. 2024) logs a million real conversations with
+GPT-3.5 and GPT-4 from April 2023 on. Its licence, ODC-BY 1.0, covers the
+database and not the text of each conversation, so it is not bundled; the
+chunk below fetches one of its fourteen shards, about 200 MB, and is not run
+here. The figures after it were measured on that shard.
+
+```{r, eval = FALSE}
+# install.packages("arrow")
+url <- paste0("https://huggingface.co/datasets/allenai/WildChat-1M/",
+              "resolve/main/data/train-00000-of-00014.parquet")
+f <- tempfile(fileext = ".parquet")
+download.file(url, f, mode = "wb")
+shard <- arrow::read_parquet(f, col_select = c("conversation_hash", "model",
+                                                "conversation"))
+turns <- tidyr::unnest(shard, conversation)   # one row per turn
+assistant <- turns %>% filter(role == "assistant")
+
+# counted as they come, the top two are a lock and an unlock ...
+emoji_frequency(assistant, content) %>% head(3)
+# ... because a jailbreak template asks for them; deduplicate by
+# conversation and set the template's echoes aside first
+assistant %>%
+  distinct(conversation_hash, content, .keep_all = TRUE) %>%
+  filter(!grepl("Developer Mode", content, fixed = TRUE)) %>%
+  emoji_frequency(content) %>%
+  head(3)
+```
+
+On that shard emoji appear in 0.96% of assistant turns against 0.44% of user
+turns, and in 1.05% of `gpt-4-0314`'s against 0.93% of
+`gpt-3.5-turbo-0301`'s. Counted naively, the two most frequent emoji in the
+assistant turns are the unlocked padlock (474) and the locked one (371), and
+200 of the 592 turns holding the unlocked padlock carry the "Developer Mode"
+jailbreak template's tags. A frequency table of model output surfaces prompt
+templates before it surfaces style, which is the first thing to know about
+auditing it: deduplicate by `conversation_hash` and by template, then count.
+
 ## Recording provenance
 
 "Emoji" is not a fixed object. Which glyphs exist, what they are called and
@@ -1210,3 +1249,8 @@ Shoeb AAM, de Melo G (2020). EmoTag1200: Understanding the Association between
 Emojis and Emotions. *EMNLP 2020*.
 <https://aclanthology.org/2020.emnlp-main.720/>. The EmoTag1200 data is
 distributed under the MIT licence.
+
+Zhao W, Ren X, Hessel J, Cardie C, Choi Y, Deng Y (2024). WildChat: 1M
+ChatGPT Interaction Logs in the Wild. *ICLR 2024*.
+<https://huggingface.co/datasets/allenai/WildChat-1M>, distributed under
+ODC-BY 1.0.

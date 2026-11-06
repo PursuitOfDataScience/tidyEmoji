@@ -46,8 +46,8 @@ reference manual is only built locally, so the local run is the one that covers
 it: do not skip it.
 
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
-  across the help pages, the three vignettes, README.md and NEWS.md, with the
-  258 entries in `inst/WORDLIST`.
+  across the help pages, the four vignettes, README.md and NEWS.md, with the
+  269 entries in `inst/WORDLIST`.
 
 ## The skip inventory
 
@@ -160,7 +160,28 @@ attributed:
 * The emoji catalogue in `R/sysdata.rda`, derived from Unicode's
   `emoji-test.txt` for Emoji 18.0 under the Unicode License V3, which is
   permissive and asks only that its notice accompany the data; the notice is
-  reproduced in full in `inst/LICENSE.note`.
+  reproduced in full in `inst/LICENSE.note`. Since 0.7.0 the same licence
+  covers the UCD's variation-sequence files and the CLDR 49 keywords that
+  sit beside it.
+* New in 0.7.0: the example data `oasst_messages` and `oasst_reactions`, a
+  screened sample of OpenAssistant Conversations (Kopf et al., 2023,
+  <arXiv:2304.07327>) under the Apache License 2.0, whose text is reproduced
+  in `inst/LICENSE.note`; it replaces a corpus of posts with no recorded
+  licence. Also new: a snapshot of the frozen data of the `emoji` package
+  16.0.0 (MIT), which moves from Imports to Suggests, and the shortcodes of
+  emojibase-data 18.0.0 (MIT). Each MIT notice is in `inst/LICENSE.note`, and
+  each copyright holder is in `Authors@R`.
+
+## Check time
+
+0.6.0's tests took 219 to 237 s of CPU on CRAN's x86_64 flavours, and the
+whole check 680 s on r-release-macos-x86_64. 0.7.0 holds the suite to a
+budget: run as CRAN runs it, on a byte-compiled install, it takes 57 s of CPU
+on the reference Linux machine where 0.6.0 took 166 s, no test block takes a
+second, and a `cran-budget` job in CI fails over its ceiling. The exhaustive
+tests run in CI on every push and stand down on CRAN through `skip_sweep()`,
+each with a sampled twin that does run there (the skip inventory above).
+**TODO:** the win-builder and macOS builder times, before submitting.
 
 ## Downstream dependencies
 

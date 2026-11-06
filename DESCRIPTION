@@ -39,7 +39,14 @@ Description: A tidy toolkit for working with the emoji in any text column, such
     catalogue is the Unicode emoji test data, bundled and current to Emoji
     18.0, so it can also say what a glyph is, map flag emoji to ISO 3166
     codes, report how much of a corpus each lexicon can score, and read
-    reaction tallies as well as text. The
+    reaction tallies as well as text. It reads what an emoji depicts (skin
+    tone, gender, hair) to describe glyph use and to rewrite tones for
+    counterfactual experiments, reports runs of emoji and the facts behind
+    their accessibility, and finds, decodes and removes hidden payloads,
+    invisible characters that carry a message to a language model. Its
+    keywords unite those of the 'emoji' package with the Unicode CLDR 49
+    annotations, and the shortcodes of the newest emoji come from
+    'emojibase' (MIT). The
     bundled emoji sentiment lexicon is from the Emoji
     Sentiment Ranking of Kralj Novak et al. (2015)
     <doi:10.1371/journal.pone.0144296>, released under CC BY-SA 4.0; the emotion
