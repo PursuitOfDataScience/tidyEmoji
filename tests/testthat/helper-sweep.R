@@ -96,3 +96,13 @@ sweep_rotate <- function(x, i, stride = 1L) {
   if (stride <= 1L || !length(x)) return(x)
   x[seq(1L + (i - 1L) %% min(stride, length(x)), length(x), by = stride)]
 }
+
+
+# The {emoji} 16.0.0 data tidyEmoji bundles (0.7.0). A test that checks the
+# package against the data it reads reads the same snapshot, since {emoji} is
+# only a Suggests now; the snapshot is compared with the installed {emoji} in
+# test-regression-0.7.0.R whenever that is installed.
+upstream <- function() tidyEmoji:::.emoji_upstream
+upstream_locate_all <- function(x) {
+  stringi::stri_locate_all_regex(x, upstream()$rx, omit_no_match = TRUE)
+}

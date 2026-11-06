@@ -10,9 +10,9 @@
 #' `emoji_provenance()` reports every version an emoji result depends on:
 #' tidyEmoji itself, the Unicode emoji version of the catalogue it detects
 #' against and the date of that catalogue's data file, the size of the
-#' catalogue, the \pkg{emoji} package supplying the shortcodes, keywords and
-#' detection regex, and the bundled lexicons. It is meant to be pasted into a
-#' methods section or stored beside a result.
+#' catalogue, the release of the \pkg{emoji} package whose shortcodes,
+#' keywords and detection regex it bundles, and the bundled lexicons. It is
+#' meant to be pasted into a methods section or stored beside a result.
 #'
 #' @details
 #' None of these are cosmetic. A glyph newer than the catalogue is not
@@ -44,6 +44,11 @@
 #' keys that is not a component is reachable through at least one detectable
 #' spelling. The two lexicon strings count their tables' rows the same way.
 #'
+#' Since 0.7.0 `emoji_pkg` is the release of \pkg{emoji} the bundled snapshot
+#' of its data was taken from, 16.0.0, not whatever version is installed:
+#' tidyEmoji no longer reads the installed package, so it is the version every
+#' result was computed with.
+#'
 #' @return A one-row tibble with columns `tidyEmoji`, `emoji_pkg`,
 #'   `unicode_emoji`, `unicode_emoji_date` (the date in the header of the
 #'   catalogue's data file, a `Date`), `n_emoji` (rows of the reference table;
@@ -57,7 +62,7 @@
 emoji_provenance <- function() {
   tibble::tibble(
     tidyEmoji = as.character(utils::packageVersion("tidyEmoji")),
-    emoji_pkg = as.character(utils::packageVersion("emoji")),
+    emoji_pkg = .emoji_upstream$version,
     unicode_emoji = emoji_unicode_version(),
     unicode_emoji_date = as.Date(.emoji_catalogue_meta$file_date),
     n_emoji = nrow(emoji_reference()),

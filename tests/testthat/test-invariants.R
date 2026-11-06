@@ -1134,11 +1134,11 @@ test_that("dfm columns are ordered by count then glyph, not by appearance", {
 test_that("emoji_search matches on each of its three fields", {
   # alias-only: "thumbsup" and "grinning_face" appear in no name (which has
   # spaces, not underscores) and in no keyword
-  e <- emoji::emojis
+  e <- upstream()
   alias_only <- function(q) {
     kw <- vapply(e$keywords, function(k) any(grepl(q, tolower(k), fixed = TRUE)),
                  logical(1))
-    nm <- grepl(q, tolower(e$name), fixed = TRUE)
+    nm <- grepl(q, tolower(as_emoji_name(e$emoji)), fixed = TRUE)
     al <- vapply(e$aliases, function(a) any(grepl(q, tolower(a), fixed = TRUE)),
                  logical(1))
     sum(al & !kw & !nm)
@@ -1184,7 +1184,7 @@ test_that("emoji_search returns the documented columns and is case-blind", {
 
 test_that("as_emoji resolves every alias, primary or not", {
   ref <- tidyEmoji:::emoji_reference()
-  aliases <- unique(unlist(emoji::emojis$aliases, use.names = FALSE))
+  aliases <- unique(unlist(upstream()$aliases, use.names = FALSE))
   aliases <- aliases[!is.na(aliases) & nzchar(aliases)]
   primary <- unique(ref$shortcode[!is.na(ref$shortcode)])
   secondary <- base::setdiff(aliases, primary)
@@ -1203,7 +1203,7 @@ test_that("as_emoji resolves every alias, primary or not", {
 
 test_that("text_to_emoji converts every alias token, primary or not", {
   ref <- tidyEmoji:::emoji_reference()
-  aliases <- unique(unlist(emoji::emojis$aliases, use.names = FALSE))
+  aliases <- unique(unlist(upstream()$aliases, use.names = FALSE))
   aliases <- aliases[!is.na(aliases) & nzchar(aliases)]
   secondary <- base::setdiff(aliases, unique(ref$shortcode[!is.na(ref$shortcode)]))
   tokens <- paste0(":", secondary, ":")
@@ -2723,6 +2723,8 @@ test_that(".emoji_fold folds ASCII deterministically and non-ASCII like tolower"
   # a new folding of its own. tolower() is only a fair reference in a UTF-8
   # locale -- under LC_ALL=C it leaves every non-ASCII letter alone, which is
   # the very gap the table closes -- so compare against it only there.
+  # the names, keywords and aliases of {emoji} as probe strings
+  skip_if_not_installed("emoji")
   e <- emoji::emojis
   skip_if_not(isTRUE(l10n_info()$`UTF-8`), "tolower() folds no non-ASCII here")
   expect_identical(f(e$name), tolower(e$name))
@@ -2831,6 +2833,7 @@ test_that("the fold covers every script with a 1:1 lowercase mapping", {
   up <- tidyEmoji:::.emoji_fold_upper
   lo <- tidyEmoji:::.emoji_fold_lower
   unconditional <- function(x) tolower(chartr(up, lo, x))
+  skip_if_not_installed("emoji")
   e <- emoji::emojis
   probe <- c(e$name, unlist(e$keywords), unlist(e$aliases),
              intToUtf8(c(0x041F, 0x0420)), intToUtf8(c(0x0393, 0x03A3)),
@@ -3363,7 +3366,8 @@ test_that("a test comparing catalogue figures to a help page is gated", {
   files <- list.files(testthat::test_path("."), pattern = "^test.*[.]R$",
                       full.names = TRUE)
   skip_if(length(files) == 0L, "test sources not available")
-  cat_src <- c("emoji_reference", "emoji::emojis", ".emoji_ref_keys")
+  cat_src <- c("emoji_reference", "emoji::emojis", ".emoji_ref_keys",
+               "upstream(")
   doc_src <- c("rd_text", "rd_flat", "rd_all", "rd_db", "Rd_db")
   # Exempt by name, with the reason. test-emotion.R reaches the catalogue only
   # to look a glyph up by key; the figures it holds the help page to (150
@@ -3777,7 +3781,7 @@ test_that("emoji_provenance() agrees with every source it reports", {
   pv <- emoji_provenance()
   expect_identical(nrow(pv), 1L)
   expect_identical(pv$unicode_emoji, emoji_unicode_version())
-  expect_identical(pv$emoji_pkg, as.character(utils::packageVersion("emoji")))
+  expect_identical(pv$emoji_pkg, tidyEmoji:::.emoji_upstream$version)
   expect_identical(pv$tidyEmoji,
                    as.character(utils::packageVersion("tidyEmoji")))
   expect_identical(pv$n_emoji, nrow(tidyEmoji:::emoji_reference()))
@@ -4363,9 +4367,9 @@ test_that("as_emoji_shortcode() is keyed on the emoji, emoji_search() on the row
   # them -- which is why its details cannot promise that every row's shortcode
   # round trips -- while as_emoji_shortcode() answers for all 189, borrowing
   # the alias of the glyph's other spelling.
-  no_alias <- vapply(emoji::emojis$aliases, function(a) !length(a), logical(1))
+  no_alias <- vapply(upstream()$aliases, function(a) !length(a), logical(1))
   expect_identical(sum(no_alias), 189L)
-  expect_false(anyNA(as_emoji_shortcode(emoji::emojis$emoji[no_alias])))
+  expect_false(anyNA(as_emoji_shortcode(upstream()$emoji[no_alias])))
 
   hit <- emoji_search("face")
   expect_gt(nrow(hit), 0L)
@@ -4373,8 +4377,8 @@ test_that("as_emoji_shortcode() is keyed on the emoji, emoji_search() on the row
   # seven are 16.0 rows with no alias, and two are 17.0 and 18.0 faces that
   # {emoji} does not know at all, so no spelling of them has one
   na_hit <- hit$emoji[is.na(hit$shortcode)]
-  expect_identical(sum(na_hit %in% emoji::emojis$emoji[no_alias]), 7L)
-  expect_identical(sum(!na_hit %in% emoji::emojis$emoji), 2L)
+  expect_identical(sum(na_hit %in% upstream()$emoji[no_alias]), 7L)
+  expect_identical(sum(!na_hit %in% upstream()$emoji), 2L)
 
   # every non-NA shortcode a search reports is a token text_to_emoji() reads,
   # and it recovers that row's emoji
@@ -5322,7 +5326,8 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
 
   old <- Sys.getenv(c("TIDYEMOJI_WRITE", "TIDYEMOJI_EMOJI_TEST",
                       "TIDYEMOJI_FETCH", "TIDYEMOJI_STD_VARIANTS",
-                      "TIDYEMOJI_EMOJI_VARIATIONS"),
+                      "TIDYEMOJI_EMOJI_VARIATIONS", "TIDYEMOJI_EMOJI_UPSTREAM",
+                      "TIDYEMOJI_SNAPSHOT"),
                     unset = NA)
   on.exit({
     for (v in names(old)) {
@@ -5335,11 +5340,16 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   sv <- testthat::test_path("..", "..", "data-raw", "StandardizedVariants.txt")
   evs <- testthat::test_path("..", "..", "data-raw",
                              "emoji-variation-sequences.txt")
-  skip_if(!file.exists(sv) || !file.exists(evs), "data-raw/ not available")
+  # and the snapshot of the {emoji} data (0.7.0)
+  ups <- testthat::test_path("..", "..", "data-raw", "emoji-upstream.rds")
+  skip_if(!file.exists(sv) || !file.exists(evs) || !file.exists(ups),
+          "data-raw/ not available")
   Sys.setenv(TIDYEMOJI_WRITE = "false",
              TIDYEMOJI_EMOJI_TEST = normalizePath(input),
              TIDYEMOJI_STD_VARIANTS = normalizePath(sv),
              TIDYEMOJI_EMOJI_VARIATIONS = normalizePath(evs),
+             TIDYEMOJI_EMOJI_UPSTREAM = normalizePath(ups),
+             TIDYEMOJI_SNAPSHOT = "false",
              TIDYEMOJI_FETCH = "false")
   env <- new.env(parent = globalenv())
   suppressMessages(sys.source(script, envir = env))
@@ -5348,7 +5358,7 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   for (nm in c("emoji_unicode_crosswalk", "category_unicode_crosswalk",
                ".emoji_catalogue", ".emoji_catalogue_meta",
                ".emoji_std_variants", ".emoji_std_variants_meta",
-               ".emoji_text_style_bases")) {
+               ".emoji_text_style_bases", ".emoji_upstream")) {
     expect_identical(get(nm, envir = env), get(nm, envir = ns), info = nm)
   }
   # the version recorded is the one the file says it is
@@ -5525,7 +5535,7 @@ check_staged_detection <- function(n = NULL) {
     }
     m
   }
-  raw <- emoji::emoji_locate_all(G)
+  raw <- upstream_locate_all(G)
   r1 <- lapply(seq_along(G), function(i) {
     m <- raw[[i]]
     if (nrow(m) < 2L) m else merge_gb11(m, G[i])
@@ -5604,7 +5614,7 @@ test_that("every alias resolves, including the 751 only the fallback knows", {
   # fallback to emoji::emoji_name", because the reference table keeps only an
   # emoji's first alias as its shortcode.
   ref <- tidyEmoji:::emoji_reference()
-  all_alias <- unique(unlist(emoji::emojis$aliases))
+  all_alias <- unique(unlist(upstream()$aliases))
   shortcodes <- unique(ref$shortcode[!is.na(ref$shortcode)])
   expect_identical(length(all_alias), 4698L)
   expect_identical(length(shortcodes), 3947L)
@@ -9077,25 +9087,29 @@ test_that("rd_flat() collapses the line wrapping rd_text() preserves", {
 # dozens of unrelated-looking failures with no statement of the cause, plus
 # four help pages silently naming a version the user does not have.
 
-test_that("the documented figures still match the installed emoji release", {
+test_that("the bundled {emoji} snapshot is the installed 16.0.0 (V)", {
   # NOT skip_if_catalogue_moved() -- this is the one test whose whole job is
-  # to fail when the catalogue moves. skip_on_cran() instead: loud for the
-  # maintainer and in CI, where re-deriving the figures is possible, and
-  # silent on the checking machine, where it is not.
+  # to fail when {emoji} moves. skip_on_cran() instead: loud for the
+  # maintainer and in CI, where retaking the snapshot is possible, and silent
+  # on the checking machine, where it is not. Since 0.7.0 the package reads
+  # the snapshot, not the installed {emoji}, so a new release changes no
+  # result; this is how it is noticed the week it lands.
   skip_on_cran()
+  skip_if_not_installed("emoji")
+  up <- tidyEmoji:::.emoji_upstream
   have <- as.character(utils::packageVersion("emoji"))
-  want <- doc_emoji_version()
-  # A deliberately loud, self-explaining failure. If it is the only thing
-  # failing, the catalogue moved and the figures need re-deriving; if it fails
-  # alongside the count assertions, that is the same cause, not many.
-  expect_identical(have, want,
+  expect_identical(have, up$version,
     info = paste0(
-      "The installed emoji package is ", have, ", but every catalogue figure ",
-      "quoted in this package's documentation and pinned in these tests was ",
-      "derived from ", want, ". Re-derive them (5042 catalogue rows, 3790 ",
-      "distinct keys, 969 lexicon rows, 736/233 in-reference, 212 ",
-      "undetectable spellings, 1252 carrying U+FE0F, 216, 200) and update ",
-      "doc_emoji_version()."))
+      "The installed emoji package is ", have, ", but the bundled snapshot ",
+      "of its data was taken from ", up$version, ". Retake it with ",
+      "TIDYEMOJI_SNAPSHOT=true and source(\"data-raw/crosswalks.R\"), then ",
+      "re-derive the vocabulary figures and update doc_emoji_version()."))
+  expect_identical(up$version, doc_emoji_version())
+  expect_identical(up$rx, emoji::emoji_rx)
+  expect_identical(up$emoji, emoji::emojis$emoji)
+  expect_identical(up$aliases, emoji::emojis$aliases)
+  expect_identical(up$keywords, emoji::emojis$keywords)
+  expect_identical(up$name, emoji::emoji_name)
 })
 
 test_that("the help pages name the catalogue the figures came from", {
@@ -9135,14 +9149,21 @@ test_that("the declared emoji floor is the release the figures came from", {
   # older emoji has fewer rows, so those figures would simply be wrong. One
   # constant governs the docs, the pinned counts and this floor together.
   desc <- utils::packageDescription("tidyEmoji")
-  declared <- paste(desc$Imports, desc$Suggests, sep = ", ")
+  # R CMD build rewraps the fields, so a line break can stand where the
+  # source had a space
+  declared <- gsub("[ \t\n]+", " ", paste(desc$Imports, desc$Suggests,
+                                          sep = ", "))
   m <- regmatches(declared, regexpr("emoji \\(>= [0-9.]+\\)", declared))
   expect_identical(length(m), 1L, info = "emoji has no declared version floor")
   got <- gsub(".*>= |\\)", "", m)
   expect_identical(got, doc_emoji_version())
-  # and the installed one satisfies it
-  expect_true(package_version(as.character(utils::packageVersion("emoji"))) >=
+  # and the snapshot, and any installed one, satisfy it
+  expect_true(package_version(tidyEmoji:::.emoji_upstream$version) >=
                 package_version(got))
+  if (requireNamespace("emoji", quietly = TRUE)) {
+    expect_true(package_version(as.character(utils::packageVersion("emoji"))) >=
+                  package_version(got))
+  }
 })
 
 test_that("emoji_provenance() reports the release the figures assume", {
@@ -9150,7 +9171,7 @@ test_that("emoji_provenance() reports the release the figures assume", {
   # the runtime counterpart: a reader who wonders which catalogue produced a
   # number has one call that answers it, and it agrees with the constant
   p <- emoji_provenance()
-  expect_identical(p$emoji_pkg, as.character(utils::packageVersion("emoji")))
+  expect_identical(p$emoji_pkg, tidyEmoji:::.emoji_upstream$version)
   expect_identical(p$emoji_pkg, doc_emoji_version())
   # and the figures the page quotes are the ones this build actually has
   E <- asNamespace("tidyEmoji")

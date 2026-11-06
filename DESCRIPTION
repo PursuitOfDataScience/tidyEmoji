@@ -13,7 +13,10 @@ Authors@R:
              comment = "Unicode emoji and character data in R/sysdata.rda"),
       person(given = "OpenAssistant contributors",
              role = "cph",
-             comment = "OASST2 example data in data/oasst_*.rda"))
+             comment = "OASST2 example data in data/oasst_*.rda"),
+      person(given = "emoji authors",
+             role = "cph",
+             comment = "snapshot of the emoji package's data in R/sysdata.rda"))
 Description: A tidy toolkit for working with the emoji in any text column, such
     as social-media posts, product reviews, chat logs or survey responses.
     Unicode is awkward to handle and not every code point is an emoji, which
@@ -53,7 +56,6 @@ Depends:
     R (>= 4.1.0)
 Imports:
     dplyr (>= 1.1.0),
-    emoji (>= 16.0.0),
     lifecycle (>= 1.0.3),
     rlang,
     stats,
@@ -72,7 +74,8 @@ Suggests:
     forcats,
     stringr,
     igraph,
-    ISOcodes
+    ISOcodes,
+    emoji (>= 16.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.1

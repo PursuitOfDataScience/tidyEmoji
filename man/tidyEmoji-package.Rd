@@ -318,6 +318,7 @@ Other contributors:
 \itemize{
   \item Unicode, Inc. (Unicode emoji and character data in R/sysdata.rda) [copyright holder]
   \item OpenAssistant contributors (OASST2 example data in data/oasst_*.rda) [copyright holder]
+  \item emoji authors (snapshot of the emoji package's data in R/sysdata.rda) [copyright holder]
 }
 
 }

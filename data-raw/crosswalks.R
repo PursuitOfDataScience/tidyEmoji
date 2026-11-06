@@ -4,8 +4,10 @@
 # crosswalk datasets derived from it:
 #   * R/sysdata.rda              the catalogue itself (.emoji_catalogue) and
 #                                where it came from (.emoji_catalogue_meta),
-#                                and the standardized variation sequences the
-#                                hidden-payload scanner reads (0.7.0)
+#                                the standardized variation sequences the
+#                                hidden-payload scanner reads (0.7.0), and the
+#                                snapshot of the {emoji} package's frozen data
+#                                (.emoji_upstream, 0.7.0)
 #   * emoji_unicode_crosswalk    one row per (shortcode, glyph) pair
 #   * category_unicode_crosswalk one row per category, glyphs collapsed by "|"
 #
@@ -17,6 +19,9 @@
 #
 #   the VOCABULARY comes from the {emoji} package: the CLDR keywords and the
 #   GitHub-style shortcode aliases, which emoji-test.txt does not carry.
+#   Since 0.7.0 it is read from an attributed snapshot of that package's
+#   frozen data, data-raw/emoji-upstream.rds, so tidyEmoji no longer imports
+#   it.
 #
 # Until 0.5.0 both came from emoji::emojis, so the catalogue could only be as
 # current as {emoji}, which stayed at Emoji 16.0 through two Unicode releases.
@@ -216,8 +221,32 @@ message("emoji variation sequences:  ", length(.emoji_text_style_bases),
 # Vocabulary -------------------------------------------------------------------
 # The GitHub-style aliases, by exact spelling. A glyph newer than {emoji} has
 # none, and keeps none: shortcodes are not invented here.
-emojis <- emoji::emojis
-aliases <- emojis$aliases[match(.emoji_catalogue$emoji, emojis$emoji)]
+#
+# The {emoji} package has not changed since 16.0.0 (2024-10-28) and stops at
+# Emoji 16.0, so since 0.7.0 tidyEmoji reads a snapshot of the four objects it
+# used from it, the aliases and keywords of emoji::emojis, emoji::emoji_name
+# and emoji::emoji_rx, under {emoji}'s MIT licence (inst/LICENSE.note). It is
+# committed as data-raw/emoji-upstream.rds, so the build repeats offline, and
+# TIDYEMOJI_SNAPSHOT=true takes it again from the installed {emoji}; a test
+# compares the two whenever {emoji} is installed, so a new release is noticed.
+upstream_path <- Sys.getenv("TIDYEMOJI_EMOJI_UPSTREAM",
+                            file.path("data-raw", "emoji-upstream.rds"))
+if (identical(tolower(Sys.getenv("TIDYEMOJI_SNAPSHOT")), "true")) {
+  stopifnot(requireNamespace("emoji", quietly = TRUE))
+  e <- emoji::emojis
+  saveRDS(list(version = as.character(utils::packageVersion("emoji")),
+               emoji = e$emoji, aliases = e$aliases, keywords = e$keywords,
+               name = emoji::emoji_name, rx = emoji::emoji_rx),
+          upstream_path, compress = "xz")
+}
+stopifnot(file.exists(upstream_path))
+.emoji_upstream <- readRDS(upstream_path)
+stopifnot(identical(names(.emoji_upstream),
+                    c("version", "emoji", "aliases", "keywords", "name", "rx")))
+message("{emoji} snapshot:            ", .emoji_upstream$version, ", ",
+        length(.emoji_upstream$emoji), " glyphs")
+aliases <- .emoji_upstream$aliases[match(.emoji_catalogue$emoji,
+                                         .emoji_upstream$emoji)]
 aliases[vapply(aliases, is.null, logical(1))] <- list(character(0))
 
 # emoji_unicode_crosswalk -----------------------------------------------------
@@ -258,7 +287,7 @@ message("category_unicode_crosswalk: ", nrow(category_unicode_crosswalk),
 
 if (!identical(tolower(Sys.getenv("TIDYEMOJI_WRITE")), "false")) {
   save(.emoji_catalogue, .emoji_catalogue_meta, .emoji_std_variants,
-       .emoji_std_variants_meta, .emoji_text_style_bases,
+       .emoji_std_variants_meta, .emoji_text_style_bases, .emoji_upstream,
        file = file.path("R", "sysdata.rda"), compress = "xz")
   save(emoji_unicode_crosswalk,
        file = file.path("data", "emoji_unicode_crosswalk.rda"), compress = "xz")

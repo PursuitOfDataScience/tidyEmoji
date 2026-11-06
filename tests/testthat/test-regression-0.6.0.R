@@ -113,14 +113,14 @@ check_e16_detection_unchanged <- function(n = NULL) {
   skip_if_catalogue_moved()
   # The prefix .emoji_detect_rx() adds can only match at a code point the
   # upstream regex cannot, so on every 16.0 spelling, alone and in context,
-  # the raw spans are emoji::emoji_locate_all()'s, repaired as before.
+  # the raw spans are the bundled {emoji} regex's, repaired as before.
   old <- function(x) {
-    l <- emoji::emoji_locate_all(x)
+    l <- upstream_locate_all(x)
     z <- grepl(g(0x200D), x, fixed = TRUE)
     l[z] <- mapply(ns$.emoji_repair_zwj, l[z], x[z], SIMPLIFY = FALSE)
     l
   }
-  e16 <- emoji::emojis$emoji
+  e16 <- upstream()$emoji
   if (!is.null(n)) e16 <- sweep_sample(e16, n)
   for (x in list(e16, paste0("a", e16, "b"), paste0(e16, e16))) {
     a <- old(x)
@@ -131,7 +131,7 @@ check_e16_detection_unchanged <- function(n = NULL) {
   # the prefix holds only post-16.0 code points
   rx <- ns$.emoji_detect_rx()
   expect_true(startsWith(rx, "(?:"))
-  expect_true(endsWith(rx, emoji::emoji_rx))
+  expect_true(endsWith(rx, upstream()$rx))
 }
 
 test_that("default detection of Emoji 16.0 text is what 0.5.0 found", {
@@ -156,25 +156,24 @@ test_that("an {emoji} that catches up empties the detection prefix", {
   expect_identical(ns$.emoji_build_detect_rx(ref, rx), rx)
   # and the real one needs the 16 code points newer than it
   real <- ns$.emoji_detect_rx()
-  expect_false(identical(real, emoji::emoji_rx))
+  expect_false(identical(real, upstream()$rx))
 })
 
 test_that("the vocabulary columns {emoji} supplies are there, loudly", {
-  # DESCRIPTION pins a floor on emoji and the package reads two columns of
-  # emoji::emojis and nothing else of its data; each must be present and a
-  # list of strings, or the vocabulary verbs would answer NA without a word
-  e <- emoji::emojis
-  for (col in c("emoji", "keywords", "aliases")) {
-    expect_true(col %in% names(e), info = col)
-  }
+  # Since 0.7.0 the package reads a bundled snapshot of {emoji}'s data
+  # rather than the installed package: two columns of emoji::emojis, the
+  # name map and the regex. Each must be present and of its type, or the
+  # vocabulary verbs would answer NA without a word
+  e <- upstream()
+  expect_named(e, c("version", "emoji", "aliases", "keywords", "name", "rx"))
   expect_type(e$keywords, "list")
   expect_type(e$aliases, "list")
   is_strings <- function(v) is.null(v) || is.character(v)
   expect_true(all(vapply(e$keywords, is_strings, logical(1))))
   expect_true(all(vapply(e$aliases, is_strings, logical(1))))
   expect_gt(sum(lengths(e$keywords)), 10000L)
-  # the modifier table 0.7.0 will read
-  expect_true(all(c("emoji", "modifiers") %in% names(emoji::emoji_modifiers)))
+  expect_type(e$rx, "character")
+  expect_length(e$rx, 1L)
   # and a missing column fails with a message naming it, not with NA
   expect_error(ns$.emoji_vocabulary_column(smile, "no_such_column"),
                "no_such_column")
@@ -200,7 +199,7 @@ check_keys_resolve_both <- function(n = NULL) {
   expect_identical(n_new, 182L)
   expect_gt(length(newer), 0L)
   # every glyph {emoji} knows is in the catalogue, spelled the same
-  expect_true(all(emoji::emojis$emoji %in% p$emoji))
+  expect_true(all(upstream()$emoji %in% p$emoji))
 }
 
 test_that("every catalogue key resolves in both sources, or to NA (fixture 3)", {

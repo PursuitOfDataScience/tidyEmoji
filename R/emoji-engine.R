@@ -61,20 +61,19 @@ emoji_reference <- function() {
 
 # One column of {emoji}'s vocabulary (`keywords` or `aliases`), aligned to
 # `glyphs` by exact spelling: a list with one character vector per glyph,
-# empty where {emoji} does not know the glyph. This is the only place the
-# package reads emoji::emojis, so a change in its shape breaks here, once, and
-# loudly: a column that is missing or no longer a list of strings is an
-# error rather than a column of NA.
+# empty where {emoji} does not know the glyph. Read from the bundled snapshot
+# of {emoji} 16.0.0's data (.emoji_upstream, 0.7.0), and the only place the
+# package reads that vocabulary, so a column that is missing or is not a list
+# of strings is an error, once and loudly, rather than a column of NA.
 .emoji_vocabulary_column <- function(glyphs, column) {
-  e <- emoji::emojis
-  if (!column %in% names(e) || !is.list(e[[column]]) ||
+  e <- .emoji_upstream
+  if (!column %in% c("keywords", "aliases") || !is.list(e[[column]]) ||
       !all(vapply(e[[column]], function(v) is.null(v) || is.character(v),
                   logical(1)))) {
     stop(sprintf(
-      paste0("The installed emoji package (%s) no longer has a `%s` list ",
-             "column of strings in emoji::emojis, which tidyEmoji reads its ",
-             "vocabulary from. Please report this at %s."),
-      as.character(utils::packageVersion("emoji")), column,
+      paste0("The bundled snapshot of the emoji package's data (%s) has no ",
+             "`%s` list column of strings. Please report this at %s."),
+      e$version, column,
       "https://github.com/PursuitOfDataScience/tidyEmoji/issues"
     ), call. = FALSE)
   }
@@ -782,8 +781,8 @@ emoji_sentiment_map <- function() {
   cbind(start = as.integer(st), end = as.integer(en))
 }
 
-# The detection regex: {emoji}'s own, behind a short prefix for the code
-# points that are newer than it.
+# The detection regex: {emoji}'s own, from the bundled snapshot of its data,
+# behind a short prefix for the code points that are newer than it.
 #
 # The catalogue moved to Unicode's emoji-test.txt in 0.6.0, so it knows Emoji
 # 17.0 and 18.0 while emoji::emoji_rx stops at 16.0. Its last two branches only
@@ -801,12 +800,12 @@ emoji_sentiment_map <- function() {
 # match, the prefix fails on its first character and nothing it found before
 # can change. ZWJ sequences need nothing extra: once their parts are found,
 # .emoji_merge_zwj() joins them (people wrestling, E17.0, is two people and a
-# fight cloud). An {emoji} release that catches up empties the prefix on its
-# own, because the derivation asks the installed regex.
+# fight cloud). A snapshot of an {emoji} release that catches up empties the
+# prefix on its own, because the derivation asks the regex it is given.
 .emoji_detect_rx <- function() {
   if (is.null(.tidyEmoji_cache$detect_rx)) {
     .tidyEmoji_cache$detect_rx <-
-      .emoji_build_detect_rx(emoji_reference(), emoji::emoji_rx)
+      .emoji_build_detect_rx(emoji_reference(), .emoji_upstream$rx)
   }
   .tidyEmoji_cache$detect_rx
 }

@@ -140,12 +140,16 @@ doc_emoji_version <- function() "16.0.0"
 # So: loud everywhere the maintainer can act on it, silent where they cannot.
 # On the checking machine the figures are simply not the subject any more, and
 # the version-identity test below says so in one place instead of seventy.
+#
+# Since 0.7.0 the package reads a bundled snapshot of {emoji}'s data, so the
+# figures move only when that snapshot is retaken, never because a new {emoji}
+# was installed; the gate reads the snapshot's version accordingly.
 skip_if_catalogue_moved <- function() {
-  have <- as.character(utils::packageVersion("emoji"))
+  have <- tidyEmoji:::.emoji_upstream$version
   testthat::skip_if_not(
     identical(have, doc_emoji_version()),
     paste0("catalogue figures were derived from emoji ", doc_emoji_version(),
-           "; installed is ", have))
+           "; the bundled snapshot is ", have))
   invisible(TRUE)
 }
 

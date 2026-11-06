@@ -71,7 +71,7 @@ is a test that might fail.
   `README.Rmd` for re-rendering it, `_pkgdown.yml` for the site's reference
   index, and this file twice for its own claims),
   one asserting the installed `emoji` release is
-  the exact one the documented vocabulary figures came from, and the
+  the one the bundled snapshot of its data was taken from, and the
   catalogue canary, which is also gated on an environment variable only the
   weekly job sets. The eleventh holds the output snapshots, which testthat does
   not compare on CRAN in any case.

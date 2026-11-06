@@ -210,7 +210,7 @@ text_to_emoji <- function(data, text) {
   v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   v[was_na] <- ""
-  name_map <- emoji::emoji_name   # named vector: name -> glyph
+  name_map <- .emoji_upstream$name   # named vector: name -> glyph
   # Match only the characters GitHub-style aliases actually use. A permissive
   # ":[^:]+:" lets an unrelated colon pair (a URL, a clock time, "note: ...")
   # consume the opening colon of a real shortcode and silently skip it.
@@ -318,7 +318,7 @@ as_emoji <- function(x) {
   by_short <- stats::setNames(ref$emoji, ref$shortcode)
   out <- unname(by_name[x])
   miss <- is.na(out); out[miss] <- unname(by_short[x[miss]])
-  miss <- is.na(out); out[miss] <- unname(emoji::emoji_name[x[miss]])
+  miss <- is.na(out); out[miss] <- unname(.emoji_upstream$name[x[miss]])
   out
 }
 

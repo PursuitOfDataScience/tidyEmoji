@@ -16,9 +16,9 @@ see Details), \code{sentiment_lexicon}, \code{emotion_lexicon} and \code{R}.
 \code{emoji_provenance()} reports every version an emoji result depends on:
 tidyEmoji itself, the Unicode emoji version of the catalogue it detects
 against and the date of that catalogue's data file, the size of the
-catalogue, the \pkg{emoji} package supplying the shortcodes, keywords and
-detection regex, and the bundled lexicons. It is meant to be pasted into a
-methods section or stored beside a result.
+catalogue, the release of the \pkg{emoji} package whose shortcodes,
+keywords and detection regex it bundles, and the bundled lexicons. It is
+meant to be pasted into a methods section or stored beside a result.
 }
 \details{
 None of these are cosmetic. A glyph newer than the catalogue is not
@@ -49,6 +49,11 @@ are not detectable in text as written under the default \code{presentation}
 \code{presentation = "any"}). No \emph{emoji} is lost to that: every one of the 3963
 keys that is not a component is reachable through at least one detectable
 spelling. The two lexicon strings count their tables' rows the same way.
+
+Since 0.7.0 \code{emoji_pkg} is the release of \pkg{emoji} the bundled snapshot
+of its data was taken from, 16.0.0, not whatever version is installed:
+tidyEmoji no longer reads the installed package, so it is the version every
+result was computed with.
 }
 \examples{
 emoji_provenance()

@@ -2,8 +2,8 @@ Third-party components bundled with tidyEmoji
 =============================================
 
 tidyEmoji itself is released under GPL (>= 3); see the License field of
-DESCRIPTION. Four of the datasets it ships were produced by other authors and
-carry their own terms. All four are reproduced here in full, because naming a
+DESCRIPTION. Five of the datasets it ships were produced by other authors and
+carry their own terms. All five are reproduced here in full, because naming a
 licence is not the same as supplying it: CC BY-SA 4.0 asks that a link to the
 licence travel with the work, the MIT and Unicode licences ask that their
 copyright and permission notices be included in all copies, and the Apache
@@ -98,8 +98,8 @@ Rebuilt:   data-raw/crosswalks.R in the package's source repository
 Licence:   Unicode License V3, reproduced below.
            https://www.unicode.org/license.txt
 
-The shortcode and keyword vocabulary is read at run time from the `emoji` R
-package (a declared Import), not bundled; see that package for its terms.
+The shortcode and keyword vocabulary and the detection regex come from the
+`emoji` R package; see section 5.
 
     UNICODE LICENSE V3
 
@@ -366,3 +366,41 @@ https://www.gnu.org/licenses/license-list.html#apache2
        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        See the License for the specific language governing permissions and
        limitations under the License.
+
+
+5. R/sysdata.rda: a snapshot of the emoji package's data
+---------------------------------------------------------
+
+Since 0.7.0 tidyEmoji no longer imports the emoji package. It bundles, in
+R/sysdata.rda (.emoji_upstream), a copy of the four objects it reads from
+emoji 16.0.0 (2024-10-28): the aliases and keywords columns of
+emoji::emojis, emoji::emoji_name and emoji::emoji_rx, unchanged.
+
+Source:    emoji 16.0.0, Emil Hvitfeldt, with data parsing code from Hadley
+           Wickham and Romain Francois,
+           https://CRAN.R-project.org/package=emoji
+Rebuilt:   data-raw/crosswalks.R in the package's source repository
+Licence:   MIT
+
+    MIT License
+
+    Copyright (c) 2021 emoji authors
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to permit
+    persons to whom the Software is furnished to do so, subject to the
+    following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+    NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+    USE OR OTHER DEALINGS IN THE SOFTWARE.
