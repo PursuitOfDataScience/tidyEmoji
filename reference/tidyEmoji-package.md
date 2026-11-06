@@ -290,6 +290,40 @@ ASCII emoticons such as `:)` are not emoji and are never detected, so a
 study of the move from emoticons to emoji, which needs both in one
 denominator, has to count the emoticons itself.
 
+## Hidden payloads
+
+A run of variation selectors after an emoji, or a string of Unicode tag
+characters, renders as nothing and can carry a message to whatever model
+reads the text next;
+[`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
+reports and decodes them, and
+[`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+and
+[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
+remove them by default. The rule is exact rather than a heuristic: a
+selector is hidden when it follows another, when an ideographic selector
+follows no CJK ideograph or when one of `U+FE00` to `U+FE0D` forms no
+standardized variation sequence, and a tag character when it is outside
+a well-formed flag.
+
+## Glyphs, not people
+
+[`emoji_decompose()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_decompose.md),
+[`emoji_skin_tone()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_skin_tone.md),
+[`emoji_gender()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_gender.md)
+and
+[`emoji_retone()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_retone.md)
+describe what a glyph depicts: the tone it is written in, the gender it
+is drawn with, its hair. They never infer the skin colour, gender or
+identity of anyone who wrote or read it. A tone is a keyboard setting on
+some platforms and an active choice on others, a gender is a design that
+every vendor draws differently, and a neutral form is Unicode's, not a
+person's. Writers mostly choose a tone close to their own (Robertson,
+Magdy and Goldwater 2018), which makes tones informative about writers
+only in aggregate, and readers infer identity even from the default
+yellow (CSCW 2021), which is exactly why a tool must not. Report counts
+of glyphs with their denominators, and leave people out of it.
+
 ## Which spelling comes back
 
 Two spellings of one emoji, differing only by `U+FE0F`, are one emoji to

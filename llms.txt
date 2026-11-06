@@ -137,6 +137,17 @@ website](https://pursuitofdatascience.github.io/tidyEmoji/).
 - [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
   : The dominant emoji emotion per row
 
+## Identity
+
+- [`emoji_decompose()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_decompose.md)
+  : Take an emoji apart: base, skin tone, gender and hair
+- [`emoji_skin_tone()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_skin_tone.md)
+  : Skin tones in a text column, with their denominator
+- [`emoji_gender()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_gender.md)
+  : The gender the emoji in a text column depict
+- [`emoji_retone()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_retone.md)
+  : Rewrite every skin tone in a text column to one tone
+
 ## Interpretation risk
 
 - [`emoji_ambiguity()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.md)

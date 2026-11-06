@@ -235,6 +235,35 @@ study of the move from emoticons to emoji, which needs both in one
 denominator, has to count the emoticons itself.</p>
     </div>
     <div class="section level2">
+    <h2 id="hidden-payloads">Hidden payloads<a class="anchor" aria-label="anchor" href="#hidden-payloads"></a></h2>
+
+
+<p>A run of variation selectors after an emoji, or a string of Unicode tag
+characters, renders as nothing and can carry a message to whatever model
+reads the text next; <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports and decodes them, and
+<code><a href="emoji_sanitize.html">emoji_sanitize()</a></code> and <code><a href="emoji_to_text.html">emoji_to_text()</a></code> remove them by default. The rule
+is exact rather than a heuristic: a selector is hidden when it follows
+another, when an ideographic selector follows no CJK ideograph or when one
+of <code>U+FE00</code> to <code>U+FE0D</code> forms no standardized variation sequence, and a tag
+character when it is outside a well-formed flag.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="glyphs-not-people">Glyphs, not people<a class="anchor" aria-label="anchor" href="#glyphs-not-people"></a></h2>
+
+
+<p><code><a href="emoji_decompose.html">emoji_decompose()</a></code>, <code><a href="emoji_skin_tone.html">emoji_skin_tone()</a></code>, <code><a href="emoji_gender.html">emoji_gender()</a></code> and
+<code><a href="emoji_retone.html">emoji_retone()</a></code> describe what a glyph depicts: the tone it is written in,
+the gender it is drawn with, its hair. They never infer the skin colour,
+gender or identity of anyone who wrote or read it. A tone is a keyboard
+setting on some platforms and an active choice on others, a gender is a
+design that every vendor draws differently, and a neutral form is
+Unicode's, not a person's. Writers mostly choose a tone close to their own
+(Robertson, Magdy and Goldwater 2018), which makes tones informative about
+writers only in aggregate, and readers infer identity even from the
+default yellow (CSCW 2021), which is exactly why a tool must not. Report
+counts of glyphs with their denominators, and leave people out of it.</p>
+    </div>
+    <div class="section level2">
     <h2 id="which-spelling-comes-back">Which spelling comes back<a class="anchor" aria-label="anchor" href="#which-spelling-comes-back"></a></h2>
 
 

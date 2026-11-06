@@ -97,6 +97,40 @@ so the difference can be explained from the output.
   emoji each. Microsoft’s ninja-cat sequences draw as one glyph on
   Windows only, and count as a cat and an object.
 
+### New verbs
+
+**What an emoji depicts of a person**, read from its code points and the
+catalogue. All four describe glyphs and never people;
+[`?tidyEmoji`](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md)
+gains a section, *Glyphs, not people*, that each of their help pages
+links to.
+
+- **[`emoji_decompose()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_decompose.md)**
+  takes a glyph apart: its base with the tones taken out, its
+  gender-neutral form, its tones (`default`, `light` to `dark`, or
+  `mixed`), the gender and hair it shows, and the components a joiner
+  joins, with `long = TRUE` for one row per component and its role.
+  Built once per session over the catalogue: 2,920 spellings carry a
+  tone and 540 carry two. Its gender rule, the female and male signs and
+  the gendered people plus a list of twelve emoji whose gender lives in
+  one code point, reproduces emojibase 18.0.0’s 652 female and 640 male
+  spellings exactly.
+- **[`emoji_skin_tone()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_skin_tone.md)**
+  counts per row the emoji that can take a tone, how many do, each tone,
+  the mixed-tone ones and the swatches standing alone, so the share is
+  always reported with its denominator: it differs tenfold between
+  corpora, 88.9% of 117 on the retired tweets against 9.2% of 782 in all
+  of OASST2.
+- **[`emoji_gender()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_gender.md)**
+  counts the person emoji by the gender they are drawn with, with the
+  gender-variable ones, whose family has more than one form, as the
+  denominator for a choice.
+- **[`emoji_retone()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_retone.md)**
+  rewrites every tone-able emoji to one tone, every person in a
+  multi-person emoji alike, for counterfactual experiments on how a
+  model treats skin tones. Every rewrite is a catalogue spelling, and on
+  Emoji 18.0 every tone-able emoji has one in every tone.
+
 ### Example data
 
 - **The example corpus is now a sample of OpenAssistant Conversations

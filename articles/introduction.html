@@ -155,55 +155,62 @@ and return tidy data frames that drop straight into a
 </td>
 </tr>
 <tr class="odd">
+<td>Identity</td>
+<td>
+<code><a href="../reference/emoji_decompose.html">emoji_decompose()</a></code>, <code><a href="../reference/emoji_skin_tone.html">emoji_skin_tone()</a></code>,
+<code><a href="../reference/emoji_gender.html">emoji_gender()</a></code>, <code><a href="../reference/emoji_retone.html">emoji_retone()</a></code>
+</td>
+</tr>
+<tr class="even">
 <td>Coverage</td>
 <td><code><a href="../reference/emoji_coverage.html">emoji_coverage()</a></code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Flags and places</td>
 <td>
 <code><a href="../reference/emoji_country.html">emoji_country()</a></code>, <code><a href="../reference/emoji_subdivision.html">emoji_subdivision()</a></code>,
 <code><a href="../reference/emoji_flag.html">emoji_flag()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Tallies</td>
 <td><code><a href="../reference/emoji_from_counts.html">emoji_from_counts()</a></code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Relate</td>
 <td>
 <code><a href="../reference/emoji_pairs.html">emoji_pairs()</a></code>, <code><a href="../reference/emoji_cooccurrence.html">emoji_cooccurrence()</a></code>,
 <code><a href="../reference/emoji_ngrams.html">emoji_ngrams()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Measure</td>
 <td>
 <code><a href="../reference/emoji_position.html">emoji_position()</a></code>, <code><a href="../reference/emoji_density.html">emoji_density()</a></code>,
 <code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Interpretation risk</td>
 <td>
 <code><a href="../reference/emoji_ambiguity.html">emoji_ambiguity()</a></code>, <code><a href="../reference/emoji_risk.html">emoji_risk()</a></code>,
 <code><a href="../reference/emoji_flag_ambiguous.html">emoji_flag_ambiguous()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Context</td>
 <td>
 <code><a href="../reference/emoji_context.html">emoji_context()</a></code>, <code><a href="../reference/emoji_collocations.html">emoji_collocations()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Functional type</td>
 <td>
 <code><a href="../reference/emoji_type.html">emoji_type()</a></code>, <code><a href="../reference/emoji_faceness.html">emoji_faceness()</a></code>,
 <code><a href="../reference/as_emoji_type.html">as_emoji_type()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Time</td>
 <td>
 <code><a href="../reference/emoji_trend.html">emoji_trend()</a></code>, <code><a href="../reference/emoji_turnover.html">emoji_turnover()</a></code>,
@@ -211,25 +218,25 @@ and return tidy data frames that drop straight into a
 <code><a href="../reference/emoji_adoption_lag.html">emoji_adoption_lag()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Text-emoji mismatch</td>
 <td>
 <code><a href="../reference/emoji_incongruity.html">emoji_incongruity()</a></code>, <code><a href="../reference/emoji_congruence.html">emoji_congruence()</a></code>,
 <code><a href="../reference/emoji_incongruity_profile.html">emoji_incongruity_profile()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Model features</td>
 <td><code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>LLM pipelines</td>
 <td>
 <code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code>, <code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code>,
 <code><a href="../reference/emoji_hidden.html">emoji_hidden()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Provenance</td>
 <td>
 <code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code>,
@@ -338,28 +345,44 @@ adopted?</td>
 </td>
 </tr>
 <tr class="even">
+<td>Which skin tones do writers choose, out of how many they could
+have?</td>
+<td>
+<code><a href="../reference/emoji_skin_tone.html">emoji_skin_tone()</a></code>, <code><a href="../reference/emoji_decompose.html">emoji_decompose()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Which gender do the person emoji depict?</td>
+<td><code><a href="../reference/emoji_gender.html">emoji_gender()</a></code></td>
+</tr>
+<tr class="even">
+<td>Does a model treat the same text differently in another skin tone?
+(fairness)</td>
+<td><code><a href="../reference/emoji_retone.html">emoji_retone()</a></code></td>
+</tr>
+<tr class="odd">
 <td>What should a language-model pipeline do with emoji?</td>
 <td>
 <code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code>, <code><a href="../reference/emoji_token_cost.html">emoji_token_cost()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Is something hidden in this text? (prompt injection, phishing)</td>
 <td>
 <code><a href="../reference/emoji_hidden.html">emoji_hidden()</a></code>, <code><a href="../reference/emoji_sanitize.html">emoji_sanitize()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>How does a model’s own output use emoji? (LLM output auditing)</td>
 <td>
 <code><a href="../reference/emoji_ratio.html">emoji_ratio()</a></code>, <code><a href="../reference/emoji_position.html">emoji_position()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>What features does a classifier need? (stylometry, ML)</td>
 <td><code><a href="../reference/emoji_dfm.html">emoji_dfm()</a></code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Which catalogue and lexicons produced this result?</td>
 <td><code><a href="../reference/emoji_provenance.html">emoji_provenance()</a></code></td>
 </tr>
