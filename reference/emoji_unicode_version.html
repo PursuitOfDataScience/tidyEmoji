@@ -65,9 +65,9 @@ The version is read from the file's own <code># Version:</code> header when the 
 is built, not inferred from where it was downloaded: Unicode serves the
 current file at an unversioned address, so the address says nothing about
 what it held. <code><a href="emoji_provenance.html">emoji_provenance()</a></code> adds the file's date.</p>
-<p>The shortcodes and keywords still come from <span class="pkg">emoji</span>, so a glyph newer
-than that package's own catalogue is detected and named but has no
-shortcode and no keywords.</p>
+<p>The shortcodes and keywords come from <span class="pkg">emoji</span>'s frozen data, which stops
+at Emoji 16.0, so since 0.7.0 the newer emoji take theirs from emojibase and
+CLDR: every emoji in the catalogue has a shortcode and keywords.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

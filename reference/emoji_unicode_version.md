@@ -27,9 +27,9 @@ address says nothing about what it held.
 [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
 adds the file's date.
 
-The shortcodes and keywords still come from emoji, so a glyph newer than
-that package's own catalogue is detected and named but has no shortcode
-and no keywords.
+The shortcodes and keywords come from emoji's frozen data, which stops
+at Emoji 16.0, so since 0.7.0 the newer emoji take theirs from emojibase
+and CLDR: every emoji in the catalogue has a shortcode and keywords.
 
 ## See also
 

@@ -1567,7 +1567,7 @@ the other verbs:
 ``` r
 
 emoji_search("happy")
-#> # A tibble: 27 × 5
+#> # A tibble: 55 × 5
 #>    emoji name                            shortcode             group     keyword
 #>    <chr> <chr>                           <chr>                 <chr>     <chr>  
 #>  1 😀    grinning face                   grinning              Smileys … happy  
@@ -1579,23 +1579,23 @@ emoji_search("happy")
 #>  7 😂    face with tears of joy          joy                   Smileys … happy  
 #>  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  
 #>  9 😇    smiling face with halo          innocent              Smileys … happy  
-#> 10 ☺     smiling face                    smiling_face          Smileys … happy  
-#> # ℹ 17 more rows
+#> 10 ☺️     smiling face                    relaxed               Smileys … happy  
+#> # ℹ 45 more rows
 emoji_search("celebration")
-#> # A tibble: 27 × 5
-#>    emoji name                     shortcode      group             keyword    
-#>    <chr> <chr>                    <chr>          <chr>             <chr>      
-#>  1 🥳    partying face            partying_face  Smileys & Emotion celebration
-#>  2 🙌    raising hands            raised_hands   People & Body     celebration
-#>  3 🎅    Santa Claus              santa          People & Body     celebration
-#>  4 🤶    Mrs. Claus               mrs_claus      People & Body     celebration
-#>  5 🧑‍🎄    Mx Claus                 mx_claus       People & Body     celebration
-#>  6 🎂    birthday cake            birthday       Food & Drink      celebration
-#>  7 🍾    bottle with popping cork champagne      Food & Drink      celebration
-#>  8 🎃    jack-o-lantern           jack_o_lantern Activities        celebration
-#>  9 🎄    Christmas tree           christmas_tree Activities        celebration
-#> 10 🎆    fireworks                fireworks      Activities        celebration
-#> # ℹ 17 more rows
+#> # A tibble: 49 × 5
+#>    emoji name                                  shortcode           group keyword
+#>    <chr> <chr>                                 <chr>               <chr> <chr>  
+#>  1 🥳    partying face                         partying_face       Smil… celebr…
+#>  2 🙌    raising hands                         raised_hands        Peop… celebr…
+#>  3 🙌🏻    raising hands: light skin tone        raising_hands_ligh… Peop… celebr…
+#>  4 🙌🏼    raising hands: medium-light skin tone raising_hands_medi… Peop… celebr…
+#>  5 🙌🏽    raising hands: medium skin tone       raising_hands_medi… Peop… celebr…
+#>  6 🙌🏾    raising hands: medium-dark skin tone  raising_hands_medi… Peop… celebr…
+#>  7 🙌🏿    raising hands: dark skin tone         raising_hands_dark… Peop… celebr…
+#>  8 🎅    Santa Claus                           santa               Peop… celebr…
+#>  9 🎅🏻    Santa Claus: light skin tone          Santa_Claus_light_… Peop… celebr…
+#> 10 🎅🏼    Santa Claus: medium-light skin tone   Santa_Claus_medium… Peop… celebr…
+#> # ℹ 39 more rows
 ```
 
 [`emoji_find()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_find.md)
@@ -1607,34 +1607,34 @@ returns those keywords in long form:
 ``` r
 
 emoji_find(c("party", "celebration"))
-#> # A tibble: 36 × 5
-#>    emoji name                     group             matched            n_matched
-#>    <chr> <chr>                    <chr>             <chr>                  <int>
-#>  1 🥳    partying face            Smileys & Emotion party, celebration         2
-#>  2 🎂    birthday cake            Food & Drink      party, celebration         2
-#>  3 🎈    balloon                  Activities        party, celebration         2
-#>  4 🎉    party popper             Activities        party, celebration         2
-#>  5 🎊    confetti ball            Activities        party, celebration         2
-#>  6 🪅    piñata                   Activities        party, celebration         2
-#>  7 😛    face with tongue         Smileys & Emotion party                      1
-#>  8 😜    winking face with tongue Smileys & Emotion party                      1
-#>  9 🙌    raising hands            People & Body     celebration                1
-#> 10 🎅    Santa Claus              People & Body     celebration                1
-#> # ℹ 26 more rows
+#> # A tibble: 131 × 5
+#>    emoji name                           group             matched      n_matched
+#>    <chr> <chr>                          <chr>             <chr>            <int>
+#>  1 🥳    partying face                  Smileys & Emotion party, cele…         2
+#>  2 🎂    birthday cake                  Food & Drink      party, cele…         2
+#>  3 🎈    balloon                        Activities        party, cele…         2
+#>  4 🎉    party popper                   Activities        party, cele…         2
+#>  5 🎊    confetti ball                  Activities        party, cele…         2
+#>  6 🪅    piñata                         Activities        party, cele…         2
+#>  7 😛    face with tongue               Smileys & Emotion party                1
+#>  8 😜    winking face with tongue       Smileys & Emotion party                1
+#>  9 🙌    raising hands                  People & Body     celebration          1
+#> 10 🙌🏻    raising hands: light skin tone People & Body     celebration          1
+#> # ℹ 121 more rows
 emoji_keywords("\U0001F389")
-#> # A tibble: 10 × 3
-#>    emoji name         keyword    
-#>    <chr> <chr>        <chr>      
-#>  1 🎉    party popper awesome    
-#>  2 🎉    party popper birthday   
-#>  3 🎉    party popper celebrate  
-#>  4 🎉    party popper celebration
-#>  5 🎉    party popper excited    
-#>  6 🎉    party popper hooray     
-#>  7 🎉    party popper party      
-#>  8 🎉    party popper popper     
-#>  9 🎉    party popper tada       
-#> 10 🎉    party popper woohoo
+#> # A tibble: 10 × 4
+#>    emoji name         keyword     source
+#>    <chr> <chr>        <chr>       <chr> 
+#>  1 🎉    party popper awesome     github
+#>  2 🎉    party popper birthday    github
+#>  3 🎉    party popper celebrate   github
+#>  4 🎉    party popper celebration github
+#>  5 🎉    party popper excited     github
+#>  6 🎉    party popper hooray      github
+#>  7 🎉    party popper party       github
+#>  8 🎉    party popper popper      github
+#>  9 🎉    party popper tada        github
+#> 10 🎉    party popper woohoo      github
 ```
 
 The keywords are the English CLDR sets, from the `emoji` package, so an
@@ -1874,7 +1874,7 @@ puts the lot in one row you can paste into a methods section:
 
 emoji_provenance() %>% glimpse()
 #> Rows: 1
-#> Columns: 8
+#> Columns: 10
 #> $ tidyEmoji          <chr> "0.7.0"
 #> $ emoji_pkg          <chr> "16.0.0"
 #> $ unicode_emoji      <chr> "18.0"
@@ -1883,6 +1883,8 @@ emoji_provenance() %>% glimpse()
 #> $ sentiment_lexicon  <chr> "novak2015 (969 emoji)"
 #> $ emotion_lexicon    <chr> "emotag1200 (150 emoji)"
 #> $ R                  <chr> "4.6.2"
+#> $ cldr               <chr> "49.0.0"
+#> $ emojibase          <chr> "18.0.0"
 ```
 
 ## Bundled datasets

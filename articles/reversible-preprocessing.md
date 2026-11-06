@@ -362,7 +362,7 @@ against the catalogue that performed it.
 
 emoji_provenance() %>% glimpse()
 #> Rows: 1
-#> Columns: 8
+#> Columns: 10
 #> $ tidyEmoji          <chr> "0.7.0"
 #> $ emoji_pkg          <chr> "16.0.0"
 #> $ unicode_emoji      <chr> "18.0"
@@ -371,6 +371,8 @@ emoji_provenance() %>% glimpse()
 #> $ sentiment_lexicon  <chr> "novak2015 (969 emoji)"
 #> $ emotion_lexicon    <chr> "emotag1200 (150 emoji)"
 #> $ R                  <chr> "4.6.2"
+#> $ cldr               <chr> "49.0.0"
+#> $ emojibase          <chr> "18.0.0"
 ```
 
 ## See also

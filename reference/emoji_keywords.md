@@ -22,21 +22,26 @@ emoji_keywords(x = NULL)
 
 ## Value
 
-A tibble with columns `emoji`, `name` and `keyword`, one row per
-keyword, in the order of `x` and then of the keyword set.
+A tibble with columns `emoji`, `name`, `keyword` and `source`
+(`"github"` or `"cldr"`, `NA` with a `NA` keyword), one row per keyword,
+in the order of `x` and then of the keyword set.
 
 ## Details
 
-**These are the English keyword sets**, from the emoji package, and
-nothing in them says anything about how an emoji is read in another
-language or culture. Multilingual keywords are not bundled.
+**These are the English keyword sets**, and nothing in them says
+anything about how an emoji is read in another language or culture.
+Multilingual keywords are not bundled.
 
-The keywords come from emoji while the catalogue comes from Unicode, and
-the two are not equally current: an emoji newer than emoji's own table
-(every Emoji 17.0 and 18.0 addition, at the time of writing) is detected
-and named but has no keywords. Such a glyph, and any string that is not
-an emoji at all, gets **one row with `keyword = NA`**, never a row with
-an empty string, so `is.na(keyword)` is the test for "no vocabulary".
+Since 0.7.0 each emoji's set is the union of two sources, and `source`
+says which a keyword came from: `"github"`, the GitHub-style set the
+emoji package carried, which every earlier release used and which comes
+first, unchanged; and `"cldr"`, the keywords of Unicode's CLDR 49
+annotations that set lacks. The union only adds: every emoji in the
+catalogue has keywords now, the 182 of Emoji 17.0 and 18.0 included,
+which had none, and no keyword an earlier release returned is gone. A
+string that is not an emoji gets **one row with `keyword = NA`**, never
+a row with an empty string, so `is.na(keyword)` is the test for "no
+vocabulary".
 
 Keywords belong to the emoji, not to one spelling of it, so the bare and
 the qualified heart return the same set.
@@ -52,21 +57,21 @@ for a substring search over keywords, names and shortcodes.
 
 ``` r
 emoji_keywords(c("\U0001f389", "\u2764"))
-#> # A tibble: 14 × 3
-#>    emoji name         keyword    
-#>    <chr> <chr>        <chr>      
-#>  1 🎉    party popper awesome    
-#>  2 🎉    party popper birthday   
-#>  3 🎉    party popper celebrate  
-#>  4 🎉    party popper celebration
-#>  5 🎉    party popper excited    
-#>  6 🎉    party popper hooray     
-#>  7 🎉    party popper party      
-#>  8 🎉    party popper popper     
-#>  9 🎉    party popper tada       
-#> 10 🎉    party popper woohoo     
-#> 11 ❤     red heart    love       
-#> 12 ❤     red heart    emotion    
-#> 13 ❤     red heart    heart      
-#> 14 ❤     red heart    red        
+#> # A tibble: 14 × 4
+#>    emoji name         keyword     source
+#>    <chr> <chr>        <chr>       <chr> 
+#>  1 🎉    party popper awesome     github
+#>  2 🎉    party popper birthday    github
+#>  3 🎉    party popper celebrate   github
+#>  4 🎉    party popper celebration github
+#>  5 🎉    party popper excited     github
+#>  6 🎉    party popper hooray      github
+#>  7 🎉    party popper party       github
+#>  8 🎉    party popper popper      github
+#>  9 🎉    party popper tada        github
+#> 10 🎉    party popper woohoo      github
+#> 11 ❤     red heart    love        github
+#> 12 ❤     red heart    emotion     github
+#> 13 ❤     red heart    heart       github
+#> 14 ❤     red heart    red         github
 ```

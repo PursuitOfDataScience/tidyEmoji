@@ -13,6 +13,9 @@
 - **emoji authors**. Copyright holder.  
   snapshot of the emoji package's data in R/sysdata.rda
 
+- **Miles Johnson**. Copyright holder.  
+  emojibase data in R/sysdata.rda and the crosswalk
+
 ## Citation
 
 Source:

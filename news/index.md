@@ -193,6 +193,30 @@ links to.
   Suggests for a test that compares the snapshot with the installed
   release, so a new one is noticed the week it lands, and
   `emoji_provenance()$emoji_pkg` reports the snapshot’s version.
+- **Every emoji now has keywords and a shortcode, and nothing an earlier
+  release returned has changed.** The keywords are the union of
+  `emoji`’s and CLDR 49’s, `emoji`’s first, and
+  [`emoji_keywords()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_keywords.md)
+  gains a `source` column (`"github"`, `"cldr"`): across the 3,781 emoji
+  `emoji` knows it gave 2.82 keywords each and CLDR gives 7.58, the two
+  sets are identical for 1,604 and share no keyword for 1,875, so a swap
+  would have dropped half the existing sets where the union drops none.
+  `emoji_search("happy")` finds 42 emoji where it found 27, all 27 among
+  them. The 182 emoji of Emoji 17.0 and 18.0, which `emoji` gives no
+  shortcode, take emojibase-data 18.0.0’s CLDR-style ones
+  (`:distorted_face:`), so `emoji_sanitize(policy = "shortcode")` no
+  longer leaves them in the text and `emoji_unicode_crosswalk` gains
+  their 202 rows (5,963 in all) with no other row changed. No shortcode
+  `emoji` gave is replaced: emojibase’s GitHub set would have changed
+  the alias set of 865 of the 1,870 emoji it covers and given the newest
+  none. CLDR’s own names, which differ from the catalogue’s for 108
+  direction sequences, are recorded and not applied.
+- **[`emoji_from_counts()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_from_counts.md)
+  reads Slack’s names** (emojibase’s `iamcal` set, 1,914 emoji), as
+  input only: `"radioactive_sign"` and `"flag-ac"` resolve, and no Slack
+  name becomes an output alias.
+  [`emoji_provenance()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_provenance.md)
+  gains `cldr` and `emojibase`.
 
 ### Smaller repairs
 

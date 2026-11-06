@@ -65,7 +65,10 @@ meant to be pasted into a methods section or stored beside a result.</p>
     <p>A one-row tibble with columns <code>tidyEmoji</code>, <code>emoji_pkg</code>,
 <code>unicode_emoji</code>, <code>unicode_emoji_date</code> (the date in the header of the
 catalogue's data file, a <code>Date</code>), <code>n_emoji</code> (rows of the reference table;
-see Details), <code>sentiment_lexicon</code>, <code>emotion_lexicon</code> and <code>R</code>.</p>
+see Details), <code>sentiment_lexicon</code>, <code>emotion_lexicon</code>, <code>R</code>, and, since
+0.7.0, <code>cldr</code> (the CLDR release the keywords come from) and <code>emojibase</code>
+(the emojibase-data release of the shortcodes for the newest emoji and of
+Slack's names).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -109,11 +112,12 @@ result was computed with.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">emoji_provenance</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 8</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 10</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   tidyEmoji emoji_pkg unicode_emoji unicode_emoji_date n_emoji sentiment_lexicon</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 0.7.0     16.0.0    18.0          2026-04-30            <span style="text-decoration: underline;">5</span>244 novak2015 (969 e…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: emotion_lexicon &lt;chr&gt;, R &lt;chr&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: emotion_lexicon &lt;chr&gt;, R &lt;chr&gt;, cldr &lt;chr&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   emojibase &lt;chr&gt;</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

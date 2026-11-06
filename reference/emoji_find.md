@@ -41,11 +41,12 @@ finds the party popper and `"celebrat"` finds nothing;
 is the substring search, over names and shortcodes as well as keywords.
 The fold to lower case does not depend on the session's locale.
 
-**English only.** The keyword sets are the CLDR English ones, so a term
-in another language matches nothing and an English term says nothing
-about how the emoji is read elsewhere. And an emoji newer than the emoji
-package's table has no keywords at all, so it is never found here; see
-[`emoji_keywords()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_keywords.md).
+**English only.** The keyword sets are English ones, the emoji package's
+and CLDR 49's together (see
+[`emoji_keywords()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_keywords.md)),
+so a term in another language matches nothing and an English term says
+nothing about how the emoji is read elsewhere. Every emoji in the
+catalogue has keywords, the newest included.
 
 ## See also
 
@@ -56,20 +57,20 @@ package's table has no keywords at all, so it is never found here; see
 
 ``` r
 emoji_find("celebration")
-#> # A tibble: 27 × 5
-#>    emoji name                     group             matched     n_matched
-#>    <chr> <chr>                    <chr>             <chr>           <int>
-#>  1 🥳    partying face            Smileys & Emotion celebration         1
-#>  2 🙌    raising hands            People & Body     celebration         1
-#>  3 🎅    Santa Claus              People & Body     celebration         1
-#>  4 🤶    Mrs. Claus               People & Body     celebration         1
-#>  5 🧑‍🎄    Mx Claus                 People & Body     celebration         1
-#>  6 🎂    birthday cake            Food & Drink      celebration         1
-#>  7 🍾    bottle with popping cork Food & Drink      celebration         1
-#>  8 🎃    jack-o-lantern           Activities        celebration         1
-#>  9 🎄    Christmas tree           Activities        celebration         1
-#> 10 🎆    fireworks                Activities        celebration         1
-#> # ℹ 17 more rows
+#> # A tibble: 47 × 5
+#>    emoji name                                  group           matched n_matched
+#>    <chr> <chr>                                 <chr>           <chr>       <int>
+#>  1 🥳    partying face                         Smileys & Emot… celebr…         1
+#>  2 🙌    raising hands                         People & Body   celebr…         1
+#>  3 🙌🏻    raising hands: light skin tone        People & Body   celebr…         1
+#>  4 🙌🏼    raising hands: medium-light skin tone People & Body   celebr…         1
+#>  5 🙌🏽    raising hands: medium skin tone       People & Body   celebr…         1
+#>  6 🙌🏾    raising hands: medium-dark skin tone  People & Body   celebr…         1
+#>  7 🙌🏿    raising hands: dark skin tone         People & Body   celebr…         1
+#>  8 🎅    Santa Claus                           People & Body   celebr…         1
+#>  9 🎅🏻    Santa Claus: light skin tone          People & Body   celebr…         1
+#> 10 🎅🏼    Santa Claus: medium-light skin tone   People & Body   celebr…         1
+#> # ℹ 37 more rows
 emoji_find(c("cat", "face"), match = "all")
 #> # A tibble: 11 × 5
 #>    emoji name                           group             matched   n_matched

@@ -108,8 +108,10 @@ those spaces, and have nothing to say about a tally.</p>
 eight reactions (<code>"+1"</code>, <code>"-1"</code>, <code>"laugh"</code>, <code>"hooray"</code>, <code>"confused"</code>,
 <code>"heart"</code>, <code>"rocket"</code>, <code>"eyes"</code>, as its REST API returns them, or
 <code>"THUMBS_UP"</code>, <code>"THUMBS_DOWN"</code> and the rest, as its GraphQL API does, in
-any case), shortcodes with or without their colons, Slack's toned names
-(<code>"thumbsup::skin-tone-2"</code>, tone 2 light to 6 dark), or Unicode names.
+any case), shortcodes with or without their colons, Slack's names (its
+own set, from emojibase's <code>iamcal</code> preset, read here and nowhere else) and
+its toned names (<code>"thumbsup::skin-tone-2"</code>, tone 2 light to 6 dark), or
+Unicode names.
 Every glyph is written in its canonical spelling, so a bare <code>U+2764</code> in the
 tally is read by the default <code>presentation</code>. A value that resolves to no
 emoji is an error naming it, rather than a silent zero, unless

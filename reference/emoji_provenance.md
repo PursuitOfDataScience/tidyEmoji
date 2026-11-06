@@ -18,7 +18,10 @@ emoji_provenance()
 A one-row tibble with columns `tidyEmoji`, `emoji_pkg`, `unicode_emoji`,
 `unicode_emoji_date` (the date in the header of the catalogue's data
 file, a `Date`), `n_emoji` (rows of the reference table; see Details),
-`sentiment_lexicon`, `emotion_lexicon` and `R`.
+`sentiment_lexicon`, `emotion_lexicon`, `R`, and, since 0.7.0, `cldr`
+(the CLDR release the keywords come from) and `emojibase` (the
+emojibase-data release of the shortcodes for the newest emoji and of
+Slack's names).
 
 ## Details
 
@@ -75,9 +78,10 @@ every result was computed with.
 
 ``` r
 emoji_provenance()
-#> # A tibble: 1 × 8
+#> # A tibble: 1 × 10
 #>   tidyEmoji emoji_pkg unicode_emoji unicode_emoji_date n_emoji sentiment_lexicon
 #>   <chr>     <chr>     <chr>         <date>               <int> <chr>            
 #> 1 0.7.0     16.0.0    18.0          2026-04-30            5244 novak2015 (969 e…
-#> # ℹ 2 more variables: emotion_lexicon <chr>, R <chr>
+#> # ℹ 4 more variables: emotion_lexicon <chr>, R <chr>, cldr <chr>,
+#> #   emojibase <chr>
 ```

@@ -425,3 +425,6 @@ Other contributors:
 
 - emoji authors (snapshot of the emoji package's data in R/sysdata.rda)
   \[copyright holder\]
+
+- Miles Johnson (emojibase data in R/sysdata.rda and the crosswalk)
+  \[copyright holder\]

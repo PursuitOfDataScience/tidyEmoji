@@ -30,13 +30,13 @@ matched the name or a shortcode rather than a keyword. `shortcode` *is*
 ## Details
 
 `shortcode` is the *matched row's* first alias, and it is `NA` when the
-matched spelling has none: 391 of the catalogue's 5244 rows carry no
-GitHub-style alias at all, so a search that hits one (9 of the 200 rows
-`emoji_search("face")` returns, for instance) has nothing to put in that
-column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
-emoji package supplying the aliases and keywords does not know yet: they
-are found by name, and only by name, because they have no keywords
-either. Use the `emoji` column for those, or
+matched spelling has none: 189 of the catalogue's 5244 rows carry no
+alias of their own, all of them spellings with a selector left out, so a
+search that hits one (7 of the 235 rows `emoji_search("face")` returns,
+for instance) has nothing to put in that column. The Emoji 17.0 and 18.0
+additions, which the emoji package's aliases and keywords stop short of,
+have emojibase's shortcodes and CLDR's keywords since 0.7.0, so they are
+found like any other emoji. Use the `emoji` column for the 189, or
 [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
 which is keyed on the emoji rather than on the row and so can borrow the
 alias of the glyph's other spelling. For the same reason the two can
@@ -67,7 +67,7 @@ for the name of a glyph.
 
 ``` r
 emoji_search("happy")
-#> # A tibble: 27 × 5
+#> # A tibble: 55 × 5
 #>    emoji name                            shortcode             group     keyword
 #>    <chr> <chr>                           <chr>                 <chr>     <chr>  
 #>  1 😀    grinning face                   grinning              Smileys … happy  
@@ -79,10 +79,10 @@ emoji_search("happy")
 #>  7 😂    face with tears of joy          joy                   Smileys … happy  
 #>  8 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  
 #>  9 😇    smiling face with halo          innocent              Smileys … happy  
-#> 10 ☺     smiling face                    smiling_face          Smileys … happy  
-#> # ℹ 17 more rows
+#> 10 ☺️     smiling face                    relaxed               Smileys … happy  
+#> # ℹ 45 more rows
 emoji_search("heart")
-#> # A tibble: 254 × 5
+#> # A tibble: 457 × 5
 #>    emoji name                         shortcode                    group keyword
 #>    <chr> <chr>                        <chr>                        <chr> <chr>  
 #>  1 😉    winking face                 wink                         Smil… heartb…
@@ -95,5 +95,5 @@ emoji_search("heart")
 #>  8 💝    heart with ribbon            gift_heart                   Smil… heart  
 #>  9 💖    sparkling heart              sparkling_heart              Smil… heart  
 #> 10 💗    growing heart                heartpulse                   Smil… heart,…
-#> # ℹ 244 more rows
+#> # ℹ 447 more rows
 ```

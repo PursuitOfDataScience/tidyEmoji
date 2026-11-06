@@ -83,11 +83,11 @@ zero-row tibble.</p>
 the party popper and <code>"celebrat"</code> finds nothing; <code><a href="emoji_search.html">emoji_search()</a></code> is the
 substring search, over names and shortcodes as well as keywords. The fold
 to lower case does not depend on the session's locale.</p>
-<p><strong>English only.</strong> The keyword sets are the CLDR English ones, so a term in
+<p><strong>English only.</strong> The keyword sets are English ones, the <span class="pkg">emoji</span>
+package's and CLDR 49's together (see <code><a href="emoji_keywords.html">emoji_keywords()</a></code>), so a term in
 another language matches nothing and an English term says nothing about how
-the emoji is read elsewhere. And an emoji newer than the <span class="pkg">emoji</span>
-package's table has no keywords at all, so it is never found here; see
-<code><a href="emoji_keywords.html">emoji_keywords()</a></code>.</p>
+the emoji is read elsewhere. Every emoji in the catalogue has keywords, the
+newest included.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -97,20 +97,20 @@ package's table has no keywords at all, so it is never found here; see
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">emoji_find</span><span class="op">(</span><span class="st">"celebration"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 27 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name                     group             matched     n_matched</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 🥳    partying face            Smileys &amp; Emotion celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 🙌    raising hands            People &amp; Body     celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 🎅    Santa Claus              People &amp; Body     celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 🤶    Mrs. Claus               People &amp; Body     celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 🧑‍🎄    Mx Claus                 People &amp; Body     celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 🎂    birthday cake            Food &amp; Drink      celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 🍾    bottle with popping cork Food &amp; Drink      celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 🎃    jack-o-lantern           Activities        celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 🎄    Christmas tree           Activities        celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 🎆    fireworks                Activities        celebration         1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 17 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 47 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name                                  group           matched n_matched</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 🥳    partying face                         Smileys &amp; Emot… celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 🙌    raising hands                         People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 🙌🏻    raising hands: light skin tone        People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 🙌🏼    raising hands: medium-light skin tone People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 🙌🏽    raising hands: medium skin tone       People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 🙌🏾    raising hands: medium-dark skin tone  People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 🙌🏿    raising hands: dark skin tone         People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 🎅    Santa Claus                           People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 🎅🏻    Santa Claus: light skin tone          People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 🎅🏼    Santa Claus: medium-light skin tone   People &amp; Body   celebr…         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 37 more rows</span></span>
 <span class="r-in"><span><span class="fu">emoji_find</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cat"</span>, <span class="st">"face"</span><span class="op">)</span>, match <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 11 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name                           group             matched   n_matched</span>

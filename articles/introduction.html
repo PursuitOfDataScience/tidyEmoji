@@ -1686,7 +1686,7 @@ shortcode (case-insensitive, literal matching), returning a tidy tibble
 you can filter further or feed into the other verbs:</p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 5</span></span></span>
 <span><span class="co">#&gt;    emoji name                            shortcode             group     keyword</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 😀    grinning face                   grinning              Smileys … happy  </span></span>
@@ -1698,57 +1698,57 @@ you can filter further or feed into the other verbs:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 😂    face with tears of joy          joy                   Smileys … happy  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 😇    smiling face with halo          innocent              Smileys … happy  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☺     smiling face                    smiling_face          Smileys … happy  </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 17 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ☺️     smiling face                    relaxed               Smileys … happy  </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 45 more rows</span></span></span>
 <span><span class="fu"><a href="../reference/emoji_search.html">emoji_search</a></span><span class="op">(</span><span class="st">"celebration"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 27 × 5</span></span></span>
-<span><span class="co">#&gt;    emoji name                     shortcode      group             keyword    </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🥳    partying face            partying_face  Smileys &amp; Emotion celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🙌    raising hands            raised_hands   People &amp; Body     celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🎅    Santa Claus              santa          People &amp; Body     celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🤶    Mrs. Claus               mrs_claus      People &amp; Body     celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🧑‍🎄    Mx Claus                 mx_claus       People &amp; Body     celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🎂    birthday cake            birthday       Food &amp; Drink      celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🍾    bottle with popping cork champagne      Food &amp; Drink      celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🎃    jack-o-lantern           jack_o_lantern Activities        celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🎄    Christmas tree           christmas_tree Activities        celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🎆    fireworks                fireworks      Activities        celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 17 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 49 × 5</span></span></span>
+<span><span class="co">#&gt;    emoji name                                  shortcode           group keyword</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🥳    partying face                         partying_face       Smil… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🙌    raising hands                         raised_hands        Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🙌🏻    raising hands: light skin tone        raising_hands_ligh… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🙌🏼    raising hands: medium-light skin tone raising_hands_medi… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🙌🏽    raising hands: medium skin tone       raising_hands_medi… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🙌🏾    raising hands: medium-dark skin tone  raising_hands_medi… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🙌🏿    raising hands: dark skin tone         raising_hands_dark… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🎅    Santa Claus                           santa               Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🎅🏻    Santa Claus: light skin tone          Santa_Claus_light_… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🎅🏼    Santa Claus: medium-light skin tone   Santa_Claus_medium… Peop… celebr…</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 39 more rows</span></span></span></code></pre></div>
 <p><code><a href="../reference/emoji_find.html">emoji_find()</a></code> goes the other way, from a semantic field
 to its emoji, which is how a stimulus set is assembled; it matches whole
 CLDR keywords, and <code><a href="../reference/emoji_keywords.html">emoji_keywords()</a></code> returns those keywords
 in long form:</p>
 <div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_find.html">emoji_find</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"party"</span>, <span class="st">"celebration"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 36 × 5</span></span></span>
-<span><span class="co">#&gt;    emoji name                     group             matched            n_matched</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🥳    partying face            Smileys &amp; Emotion party, celebration         2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🎂    birthday cake            Food &amp; Drink      party, celebration         2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🎈    balloon                  Activities        party, celebration         2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🎉    party popper             Activities        party, celebration         2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🎊    confetti ball            Activities        party, celebration         2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🪅    piñata                   Activities        party, celebration         2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 😛    face with tongue         Smileys &amp; Emotion party                      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😜    winking face with tongue Smileys &amp; Emotion party                      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🙌    raising hands            People &amp; Body     celebration                1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🎅    Santa Claus              People &amp; Body     celebration                1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 26 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 131 × 5</span></span></span>
+<span><span class="co">#&gt;    emoji name                           group             matched      n_matched</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🥳    partying face                  Smileys &amp; Emotion party, cele…         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🎂    birthday cake                  Food &amp; Drink      party, cele…         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🎈    balloon                        Activities        party, cele…         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🎉    party popper                   Activities        party, cele…         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🎊    confetti ball                  Activities        party, cele…         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🪅    piñata                         Activities        party, cele…         2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 😛    face with tongue               Smileys &amp; Emotion party                1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 😜    winking face with tongue       Smileys &amp; Emotion party                1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🙌    raising hands                  People &amp; Body     celebration          1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🙌🏻    raising hands: light skin tone People &amp; Body     celebration          1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 121 more rows</span></span></span>
 <span><span class="fu"><a href="../reference/emoji_keywords.html">emoji_keywords</a></span><span class="op">(</span><span class="st">"\U0001F389"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 3</span></span></span>
-<span><span class="co">#&gt;    emoji name         keyword    </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🎉    party popper awesome    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🎉    party popper birthday   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🎉    party popper celebrate  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🎉    party popper celebration</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🎉    party popper excited    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🎉    party popper hooray     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🎉    party popper party      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🎉    party popper popper     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🎉    party popper tada       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🎉    party popper woohoo</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 4</span></span></span>
+<span><span class="co">#&gt;    emoji name         keyword     source</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> 🎉    party popper awesome     github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> 🎉    party popper birthday    github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 🎉    party popper celebrate   github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> 🎉    party popper celebration github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> 🎉    party popper excited     github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> 🎉    party popper hooray      github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> 🎉    party popper party       github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 🎉    party popper popper      github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 🎉    party popper tada        github</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 🎉    party popper woohoo      github</span></span></code></pre></div>
 <p>The keywords are the English CLDR sets, from the <code>emoji</code>
 package, so an emoji newer than that package has a name but no
 keywords.</p>
@@ -1951,7 +1951,7 @@ puts the lot in one row you can paste into a methods section:</p>
 <div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/emoji_provenance.html">emoji_provenance</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 1</span></span>
-<span><span class="co">#&gt; Columns: 8</span></span>
+<span><span class="co">#&gt; Columns: 10</span></span>
 <span><span class="co">#&gt; $ tidyEmoji          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0.7.0"</span></span>
 <span><span class="co">#&gt; $ emoji_pkg          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "16.0.0"</span></span>
 <span><span class="co">#&gt; $ unicode_emoji      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "18.0"</span></span>
@@ -1959,7 +1959,9 @@ puts the lot in one row you can paste into a methods section:</p>
 <span><span class="co">#&gt; $ n_emoji            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 5244</span></span>
 <span><span class="co">#&gt; $ sentiment_lexicon  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "novak2015 (969 emoji)"</span></span>
 <span><span class="co">#&gt; $ emotion_lexicon    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "emotag1200 (150 emoji)"</span></span>
-<span><span class="co">#&gt; $ R                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "4.6.2"</span></span></code></pre></div>
+<span><span class="co">#&gt; $ R                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "4.6.2"</span></span>
+<span><span class="co">#&gt; $ cldr               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "49.0.0"</span></span>
+<span><span class="co">#&gt; $ emojibase          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "18.0.0"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="bundled-datasets">Bundled datasets<a class="anchor" aria-label="anchor" href="#bundled-datasets"></a>

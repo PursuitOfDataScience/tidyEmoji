@@ -74,13 +74,14 @@ the matched spelling has no alias; see Details.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>shortcode</code> is the <em>matched row's</em> first alias, and it is <code>NA</code> when the
-matched spelling has none: 391 of the catalogue's 5244 rows carry no
-GitHub-style alias at all, so a search that hits one (9 of the 200 rows
-<code>emoji_search("face")</code> returns, for instance) has nothing to put in that
-column. 202 of the 391 are the Emoji 17.0 and 18.0 additions, which the
-<span class="pkg">emoji</span> package supplying the aliases and keywords does not know yet:
-they are found by name, and only by name, because they have no keywords
-either. Use the <code>emoji</code> column for those, or <code><a href="as_emoji_name.html">as_emoji_shortcode()</a></code>, which
+matched spelling has none: 189 of the catalogue's 5244 rows carry no alias
+of their own, all of them spellings with a selector left out, so a search
+that hits one (7 of the 235 rows <code>emoji_search("face")</code> returns, for
+instance) has nothing to put in that column. The Emoji 17.0 and 18.0
+additions, which the <span class="pkg">emoji</span> package's aliases and keywords stop short
+of, have emojibase's shortcodes and CLDR's keywords since 0.7.0, so they
+are found like any other emoji. Use the <code>emoji</code> column for the 189, or
+<code><a href="as_emoji_name.html">as_emoji_shortcode()</a></code>, which
 is keyed on the emoji rather than on the row and so can borrow the alias of
 the glyph's other spelling. For the same reason the two can disagree even
 when both answer – see <code><a href="as_emoji_name.html">as_emoji_shortcode()</a></code>.</p>
@@ -103,7 +104,7 @@ sample of it. See <code><a href="as_emoji_name.html">as_emoji()</a></code> for w
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">emoji_search</span><span class="op">(</span><span class="st">"happy"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 27 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 55 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name                            shortcode             group     keyword</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 😀    grinning face                   grinning              Smileys … happy  </span>
@@ -115,10 +116,10 @@ sample of it. See <code><a href="as_emoji_name.html">as_emoji()</a></code> for w
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 😂    face with tears of joy          joy                   Smileys … happy  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 🙂    slightly smiling face           slightly_smiling_face Smileys … happy  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 😇    smiling face with halo          innocent              Smileys … happy  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> ☺     smiling face                    smiling_face          Smileys … happy  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 17 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> ☺️     smiling face                    relaxed               Smileys … happy  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 45 more rows</span></span>
 <span class="r-in"><span><span class="fu">emoji_search</span><span class="op">(</span><span class="st">"heart"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 254 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 457 × 5</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name                         shortcode                    group keyword</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 😉    winking face                 wink                         Smil… heartb…</span>
@@ -131,7 +132,7 @@ sample of it. See <code><a href="as_emoji_name.html">as_emoji()</a></code> for w
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 💝    heart with ribbon            gift_heart                   Smil… heart  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 💖    sparkling heart              sparkling_heart              Smil… heart  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 💗    growing heart                heartpulse                   Smil… heart,…</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 244 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 447 more rows</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

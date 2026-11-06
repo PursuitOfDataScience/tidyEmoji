@@ -73,12 +73,13 @@ GitHub's eight reactions (`"+1"`, `"-1"`, `"laugh"`, `"hooray"`,
 `"confused"`, `"heart"`, `"rocket"`, `"eyes"`, as its REST API returns
 them, or `"THUMBS_UP"`, `"THUMBS_DOWN"` and the rest, as its GraphQL API
 does, in any case), shortcodes with or without their colons, Slack's
-toned names (`"thumbsup::skin-tone-2"`, tone 2 light to 6 dark), or
-Unicode names. Every glyph is written in its canonical spelling, so a
-bare `U+2764` in the tally is read by the default `presentation`. A
-value that resolves to no emoji is an error naming it, rather than a
-silent zero, unless `unknown = "drop"`; a Slack tone on an emoji that
-takes none resolves to no emoji.
+names (its own set, from emojibase's `iamcal` preset, read here and
+nowhere else) and its toned names (`"thumbsup::skin-tone-2"`, tone 2
+light to 6 dark), or Unicode names. Every glyph is written in its
+canonical spelling, so a bare `U+2764` in the tally is read by the
+default `presentation`. A value that resolves to no emoji is an error
+naming it, rather than a silent zero, unless `unknown = "drop"`; a Slack
+tone on an emoji that takes none resolves to no emoji.
 
 `n` must be a whole number of at least 0. A fractional count, such as a
 survey weight or an average, is refused rather than rounded: a text

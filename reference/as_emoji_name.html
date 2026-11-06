@@ -71,14 +71,14 @@
 </ul><p>All three resolve through <code>emoji_key()</code>, so qualified emoji (carrying
 <code>U+FE0F</code>) and unqualified forms resolve identically. Unmatched inputs return
 <code>NA</code>.</p>
-<p><code>as_emoji()</code> accepts either namespace in the same argument, and 464 strings
+<p><code>as_emoji()</code> accepts either namespace in the same argument, and 471 strings
 belong to both – they are the exact Unicode name of one emoji and a
 shortcode alias of another. It resolves them in a fixed order: <strong>exact
 Unicode name first</strong>, then shortcode, then <span class="pkg">emoji</span>'s own name table. An
 exact name match is the stronger signal, so <code>as_emoji("dog")</code> is the emoji
 actually <em>named</em> "dog" (a dog, <code>U+1F415</code>), not the one whose alias is
 <code>:dog:</code> (a dog face, <code>U+1F436</code>).</p>
-<p>For 17 of those 464 strings the two namespaces disagree, and there
+<p>For 17 of those 471 strings the two namespaces disagree, and there
 <code>as_emoji()</code> and <code><a href="text_to_emoji.html">text_to_emoji()</a></code> differ <em>by design</em>: a <code>:dog:</code> token is
 explicitly delimited as a shortcode, so <code><a href="text_to_emoji.html">text_to_emoji()</a></code> reads it in the
 shortcode namespace and produces the dog face. The pattern is an emoji whose
@@ -104,13 +104,13 @@ where the bare <code>U+2764</code> row's own first alias is <code>"red_heart"</c
 a search result is a row – so the two verbs can disagree on the same glyph.
 Both resolve back to the same emoji through <code><a href="text_to_emoji.html">text_to_emoji()</a></code>, which reads
 every alias, so where both answer the disagreement is cosmetic. Where they
-differ in substance is the 189 rows of the Emoji 16.0 catalogue that have
-no alias: <code><a href="emoji_search.html">emoji_search()</a></code> reports <code>NA</code> for those, while
-<code>as_emoji_shortcode()</code> still answers for all 189, having borrowed the alias
-of the glyph's other spelling. The 202 spellings added in Emoji 17.0 and
-18.0 have no alias on any spelling, since the aliases come from the
-<span class="pkg">emoji</span> package and it has not caught up, so both return <code>NA</code> for
-them; they still have a name.</p>
+differ in substance is the 189 rows that have no alias of their own, all of
+them spellings with a selector left out: <code><a href="emoji_search.html">emoji_search()</a></code> reports <code>NA</code> for
+those, while <code>as_emoji_shortcode()</code> still answers for all 189, having
+borrowed the alias of the glyph's other spelling. The 202 spellings added
+in Emoji 17.0 and 18.0, which the <span class="pkg">emoji</span> package's aliases stop short
+of, have emojibase's CLDR-style shortcodes since 0.7.0, so both answer for
+them too.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -36,7 +36,7 @@ All three resolve through `emoji_key()`, so qualified emoji (carrying
 `U+FE0F`) and unqualified forms resolve identically. Unmatched inputs
 return `NA`.
 
-`as_emoji()` accepts either namespace in the same argument, and 464
+`as_emoji()` accepts either namespace in the same argument, and 471
 strings belong to both – they are the exact Unicode name of one emoji
 and a shortcode alias of another. It resolves them in a fixed order:
 **exact Unicode name first**, then shortcode, then emoji's own name
@@ -44,7 +44,7 @@ table. An exact name match is the stronger signal, so `as_emoji("dog")`
 is the emoji actually *named* "dog" (a dog, `U+1F415`), not the one
 whose alias is `:dog:` (a dog face, `U+1F436`).
 
-For 17 of those 464 strings the two namespaces disagree, and there
+For 17 of those 471 strings the two namespaces disagree, and there
 `as_emoji()` and
 [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
 differ *by design*: a `:dog:` token is explicitly delimited as a
@@ -78,14 +78,14 @@ result is a row – so the two verbs can disagree on the same glyph. Both
 resolve back to the same emoji through
 [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md),
 which reads every alias, so where both answer the disagreement is
-cosmetic. Where they differ in substance is the 189 rows of the Emoji
-16.0 catalogue that have no alias:
+cosmetic. Where they differ in substance is the 189 rows that have no
+alias of their own, all of them spellings with a selector left out:
 [`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
 reports `NA` for those, while `as_emoji_shortcode()` still answers for
 all 189, having borrowed the alias of the glyph's other spelling. The
-202 spellings added in Emoji 17.0 and 18.0 have no alias on any
-spelling, since the aliases come from the emoji package and it has not
-caught up, so both return `NA` for them; they still have a name.
+202 spellings added in Emoji 17.0 and 18.0, which the emoji package's
+aliases stop short of, have emojibase's CLDR-style shortcodes since
+0.7.0, so both answer for them too.
 
 ## See also
 

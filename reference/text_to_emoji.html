@@ -106,12 +106,10 @@ share one shortcode and only one of the two spellings can come back.
 Feeding the whole emoji catalogue through
 <code>emoji_to_text(format = "shortcode")</code> and back returns an identical
 code-point key for all 5244 entries and identical bytes for 80% of them.
-The other 1040 differ <strong>by <code>U+FE0F</code> alone, never by more</strong>: they come back
+The other 1060 differ <strong>by <code>U+FE0F</code> alone, never by more</strong>: they come back
 as the spelling this verb's shortcode table carries. A second round trip
 changes nothing, so the result is stable either way – but compare with
-<code>emoji_key()</code>, never with string equality. The 202 spellings added in
-Emoji 17.0 and 18.0 are among the identical ones for a duller reason: they
-have no shortcode, so <code><a href="emoji_to_text.html">emoji_to_text()</a></code> left them in place.</p>
+<code>emoji_key()</code>, never with string equality.</p>
 <p>Which 80% is <em>not</em> the same question as which were already fully qualified,
 and the two sets genuinely differ in both directions. The bare heart
 (<code>U+2764</code>) survives unchanged, because that unqualified spelling is the one
@@ -119,7 +117,7 @@ and the two sets genuinely differ in both directions. The bare heart
 (<code>U+1F575 U+FE0F U+200D U+2642</code>) does not, because it comes back with a
 second selector on the gender sign. If your text holds the <em>canonical</em>
 spelling of each emoji – what a keyboard emits – the round trip is
-byte-exact for all 3790 that have a shortcode; see <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code>,
+byte-exact for all 3972; see <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code>,
 which tabulates both denominators.</p>
     </div>
     <div class="section level2">

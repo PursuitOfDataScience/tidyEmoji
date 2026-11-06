@@ -65,20 +65,24 @@ emoji in the catalogue, each under its canonical spelling.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with columns <code>emoji</code>, <code>name</code> and <code>keyword</code>, one row per
-keyword, in the order of <code>x</code> and then of the keyword set.</p>
+    <p>A tibble with columns <code>emoji</code>, <code>name</code>, <code>keyword</code> and <code>source</code>
+(<code>"github"</code> or <code>"cldr"</code>, <code>NA</code> with a <code>NA</code> keyword), one row per keyword,
+in the order of <code>x</code> and then of the keyword set.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>These are the English keyword sets</strong>, from the <span class="pkg">emoji</span> package, and
-nothing in them says anything about how an emoji is read in another
-language or culture. Multilingual keywords are not bundled.</p>
-<p>The keywords come from <span class="pkg">emoji</span> while the catalogue comes from Unicode,
-and the two are not equally current: an emoji newer than <span class="pkg">emoji</span>'s own
-table (every Emoji 17.0 and 18.0 addition, at the time of writing) is
-detected and named but has no keywords. Such a glyph, and any string that
-is not an emoji at all, gets <strong>one row with <code>keyword = NA</code></strong>, never a row
-with an empty string, so <code>is.na(keyword)</code> is the test for "no vocabulary".</p>
+    <p><strong>These are the English keyword sets</strong>, and nothing in them says anything
+about how an emoji is read in another language or culture. Multilingual
+keywords are not bundled.</p>
+<p>Since 0.7.0 each emoji's set is the union of two sources, and <code>source</code> says
+which a keyword came from: <code>"github"</code>, the GitHub-style set the <span class="pkg">emoji</span>
+package carried, which every earlier release used and which comes first,
+unchanged; and <code>"cldr"</code>, the keywords of Unicode's CLDR 49 annotations that
+set lacks. The union only adds: every emoji in the catalogue has keywords
+now, the 182 of Emoji 17.0 and 18.0 included, which had none, and no
+keyword an earlier release returned is gone. A string that is not an emoji
+gets <strong>one row with <code>keyword = NA</code></strong>, never a row with an empty string, so
+<code>is.na(keyword)</code> is the test for "no vocabulary".</p>
 <p>Keywords belong to the emoji, not to one spelling of it, so the bare and
 the qualified heart return the same set.</p>
     </div>
@@ -92,23 +96,23 @@ shortcodes.</p></div>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">emoji_keywords</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"\U0001f389"</span>, <span class="st">"\u2764"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 14 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name         keyword    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 🎉    party popper awesome    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 🎉    party popper birthday   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 🎉    party popper celebrate  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 🎉    party popper celebration</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 🎉    party popper excited    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 🎉    party popper hooray     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 🎉    party popper party      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 🎉    party popper popper     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 🎉    party popper tada       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 🎉    party popper woohoo     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> ❤     red heart    love       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> ❤     red heart    emotion    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> ❤     red heart    heart      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> ❤     red heart    red        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 14 × 4</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    emoji name         keyword     source</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> 🎉    party popper awesome     github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> 🎉    party popper birthday    github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> 🎉    party popper celebrate   github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> 🎉    party popper celebration github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 🎉    party popper excited     github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 🎉    party popper hooray      github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 🎉    party popper party       github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 🎉    party popper popper      github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 🎉    party popper tada        github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 🎉    party popper woohoo      github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">11</span> ❤     red heart    love        github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">12</span> ❤     red heart    emotion     github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">13</span> ❤     red heart    heart       github</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">14</span> ❤     red heart    red         github</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

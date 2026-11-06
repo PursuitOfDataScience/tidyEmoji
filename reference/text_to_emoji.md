@@ -74,14 +74,10 @@ form share one shortcode and only one of the two spellings can come
 back. Feeding the whole emoji catalogue through
 `emoji_to_text(format = "shortcode")` and back returns an identical
 code-point key for all 5244 entries and identical bytes for 80% of them.
-The other 1040 differ **by `U+FE0F` alone, never by more**: they come
+The other 1060 differ **by `U+FE0F` alone, never by more**: they come
 back as the spelling this verb's shortcode table carries. A second round
 trip changes nothing, so the result is stable either way – but compare
-with `emoji_key()`, never with string equality. The 202 spellings added
-in Emoji 17.0 and 18.0 are among the identical ones for a duller reason:
-they have no shortcode, so
-[`emoji_to_text()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_to_text.md)
-left them in place.
+with `emoji_key()`, never with string equality.
 
 Which 80% is *not* the same question as which were already fully
 qualified, and the two sets genuinely differ in both directions. The
@@ -90,7 +86,7 @@ spelling is the one `:heart:` maps to; the already-qualified man
 detective (`U+1F575 U+FE0F U+200D U+2642`) does not, because it comes
 back with a second selector on the gender sign. If your text holds the
 *canonical* spelling of each emoji – what a keyboard emits – the round
-trip is byte-exact for all 3790 that have a shortcode; see
+trip is byte-exact for all 3972; see
 [`emoji_sanitize()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md),
 which tabulates both denominators.
 
