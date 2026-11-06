@@ -4,6 +4,28 @@
 
 *In development. This section is filled in as the 0.7.0 work lands.*
 
+### Infrastructure
+
+- **The test suite fits CRAN’s clock.** CRAN’s x86_64 flavours spent 219
+  to 237 s of CPU on 0.6.0’s tests, and one of them 680 s on the whole
+  check. Run as CRAN runs it, the suite now takes 49.4 s of CPU on the
+  reference machine against 165.5 s for 0.6.0, and the tests step of
+  `R CMD check` 51 s. The 39 exhaustive tests that cost most of the time
+  (every catalogue spelling, every verb, hundreds of random strings)
+  stand down on CRAN through `skip_sweep()`, and each names a *twin*
+  that runs there instead and asserts the same property over a
+  deterministic sample of the catalogue, always including a fixed list
+  of hard cases. A test fails if a twin goes missing, every sweep still
+  runs on every push in CI, and a new `cran-budget` job times the suite
+  in CRAN mode and fails over its ceiling, or over 1 s for any single
+  test.
+- **[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
+  is about 80 times faster**, three milliseconds a call rather than a
+  quarter of a second, with output byte-identical to 0.6.0’s on 620
+  queries, and
+  [`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md)
+  with no argument builds its 5,244-row table once per session.
+
 ## tidyEmoji 0.6.0
 
 CRAN release: 2026-11-05

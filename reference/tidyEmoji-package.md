@@ -333,3 +333,7 @@ Useful links:
 ## Author
 
 **Maintainer**: Youzhi Yu <yuyouzhi666@icloud.com>
+
+Authors:
+
+- Youzhi Yu <yuyouzhi666@icloud.com>
