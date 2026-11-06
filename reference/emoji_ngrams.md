@@ -96,7 +96,9 @@ spelling comes back* in
 [`emoji_pairs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_pairs.md)
 for order-free co-occurrence;
 [`emoji_extract_unnest()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.md)
-for the underlying one-emoji-per-row form.
+for the underlying one-emoji-per-row form;
+[`emoji_runs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_runs.md)
+for maximal runs rather than windows of a fixed length.
 
 ## Examples
 

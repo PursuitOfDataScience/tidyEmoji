@@ -12,6 +12,7 @@
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_type.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/category_unicode_crosswalk.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_a11y_check.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_adoption_lag.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ambiguity.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_categorize.html</loc></url>
@@ -30,6 +31,7 @@
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_nest.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_extract_unnest.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_features.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_filter.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_find.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_flag.html</loc></url>
@@ -51,6 +53,7 @@
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_ratio.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_retone.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_risk.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_runs.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.html</loc></url>

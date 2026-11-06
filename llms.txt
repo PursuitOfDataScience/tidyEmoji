@@ -137,6 +137,15 @@ website](https://pursuitofdatascience.github.io/tidyEmoji/).
 - [`emoji_emotion_label()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion_label.md)
   : The dominant emoji emotion per row
 
+## Sequences and accessibility
+
+- [`emoji_runs()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_runs.md)
+  : Runs of emoji: the sequences writers build
+- [`emoji_features()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_features.md)
+  : One row per emoji, with the cues that tell what it is doing
+- [`emoji_a11y_check()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_a11y_check.md)
+  : Accessibility facts about the emoji in a text column
+
 ## Identity
 
 - [`emoji_decompose()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_decompose.md)

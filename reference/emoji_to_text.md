@@ -113,6 +113,16 @@ fire"), or as their shortcodes (":grinning::fire:"): the parts every
 other verb counts since 0.7.0. If any part has no name the sequence
 stays as it is.
 
+## A preview of what a screen reader says
+
+`format = "name"` writes the text a screen reader that reads CLDR names,
+as NVDA does, will speak. That *Preview* is the design the sighted
+writers in Griggio, Gorman and Tigwell (CSCW 2024) preferred to
+warnings, because it leaves the judgement to them, so the package offers
+it here rather than in a verb of its own;
+[`emoji_a11y_check()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_a11y_check.md)
+reports the facts their taxonomy is built from.
+
 ## See also
 
 [`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
@@ -120,7 +130,8 @@ for the inverse (emojize);
 [`as_emoji_name()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
 [`as_emoji_shortcode()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md),
 [`as_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/as_emoji_name.md)
-for vector helpers.
+for vector helpers;
+[`emoji_a11y_check()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_a11y_check.md).
 
 ## Examples
 
