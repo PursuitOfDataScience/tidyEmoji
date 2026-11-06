@@ -733,7 +733,9 @@ test_that("emoji_coverage() reports what a lexicon could not score (moved)", {
 
 test_that("emoji_coverage() gives the example corpus's figures", {
   # 0.6.0 pinned these on the retired tweet corpus (900 occurrences, 62.8%
-  # and 50.8% for the sentiment lexicon); 0.7.0 on the OASST2 sample
+  # and 50.8% for the sentiment lexicon); 0.7.0 on the OASST2 sample, after
+  # D7 split its three unrecommended ZWJ sequences into their parts (1,450
+  # occurrences of 401 types before, 1,454 of 398 after)
   corpus <- oasst_messages
   cv <- emoji_coverage(corpus, text)
   expect_identical(cv$lexicon, c("novak2015", "emotag1200"))
@@ -741,11 +743,11 @@ test_that("emoji_coverage() gives the example corpus's figures", {
   expect_identical(c(s$n_occurrences, s$n_scorable, s$n_types,
                      s$n_types_scorable, s$n_rows_with_emoji,
                      s$n_rows_unscored, s$lexicon_size),
-                   c(1450L, 1087L, 401L, 244L, 750L, 135L, 969L))
+                   c(1454L, 1091L, 398L, 244L, 750L, 135L, 969L))
   expect_equal(round(100 * s$occurrence_coverage, 1), 75.0)
-  expect_equal(round(100 * s$type_coverage, 1), 60.8)
+  expect_equal(round(100 * s$type_coverage, 1), 61.3)
   e <- cv[cv$lexicon == "emotag1200", ]
-  expect_equal(round(100 * e$occurrence_coverage, 1), 53.0)
+  expect_equal(round(100 * e$occurrence_coverage, 1), 52.9)
   expect_identical(e$n_types_scorable, 106L)
   # the per-row figure it summarises: rows with emoji and no score
   sent <- emoji_sentiment(corpus, text)

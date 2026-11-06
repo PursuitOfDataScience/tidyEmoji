@@ -78,7 +78,7 @@ weighted
 That is the honest network for this corpus: `r nrow(weighted)` edges, where
 the raw edge list had `r nrow(edges)`. Most of those came from a handful of
 replies that tabulate dozens of emoji at once, which pair every emoji in the
-table with every other; 1,485 messages holding 1,450 emoji are too few for a
+table with every other; 1,485 messages holding 1,454 emoji are too few for a
 network of more than a modest number of emoji, and it is better to know that
 than to draw the whole edge list. A corpus of hundreds of thousands of
 messages, or one pooled by user or by conversation with `doc_id`, gives a

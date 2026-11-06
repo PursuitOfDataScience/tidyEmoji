@@ -87,7 +87,7 @@ glyphs are measured at all.
 }
 
 On the example corpus, \link{oasst_messages}, the two differ by fourteen points
-for the bundled sentiment lexicon, 75.0\% of occurrences against 60.8\% of
+for the bundled sentiment lexicon, 75.0\% of occurrences against 61.3\% of
 types, and the third number is the one with consequences: 135 of the 750
 rows that hold an emoji have none the lexicon can score, so their
 \code{.emoji_sentiment} is \code{NA}. Dropping those rows before a comparison drops
@@ -102,7 +102,8 @@ of the catalogue's count.
 \section{What \code{presentation} costs}{
 
 The default detection requires emoji presentation, so a bare \code{U+2764}
-heart is not counted. \code{n_text_presentation} is how many such
+heart is not counted, nor, since 0.7.0, a glyph the writer followed with
+\code{U+FE0E} to ask for its text form. \code{n_text_presentation} is how many such
 text-presentation glyphs the corpus holds (the occurrences
 \code{presentation = "any"} would add), and \code{n_text_presentation_scorable} is
 how many of those this lexicon could score. Under the default they are

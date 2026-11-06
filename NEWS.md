@@ -23,7 +23,7 @@
   hidden, and Japanese ideographic variants, Mongolian and mathematical
   variants, joiners and non-joiners and the England, Scotland and Wales flags
   are all left alone, so text with nothing hidden in it comes back byte for
-  byte, as all 2,000 rows of the bundled corpus do under all five policies.
+  byte, as all 1,485 rows of the bundled sample do under all five policies.
 * **New: `emoji_hidden()`** reports, per row, how many code points are hidden,
   their bytes, whether they are selectors or tags, how many runs they form,
   and the payload decoded from the two published encodings, with every control
@@ -32,6 +32,53 @@
   **`emoji_token_cost()` gains `.emoji_n_hidden` and `.emoji_hidden_bytes`**,
   added at the end. 0.6.0 reported four bytes for an emoji that carried 112
   more.
+
+## Detection
+
+**Counts move, in both directions.** Two changes remove emoji that 0.6.0
+counted and one splits a nameless emoji into the emoji it is made of, so a
+corpus scored under 0.6.0 and again under 0.7.0 can report fewer emoji or
+more. `emoji_summary()` gains `n_unlisted`, beside `n_orphan_components` and
+`n_invalid_flags`, so the difference can be explained from the output.
+
+* **Fewer: a symbol followed by `U+FE0F` is an emoji only if the catalogue
+  lists it.** `U+2605 U+FE0F`, a black star with a stray selector, was one
+  emoji with no name in 0.6.0 and is no emoji in 0.7.0, and so are 1,110
+  other code points: the chess symbols, the astrological signs and whole
+  blocks of mahjong tiles, dominoes and playing cards among them. The last
+  branch of the detection regex inherited from `emoji` accepts any
+  `Extended_Pictographic` code point before the selector, a presentation
+  sequence Unicode defines for only some of them; the catalogue now decides.
+  `n_unlisted` counts them, and the verbs that rewrite text treat them as
+  before. Rare and systematic, the shape of 0.6.0's invalid flags: 2 tokens
+  in all of OASST2, none in the bundled sample.
+* **Fewer: a request for the text form is honoured.** `U+FE0E` after a glyph
+  asks for its text presentation, a sequence Unicode defines for 371 bases.
+  0.6.0 counted it as an emoji anyway for the 152 bases whose default is
+  emoji (watch, hourglass, hot beverage, star, soccer ball, the zodiac
+  signs) and for nine that take a skin tone (index pointing up, victory hand,
+  writing hand, hand with fingers splayed, and five people), leaving the
+  selector outside the emoji. Under the default `presentation = "emoji"` such
+  a glyph is now text, exactly as a bare `U+2764` is: not counted, and left
+  alone by the verbs that rewrite text, where 0.6.0's `"strip"` removed the
+  star and left a stray selector behind. Under `"any"` it counts, with the
+  selector inside it, so `"strip"` removes all of it and `"name"` names it.
+  Every lookup now sets `U+FE0E` aside as it does `U+FE0F`, so the
+  text-style star is named and scored like the emoji one, and
+  `emoji_identical()` and `as_emoji_canonical()` treat the two as one emoji.
+* **More: a zero-width-joiner sequence Unicode does not recommend counts as
+  its parts.** Adult, girl and boy joined (`U+1F9D1 U+200D U+1F467 U+200D
+  U+1F466`) is no recommended family. 0.6.0 counted it as one emoji with no
+  name; nearly every platform draws it as three, and 0.7.0 counts those
+  three, the longest catalogued parts read left to right. The verbs that
+  rewrite text keep the sequence whole, so `"strip"` removes its joiners too
+  and `"name"` names the parts in order, and `n_unlisted` counts it. Each
+  split adds its parts minus one: the bundled sample holds three such
+  sequences (a cat joined to a laptop, a man and a woman joined by a
+  handshake, a handshake joined to a zombie) and so 1,454 emoji of 398 kinds
+  rather than 1,450 of 401. All 1,614 recommended ZWJ sequences are still
+  one emoji each. Microsoft's ninja-cat sequences draw as one glyph on
+  Windows only, and count as a cat and an object.
 
 ## Example data
 

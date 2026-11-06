@@ -104,7 +104,7 @@ emoji_position <- function(data, text, presentation = "emoji") {
 #' emoji is built: `"hi <emoji>"` is four graphemes either way, but
 #' `.emoji_per_char` is 0.25 for a single-code-point smiley, 0.200 for a
 #' two-code-point flag and 0.100 for a seven-code-point ZWJ family. It is not
-#' exotic -- 79 of the 750 emoji-bearing rows in the example corpus,
+#' exotic -- 77 of the 750 emoji-bearing rows in the example corpus,
 #' [oasst_messages], contain a multi-code-point emoji.
 #'
 #' This is the same basis [emoji_ratio()] uses and states, and the opposite of
@@ -189,7 +189,9 @@ emoji_density <- function(data, text, presentation = "emoji") {
 #' section of [tidyEmoji]), so it adds nothing to `.emoji_n` or
 #' `.emoji_codepoints`. It is not text either, so it does not stop a row being
 #' `.emoji_only`: `U+1F600 U+1F3FB` is one emoji, a ratio of `0.5`, and
-#' emoji-only.
+#' emoji-only. The same holds for the joiners of a zero-width-joiner sequence
+#' Unicode does not recommend, which counts as its parts:
+#' `U+1F9D1 U+200D U+1F467` is two emoji, a ratio of `2/3`, and emoji-only.
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
@@ -220,13 +222,15 @@ emoji_ratio <- function(data, text, presentation = "emoji") {
   v <- .emoji_text_col(data, {{ text }})
   was_na <- is.na(v)
   sp <- .emoji_spans(v, presentation)
-  # `locs` is the emoji; `spans` adds the components and stray indicators,
-  # which count towards neither the ratio nor .emoji_n but are not text
-  # either, so they do not stop a row being emoji-only.
+  # `locs` is the emoji; `spans` adds the components, stray indicators and
+  # unlisted selector pairs, which count towards neither the ratio nor
+  # .emoji_n but are not text either, so they do not stop a row being
+  # emoji-only. An unrecommended ZWJ sequence counts as its parts, its
+  # joiners as neither emoji nor text.
   spans <- sp$locs
   locs <- spans
   for (i in which(!vapply(sp$kinds, is.null, logical(1)))) {
-    locs[[i]] <- spans[[i]][sp$kinds[[i]] <= 2L, , drop = FALSE]
+    locs[[i]] <- .emoji_counted(sp, i)$m
   }
   n_char <- nchar(v)
 

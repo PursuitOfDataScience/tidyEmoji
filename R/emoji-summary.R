@@ -40,18 +40,24 @@
 #'   since a flag has no text-presentation form.
 #'
 #' @return A one-row tibble with columns \code{n_with_emoji} (entries containing at
-#'   least one emoji), \code{n_total} (all entries), \code{n_orphan_components}
-#'   and \code{n_invalid_flags}. The last two count *glyphs*, not entries: the
-#'   emoji material the text holds that is not an emoji, and so is in no other
-#'   count. `n_orphan_components` is the skin-tone swatches and hair
-#'   components standing alone, as in `U+1F600 U+1F3FB`, where the tone
-#'   follows a base that cannot take one; `n_invalid_flags` is the runs of
-#'   regional indicators that spell no country, such as `U+1F1FD U+1F1FD`
-#'   ("XX") or a lone indicator. Both were counted as emoji before 0.6.0, so
-#'   they are what to look at when a corpus reports fewer emoji than it used
-#'   to. See the *Detection* section of [tidyEmoji]. `n_hidden`, unlike those
-#'   two, counts *entries*: the ones carrying a hidden payload, a code point
-#'   [emoji_hidden()] reports and [emoji_sanitize()] removes by default.
+#'   least one emoji), \code{n_total} (all entries), \code{n_orphan_components},
+#'   \code{n_invalid_flags}, \code{n_unlisted} and \code{n_hidden}. The middle
+#'   three count *glyphs*, not entries: the emoji material the text holds that
+#'   is not an emoji as it stands. `n_orphan_components` is the skin-tone
+#'   swatches and hair components standing alone, as in `U+1F600 U+1F3FB`,
+#'   where the tone follows a base that cannot take one; `n_invalid_flags` is
+#'   the runs of regional indicators that spell no country, such as
+#'   `U+1F1FD U+1F1FD` ("XX") or a lone indicator. `n_unlisted` is the
+#'   sequences the catalogue lists under no spelling: a code point followed
+#'   by `U+FE0F`, such as the black star `U+2605 U+FE0F`, which no verb
+#'   counts, and a zero-width-joiner sequence Unicode does not recommend, such
+#'   as adult, girl and boy joined, which every verb counts as the parts it
+#'   splits into. The first two were counted as emoji before 0.6.0 and the
+#'   third before 0.7.0, so they are what to look at when a corpus reports a
+#'   different number of emoji than it used to. See the *Detection* section
+#'   of [tidyEmoji]. `n_hidden`, unlike those three, counts *entries*: the
+#'   ones carrying a hidden payload, a code point [emoji_hidden()] reports
+#'   and [emoji_sanitize()] removes by default.
 #' @seealso [emoji_filter()] to keep the emoji-bearing rows themselves;
 #'   [emoji_coverage()] for what a lexicon can score of them.
 #' @examples
@@ -78,13 +84,15 @@ emoji_summary <- function(data, text, presentation = "emoji") {
   }
   has <- vapply(seq_along(sp$locs), function(i) {
     k <- kinds[[i]]
-    if (is.null(k)) nrow(sp$locs[[i]]) > 0L else any(k <= 2L)
+    if (is.null(k)) nrow(sp$locs[[i]]) > 0L else nrow(.emoji_counted(sp, i)$m) > 0L
   }, logical(1))
   tibble::tibble(
     n_with_emoji = sum(has, na.rm = TRUE),
     n_total = length(v),
     n_orphan_components = n_kind(.emoji_kind_component),
     n_invalid_flags = n_kind(.emoji_kind_flag),
+    n_unlisted = n_kind(.emoji_kind_unlisted) +
+      n_kind(.emoji_kind_unrecommended),
     n_hidden = sum(lengths(.emoji_hidden_scan(v)$pos) > 0L)
   )
 }

@@ -58,8 +58,12 @@
     while (k > 1L && blank[k]) k <- k - 1L
     run <- seq(k, nrow(m))
     kind <- sp$kinds[[i]]
-    if (!is.null(kind)) run <- run[kind[run] <= 2L]
-    .emoji_slice(m[run, , drop = FALSE], s)
+    if (is.null(kind)) return(.emoji_slice(m[run, , drop = FALSE], s))
+    # the emoji of the run: counted spans that fall inside it, so an
+    # unrecommended ZWJ sequence there contributes its parts
+    cnt <- .emoji_counted(sp, i)
+    inside <- cnt$m[, "start"] >= m[run[1L], "start"]
+    .emoji_slice(cnt$m[inside, , drop = FALSE], s)
   })
 }
 

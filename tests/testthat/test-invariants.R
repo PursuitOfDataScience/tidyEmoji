@@ -5321,7 +5321,8 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   skip_if_not_installed("tidyr")
 
   old <- Sys.getenv(c("TIDYEMOJI_WRITE", "TIDYEMOJI_EMOJI_TEST",
-                      "TIDYEMOJI_FETCH", "TIDYEMOJI_STD_VARIANTS"),
+                      "TIDYEMOJI_FETCH", "TIDYEMOJI_STD_VARIANTS",
+                      "TIDYEMOJI_EMOJI_VARIATIONS"),
                     unset = NA)
   on.exit({
     for (v in names(old)) {
@@ -5329,12 +5330,16 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
         do.call(Sys.setenv, stats::setNames(list(old[[v]]), v))
     }
   }, add = TRUE)
-  # the UCD's standardized variation sequences (0.7.0), read beside it
+  # the UCD's standardized and emoji variation sequences (0.7.0), read
+  # beside it
   sv <- testthat::test_path("..", "..", "data-raw", "StandardizedVariants.txt")
-  skip_if(!file.exists(sv), "data-raw/ not available")
+  evs <- testthat::test_path("..", "..", "data-raw",
+                             "emoji-variation-sequences.txt")
+  skip_if(!file.exists(sv) || !file.exists(evs), "data-raw/ not available")
   Sys.setenv(TIDYEMOJI_WRITE = "false",
              TIDYEMOJI_EMOJI_TEST = normalizePath(input),
              TIDYEMOJI_STD_VARIANTS = normalizePath(sv),
+             TIDYEMOJI_EMOJI_VARIATIONS = normalizePath(evs),
              TIDYEMOJI_FETCH = "false")
   env <- new.env(parent = globalenv())
   suppressMessages(sys.source(script, envir = env))
@@ -5342,12 +5347,15 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   ns <- asNamespace("tidyEmoji")
   for (nm in c("emoji_unicode_crosswalk", "category_unicode_crosswalk",
                ".emoji_catalogue", ".emoji_catalogue_meta",
-               ".emoji_std_variants", ".emoji_std_variants_meta")) {
+               ".emoji_std_variants", ".emoji_std_variants_meta",
+               ".emoji_text_style_bases")) {
     expect_identical(get(nm, envir = env), get(nm, envir = ns), info = nm)
   }
   # the version recorded is the one the file says it is
   expect_identical(ns$.emoji_catalogue_meta$emoji_version, "18.0")
   expect_identical(ns$.emoji_catalogue_meta$rows, 5244L)
+  # 371 bases with a text sequence: 152 default to emoji, 219 to text
+  expect_length(ns$.emoji_text_style_bases, 371L)
 })
 
 test_that("every nchar() on user text feeds a documented code-point figure", {
@@ -10019,10 +10027,11 @@ test_that("the alias figures on ?emoji_search hold", {
 })
 
 test_that("?emoji_density's figures describe the example corpus", {
-  # "79 of the 750 emoji-bearing rows in the example corpus contain a
+  # "77 of the 750 emoji-bearing rows in the example corpus contain a
   # multi-code-point emoji" -- the sentence that stops a reader dismissing
   # the code-point basis as a corner case (0.6.0 quoted 115 of 560, on the
-  # tweet corpus 0.7.0 retired)
+  # tweet corpus 0.7.0 retired; 79 before D7 split two rows' unrecommended
+  # ZWJ sequences into single-code-point parts)
   lst <- asNamespace("tidyEmoji")$emoji_glyph_list(oasst_messages$text)
   bearing <- lengths(lst) > 0L
   expect_identical(sum(bearing), 750L)
@@ -10030,11 +10039,11 @@ test_that("?emoji_density's figures describe the example corpus", {
     if (!length(g)) return(FALSE)
     any(vapply(g, function(x) length(utf8ToInt(x)) > 1L, logical(1)))
   }, logical(1))
-  expect_identical(sum(multi), 79L)
+  expect_identical(sum(multi), 77L)
   # every row with a multi-code-point emoji is by definition emoji-bearing
   expect_identical(sum(multi & bearing), sum(multi))
   rd <- rd_flat("emoji_density")
-  expect_match(rd, "79 of the 750 emoji-bearing rows", fixed = TRUE)
+  expect_match(rd, "77 of the 750 emoji-bearing rows", fixed = TRUE)
 })
 
 test_that("each verb is on the side of the spelling rule ?tidyEmoji puts it", {
@@ -10603,7 +10612,9 @@ test_that("every documented sort actually orders the output it describes", {
   stable(function(x) emoji_adoption_lag(x, text, when))
 
   # emoji_version_profile: oldest first, and the unknown-version row last
-  unk <- paste0("\U0001F600\u200d\U0001F525")   # detected, not catalogued
+  # detected, not catalogued: a family with a skin tone, which the grammar
+  # allows and Unicode does not recommend
+  unk <- "\U0001F46A\U0001F3FD"
   expect_false(asNamespace("tidyEmoji")$emoji_key(unk) %in% ref$key)
   vp <- emoji_version_profile(
     data.frame(text = c(G, unk, unk), stringsAsFactors = FALSE), text)
@@ -10838,18 +10849,20 @@ test_that("the reversible-preprocessing vignette's figures hold", {
                fixed = TRUE)
 
   # and the claim the article makes about its own last table: "shortcode"
-  # leaves in place a glyph it cannot name, so a corpus holding one still
-  # shows a cost. On the example corpus that is the three ZWJ sequences
-  # Unicode does not recommend, read as one nameless glyph each until the D7
-  # fix; pin the count the inline figure prints and the reason the prose
-  # gives for it, so the sentence cannot describe a different corpus.
+  # leaves in place a glyph it cannot name, and on the example corpus there
+  # is none left. Until 0.7.0 there were three, the ZWJ sequences Unicode
+  # does not recommend, each read as one nameless glyph; D7 counts them as
+  # their parts and writes each part's shortcode. Pin the count the inline
+  # figure prints and the history the prose gives, so the sentence cannot
+  # describe a different corpus.
   d <- oasst_messages
-  expect_identical(sum(emoji_token_cost(d, text)$.emoji_n), 1450L)
+  expect_identical(sum(emoji_token_cost(d, text)$.emoji_n), 1454L)
   san <- emoji_sanitize(d, text, policy = "shortcode")
   left <- unlist(tidyEmoji:::emoji_glyph_list(san$text), use.names = FALSE)
-  expect_identical(length(left), 3L)
-  expect_true(all(grepl("\u200d", left, fixed = TRUE)))
-  expect_true(all(is.na(as_emoji_name(left))))
+  expect_identical(length(left), 0L)
+  d7 <- tidyEmoji:::.emoji_spans(d$text)$kinds
+  expect_identical(sum(vapply(d7, function(k) sum(k == 6L), integer(1))), 3L)
+  expect_match(txt, "Before 0.7.0 it kept three", fixed = TRUE)
   expect_match(txt, "zero-width-joiner sequences Unicode does not", fixed = TRUE)
 })
 

@@ -164,6 +164,42 @@
 #' [emoji_to_text()] still names it), because what changed is what is
 #' *counted*, and a swatch left in a stripped column would still be a swatch.
 #'
+#' Since 0.7.0 the catalogue decides two more cases, and what a reader sees
+#' decides how a sequence splits:
+#'
+#' * **A symbol with a stray `U+FE0F` is an emoji only if the catalogue lists
+#'   it.** The detection regex, inherited from the \pkg{emoji} package,
+#'   accepts any pictographic code point followed by `U+FE0F`, a presentation
+#'   sequence Unicode defines for only some of them, so a black star
+#'   (`U+2605`), a chess piece or a playing card with a selector after it came
+#'   back as an emoji with no name: 1,111 code points in all. No verb counts
+#'   such a span now, and the verbs that rewrite text treat it as before.
+#' * **A zero-width-joiner sequence Unicode does not recommend counts as its
+#'   parts.** Segmentation joins any two pictographs a `U+200D` stands
+#'   between, and nothing asked whether the result is a recommended sequence.
+#'   Adult, girl and boy joined is not one: until 0.7.0 it was one emoji with
+#'   no name, and now it is the three emoji nearly every platform draws, the
+#'   longest catalogued parts read left to right. The verbs that rewrite text
+#'   keep it whole, so `"strip"` removes the joiners with it and `"name"`
+#'   names the parts in order. Microsoft's ninja-cat sequences (a cat joined
+#'   to a laptop, a dragon, a rocket and three more) draw as one glyph on
+#'   Windows and as a cat beside an object everywhere else, and here they
+#'   count as the cat and the object, so a corpus written on Windows holds
+#'   more emoji than its writers saw.
+#' * **A request for the text form is honoured.** `U+FE0E` after a glyph asks
+#'   for its text presentation, a sequence Unicode's
+#'   `emoji-variation-sequences.txt` defines for 371 bases. Under the default
+#'   `presentation = "emoji"` such a glyph is not an emoji, exactly as a bare
+#'   `U+2764` is not, and the verbs that rewrite text leave it as text; under
+#'   `"any"` it counts, with the selector inside the span, so `"strip"`
+#'   removes all of it. Until 0.7.0 the 152 bases whose default is emoji (a
+#'   watch, a star, the zodiac signs) and nine that take a skin tone (the
+#'   index pointing up, the victory hand and seven more) were counted despite
+#'   the request.
+#'
+#' [emoji_summary()] counts the first two kinds in `n_unlisted`, so a count
+#' that moved between versions can be explained.
+#'
 #' ASCII emoticons such as `:)` are not emoji and are never detected, so a
 #' study of the move from emoticons to emoji, which needs both in one
 #' denominator, has to count the emoticons itself.

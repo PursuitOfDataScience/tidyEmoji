@@ -81,7 +81,9 @@ indicator that spells no flag, is not an emoji (see the \emph{Detection}
 section of \link{tidyEmoji}), so it adds nothing to \code{.emoji_n} or
 \code{.emoji_codepoints}. It is not text either, so it does not stop a row being
 \code{.emoji_only}: \verb{U+1F600 U+1F3FB} is one emoji, a ratio of \code{0.5}, and
-emoji-only.
+emoji-only. The same holds for the joiners of a zero-width-joiner sequence
+Unicode does not recommend, which counts as its parts:
+\verb{U+1F9D1 U+200D U+1F467} is two emoji, a ratio of \code{2/3}, and emoji-only.
 }
 \examples{
 df <- data.frame(text = c("\U0001f600\U0001f389", "half \U0001f600", "no"))

@@ -99,7 +99,7 @@ against the full corpus rather than against the surviving subset.
 
 PMI alone is a fragile ranking. It favours rare pairs (a word seen once
 beside an emoji seen once scores the maximum), and on a real corpus it
-ties constantly: on the example corpus, \link{oasst_messages}, 43.4\% of the
+ties constantly: on the example corpus, \link{oasst_messages}, 42.7\% of the
 rows share their PMI with another row. Corpus linguistics answers this
 by choosing the measure for the question, and by knowing which kind of
 question it is. \code{measure} offers the standard ones, all computed from the

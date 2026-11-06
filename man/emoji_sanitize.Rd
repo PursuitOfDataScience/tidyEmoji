@@ -102,9 +102,11 @@ policy whose result is emoji-free whatever you hand it.
 \item \code{"name"} and \code{"shortcode"} substitute the Unicode name
 ("grinning face") or the GitHub-style alias (":grinning:"), exactly as
 \code{\link[=emoji_to_text]{emoji_to_text()}} does -- including its rule that a glyph with no known
-name or alias is \strong{left in place unchanged}. A ZWJ sequence too new for
-the installed catalogue is detected but cannot be named, so these two
-policies can return a column that still holds emoji. \code{"strip"} never
+name or alias is \strong{left in place unchanged}. A glyph the catalogue does
+not list, such as a family with a skin tone (a sequence Unicode allows
+but does not recommend), is detected but cannot be named, so these two
+policies can return a column that still holds emoji. A ZWJ sequence the
+catalogue does not list is named by its parts, in order. \code{"strip"} never
 does. Neither does \code{"placeholder"}, unless the token you supply is
 itself emoji-forming: one that \emph{is} an emoji survives by definition, and
 a lone combining character such as \code{U+FE0F} binds to whatever the

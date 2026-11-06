@@ -800,7 +800,11 @@ test_that("the ZWJ repair binds only between two emoji", {
   Z <- "\u200D"
   man <- "\U0001F468"
   woman <- "\U0001F469"
-  one <- function(s) gl(s)[[1]]
+  # the spans the detector segments the text into, which is what the repair
+  # decides; what is counted inside a span is a separate question (below)
+  one <- function(s) {
+    tidyEmoji:::.emoji_slice(tidyEmoji:::.emoji_all_spans(s)[[1]], s)
+  }
   # UAX #29 GB11: a ZWJ between two emoji binds them into one cluster
   expect_equal(one(paste0(man, Z, woman)), paste0(man, Z, woman))
   expect_equal(one(paste0(man, Z, woman, Z, man)),
@@ -814,6 +818,11 @@ test_that("the ZWJ repair binds only between two emoji", {
   expect_equal(one(paste0(man, Z, " ", woman)), c(man, woman))
   expect_equal(one(paste0(man, " ", Z, woman)), c(man, woman))
   expect_equal(one(Z), character(0))
+  # and since 0.7.0 (D7) a joined sequence the catalogue does not list is
+  # counted as the parts it splits into, the way nearly every platform draws
+  # it; man, ZWJ, woman is no recommended sequence
+  expect_equal(gl(paste0(man, Z, woman))[[1]], c(man, woman))
+  expect_equal(gl(paste0(man, Z, woman, Z, man))[[1]], c(man, woman, man))
 })
 
 test_that("emoji_canonical collapses qualification and passes unknowns", {
@@ -870,9 +879,11 @@ test_that("emoji_risk's two counts agree about an unscorable row", {
 # ---------------------------------------------------------------------------
 
 test_that("emoji_categorize keeps an emoji-bearing row it cannot categorise", {
-  # a ZWJ sequence UAX #29 makes one grapheme but that no catalogue lists --
-  # exactly what a corpus newer than the installed {emoji} contains
-  novel <- paste0("\U0001F600", "\u200D", "\U0001F600")
+  # a glyph the detector reads as one emoji but that no catalogue lists: the
+  # family with a skin tone, a modifier sequence UTS #51's grammar allows and
+  # Unicode does not recommend. (0.4.0 used a ZWJ sequence of two grinning
+  # faces, which 0.7.0 counts as the two faces it splits into, D7.)
+  novel <- "\U0001F46A\U0001F3FD"
   expect_length(tidyEmoji:::emoji_glyph_list(novel)[[1]], 1L)
   expect_false(tidyEmoji:::emoji_key(novel) %in%
                  tidyEmoji:::emoji_reference()$key)
@@ -889,7 +900,7 @@ test_that("emoji_categorize keeps an emoji-bearing row it cannot categorise", {
 })
 
 test_that("categorize keeps exactly the rows emoji_filter keeps", {
-  novel <- paste0("\U0001F600", "\u200D", "\U0001F600")
+  novel <- "\U0001F46A\U0001F3FD"
   df <- data.frame(text = c(paste("hi", laugh), novel, "plain", rage))
   expect_equal(nrow(emoji_categorize(df, text)),
                nrow(emoji_filter(df, text)))
@@ -898,7 +909,7 @@ test_that("categorize keeps exactly the rows emoji_filter keeps", {
 test_that("the other verbs already reported the unknown glyph honestly", {
   # recorded so a future change does not "tidy" these NAs away: reporting the
   # glyph with NA metadata is what tells a user their catalogue is behind
-  novel <- paste0("\U0001F600", "\u200D", "\U0001F600")
+  novel <- "\U0001F46A\U0001F3FD"
   df <- data.frame(text = paste("hi", novel))
   expect_equal(emoji_position(df, text)$.emoji_n, 1L)
   expect_true(is.na(emoji_type(df, text)$.emoji_type))
@@ -931,7 +942,10 @@ test_that("the other verbs already reported the unknown glyph honestly", {
 # "did it come back as one glyph?" passes while the answer is the wrong emoji.
 orphaned_joiners <- function(x) {
   zwj <- "\u200D"
-  locs <- tidyEmoji:::.emoji_locations(x)
+  # the detected spans, not the counted occurrences: since 0.7.0 (D7) the
+  # joiners of a sequence the catalogue does not list sit between the parts it
+  # is counted as, and still inside the one span the detector found
+  locs <- tidyEmoji:::.emoji_all_spans(x)
   vapply(seq_along(x), function(i) {
     s <- x[[i]]
     if (is.na(s) || !grepl(zwj, s, fixed = TRUE)) return(0L)
@@ -995,15 +1009,20 @@ test_that("real corpus text leaves no joiner orphaned", {
   txt <- oasst_messages$text
   expect_gt(sum(grepl("\u200D", txt, fixed = TRUE)), 20L)
   expect_equal(sum(orphaned_joiners(txt) > 0L), 0L)
-  # and every glyph the corpus yields resolves to a known emoji, except the
-  # three ZWJ sequences Unicode does not recommend, which come back as one
-  # nameless glyph until 0.7.0's D7 fix splits them
+  # and every glyph the corpus yields resolves to a known emoji. Until 0.7.0
+  # three ZWJ sequences Unicode does not recommend came back as one nameless
+  # glyph each; D7 counts them as their parts
   glyphs <- unique(unlist(tidyEmoji:::emoji_glyph_list(txt), use.names = FALSE))
-  nameless <- glyphs[is.na(as_emoji_name(glyphs))]
-  expect_setequal(nameless, c(
-    intToUtf8(c(0x1F431, 0x200D, 0x1F4BB)),
-    intToUtf8(c(0x1F468, 0x200D, 0x1F91D, 0x200D, 0x1F469)),
-    intToUtf8(c(0x1F91D, 0x200D, 0x1F9DF, 0x200D, 0x2640, 0xFE0F))))
+  expect_identical(glyphs[is.na(as_emoji_name(glyphs))], character(0))
+  d7 <- c(intToUtf8(c(0x1F431, 0x200D, 0x1F4BB)),
+          intToUtf8(c(0x1F468, 0x200D, 0x1F91D, 0x200D, 0x1F469)),
+          intToUtf8(c(0x1F91D, 0x200D, 0x1F9DF, 0x200D, 0x2640, 0xFE0F)))
+  expect_true(all(vapply(d7, function(g) any(grepl(g, txt, fixed = TRUE)),
+                         logical(1))))
+  expect_identical(tidyEmoji:::emoji_glyph_list(d7), list(
+    intToUtf8(c(0x1F431, 0x1F4BB), multiple = TRUE),
+    intToUtf8(c(0x1F468, 0x1F91D, 0x1F469), multiple = TRUE),
+    c(intToUtf8(0x1F91D), intToUtf8(c(0x1F9DF, 0x200D, 0x2640, 0xFE0F)))))
 })
 
 # Shared by the sweep and its CRAN twin: every ZWJ spelling, or a sample with the two that lose a joiner
@@ -1080,8 +1099,11 @@ test_that("a bare gender sign no longer splits the sequence around it", {
 test_that("the widened rule does not merge things that are not one emoji", {
   gl <- tidyEmoji:::emoji_glyph_list
   Z <- "\u200D"
-  # rule 1 still covers sequences the catalogue has never heard of
-  expect_length(gl(paste0("\U0001F600", Z, "\U0001F600"))[[1]], 1L)
+  # rule 1 still covers sequences the catalogue has never heard of: one span,
+  # counted since 0.7.0 as the two faces it is made of (D7)
+  twin <- paste0("\U0001F600", Z, "\U0001F600")
+  expect_equal(nrow(tidyEmoji:::.emoji_all_spans(twin)[[1]]), 1L)
+  expect_length(gl(twin)[[1]], 2L)
   # and nothing else merges
   expect_length(gl(paste0(laugh, " ", rage))[[1]], 2L)
   expect_length(gl(paste0(laugh, Z, "x", Z, rage))[[1]], 2L)

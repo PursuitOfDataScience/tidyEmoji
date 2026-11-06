@@ -100,7 +100,7 @@ diagonal).
 \section{Counts are not associations}{
 
 Most emoji pairs in a real corpus are seen once: on the example corpus,
-\link{oasst_messages}, 4,042 of the 4,314 edges (93.7\%) have \code{n = 1}. A graph
+\link{oasst_messages}, 4,044 of the 4,316 edges (93.7\%) have \code{n = 1}. A graph
 drawn from raw counts is mostly noise with a layout, and the common emoji
 pair with everything simply because they are common. \code{measure} scores each
 pair against what its two emoji's frequencies predict, over documents: \code{N}

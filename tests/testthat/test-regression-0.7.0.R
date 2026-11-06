@@ -381,18 +381,26 @@ surface_070 <- function() {
     to_text_hidden_keep = function(d, col)
       emoji_to_text(d, !!col, hidden = "keep"),
     token_cost_hidden = function(d, col) emoji_token_cost(d, !!col),
-    summary_n_hidden = function(d, col) emoji_summary(d, !!col)
+    summary_n_hidden = function(d, col) emoji_summary(d, !!col),
+    summary_n_unlisted_any = function(d, col)
+      emoji_summary(d, !!col, presentation = "any")
   )
 }
 
 # The verbs that pool rows and say so when the input is grouped.
-surface_070_aggregators <- function() c("summary_n_hidden")
+surface_070_aggregators <- function() {
+  c("summary_n_hidden", "summary_n_unlisted_any")
+}
 
+# Row 3 carries one of each 0.7.0 detection case besides the hidden payload
+# in row 1: a symbol with a stray U+FE0F (D6), adult and girl joined (D7) and
+# a star asking for its text form (D10).
 surface_fixture <- function() {
   data.frame(
     id = 1:4,
     text = c(paste0("hi ", cp(0x1F600), vs_encode("x")), "plain",
-             paste(cp(0x1F44B), cp(0x2764, 0xFE0F)), NA),
+             paste(cp(0x1F44B), cp(0x2764, 0xFE0F), cp(0x2605, 0xFE0F),
+                   cp(0x1F9D1, 0x200D, 0x1F467), cp(0x2B50, 0xFE0E)), NA),
     stringsAsFactors = FALSE)
 }
 
@@ -619,15 +627,15 @@ check_help_corpus_figures <- function(full) {
   if (full) {
     col <- emoji_collocations(m, text)
     tied <- mean(duplicated(col$pmi) | duplicated(col$pmi, fromLast = TRUE))
-    expect_identical(round(100 * tied, 1), 43.4)
+    expect_identical(round(100 * tied, 1), 42.7)
     pr <- emoji_pairs(m, text)
-    expect_identical(c(sum(pr$n == 1L), nrow(pr)), c(4042L, 4314L))
+    expect_identical(c(sum(pr$n == 1L), nrow(pr)), c(4044L, 4316L))
     expect_identical(round(100 * mean(pr$n == 1L), 1), 93.7)
   }
-  expect_match(rd_flat("emoji_collocations"), "43.4% of the rows share",
+  expect_match(rd_flat("emoji_collocations"), "42.7% of the rows share",
                fixed = TRUE)
   expect_match(rd_flat("emoji_pairs"),
-               "4,042 of the 4,314 edges (93.7%) have", fixed = TRUE)
+               "4,044 of the 4,316 edges (93.7%) have", fixed = TRUE)
   cv <- emoji_coverage(m, text)
   s <- cv[cv$lexicon == "novak2015", ]
   cov <- rd_flat("emoji_coverage")
@@ -651,4 +659,340 @@ test_that("the help pages quote the example corpus's figures", {
 
 test_that("the help pages quote the example corpus's coverage figures", {
   check_help_corpus_figures(FALSE)
+})
+
+
+# --- M3 and M4 (D6, D7, D10): what the catalogue decides ---------------------------
+#
+# D6: a code point followed by U+FE0F that the catalogue lists under no
+# spelling is span kind 5, counted by no verb and rewritten as in 0.6.0. D7: a
+# ZWJ sequence the catalogue does not list is kind 6, counted as its longest
+# catalogued parts and rewritten as one unit. D10: a detected glyph followed
+# by U+FE0E, whose text sequence Unicode defines, is text under "emoji" and a
+# kind-2 span holding the selector under "any".
+
+span_kind_counts <- function(x, kind, presentation = "emoji") {
+  k <- tidyEmoji:::.emoji_spans(x, presentation)$kinds
+  vapply(k, function(z) sum(z == kind), integer(1))
+}
+
+test_that("a non-emoji symbol plus U+FE0F is not an emoji (D6)", {
+  star <- cp(0x2605, 0xFE0F)                  # BLACK STAR + VS16
+  f <- emoji_frequency(tibble::tibble(text = star), text)
+  # 0.6.0: one row, name NA. 0.7.0: zero rows, and it is accounted for.
+  expect_equal(nrow(f), 0L)
+  expect_equal(emoji_summary(tibble::tibble(text = star), text)$n_unlisted, 1L)
+  # controls that must stay emoji
+  ok <- c(cp(0x2600, 0xFE0F), cp(0x2764, 0xFE0F), cp(0x2665, 0xFE0F),
+          cp(0x1F004))
+  expect_equal(nrow(emoji_frequency(tibble::tibble(text = ok), text)), 4L)
+})
+
+# The code points the 0.7.0 plan swept: every one in U+00A0..U+33FF and
+# U+1F000..U+1FAFF, each followed by U+FE0F. `cps` narrows it for the twin.
+check_unlisted_pairs <- function(cps = c(0xA0:0x33FF, 0x1F000:0x1FAFF)) {
+  x <- vapply(cps, function(c) intToUtf8(c(c, 0xFE0F)), character(1))
+  ref <- tidyEmoji:::emoji_reference()
+  listed <- tidyEmoji:::emoji_key(x) %in% ref$key
+  counted <- lengths(tidyEmoji:::.emoji_locations(x)) > 0L
+  k5 <- span_kind_counts(x, 5L)
+  k3 <- span_kind_counts(x, 3L)
+  k4 <- span_kind_counts(x, 4L)
+  # a pair the catalogue does not list is never counted, and every one the
+  # catalogue lists is, bar the nine components standing alone (D1)
+  expect_false(any(counted & !listed))
+  expect_identical(counted, listed & k3 == 0L)
+  # what is not counted is set aside, not dropped silently: as unlisted, or,
+  # for a lone regional indicator, as the invalid flag 0.6.0 made it (D2)
+  spans <- lengths(tidyEmoji:::.emoji_spans(x)$locs) > 0L
+  expect_identical(k5 > 0L | k4 > 0L, !listed & spans)
+  expect_false(any(k5 > 0L & k4 > 0L))
+  expect_true(all(k5 <= 1L))
+  ri <- cps >= 0x1F1E6 & cps <= 0x1F1FF
+  expect_identical(k4 > 0L, ri)
+  # bare, none of them is an emoji under either presentation
+  bare <- vapply(cps[k5 > 0L], intToUtf8, character(1))
+  expect_false(any(lengths(tidyEmoji:::.emoji_locations(bare)) > 0L))
+  # emoji_summary() says how many, and the counting verbs agree it is none
+  d <- tibble::tibble(text = x[k5 > 0L])
+  s <- emoji_summary(d, text)
+  expect_identical(s$n_unlisted, sum(k5))
+  expect_identical(s$n_with_emoji, 0L)
+  expect_identical(nrow(emoji_frequency(d, text)), 0L)
+  # and the rewriting verbs do what 0.6.0 did, which the v0.6.0 differential
+  # audit measured byte for byte over all of them: "strip" and "placeholder"
+  # act on the span, "name" and "shortcode" leave it, having no name to give
+  w <- tibble::tibble(text = paste0("a", x[k5 > 0L], "b"))
+  n <- nrow(w)
+  expect_identical(emoji_sanitize(w, text, policy = "strip")$text,
+                   rep("ab", n))
+  expect_identical(emoji_sanitize(w, text, policy = "placeholder")$text,
+                   rep("a[emoji]b", n))
+  expect_identical(emoji_sanitize(w, text, policy = "name")$text, w$text)
+  expect_identical(emoji_sanitize(w, text, policy = "shortcode")$text, w$text)
+  expect_identical(emoji_to_text(w, text)$text, w$text)
+  sum(k5)
+}
+
+test_that("every non-emoji symbol plus U+FE0F is unlisted, not counted (D6)", {
+  skip_sweep(twin = "the D6 symbols and their controls are classified as the catalogue says")
+  # 1,111 such code points in 0.6.0, all of them counted with no name
+  expect_identical(check_unlisted_pairs(), 1111L)
+})
+
+test_that("the D6 symbols and their controls are classified as the catalogue says", {
+  # black star, black smiling face, white heart suit, eighth note, black
+  # knight, a mahjong tile, a domino, a playing card, mercury, jupiter, the
+  # outlined white star; and the controls that must stay emoji: sun, heart,
+  # heart suit, the star with a redundant selector, the one mahjong tile and
+  # the one playing card that are emoji
+  d6 <- c(0x2605, 0x263B, 0x2661, 0x266A, 0x265E, 0x1F000, 0x1F030, 0x1F0A1,
+          0x263F, 0x2643, 0x269D)
+  ctl <- c(0x2600, 0x2764, 0x2665, 0x2B50, 0x1F004, 0x1F0CF)
+  expect_identical(check_unlisted_pairs(c(d6, ctl)), length(d6))
+  x <- vapply(ctl, function(c) intToUtf8(c(c, 0xFE0F)), character(1))
+  expect_identical(lengths(tidyEmoji:::emoji_glyph_list(x)), rep(1L, 6L))
+  expect_false(anyNA(as_emoji_name(x)))
+})
+
+test_that("an unrecommended ZWJ sequence counts as its parts (D7)", {
+  fam <- cp(0x1F9D1, 0x200D, 0x1F467, 0x200D, 0x1F466)   # not RGI
+  f <- emoji_frequency(tibble::tibble(text = fam), text)
+  expect_setequal(f$emoji, c(cp(0x1F9D1), cp(0x1F467), cp(0x1F466)))
+  expect_false(anyNA(f$name))
+  # every RGI ZWJ sequence is still exactly one occurrence
+  rgi <- cp(0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F467, 0x200D, 0x1F466)
+  expect_equal(emoji_summary(tibble::tibble(text = rgi), text)$n_with_emoji, 1L)
+  expect_equal(sum(emoji_frequency(tibble::tibble(text = rgi), text)$n), 1L)
+})
+
+test_that("each unrecommended sequence splits into the parts a reader sees (D7)", {
+  # each fixture and the parts it is counted as, in reading order
+  fx <- list(
+    # in OASST2: the hacker cat; a man and a woman joined by a handshake; the
+    # levitating man in suit given a gender; a handshake joined to a zombie
+    list(cp(0x1F431, 0x200D, 0x1F4BB), c(cp(0x1F431), cp(0x1F4BB))),
+    list(cp(0x1F468, 0x200D, 0x1F91D, 0x200D, 0x1F469),
+         c(cp(0x1F468), cp(0x1F91D), cp(0x1F469))),
+    list(cp(0x1F574, 0xFE0F, 0x200D, 0x2640, 0xFE0F),
+         c(cp(0x1F574, 0xFE0F), cp(0x2640, 0xFE0F))),
+    list(cp(0x1F574, 0xFE0F, 0x200D, 0x2642, 0xFE0F),
+         c(cp(0x1F574, 0xFE0F), cp(0x2642, 0xFE0F))),
+    list(cp(0x1F91D, 0x200D, 0x1F9DF, 0x200D, 0x2640, 0xFE0F),
+         c(cp(0x1F91D), cp(0x1F9DF, 0x200D, 0x2640, 0xFE0F))),
+    # in WildChat: families built on the adult with a girl or a boy, which
+    # Unicode never recommended (the RGI ones use the child)
+    list(cp(0x1F9D1, 0x200D, 0x1F467), c(cp(0x1F9D1), cp(0x1F467))),
+    list(cp(0x1F9D1, 0x200D, 0x1F466, 0x200D, 0x1F466),
+         c(cp(0x1F9D1), cp(0x1F466), cp(0x1F466))),
+    # synthetic: two grinning faces; an astronaut on fire, whose first part
+    # is itself a ZWJ sequence; a toned thumbs-up on fire; a toned adult
+    list(cp(0x1F600, 0x200D, 0x1F600), c(cp(0x1F600), cp(0x1F600))),
+    list(cp(0x1F468, 0x200D, 0x1F680, 0x200D, 0x1F525),
+         c(cp(0x1F468, 0x200D, 0x1F680), cp(0x1F525))),
+    list(cp(0x1F44D, 0x1F3FD, 0x200D, 0x1F525),
+         c(cp(0x1F44D, 0x1F3FD), cp(0x1F525))),
+    list(cp(0x1F9D1, 0x1F3FD, 0x200D, 0x1F467),
+         c(cp(0x1F9D1, 0x1F3FD), cp(0x1F467))),
+    # a family glued to a profession, both parts ZWJ sequences
+    list(cp(0x1F9D1, 0x200D, 0x1F4BB, 0x200D, 0x1F468, 0x200D, 0x1F469,
+            0x200D, 0x1F467),
+         c(cp(0x1F9D1, 0x200D, 0x1F4BB),
+           cp(0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F467))),
+    # a chain longer than the longest catalogue spelling: eight faces
+    list(intToUtf8(c(rep(c(0x1F600, 0x200D), 7L), 0x1F600)),
+         rep(cp(0x1F600), 8L)),
+    # an orphan joiner at either end belongs to no part
+    list(cp(0x200D, 0x1F600, 0x200D, 0x1F525), c(cp(0x1F600), cp(0x1F525))),
+    list(cp(0x1F600, 0x200D, 0x1F525, 0x200D), c(cp(0x1F600), cp(0x1F525))),
+    # a part the catalogue does not list is no part at all
+    list(cp(0x2605, 0xFE0F, 0x200D, 0x1F600), cp(0x1F600))
+  )
+  seqs <- vapply(fx, `[[`, character(1), 1L)
+  parts <- lapply(fx, `[[`, 2L)
+  expect_identical(tidyEmoji:::emoji_glyph_list(seqs), parts)
+  expect_false(anyNA(as_emoji_name(unlist(parts))))
+  # one unrecommended span each, which emoji_summary() reports
+  expect_identical(span_kind_counts(seqs, 6L), rep(1L, length(seqs)))
+  d <- tibble::tibble(text = seqs)
+  expect_identical(emoji_summary(d, text)$n_unlisted, length(seqs))
+  # each split adds its parts minus one, and the counting verbs agree
+  n <- lengths(parts)
+  expect_identical(emoji_position(d, text)$.emoji_n, n)
+  expect_identical(emoji_token_cost(d, text)$.emoji_n, n)
+  expect_identical(sum(emoji_frequency(d, text)$n), sum(n))
+  # the verbs that rewrite text keep each sequence whole, joiners included
+  w <- tibble::tibble(text = paste0("a", seqs, "b"))
+  inner <- !startsWith(seqs, cp(0x200D)) & !endsWith(seqs, cp(0x200D))
+  expect_identical(emoji_sanitize(w, text, policy = "strip")$text[inner],
+                   rep("ab", sum(inner)))
+  expect_identical(
+    emoji_sanitize(w, text, policy = "placeholder")$text[inner],
+    rep("a[emoji]b", sum(inner)))
+  # ?emoji_ratio's example: two emoji, two code points of three, emoji-only
+  r <- emoji_ratio(tibble::tibble(text = cp(0x1F9D1, 0x200D, 0x1F467)), text)
+  expect_identical(c(r$.emoji_n, r$.emoji_codepoints, r$.emoji_n_char),
+                   c(2L, 2L, 3L))
+  expect_true(r$.emoji_only)
+  # and "name" names the parts in order
+  nm <- emoji_sanitize(w, text, policy = "name")$text
+  expect_identical(nm[1L], "acat face laptopb")
+  expect_identical(nm[8L], "agrinning face grinning faceb")
+})
+
+check_rgi_zwj_one <- function(n = NULL) {
+  ref <- tidyEmoji:::emoji_reference()
+  zwj <- ref$emoji[ref$status == "fully-qualified" &
+                     grepl(cp(0x200D), ref$emoji, fixed = TRUE)]
+  expect_identical(length(zwj), 1614L)
+  if (!is.null(n)) zwj <- sweep_sample(zwj, n)
+  expect_identical(lengths(tidyEmoji:::emoji_glyph_list(zwj)),
+                   rep(1L, length(zwj)))
+  expect_identical(span_kind_counts(zwj, 6L), rep(0L, length(zwj)))
+  expect_identical(emoji_summary(tibble::tibble(text = zwj), text)$n_unlisted,
+                   0L)
+}
+
+test_that("every recommended ZWJ sequence is still one occurrence (D7)", {
+  skip_sweep(twin = "a sample of the recommended ZWJ sequences is still one occurrence each")
+  check_rgi_zwj_one()
+})
+
+test_that("a sample of the recommended ZWJ sequences is still one occurrence each", {
+  check_rgi_zwj_one(60L)
+})
+
+test_that("the example corpus's split sequences add their parts minus one (D7)", {
+  sp <- tidyEmoji:::.emoji_spans(oasst_messages$text)
+  six <- vapply(sp$kinds, function(k) sum(k == 6L), integer(1))
+  expect_identical(sum(six), 3L)
+  parts <- vapply(sp$parts, function(p) if (is.null(p)) 0L else nrow(p),
+                  integer(1))
+  # 1,450 occurrences in 0.6.0, when each of the three counted once
+  n <- sum(lengths(tidyEmoji:::emoji_glyph_list(oasst_messages$text)))
+  expect_identical(n, 1450L + sum(parts) - sum(six))
+  expect_identical(n, 1454L)
+})
+
+test_that("a text presentation sequence is not an emoji by default (D10)", {
+  star_text <- cp(0x2B50, 0xFE0E)                     # STAR + VS15
+  d <- tibble::tibble(text = star_text)
+  # 0.6.0: counted, with the U+FE0E left outside the span
+  expect_equal(sum(emoji_frequency(d, text)$n), 0L)
+  expect_equal(sum(emoji_frequency(d, text, presentation = "any")$n), 1L)
+  # not a defined sequence, so still an emoji
+  expect_equal(sum(emoji_frequency(tibble::tibble(text = cp(0x1F600, 0xFE0E)),
+                                   text)$n), 1L)
+})
+
+test_that("every base with a text sequence is text when U+FE0E follows it (D10)", {
+  bases <- tidyEmoji:::.emoji_text_style_bases
+  expect_length(bases, 371L)
+  ref <- tidyEmoji:::emoji_reference()
+  one <- ref$emoji[ref$status == "fully-qualified" & nchar(ref$emoji) == 1L]
+  emoji_default <- bases %in% vapply(one, utf8ToInt, integer(1))
+  expect_identical(sum(emoji_default), 152L)
+  x <- vapply(bases, function(b) cp(b, 0xFE0E), character(1))
+  bare <- vapply(bases, intToUtf8, character(1))
+  by_default <- lengths(tidyEmoji:::.emoji_locations(x)) > 0L
+  under_any <- lengths(tidyEmoji:::.emoji_locations(x, "any")) > 0L
+  # none counted by default; all 152 emoji-default ones counted under "any"
+  expect_false(any(by_default))
+  expect_true(all(under_any[emoji_default]))
+  # the 219 text-default ones count under "any" as in 0.6.0, every one but
+  # the twelve keycap bases and the three typographic signs
+  typography <- bases %in% c(0x23, 0x2A, 0x30:0x39, 0xA9, 0xAE, 0x2122)
+  expect_identical(under_any[!emoji_default], !typography[!emoji_default])
+  # nine of them the detector reads bare, because they take a skin tone;
+  # 0.6.0 counted them with U+FE0E too, and the request is honoured now
+  nine <- c(0x261D, 0x26F9, 0x270C, 0x270D, 0x1F3CB, 0x1F3CC, 0x1F574,
+            0x1F575, 0x1F590)
+  bare_counted <- lengths(tidyEmoji:::.emoji_locations(bare)) > 0L
+  expect_setequal(bases[bare_counted & !emoji_default], nine)
+  expect_true(all(bare_counted[emoji_default]))
+  # under "any" each of those 161 is a text glyph with its selector inside
+  sp <- tidyEmoji:::.emoji_spans(x, "any")
+  held <- vapply(sp$locs, function(m) nrow(m) == 1L && m[1L, "end"] == 2L,
+                 logical(1))
+  expect_identical(held, bare_counted)
+  expect_true(all(vapply(sp$kinds[held], identical, logical(1), 2L)))
+  # and emoji_coverage() reports them as it reports a bare heart
+  cv <- emoji_coverage(tibble::tibble(text = x[bare_counted]), text)
+  expect_identical(cv$n_occurrences, c(0L, 0L))
+  expect_identical(cv$n_text_presentation, rep(sum(bare_counted), 2L))
+})
+
+test_that("the rewriting verbs leave a text-style star as text by default (D10)", {
+  star <- paste0("a", cp(0x2B50, 0xFE0E), "b")
+  d <- tibble::tibble(text = star)
+  # 0.6.0 stripped the star and left the selector behind
+  for (p in c("strip", "name", "shortcode", "placeholder")) {
+    expect_identical(emoji_sanitize(d, text, policy = p)$text, star, info = p)
+  }
+  expect_identical(emoji_to_text(d, text)$text, star)
+  # under "any" the whole sequence is the glyph
+  expect_identical(
+    emoji_sanitize(d, text, policy = "strip", presentation = "any")$text, "ab")
+  expect_identical(emoji_to_text(d, text, presentation = "any")$text, "astarb")
+  expect_identical(
+    emoji_sanitize(d, text, policy = "placeholder", presentation = "any")$text,
+    "a[emoji]b")
+  # the text-style spelling is the same emoji to every lookup, as the
+  # qualified one is, so it is named and scored where it is counted
+  ts <- cp(0x2B50, 0xFE0E)
+  expect_identical(as_emoji_name(ts), "star")
+  expect_true(emoji_identical(ts, cp(0x2B50, 0xFE0F)))
+  expect_true(is.na(tidyEmoji:::emoji_key(cp(0xFE0E))))
+  f <- emoji_frequency(d, text, presentation = "any")
+  expect_identical(f$name, "star")
+  # an emoji that is not a defined text sequence keeps its own span
+  grin <- tibble::tibble(text = paste0("a", cp(0x1F600, 0xFE0E), "b"))
+  expect_identical(emoji_sanitize(grin, text, policy = "strip")$text,
+                   paste0("a", cp(0xFE0E), "b"))
+})
+
+test_that("rewriting and counting verbs agree on what every span is", {
+  # The 0.7.0 plan's second prediction: with kinds 5 and 6, a rewriting verb
+  # and a counting verb could disagree about a span. Both read
+  # .emoji_spans(), so derive each side's answer from it and check every
+  # verb against that, on a D6, a D7, a D8 and a D10 fixture, under both
+  # presentations.
+  fx <- c(d6 = paste0("a ", cp(0x2605, 0xFE0F), " b"),
+          d7 = paste0("a ", cp(0x1F9D1, 0x200D, 0x1F467, 0x200D, 0x1F466),
+                      " b"),
+          d8 = paste0("a ", cp(0x1F600), vs_encode("hi"), " b"),
+          d10 = paste0("a ", cp(0x2B50, 0xFE0E), " b"),
+          plain = "a b")
+  d <- tibble::tibble(text = unname(fx))
+  for (pres in c("emoji", "any")) {
+    sp <- tidyEmoji:::.emoji_spans(d$text, pres)
+    n_counted <- vapply(seq_along(fx), function(i)
+      nrow(tidyEmoji:::.emoji_counted(sp, i)$m), integer(1))
+    n_spans <- vapply(sp$locs, nrow, integer(1))
+    info <- paste(names(fx), pres)
+    # the counting verbs count exactly the counted spans
+    expect_identical(emoji_position(d, text, presentation = pres)$.emoji_n,
+                     n_counted, info = pres)
+    expect_identical(emoji_token_cost(d, text, presentation = pres)$.emoji_n,
+                     n_counted, info = pres)
+    expect_identical(emoji_density(d, text, presentation = pres)$.emoji_n,
+                     n_counted, info = pres)
+    expect_identical(emoji_summary(d, text, presentation = pres)$n_with_emoji,
+                     sum(n_counted > 0L), info = pres)
+    expect_identical(
+      sum(emoji_frequency(d, text, presentation = pres)$n), sum(n_counted),
+      info = pres)
+    # the rewriting verbs act on exactly the spans: one placeholder each,
+    # and "strip" leaves no emoji material and no hidden payload behind
+    ph <- emoji_sanitize(d, text, policy = "placeholder",
+                         presentation = pres)$text
+    expect_identical(lengths(regmatches(ph, gregexpr("[emoji]", ph,
+                                                     fixed = TRUE))),
+                     n_spans, info = info)
+    st <- emoji_sanitize(d, text, policy = "strip", presentation = pres)$text
+    expect_identical(lengths(tidyEmoji:::.emoji_spans(st, pres)$locs) %/% 2L,
+                     rep(0L, length(fx)), info = info)
+    expect_identical(emoji_hidden(tibble::tibble(text = st), text)$.emoji_n_hidden,
+                     rep(0L, length(fx)), info = info)
+  }
 })

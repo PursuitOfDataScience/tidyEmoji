@@ -25,7 +25,11 @@
 #'   version before 0.7.0 did.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`, and emoji with no known name are left
-#'   in place unchanged.
+#'   in place unchanged. A ZWJ sequence the catalogue does not list, such as
+#'   grinning face, `U+200D`, fire, is written as the names of the parts it
+#'   splits into, in order and separated by spaces ("grinning face fire"), or
+#'   as their shortcodes (":grinning::fire:"): the parts every other verb
+#'   counts since 0.7.0. If any part has no name the sequence stays as it is.
 #' @seealso [text_to_emoji()] for the inverse (emojize); [as_emoji_name()],
 #'   [as_emoji_shortcode()], [as_emoji()] for vector helpers.
 #' @examples
@@ -83,11 +87,26 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
     rpl_lookup <- stats::setNames(wrapped, ref$key)
   }
   all_glyphs <- unique(unlist(lst, use.names = FALSE))
-  key_lookup <- stats::setNames(emoji_key(all_glyphs), all_glyphs)
+  glyph_rpl <- stats::setNames(unname(rpl_lookup[emoji_key(all_glyphs)]),
+                               all_glyphs)
+  # A ZWJ sequence the catalogue does not list has no name of its own; it is
+  # written as the names of the parts it splits into, in order, which is what
+  # the counting verbs count and what nearly every platform draws (D7). If
+  # any part has no replacement the sequence stays as it is, as any glyph
+  # with no known name does.
+  zw <- all_glyphs[is.na(glyph_rpl) & grepl(.emoji_zwj, all_glyphs, fixed = TRUE)]
+  for (g in zw) {
+    pm <- .emoji_zwj_parts(utf8ToInt(g))
+    if (!nrow(pm)) next
+    r <- unname(rpl_lookup[emoji_key(substring(g, pm[, "start"], pm[, "end"]))])
+    if (!anyNA(r)) {
+      glyph_rpl[[g]] <- paste(r, collapse = if (format == "name") " " else "")
+    }
+  }
   rewritten <- vapply(seq_along(v), function(i) {
     g <- lst[[i]]
     if (!length(g)) return(v[[i]])
-    .emoji_replace_in_order(v[[i]], locs[[i]], g, rpl_lookup[key_lookup[g]])
+    .emoji_replace_in_order(v[[i]], locs[[i]], g, unname(glyph_rpl[g]))
   }, character(1))
   rewritten[was_na] <- NA_character_
 

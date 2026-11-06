@@ -47,18 +47,24 @@ since a flag has no text-presentation form.}
 }
 \value{
 A one-row tibble with columns \code{n_with_emoji} (entries containing at
-least one emoji), \code{n_total} (all entries), \code{n_orphan_components}
-and \code{n_invalid_flags}. The last two count \emph{glyphs}, not entries: the
-emoji material the text holds that is not an emoji, and so is in no other
-count. \code{n_orphan_components} is the skin-tone swatches and hair
-components standing alone, as in \verb{U+1F600 U+1F3FB}, where the tone
-follows a base that cannot take one; \code{n_invalid_flags} is the runs of
-regional indicators that spell no country, such as \verb{U+1F1FD U+1F1FD}
-("XX") or a lone indicator. Both were counted as emoji before 0.6.0, so
-they are what to look at when a corpus reports fewer emoji than it used
-to. See the \emph{Detection} section of \link{tidyEmoji}. \code{n_hidden}, unlike those
-two, counts \emph{entries}: the ones carrying a hidden payload, a code point
-\code{\link[=emoji_hidden]{emoji_hidden()}} reports and \code{\link[=emoji_sanitize]{emoji_sanitize()}} removes by default.
+least one emoji), \code{n_total} (all entries), \code{n_orphan_components},
+\code{n_invalid_flags}, \code{n_unlisted} and \code{n_hidden}. The middle
+three count \emph{glyphs}, not entries: the emoji material the text holds that
+is not an emoji as it stands. \code{n_orphan_components} is the skin-tone
+swatches and hair components standing alone, as in \verb{U+1F600 U+1F3FB},
+where the tone follows a base that cannot take one; \code{n_invalid_flags} is
+the runs of regional indicators that spell no country, such as
+\verb{U+1F1FD U+1F1FD} ("XX") or a lone indicator. \code{n_unlisted} is the
+sequences the catalogue lists under no spelling: a code point followed
+by \code{U+FE0F}, such as the black star \verb{U+2605 U+FE0F}, which no verb
+counts, and a zero-width-joiner sequence Unicode does not recommend, such
+as adult, girl and boy joined, which every verb counts as the parts it
+splits into. The first two were counted as emoji before 0.6.0 and the
+third before 0.7.0, so they are what to look at when a corpus reports a
+different number of emoji than it used to. See the \emph{Detection} section
+of \link{tidyEmoji}. \code{n_hidden}, unlike those three, counts \emph{entries}: the
+ones carrying a hidden payload, a code point \code{\link[=emoji_hidden]{emoji_hidden()}} reports
+and \code{\link[=emoji_sanitize]{emoji_sanitize()}} removes by default.
 }
 \description{
 \code{emoji_summary()} reports how many entries in a text column contain at least

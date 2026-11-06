@@ -594,7 +594,9 @@ emoji_reference <- function() {
 # Codepoint key used to join emoji robustly across qualified / unqualified
 # forms: the emoji variation selector U+FE0F is dropped so that, for example,
 # the qualified heart (U+2764 U+FE0F) matches the lexicon's unqualified
-# U+2764.
+# U+2764. The text variation selector U+FE0E goes too (0.7.0): under
+# presentation = "any" a glyph asking for its text form is counted with its
+# selector inside the span (D10), and is the same emoji to every lookup.
 emoji_key <- function(glyphs) {
   # as.character() first, like as_emoji_name() and emoji_ambiguity() already
   # do. Without it a factor glyph column reached nzchar() -- "'nzchar()'
@@ -611,7 +613,7 @@ emoji_key <- function(glyphs) {
     # missing.
     cp <- suppressWarnings(utf8ToInt(g))
     if (anyNA(cp)) return(NA_character_)
-    cp <- cp[cp != 0xFE0F]
+    cp <- cp[cp != 0xFE0F & cp != 0xFE0E]
     # A string that was nothing but variation selectors leaves no code points,
     # and used to key on "" -- a second "there is no key here" value alongside
     # NA, which every consumer then had to remember to filter separately. One
@@ -666,6 +668,12 @@ emoji_sentiment_map <- function() {
 #    parts have merged; it terminates because each pass strictly reduces the
 #    row count.
 .emoji_zwj <- "\u200d"
+
+# The two presentation selectors, kept as constants for the same reason as
+# the joiner: a "\uFE0E" escape inside a function body deparses as the
+# character itself, and R/ stays ASCII however it is read.
+.emoji_vs15 <- "\ufe0e"
+.emoji_vs16 <- "\ufe0f"
 
 # The distinct codepoint keys of the reference table, cached: the set rule 2
 # above tests membership in.
@@ -851,22 +859,32 @@ emoji_sentiment_map <- function() {
 }
 
 # What a match can turn out to be. Only the first two are emoji occurrences;
-# the other two are emoji *material* the catalogue says is not an emoji on its
-# own, which the counting verbs skip and the verbs that rewrite text treat
+# the others are emoji *material* the catalogue says is not an emoji as it
+# stands, which the counting verbs skip and the verbs that rewrite text treat
 # exactly as before.
 #
-#   1 emoji      a match the default presentation counts
-#   2 text       a text-presentation glyph counted only under
-#                presentation = "any"
-#   3 component  a skin-tone or hair component standing alone (D1)
-#   4 flag       regional indicators that spell no flag (D2)
+#   1 emoji          a match the default presentation counts
+#   2 text           a text-presentation glyph counted only under
+#                    presentation = "any"
+#   3 component      a skin-tone or hair component standing alone (D1)
+#   4 flag           regional indicators that spell no flag (D2)
+#   5 unlisted       a code point and U+FE0F the catalogue lists under no
+#                    spelling, neither the pair nor the bare code point (D6)
+#   6 unrecommended  a ZWJ sequence the catalogue does not list (D7): counted
+#                    as the catalogued parts it splits into, as nearly every
+#                    platform draws it, and rewritten as one unit
 .emoji_kind_component <- 3L
 .emoji_kind_flag <- 4L
+.emoji_kind_unlisted <- 5L
+.emoji_kind_unrecommended <- 6L
 
 # The catalogue facts the classification needs, cached: the code-point keys of
-# the nine components, those of the 259 valid country flags, and a class
-# matching any code point that could start either, so a row holding none of
-# them, which is nearly every row, is never looked at twice.
+# the nine components, those of the 259 valid country flags, a class matching
+# any code point that could start either or be a presentation selector, so a
+# row holding none of them, which is nearly every row, is never looked at
+# twice; the keys a ZWJ sequence's parts may have (every catalogue key but
+# the components, which are not emoji on their own); and the bases Unicode
+# defines a U+FE0E text presentation sequence for (D10).
 .emoji_residue <- function() {
   if (is.null(.tidyEmoji_cache$residue)) {
     ref <- emoji_reference()
@@ -878,11 +896,47 @@ emoji_sentiment_map <- function() {
       component_rx = paste0("^\\x{FE0F}*", .emoji_cp_class(comp_cps),
                             "\\x{FE0F}*$"),
       flags = unique(ref$emoji[ref$subgroup == "country-flag"]),
-      class = .emoji_cp_class(c(comp_cps, ri)),
-      ri_only = "^[\\x{1F1E6}-\\x{1F1FF}]+$"
+      class = .emoji_cp_class(c(comp_cps, ri, 0xFE0F)),
+      ri_only = "^[\\x{1F1E6}-\\x{1F1FF}]+$",
+      part_keys = unique(ref$key[!comp]),
+      text_style = .emoji_text_style_bases
     )
   }
   .tidyEmoji_cache$residue
+}
+
+# A ZWJ sequence the catalogue does not list, split into the longest
+# catalogued parts it holds, left to right (D7): adult, girl and boy for a
+# family Unicode never recommended, a cat and a laptop for the "hacker cat".
+# `cps` are the sequence's code points; the result is a start/end matrix of
+# the parts, relative to them, so the joiners between parts, and anything that
+# is no emoji on its own, belong to no part.
+.emoji_zwj_parts <- function(cps, part_keys = .emoji_residue()$part_keys) {
+  n <- length(cps)
+  st <- en <- integer(0)
+  p <- 1L
+  while (p <= n) {
+    if (cps[[p]] == 0x200DL) {
+      p <- p + 1L
+      next
+    }
+    best <- 0L
+    for (e in seq.int(min(n, p + .emoji_max_cp - 1L), p)) {
+      if (cps[[e]] == 0x200DL) next
+      if (emoji_key(intToUtf8(cps[p:e])) %in% part_keys) {
+        best <- e
+        break
+      }
+    }
+    if (best) {
+      st <- c(st, p)
+      en <- c(en, best)
+      p <- best + 1L
+    } else {
+      p <- p + 1L
+    }
+  }
+  cbind(start = as.integer(st), end = as.integer(en))
 }
 
 # The text-presentation spellings presentation = "any" also reads: every
@@ -942,11 +996,36 @@ emoji_sentiment_map <- function() {
 #
 # Both checks run after the ZWJ repair, so a component or an indicator inside
 # a joined sequence is part of that sequence and never looked at.
+#
+# 0.7.0 adds three more, in the same place, so that none of them can come
+# back one verb at a time either:
+#
+# * D6: a code point followed by U+FE0F is an emoji only if the catalogue
+#   lists it. The last branch of the bundled detection regex accepts any
+#   Extended_Pictographic code point before U+FE0F, which is a segmentation
+#   property far wider than the set of emoji, so a black star, a chess piece
+#   or a playing card with a stray selector came back as a nameless emoji.
+#   Such a span is kind 5 now: counted by no verb, rewritten as before.
+# * D7: grapheme segmentation joins any two pictographs a ZWJ stands between
+#   (UAX #29 GB11), which is right for segmentation, and then nothing asked
+#   whether the result is a sequence Unicode recommends. One that is not is
+#   kind 6: counted as its catalogued parts, the way nearly every platform
+#   draws it, and kept as one unit for the verbs that rewrite text. `parts`
+#   carries the parts, row by row.
+# * D10: a detected glyph followed by U+FE0E is the writer asking for its
+#   text form, when emoji-variation-sequences.txt defines that sequence. Under
+#   presentation = "emoji" it is not an emoji, so the span goes altogether and
+#   the text is left alone, exactly as a bare U+2764 is; under "any" it is a
+#   text-presentation glyph, kind 2, with its U+FE0E inside the span. That is
+#   the 152 emoji-default bases (a watch, a star, the zodiac signs) and the
+#   nine text-default ones the detector reads bare because they take a skin
+#   tone (index pointing up, victory hand and seven more).
 .emoji_spans <- function(x, presentation = "emoji") {
   x <- as.character(x)
   x[is.na(x)] <- ""
   locs <- .emoji_matches(x)
   kinds <- vector("list", length(x))
+  parts <- vector("list", length(x))
   res <- .emoji_residue()
   # Classified in one vectorised pass over every short span of every row that
   # could hold a component or an indicator, rather than row by row: the
@@ -970,12 +1049,60 @@ emoji_sentiment_map <- function() {
         .emoji_kind_component
       k[short[stringi::stri_detect_regex(g, res$ri_only) &
                 !g %in% res$flags]] <- .emoji_kind_flag
+      # D6: two code points, the second U+FE0F, the first nothing the
+      # catalogue lists under any spelling
+      vs <- which(nchar(g) == 2L & endsWith(g, .emoji_vs16) & k[short] == 1L)
+      if (length(vs)) {
+        k[short[vs[!emoji_key(g[vs]) %in% .emoji_ref_keys()]]] <-
+          .emoji_kind_unlisted
+      }
     }
     odd <- unique(rows[k != 1L])
     if (length(odd)) {
       per_row <- split(k, factor(rows, levels = seq_along(cand)))
       kinds[cand[odd]] <- per_row[odd]
     }
+  }
+  # D7: a joined span the catalogue does not list, split into its parts
+  for (i in which(grepl(.emoji_zwj, x, fixed = TRUE))) {
+    m <- locs[[i]]
+    if (!nrow(m)) next
+    g <- .emoji_slice(m, x[[i]])
+    odd <- which(grepl(.emoji_zwj, g, fixed = TRUE) &
+                   !emoji_key(g) %in% .emoji_ref_keys())
+    if (!length(odd)) next
+    k <- kinds[[i]] %||% rep(1L, nrow(m))
+    p <- lapply(odd, function(j) {
+      sp <- .emoji_zwj_parts(utf8ToInt(g[[j]]), res$part_keys)
+      sp + (m[j, "start"] - 1L)
+    })
+    k[odd] <- .emoji_kind_unrecommended
+    kinds[[i]] <- k
+    parts[[i]] <- do.call(rbind, p)
+  }
+  # D10: a glyph asking for its text form with U+FE0E
+  for (i in which(grepl(.emoji_vs15, x, fixed = TRUE))) {
+    m <- locs[[i]]
+    if (!nrow(m)) next
+    cps <- suppressWarnings(utf8ToInt(x[[i]]))
+    if (anyNA(cps)) next
+    nxt <- m[, "end"] + 1L
+    hit <- m[, "end"] == m[, "start"] & nxt <= length(cps) &
+      cps[pmin(nxt, length(cps))] == 0xFE0EL &
+      cps[m[, "start"]] %in% res$text_style
+    if (!any(hit)) next
+    k <- kinds[[i]] %||% rep(1L, nrow(m))
+    if (identical(presentation, "any")) {
+      m[hit, "end"] <- m[hit, "end"] + 1L
+      k[hit] <- 2L
+    } else {
+      m <- m[!hit, , drop = FALSE]
+      k <- k[!hit]
+    }
+    locs[[i]] <- m
+    # list(NULL), not NULL: assigning NULL with [[<- would delete the element
+    # and shift every later row's kinds onto the wrong row
+    kinds[i] <- list(if (all(k == 1L)) NULL else k)
   }
   if (identical(presentation, "any")) {
     trx <- .emoji_text_rx()
@@ -993,20 +1120,43 @@ emoji_sentiment_map <- function() {
       kinds[[i]] <- k[o]
     }
   }
-  list(locs = locs, kinds = kinds)
+  list(locs = locs, kinds = kinds, parts = parts)
+}
+
+# The spans of row `i` of `sp` that count as occurrences, with their kinds:
+# every span of kind 1 or 2, and in place of an unrecommended ZWJ sequence
+# (kind 6) the parts it splits into, each of kind 1, in reading order. Every
+# verb that counts reads its spans through this, so they cannot disagree about
+# what an occurrence is.
+.emoji_counted <- function(sp, i) {
+  m <- sp$locs[[i]]
+  k <- sp$kinds[[i]]
+  if (is.null(k)) return(list(m = m, k = rep(1L, nrow(m))))
+  keep <- k <= 2L
+  out <- m[keep, , drop = FALSE]
+  ko <- k[keep]
+  p <- sp$parts[[i]]
+  if (!is.null(p) && nrow(p)) {
+    out <- rbind(out, p)
+    ko <- c(ko, rep(1L, nrow(p)))
+    o <- order(out[, "start"], method = "radix")
+    out <- out[o, , drop = FALSE]
+    ko <- ko[o]
+  }
+  list(m = out, k = ko)
 }
 
 # Emoji locations per element, as a list of start/end matrices (possibly
 # 0-row). Positions are in characters, matching substr(). This is the single
 # source of truth: emoji_glyph_list() slices the same spans, so extraction and
 # location can never disagree. Only emoji occurrences are returned; the
-# components and stray regional indicators .emoji_spans() sets aside are not.
+# components, stray regional indicators and unlisted selector pairs
+# .emoji_spans() sets aside are not, and an unrecommended ZWJ sequence comes
+# back as its parts.
 .emoji_locations <- function(x, presentation = "emoji") {
   sp <- .emoji_spans(x, presentation)
   locs <- sp$locs
-  for (i in which(lengths(sp$kinds) > 0L)) {
-    locs[[i]] <- locs[[i]][sp$kinds[[i]] <= 2L, , drop = FALSE]
-  }
+  for (i in which(lengths(sp$kinds) > 0L)) locs[[i]] <- .emoji_counted(sp, i)$m
   locs
 }
 

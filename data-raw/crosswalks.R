@@ -184,6 +184,35 @@ keep <- sv_vs >= 0xFE00L & sv_vs <= 0xFE0DL
 message("standardized variants:      ", .emoji_std_variants_meta$file, ", ",
         length(.emoji_std_variants), " sequences with U+FE00..U+FE0D")
 
+# Emoji variation sequences (0.7.0, D10) ------------------------------------
+# emoji-variation-sequences.txt lists every base that has a text-style
+# (U+FE0E) and an emoji-style (U+FE0F) sequence. Detection asks it about a
+# detected glyph followed by U+FE0E: that is the writer asking for the text
+# form, so under presentation = "emoji" the glyph is text, not an emoji. Same
+# Unicode version as the catalogue, refreshed with it.
+evs_input <- Sys.getenv("TIDYEMOJI_EMOJI_VARIATIONS",
+                        file.path("data-raw", "emoji-variation-sequences.txt"))
+if (identical(tolower(Sys.getenv("TIDYEMOJI_FETCH")), "true")) {
+  utils::download.file(
+    paste0("https://www.unicode.org/Public/", file_version,
+           ".0/ucd/emoji/emoji-variation-sequences.txt"),
+    evs_input, mode = "wb", quiet = TRUE)
+}
+stopifnot(file.exists(evs_input))
+evs_lines <- readLines(evs_input, encoding = "UTF-8", warn = FALSE)
+evs_version <- sub("^# Version: ", "",
+                   grep("^# Version:", evs_lines, value = TRUE)[1L])
+if (!identical(evs_version, paste0(file_version, ".0"))) {
+  stop("emoji-variation-sequences.txt is for Unicode ", evs_version,
+       ", not ", file_version, ".0 as the catalogue is.")
+}
+evs_text <- grep("^[0-9A-F]+ FE0E +; text style;", evs_lines, value = TRUE)
+.emoji_text_style_bases <- strtoi(sub(" .*$", "", evs_text), 16L)
+stopifnot(!anyNA(.emoji_text_style_bases),
+          !anyDuplicated(.emoji_text_style_bases))
+message("emoji variation sequences:  ", length(.emoji_text_style_bases),
+        " bases with a text-style sequence")
+
 # Vocabulary -------------------------------------------------------------------
 # The GitHub-style aliases, by exact spelling. A glyph newer than {emoji} has
 # none, and keeps none: shortcodes are not invented here.
@@ -229,7 +258,7 @@ message("category_unicode_crosswalk: ", nrow(category_unicode_crosswalk),
 
 if (!identical(tolower(Sys.getenv("TIDYEMOJI_WRITE")), "false")) {
   save(.emoji_catalogue, .emoji_catalogue_meta, .emoji_std_variants,
-       .emoji_std_variants_meta,
+       .emoji_std_variants_meta, .emoji_text_style_bases,
        file = file.path("R", "sysdata.rda"), compress = "xz")
   save(emoji_unicode_crosswalk,
        file = file.path("data", "emoji_unicode_crosswalk.rda"), compress = "xz")

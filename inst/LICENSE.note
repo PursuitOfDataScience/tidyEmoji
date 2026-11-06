@@ -86,6 +86,14 @@ Character Database:
 
 Source:    StandardizedVariants.txt, Unicode 18.0.0 (file dated 2026-07-29),
            https://www.unicode.org/Public/18.0.0/ucd/StandardizedVariants.txt
+
+So is the list of bases with a text presentation sequence, which detection
+reads (since 0.7.0, also in R/sysdata.rda) to honour a request for the text
+form of an emoji:
+
+Source:    emoji-variation-sequences.txt, Unicode 18.0.0 (file dated
+           2026-01-09),
+           https://www.unicode.org/Public/18.0.0/ucd/emoji/emoji-variation-sequences.txt
 Rebuilt:   data-raw/crosswalks.R in the package's source repository
 Licence:   Unicode License V3, reproduced below.
            https://www.unicode.org/license.txt

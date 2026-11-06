@@ -58,7 +58,7 @@
 #'   glyphs are measured at all.
 #'
 #' On the example corpus, [oasst_messages], the two differ by fourteen points
-#' for the bundled sentiment lexicon, 75.0% of occurrences against 60.8% of
+#' for the bundled sentiment lexicon, 75.0% of occurrences against 61.3% of
 #' types, and the third number is the one with consequences: 135 of the 750
 #' rows that hold an emoji have none the lexicon can score, so their
 #' `.emoji_sentiment` is `NA`. Dropping those rows before a comparison drops
@@ -72,7 +72,8 @@
 #'
 #' @section What `presentation` costs:
 #' The default detection requires emoji presentation, so a bare `U+2764`
-#' heart is not counted. `n_text_presentation` is how many such
+#' heart is not counted, nor, since 0.7.0, a glyph the writer followed with
+#' `U+FE0E` to ask for its text form. `n_text_presentation` is how many such
 #' text-presentation glyphs the corpus holds (the occurrences
 #' `presentation = "any"` would add), and `n_text_presentation_scorable` is
 #' how many of those this lexicon could score. Under the default they are
@@ -131,7 +132,10 @@ emoji_coverage <- function(data, text, lexicon = NULL,
       text_keys[[i]] <- character(0)
       next
     }
-    kind <- sp$kinds[[i]] %||% rep(1L, nrow(m))
+    # an unrecommended ZWJ sequence counts as its parts, as everywhere else
+    cnt <- .emoji_counted(sp, i)
+    m <- cnt$m
+    kind <- cnt$k
     k <- emoji_key(.emoji_slice(m, w[[i]]))
     counted <- if (presentation == "any") kind <= 2L else kind == 1L
     keys[[i]] <- k[counted]

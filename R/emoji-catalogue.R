@@ -181,8 +181,9 @@ emoji_properties <- function(x = NULL) {
 #' can apply it too.
 #'
 #' @details
-#' Two spellings of one emoji differ only in the variation selector `U+FE0F`,
-#' and a plain `dplyr::left_join()` on the glyph treats them as different
+#' Two spellings of one emoji differ only in the variation selector `U+FE0F`
+#' (or `U+FE0E`, which asks for the text form), and a plain
+#' `dplyr::left_join()` on the glyph treats them as different
 #' keys, which silently drops every row whose text holds the other spelling.
 #' Canonicalising both sides first is the fix. A glyph the catalogue does not
 #' know comes back unchanged, so the function is safe to apply to a whole
@@ -214,9 +215,9 @@ as_emoji_canonical <- function(x) {
 #'
 #' `emoji_identical()` compares glyphs element by element and says whether each
 #' pair is the same emoji, which means the same code points once the variation
-#' selector `U+FE0F` is set aside. With `details = TRUE` it also says how two
-#' glyphs differ: not at all, only in that selector, only in skin tone, or in
-#' the emoji itself.
+#' selectors `U+FE0F` and `U+FE0E` are set aside. With `details = TRUE` it also
+#' says how two glyphs differ: not at all, only in a selector, only in skin
+#' tone, or in the emoji itself.
 #'
 #' @section What this can and cannot tell you:
 #' This is the comparison a forensic or legal question needs, and it has a

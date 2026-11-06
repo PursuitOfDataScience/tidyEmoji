@@ -25,9 +25,9 @@ sequences written out (\code{"U+2764 U+FE0F"}) for the record.
 \description{
 \code{emoji_identical()} compares glyphs element by element and says whether each
 pair is the same emoji, which means the same code points once the variation
-selector \code{U+FE0F} is set aside. With \code{details = TRUE} it also says how two
-glyphs differ: not at all, only in that selector, only in skin tone, or in
-the emoji itself.
+selectors \code{U+FE0F} and \code{U+FE0E} are set aside. With \code{details = TRUE} it also
+says how two glyphs differ: not at all, only in a selector, only in skin
+tone, or in the emoji itself.
 }
 \section{What this can and cannot tell you}{
 

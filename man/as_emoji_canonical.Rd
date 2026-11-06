@@ -20,8 +20,9 @@ verb in the package applies before a join, exported so a join of your own
 can apply it too.
 }
 \details{
-Two spellings of one emoji differ only in the variation selector \code{U+FE0F},
-and a plain \code{dplyr::left_join()} on the glyph treats them as different
+Two spellings of one emoji differ only in the variation selector \code{U+FE0F}
+(or \code{U+FE0E}, which asks for the text form), and a plain
+\code{dplyr::left_join()} on the glyph treats them as different
 keys, which silently drops every row whose text holds the other spelling.
 Canonicalising both sides first is the fix. A glyph the catalogue does not
 know comes back unchanged, so the function is safe to apply to a whole

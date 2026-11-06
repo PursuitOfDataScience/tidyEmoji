@@ -13,7 +13,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
+          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_unlisted", "n_hidden"]
         },
         {
           "type": "integer",
@@ -26,7 +26,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
+              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_unlisted", "n_hidden"]
             }
           },
           "value": [
@@ -53,6 +53,11 @@
             {
               "type": "integer",
               "attributes": {},
+              "value": [3]
+            },
+            {
+              "type": "integer",
+              "attributes": {},
               "value": [0]
             }
           ]
@@ -75,7 +80,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
+          "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_unlisted", "n_hidden"]
         },
         {
           "type": "integer",
@@ -88,7 +93,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_hidden"]
+              "value": ["n_with_emoji", "n_total", "n_orphan_components", "n_invalid_flags", "n_unlisted", "n_hidden"]
             }
           },
           "value": [
@@ -111,6 +116,11 @@
               "type": "integer",
               "attributes": {},
               "value": [1]
+            },
+            {
+              "type": "integer",
+              "attributes": {},
+              "value": [0]
             },
             {
               "type": "integer",
@@ -333,7 +343,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [401]
+          "value": [398]
         },
         {
           "type": "list",
@@ -425,7 +435,7 @@
             {
               "type": "double",
               "attributes": {},
-              "value": [6.44942, 6.44942, 6.44942, 6.22627, 6.22627, 5.63849, 5.63849, 5.63849]
+              "value": [6.45008, 6.45008, 6.45008, 6.22693, 6.22693, 5.63915, 5.63915, 5.63915]
             }
           ]
         }
@@ -482,7 +492,7 @@
             {
               "type": "double",
               "attributes": {},
-              "value": [6.44942, 6.44942, 6.44942, 5.43782, 6.22627, 6.22627, 4.07064, 4.018]
+              "value": [6.45008, 6.45008, 6.45008, 5.43847, 6.22693, 6.22693, 4.0713, 4.01866]
             },
             {
               "type": "double",
@@ -514,7 +524,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [4314]
+          "value": [4316]
         },
         {
           "type": "list",
@@ -566,7 +576,7 @@
         {
           "type": "integer",
           "attributes": {},
-          "value": [4314]
+          "value": [4316]
         },
         {
           "type": "list",
@@ -643,22 +653,22 @@
             {
               "type": "integer",
               "attributes": {},
-              "value": [1450, 1450]
+              "value": [1454, 1454]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [1087, 769]
+              "value": [1091, 769]
             },
             {
               "type": "double",
               "attributes": {},
-              "value": [0.749655, 0.530345]
+              "value": [0.750344, 0.528886]
             },
             {
               "type": "integer",
               "attributes": {},
-              "value": [401, 401]
+              "value": [398, 398]
             },
             {
               "type": "integer",
@@ -668,7 +678,7 @@
             {
               "type": "double",
               "attributes": {},
-              "value": [0.608479, 0.264339]
+              "value": [0.613065, 0.266332]
             },
             {
               "type": "integer",

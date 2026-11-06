@@ -116,18 +116,31 @@ test_that("emoji_sanitize strip leaves no emoji, even a recombined one", {
 
 test_that("emoji_sanitize name/shortcode leave an unnameable glyph in place", {
   # ?emoji_sanitize says so, and ?emoji_to_text is where the rule comes from:
-  # a ZWJ sequence the catalogue does not know is detected but cannot be
-  # named, so these two policies can return a column that still holds emoji.
-  zwj <- paste0(grin, "\u200d\U0001F525")       # detected, not catalogued
-  expect_true(tidyEmoji:::emoji_has(zwj))
-  expect_true(is.na(as_emoji_name(zwj)))
-  df <- data.frame(text = zwj)
-  expect_identical(emoji_sanitize(df, text, policy = "name")$text, zwj)
-  expect_identical(emoji_sanitize(df, text, policy = "shortcode")$text, zwj)
+  # a glyph the catalogue does not list is detected but cannot be named, so
+  # these two policies can return a column that still holds emoji. A family
+  # with a skin tone is such a glyph: the grammar allows it, Unicode does not
+  # recommend it.
+  odd <- "\U0001F46A\U0001F3FD"                  # detected, not catalogued
+  expect_true(tidyEmoji:::emoji_has(odd))
+  expect_true(is.na(as_emoji_name(odd)))
+  df <- data.frame(text = odd)
+  expect_identical(emoji_sanitize(df, text, policy = "name")$text, odd)
+  expect_identical(emoji_sanitize(df, text, policy = "shortcode")$text, odd)
   # while the two that do not need a name still clear it
   expect_identical(emoji_sanitize(df, text, policy = "strip")$text, "")
   expect_identical(emoji_sanitize(df, text, policy = "placeholder")$text,
                    "[emoji]")
+  # a ZWJ sequence the catalogue does not list is named by its parts (D7),
+  # and rewritten as one unit, joiner included
+  zwj <- paste0(grin, "\u200d\U0001F525")
+  dz <- data.frame(text = paste0("a", zwj, "b"))
+  expect_identical(emoji_sanitize(dz, text, policy = "name")$text,
+                   "agrinning face fireb")
+  expect_identical(emoji_sanitize(dz, text, policy = "shortcode")$text,
+                   "a:grinning::fire:b")
+  expect_identical(emoji_sanitize(dz, text, policy = "placeholder")$text,
+                   "a[emoji]b")
+  expect_identical(emoji_sanitize(dz, text, policy = "strip")$text, "ab")
 })
 
 test_that("emoji_sanitize keeps the column name and validates its arguments", {
