@@ -183,9 +183,9 @@ the communities:
 set.seed(2026)
 layout <- igraph::layout_with_fr(g, weights = igraph::E(g)$dice)
 deg <- igraph::degree(g)
-community <- igraph::membership(communities)
+community <- as.integer(igraph::membership(communities))
 top <- deg == stats::ave(deg, community, FUN = max) &
-  !duplicated(data.frame(community, deg))
+  !duplicated(paste(community, deg))
 plot(g, layout = layout,
      vertex.label = ifelse(top, as_emoji_name(igraph::V(g)$name), NA),
      vertex.label.cex = 0.75, vertex.label.color = "black",
