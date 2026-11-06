@@ -150,11 +150,12 @@ ata_tweets <- tibble::as_tibble(
     encoding = "UTF-8", stringsAsFactors = FALSE
   )
 )
-ata_tweets
+emoji_summary(ata_tweets, full_text)
 ```
 
 The actual text lives in the `full_text` column, which is the column we pass to
-each tidyEmoji verb.
+each tidyEmoji verb. The outputs below report what tidyEmoji finds in that
+column rather than printing the text itself.
 
 ## Detecting and summarising emoji
 
@@ -187,7 +188,8 @@ emoji-bearing and emoji-free text, or restrict an analysis to the emoji subset.
 
 ```{r}
 ata_tweets %>%
-  emoji_filter(full_text)
+  emoji_filter(full_text) %>%
+  nrow()
 ```
 
 ## Extracting emoji
@@ -205,7 +207,7 @@ step.
 ```{r}
 ata_tweets %>%
   emoji_extract_nest(full_text) %>%
-  select(full_text, .emoji_unicode)
+  select(.emoji_unicode)
 ```
 
 ### `emoji_extract_unnest()`
@@ -249,7 +251,8 @@ gives you everything needed for counting, joining and plotting.
 
 ```{r}
 ata_tweets %>%
-  emoji_tokens(full_text)
+  emoji_tokens(full_text) %>%
+  select(-full_text)
 ```
 
 ### A note on grapheme-aware detection
@@ -716,10 +719,13 @@ occurrence with a window of the surrounding text. Other emoji are blanked out
 of the window, so a neighbouring glyph never leaks into it:
 
 ```{r}
-ata_tweets %>%
-  emoji_context(full_text, window = 4) %>%
-  select(.row_number, .emoji, .emoji_context) %>%
-  head(5)
+notes <- data.frame(text = c(
+  "so proud of the whole team \U0001F389 see you all on Friday",
+  "missed the last train again \U0001F62D\U0001F62D walking home now"
+))
+notes %>%
+  emoji_context(text, window = 4) %>%
+  select(.row_number, .emoji, .emoji_context)
 ```
 
 Aggregated over a corpus, those windows give the emoji-word associations that
@@ -905,7 +911,7 @@ incong %>%
 
 incong %>%
   filter(.emoji_polarity_flip) %>%
-  select(full_text, .emoji_sentiment, text_score) %>%
+  select(.emoji_sentiment, text_score) %>%
   head(3)
 ```
 
