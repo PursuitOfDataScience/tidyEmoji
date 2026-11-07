@@ -31,9 +31,11 @@ run that has happened for this version.*
   - windows-latest: R-release
 * GitHub Actions, additionally: two collation jobs running the same check with
   `LC_COLLATE` set to `C` and to `en_US.UTF-8` and nothing else varied, a
-  `ctype` job running it under `LC_ALL=C`, a `cran-budget` job timing the
-  suite in CRAN mode against a ceiling, a weekly URL, spelling and catalogue
-  job, and a coverage job
+  `ctype` job running it under `LC_ALL=C`, a `cran-mode` job running
+  `R CMD check --as-cran` with `NOT_CRAN` unset, as CRAN does, on
+  windows-latest (R-devel and release) and macos-latest (release), a
+  `cran-budget` job timing the suite in CRAN mode against a ceiling, a weekly
+  URL, spelling and catalogue job, and a coverage job
 * win-builder: R-devel and R-release
 
 ## R CMD check results
@@ -67,7 +69,7 @@ is a test that might fail.
   the package. The declared R minimum against an installable tree, a
   `select()`-avoidance benchmark comparing two wall-clock timings, six that
   read files a tarball does not carry (`data-raw/` twice, for rebuilding the
-  catalogue and crosswalks and for rebuilding the example datasets,
+  catalogue, crosswalks and lexicons and for rebuilding the example datasets,
   `README.Rmd` for re-rendering it, `_pkgdown.yml` for the site's reference
   index, and this file twice for its own claims),
   one asserting the installed `emoji` release is

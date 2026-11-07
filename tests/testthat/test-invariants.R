@@ -5319,12 +5319,15 @@ test_that("the declared dependency floors cover the arguments the code uses", {
 # Round 52: the reproducibility claim, and the last of the roadmap's
 # "grep for other nchar() uses on user text" action item.
 
-test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
+test_that("the bundled catalogue, crosswalks and lexicons are what data-raw/ produces", {
   # Every dataset's @source names the data-raw script that builds it. Since
   # 0.6.0 that script reads Unicode's emoji-test.txt, committed beside it, so
   # the whole build can be repeated here without the network: the catalogue
-  # in R/sysdata.rda, its provenance, and both crosswalks. The two lexicons
-  # need the network and are verified out of band.
+  # in R/sysdata.rda, its provenance, and both crosswalks. Since 0.7.0 the two
+  # lexicons are built from pinned copies of their sources too, which they
+  # were not: they read an unpinned branch over the network, and the bundled
+  # sentiment file had stopped being what its script wrote (dplyr 1.2 had
+  # changed its attribute order) without any test noticing.
   skip_on_cran()
   script <- testthat::test_path("..", "..", "data-raw", "crosswalks.R")
   input <- testthat::test_path("..", "..", "data-raw", "emoji-test.txt")
@@ -5353,8 +5356,10 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   # (0.7.0)
   ups <- testthat::test_path("..", "..", "data-raw", "emoji-upstream.rds")
   voc <- testthat::test_path("..", "..", "data-raw", "vocabulary")
+  # and the pinned sources of the two lexicons (0.7.0)
+  lex <- testthat::test_path("..", "..", "data-raw", "lexicons")
   skip_if(!file.exists(sv) || !file.exists(evs) || !file.exists(ups) ||
-            !dir.exists(voc), "data-raw/ not available")
+            !dir.exists(voc) || !dir.exists(lex), "data-raw/ not available")
   skip_if_not_installed("jsonlite")
   Sys.setenv(TIDYEMOJI_WRITE = "false",
              TIDYEMOJI_EMOJI_TEST = normalizePath(input),
@@ -5379,6 +5384,26 @@ test_that("the bundled catalogue and crosswalks are what data-raw/ produces", {
   expect_identical(ns$.emoji_catalogue_meta$rows, 5244L)
   # 371 bases with a text sequence: 152 default to emoji, 219 to text
   expect_length(ns$.emoji_text_style_bases, 371L)
+
+  # the two lexicons, from data-raw/lexicons/, down to the serialized bytes,
+  # which is what attribute order and a last-place rounding difference change
+  # while identical() stays TRUE
+  old_lex <- Sys.getenv("TIDYEMOJI_LEXICONS", unset = NA)
+  on.exit(if (is.na(old_lex)) Sys.unsetenv("TIDYEMOJI_LEXICONS") else
+            Sys.setenv(TIDYEMOJI_LEXICONS = old_lex), add = TRUE)
+  Sys.setenv(TIDYEMOJI_LEXICONS = normalizePath(lex))
+  for (nm in c("emoji_sentiment_lexicon", "emoji_emotion_lexicon")) {
+    script <- testthat::test_path("..", "..", "data-raw", paste0(nm, ".R"))
+    lenv <- new.env(parent = globalenv())
+    suppressMessages(sys.source(script, envir = lenv))
+    built <- get(nm, envir = lenv)
+    shipped <- getExportedValue("tidyEmoji", nm)
+    expect_identical(built, shipped, info = nm)
+    expect_identical(names(attributes(built)),
+                     c("names", "row.names", "class"), info = nm)
+    expect_identical(serialize(built, NULL), serialize(shipped, NULL),
+                     info = nm)
+  }
 })
 
 test_that("every nchar() on user text feeds a documented code-point figure", {

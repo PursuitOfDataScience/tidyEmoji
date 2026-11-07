@@ -20,7 +20,12 @@
 #
 # Run on 2026-11-06: 482,010 rows; 0, 0 and 1 flagged. The one is an assistant
 # turn in WildChat holding a stray U+E0001, the deprecated language tag, among
-# decorative letters; removing it is the only change to that row. Every other
+# decorative letters; removing it is the only change to that row. It is a true
+# positive, not a false one: the scan's second rule hides U+E0001 always,
+# because no well-formed sequence uses it, and the roadmap's figure of 0 flags
+# on these corpora had simply missed it. What the zero was guarding, that no
+# legitimate sequence is touched, holds: both subdivision flags and every
+# selector in all three corpora come back byte for byte. Every other
 # row checked comes back byte for byte under all five policies and under
 # emoji_to_text(): all of the first two corpora and the 2,809 other WildChat
 # turns that carry an emoji, a selector or a tag, 139,983 rows. Selector runs

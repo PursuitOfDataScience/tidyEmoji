@@ -132,7 +132,10 @@ meta <- attr(eligible, "oasst")
 # English-centred and leave some messages unscored, so every unscored
 # emoji-bearing message, and every row an example or vignette prints, was read
 # in full; a message is removed if it is sexual, hateful, harassing, or holds
-# personal data the automatic screen missed.
+# personal data the automatic screen missed. Read again at the 0.7.0 release
+# gate (2026-11-06): the 106 unscored emoji messages that ship, and the nine
+# rows the final vignettes, README and examples print or begin to print;
+# nothing further was removed.
 read_out <- utils::read.csv(file.path("data-raw", "oasst-read-out.csv"),
                             stringsAsFactors = FALSE)
 eligible <- eligible[!eligible$message_id %in% read_out$message_id, ,

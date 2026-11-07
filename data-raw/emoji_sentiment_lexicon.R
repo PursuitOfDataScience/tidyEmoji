@@ -18,10 +18,46 @@
 
 library(dplyr)
 
-# A faithful copy of the Emoji Sentiment Ranking 1.0 CSV.
-url <- "https://raw.githubusercontent.com/omkar-foss/emosent-py/master/emosent/data/Emoji_Sentiment_Data_v1.0.csv"
+# A faithful copy of the Emoji Sentiment Ranking 1.0 CSV, from the one commit
+# of emosent-py that has ever touched it, committed xz-compressed under
+# data-raw/lexicons/ so the dataset rebuilds offline and byte for byte (78,880
+# bytes, md5 dd9960916aef9ac9411888534d60bc6f). TIDYEMOJI_FETCH=true downloads
+# it again; TIDYEMOJI_LEXICONS names another directory to read it from.
+url <- paste0("https://raw.githubusercontent.com/omkar-foss/emosent-py/",
+              "5a18b51b9cc4f1087b810e2ec68f2078fffa2fac/emosent/data/",
+              "Emoji_Sentiment_Data_v1.0.csv")
+src <- file.path(Sys.getenv("TIDYEMOJI_LEXICONS",
+                            file.path("data-raw", "lexicons")),
+                 "Emoji_Sentiment_Data_v1.0.csv.xz")
+if (identical(tolower(Sys.getenv("TIDYEMOJI_FETCH")), "true")) {
+  tmp <- tempfile(fileext = ".csv")
+  utils::download.file(url, tmp, mode = "wb", quiet = TRUE)
+  con <- xzfile(src, open = "wb", compression = 9)
+  writeBin(readBin(tmp, "raw", file.info(tmp)$size), con)
+  close(con)
+}
 
-raw <- readr::read_csv(url, show_col_types = FALSE)
+# Read as bytes and marked UTF-8, so the session's locale cannot touch the
+# glyphs; empty fields and "NA" are missing, as readr::read_csv() had them.
+raw <- utils::read.csv(xzfile(src), encoding = "UTF-8", check.names = FALSE,
+                       na.strings = c("", "NA"), stringsAsFactors = FALSE,
+                       colClasses = c(Position = "character"))
+
+# R's own decimal parser, behind read.csv() and as.numeric(), is not
+# correctly rounded: it reads one of the 969 positions below one unit in the
+# last place off the nearest double, where readr, which built the bundled
+# file, did not, and on a platform whose long double is a double it can miss
+# more. Every value here is a plain decimal of at most nine places, so it is
+# read exactly instead, as an integer over a power of ten: both are exact
+# doubles, and IEEE division rounds correctly.
+exact_decimal <- function(s) {
+  stopifnot(all(grepl("^[0-9]+([.][0-9]{1,9})?$", s)))
+  vapply(strsplit(s, ".", fixed = TRUE), function(p) {
+    k <- if (length(p) > 1L) nchar(p[[2L]]) else 0L
+    (as.numeric(p[[1L]]) * 10^k + if (k) as.numeric(p[[2L]]) else 0) / 10^k
+  }, numeric(1))
+}
+raw$Position <- exact_decimal(raw$Position)
 
 emoji_sentiment_lexicon <- raw %>%
   transmute(
@@ -69,5 +105,15 @@ local({
   stopifnot(!anyDuplicated(k[!is.na(k)]))
 })
 
-save(emoji_sentiment_lexicon,
-     file = "data/emoji_sentiment_lexicon.rda", compress = "xz")
+# Attribute order is part of the .rda but not of the value (identical()
+# ignores it), and dplyr and tibble releases differ in it: dplyr 1.2 puts
+# row.names first. Fix it at names, row.names, class, the order the bundled
+# file has always had, so the rebuild is byte for byte whatever the toolchain.
+emoji_sentiment_lexicon <- structure(
+  unclass(emoji_sentiment_lexicon)[names(emoji_sentiment_lexicon)],
+  row.names = c(NA, -nrow(emoji_sentiment_lexicon)), class = "data.frame")
+
+if (!identical(tolower(Sys.getenv("TIDYEMOJI_WRITE")), "false")) {
+  save(emoji_sentiment_lexicon,
+       file = file.path("data", "emoji_sentiment_lexicon.rda"), compress = "xz")
+}

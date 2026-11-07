@@ -191,6 +191,66 @@ jobs:
         with:
           upload-snapshots: false
 
+  # Every job above checks with NOT_CRAN=true, as r-lib/actions sets it, so the
+  # sweeps run; CRAN leaves it unset, so on CRAN they stand down and their
+  # sampled twins run instead, and CRAN's pretest that refuses packages runs
+  # on Windows. This job runs R CMD check --as-cran in CRAN mode on Windows
+  # (R-devel and release) and macOS, the platforms of win-builder and the
+  # macOS builder, so the check time CRAN will see there is measured on every
+  # push rather than once before a submission; cran-comments.md records it
+  # beside CRAN's own figures. The entries are written as `- os:` rather than
+  # `- {os:}` on purpose: they are not flavours of the check matrix above.
+  cran-mode:
+    runs-on: ${{ matrix.os }}
+
+    name: ${{ matrix.os }} (${{ matrix.r }}, CRAN mode)
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            r: 'devel'
+          - os: windows-latest
+            r: 'release'
+          - os: macos-latest
+            r: 'release'
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - name: R CMD check --as-cran, the way CRAN runs it
+        run: |
+          # setup-r exports NOT_CRAN=true to every step; CRAN leaves it unset
+          Sys.unsetenv("NOT_CRAN")
+          t0 <- proc.time()[["elapsed"]]
+          rcmdcheck::rcmdcheck(
+            args = c("--no-manual", "--as-cran"), build_args = "--no-manual",
+            error_on = "warning", check_dir = "check",
+            env = c(NOT_CRAN = "false"))
+          cat(sprintf("\nCRAN-mode check: %.0f s elapsed\n",
+                      proc.time()[["elapsed"]] - t0))
+          rout <- list.files("check", "^testthat[.]Rout", recursive = TRUE,
+                             full.names = TRUE)
+          if (length(rout)) cat(grep("^\\[ FAIL", readLines(rout[1L]),
+                                     value = TRUE), sep = "\n")
+        shell: Rscript {0}
+
   # CRAN's check time is a budget, and since 0.7.0 a release criterion. CRAN
   # runs the tests with NOT_CRAN unset, so every sweep stands down behind
   # skip_sweep() and its twin runs instead; r-lib/actions sets NOT_CRAN=true,
