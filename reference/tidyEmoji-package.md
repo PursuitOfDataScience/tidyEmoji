@@ -32,8 +32,9 @@ Emoji Sentiment Ranking of Kralj Novak et al. (2015)
 Shoeb & de Melo (2020) <https://aclanthology.org/2020.emnlp-main.720/>,
 released under the MIT licence. The example data, dated and
 multilingual, is a sample of OpenAssistant Conversations (Kopf et al.,
-2023) [arXiv:2304.07327](https://arxiv.org/abs/2304.07327), released
-under the Apache License 2.0.
+2023)
+[doi:10.48550/arXiv.2304.07327](https://doi.org/10.48550/arXiv.2304.07327)
+, released under the Apache License 2.0.
 
 ## Output and naming contract
 
