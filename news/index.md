@@ -2,7 +2,16 @@
 
 ## tidyEmoji 0.7.0
 
-*In development. This section is filled in as the 0.7.0 work lands.*
+**What an emoji carries: who it depicts, what a screen reader says for
+it, and what it hides.** The verbs that rewrite text now remove hidden
+payloads by default, the variation selectors and tag characters that
+smuggle a message past whatever reads the text next. Unicode’s catalogue
+now decides which presentation and joiner sequences are emoji. Eight new
+verbs read identity (skin tone, gender, decomposition, retoning), access
+(runs, the cues around each emoji, accessibility facts) and hidden code
+points. The example corpus is a licensed, dated sample of OASST2,
+installing tidyEmoji no longer installs `emoji`, every emoji has
+keywords and a shortcode, and the test suite fits CRAN’s clock.
 
 ### Hidden payloads
 
@@ -29,7 +38,13 @@
   and mathematical variants, joiners and non-joiners and the England,
   Scotland and Wales flags are all left alone, so text with nothing
   hidden in it comes back byte for byte, as all 1,485 rows of the
-  bundled sample do under all five policies.
+  bundled sample do under all five policies. On 482,010 rows of three
+  real corpora (the retired posts, all 135,174 OASST2 messages and the
+  344,836 turns in the first shard of WildChat-1M) the scan flags one: a
+  model’s reply holding a stray `U+E0001`, the deprecated language tag,
+  among decorative letters, and that code point is all it loses. The
+  139,983 other rows checked come back byte for byte under every policy
+  (`data-raw/hidden-corpora.R`).
 - **New:
   [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)**
   reports, per row, how many code points are hidden, their bytes,
@@ -299,21 +314,27 @@ links to.
 
 - **The test suite fits CRAN’s clock.** CRAN’s x86_64 flavours spent 219
   to 237 s of CPU on 0.6.0’s tests, and one of them 680 s on the whole
-  check. Run as CRAN runs it, the suite now takes 49.4 s of CPU on the
-  reference machine against 165.5 s for 0.6.0, and the tests step of
-  `R CMD check` 51 s. The 39 exhaustive tests that cost most of the time
-  (every catalogue spelling, every verb, hundreds of random strings)
-  stand down on CRAN through `skip_sweep()`, and each names a *twin*
-  that runs there instead and asserts the same property over a
-  deterministic sample of the catalogue, always including a fixed list
-  of hard cases. A test fails if a twin goes missing, every sweep still
-  runs on every push in CI, and a new `cran-budget` job times the suite
-  in CRAN mode and fails over its ceiling, or over 1 s for any single
-  test.
+  check. Run as CRAN runs it, on byte-compiled installs, the suite now
+  takes a median 55.0 s of CPU on one core of an AMD server against
+  156.0 s for 0.6.0’s: 2.83 times less (95% CI 2.79 to 2.89) over 12
+  paired, interleaved runs of the two, and 2.69 times in the worst pair
+  (Wilcoxon signed-rank p \< 0.001). The 49 exhaustive tests that cost
+  most of the time (every catalogue spelling, every verb, hundreds of
+  random strings) stand down on CRAN through `skip_sweep()`, and each
+  names a *twin* that runs there instead and asserts the same property
+  over a deterministic sample of the catalogue, always including a fixed
+  list of hard cases. A test fails if a twin goes missing, every sweep
+  still runs on every push in CI, and a new `cran-budget` job times the
+  suite in CRAN mode and fails over 82.5 s, 1.5 times its median on
+  GitHub’s runner, or over 1 s for any single test.
 - **[`emoji_search()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_search.md)
-  is about 80 times faster**, three milliseconds a call rather than a
-  quarter of a second, with output byte-identical to 0.6.0’s on 620
-  queries, and
+  is about 47 times faster**: a median 4.5 ms a call against 212 ms for
+  0.6.0, a speed-up of 47.3 (95% CI 46.7 to 47.6) over 30 paired,
+  interleaved runs of 20 queries on byte-compiled installs, 43.3 in the
+  worst pair (Wilcoxon signed-rank p \< 0.001). Before the vocabulary
+  additions above its output was byte-identical to 0.6.0’s on 620
+  queries; with them 115 of those queries find more, and every emoji
+  0.6.0 found is still among the results.
   [`emoji_properties()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_properties.md)
   with no argument builds its 5,244-row table once per session.
 
