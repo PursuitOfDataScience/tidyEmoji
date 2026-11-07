@@ -160,36 +160,70 @@ emoji_runs <- function(data, text, sep = c("whitespace", "adjacent"),
 # What is next to an occurrence, on one side: the nearest thing that is not
 # white space, as "word", "emoji", "punct" or "none", and whether white space
 # stands between.
+#
+# Vectorised over the rows: their code points are laid end to end, every one
+# is classified once (white space, letter or digit, inside an emoji span),
+# and each occurrence then reads its neighbour by index, so the cost is
+# linear in the characters however the emoji are spread over the rows. The
+# first version looked at one occurrence at a time, re-scanning its row's
+# spans and re-walking its UTF-8 from the start, so a row of 1,600 emoji cost
+# twice what 1,600 rows of one did (the second axis of data-raw/benchmark.R).
+# Rows go in chunks of about two million characters, which bounds the
+# per-character vectors on a large corpus.
 .emoji_neighbour <- function(w, row, start, end, all_spans, side) {
   n <- length(row)
-  kind <- character(n)
+  kind <- rep("none", n)
   space <- logical(n)
-  for (j in seq_len(n)) {
-    s <- w[[row[[j]]]]
+  if (!n) return(list(kind = kind, space = space))
+  rows <- sort(unique(row))
+  chunk <- floor(cumsum(as.numeric(stringi::stri_length(w[rows]))) / 2097152)
+  occ_chunk <- chunk[match(row, rows)]
+  for (cid in unique(chunk)) {
+    rr <- rows[chunk == cid]
+    cps <- stringi::stri_enc_toutf32(w[rr])
+    len <- lengths(cps)
+    off <- c(0L, cumsum(len))[seq_along(rr)]
+    cp <- unlist(cps, use.names = FALSE)
+    N <- length(cp)
+    u <- unique(cp)
+    uc <- intToUtf8(u, multiple = TRUE)
+    is_ws <- stringi::stri_detect_regex(uc, .emoji_ws1)[match(cp, u)]
+    is_word <- stringi::stri_detect_regex(uc, .emoji_word_rx)[match(cp, u)]
+    m <- do.call(rbind, all_spans[rr])
+    covered <- logical(N)
+    if (nrow(m)) {
+      o <- rep(off, vapply(all_spans[rr], nrow, integer(1)))
+      w_len <- m[, "end"] - m[, "start"] + 1L
+      covered[sequence(w_len) + rep(m[, "start"] - 1L + o, w_len)] <- TRUE
+    }
+    js <- which(occ_chunk == cid)
+    k <- match(row[js], rr)
+    o <- off[k]
+    pos <- seq_len(N)
     if (side == "prev") {
-      i <- start[[j]] - 1L
-      if (i < 1L) { kind[[j]] <- "none"; next }
-      ch <- substr(s, i, i)
+      i <- start[js] - 1L
+      ok <- i >= 1L
+      # the nearest position at or before each one that is not white space
+      near <- cummax(ifelse(is_ws, 0L, pos))
+      t <- rep(0L, length(js))
+      t[ok] <- near[o[ok] + i[ok]]
+      found <- ok & t > o
     } else {
-      i <- end[[j]] + 1L
-      if (i > nchar(s)) { kind[[j]] <- "none"; next }
-      ch <- substr(s, i, i)
+      i <- end[js] + 1L
+      ok <- i <= len[k]
+      # and at or after it
+      near <- rev(cummin(rev(ifelse(is_ws, N + 1L, pos))))
+      t <- rep(N + 1L, length(js))
+      t[ok] <- near[o[ok] + i[ok]]
+      found <- ok & t <= o + len[k]
     }
-    space[[j]] <- stringi::stri_detect_regex(ch, .emoji_ws1)
-    # walk over white space to the nearest other character
-    if (space[[j]]) {
-      step <- if (side == "prev") -1L else 1L
-      while (i >= 1L && i <= nchar(s) &&
-             stringi::stri_detect_regex(substr(s, i, i), .emoji_ws1)) {
-        i <- i + step
-      }
-      if (i < 1L || i > nchar(s)) { kind[[j]] <- "none"; next }
-      ch <- substr(s, i, i)
-    }
-    m <- all_spans[[row[[j]]]]
-    in_span <- nrow(m) > 0L && any(m[, "start"] <= i & m[, "end"] >= i)
-    kind[[j]] <- if (in_span) "emoji" else
-      if (stringi::stri_detect_regex(ch, .emoji_word_rx)) "word" else "punct"
+    sp <- logical(length(js))
+    sp[ok] <- is_ws[o[ok] + i[ok]]
+    kk <- rep("none", length(js))
+    kk[found] <- ifelse(covered[t[found]], "emoji",
+                        ifelse(is_word[t[found]], "word", "punct"))
+    kind[js] <- kk
+    space[js] <- sp
   }
   list(kind = kind, space = space)
 }

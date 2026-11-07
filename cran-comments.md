@@ -88,12 +88,13 @@ is a test that might fail.
   instead, the third is coupled to `.github/`, also build-ignored, and the
   fourth reads the roxygen comments in `R/`, which an installed package
   keeps only as the rendered help pages.
-* **Three are acceptance tests for verbs a later release will add**, each
-  naming its target: `emoji_skin_tone()`, `emoji_runs()` and
-  `emoji_sentiment_role()`. They live in `test-acceptance-pending.R`,
-  deliberately not named for a version, and stand down by name until the verb
-  exists rather than failing. Six that used to live there landed in this
-  release and now run in `test-regression-0.6.0.R`.
+* **One is an acceptance test for a verb a later release will add**, naming
+  its target: `emoji_sentiment_role()`. It lives in
+  `test-acceptance-pending.R`, deliberately not named for a version, and
+  stands down by name until the verb exists rather than failing. Eight that
+  used to live there have landed: six in 0.6.0, now in
+  `test-regression-0.6.0.R`, and those for `emoji_skin_tone()` and
+  `emoji_runs()` in this release, now in `test-regression-0.7.0.R`.
 
 Count this from the run rather than copying the number forward: it changes
 whenever a verb lands or a test is added.
@@ -176,11 +177,17 @@ attributed:
 
 0.6.0's tests took 219 to 237 s of CPU on CRAN's x86_64 flavours, and the
 whole check 680 s on r-release-macos-x86_64. 0.7.0 holds the suite to a
-budget: run as CRAN runs it, on a byte-compiled install, it takes 57 s of CPU
-on the reference Linux machine where 0.6.0 took 166 s, no test block takes a
-second, and a `cran-budget` job in CI fails over its ceiling. The exhaustive
-tests run in CI on every push and stand down on CRAN through `skip_sweep()`,
-each with a sampled twin that does run there (the skip inventory above).
+budget. Run as CRAN runs it, on byte-compiled installs on one core of an AMD
+EPYC 7702 on Linux, the 0.7.0 suite takes a median 55.0 s of CPU (53.7
+to 56.6 s) where 0.6.0's takes 156.0 s: 2.83 times less, 95% CI 2.79 to
+2.89, over 12 paired, interleaved runs of the two with a warm-up pair
+discarded, and 2.69 times in the worst pair (Wilcoxon signed-rank
+p = 0.00049). No test block takes a second. A `cran-budget` job in CI fails
+over 82.5 s, 1.5 times the median of five runs of it on the current suite
+(52.7, 55.0, 55.0, 56.7 and 57.2 s elapsed on GitHub's ubuntu-latest), or
+over 1 s for any one block. The exhaustive tests run in CI on every push and
+stand down on CRAN through `skip_sweep()`, each with a sampled twin that
+does run there (the skip inventory above).
 **TODO:** the win-builder and macOS builder times, before submitting.
 
 ## Downstream dependencies
@@ -189,8 +196,8 @@ There are no reverse dependencies. Verified against a live CRAN index
 (25,479 packages on 2026-11-04, which list tidyEmoji at 0.4.0) with
 `tools::package_dependencies("tidyEmoji", db = available.packages(),
 reverse = TRUE, which = c("Depends", "Imports", "LinkingTo", "Suggests",
-"Enhances"))`, which returns none. Re-run this against a live index before submitting, and state the published
-version it reports.
+"Enhances"))`, which returns none. Re-run this against a live index before
+submitting, and state the published version it reports.
 
 The DOI in DESCRIPTION and on `?emoji_sentiment_lexicon`
 (<doi:10.1371/journal.pone.0144296>) resolves to the PLoS ONE article.

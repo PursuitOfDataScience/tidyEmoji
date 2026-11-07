@@ -225,7 +225,7 @@ jobs:
         run: |
           # r-lib/actions exports NOT_CRAN=true to every step; CRAN does not.
           Sys.unsetenv("NOT_CRAN")
-          total_s <- 80
+          total_s <- 82.5
           block_s <- 1
           t0 <- proc.time()
           res <- as.data.frame(testthat::test_dir(

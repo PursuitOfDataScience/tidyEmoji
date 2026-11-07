@@ -1215,6 +1215,15 @@ test_that("an orphan skin-tone modifier is accounted for, not counted", {
   out <- emoji_skin_tone(tibble::tibble(text = paste("a", orphan, "b")), text)
   expect_equal(out$.emoji_n_orphan_modifiers[1], 1L)
   expect_equal(out$.emoji_n_modified[1], 0L)
+  # A hair component standing alone is a component span as well, and no tone,
+  # so it is no orphan modifier: two swatches and two hairs count two, and a
+  # hair alone none. (A mutation that counted every single-code-point
+  # component survived every fixture before this one.)
+  hair <- tibble::tibble(text = c(
+    paste(cp(0x1F9B0), cp(0x1F3FD), "x", cp(0x1F3FF), cp(0x1F9B3)),
+    cp(0x1F9B1)))
+  expect_identical(emoji_skin_tone(hair, text)$.emoji_n_orphan_modifiers,
+                   c(2L, 0L))
 })
 
 test_that("modified and modifiable cannot be swapped unnoticed", {
@@ -1621,6 +1630,44 @@ test_that("emoji_features() flags an emoji inside a word", {
                pos[1:2])
 })
 
+test_that("emoji_features() reads a neighbour across white space, to the row's edges", {
+  s <- cp(0x1F600)
+  p <- cp(0x1F389)
+  tone <- cp(0x1F44D, 0x1F3FD)
+  fam <- cp(0x1F468, 0x200D, 0x1F469, 0x200D, 0x1F467)  # RGI: one occurrence
+  d <- tibble::tibble(text = c(
+    "no emoji here",
+    paste0(s, cp(0x3000), cp(0xA0)),                 # trailing Unicode spaces
+    paste0("  ", s, "x"),                            # leading spaces: "none",
+    paste0("a", cp(0x2003), s, cp(0x09), "!"),       # never the row above; em
+    paste0(s, " ", p),                               # space and tab; an emoji
+    paste0(tone, "ok", fam, s),                      # across a space; spans
+    NA,                                              # of two and five code
+    paste0("a", s, s, s, "!")))                      # points; a run
+  out <- emoji_features(d, text)
+  expect_identical(out$.row_number, c(2L, 3L, 4L, 5L, 5L, 6L, 6L, 6L, 8L, 8L, 8L))
+  expect_identical(out$.emoji_prev, c("none", "none", "word", "none", "emoji",
+                                      "none", "word", "emoji",
+                                      "word", "emoji", "emoji"))
+  expect_identical(out$.emoji_next, c("none", "word", "punct", "emoji", "none",
+                                      "word", "emoji", "none",
+                                      "emoji", "emoji", "punct"))
+  expect_identical(out$.emoji_prev_space, c(FALSE, TRUE, TRUE, FALSE, TRUE,
+                                            FALSE, FALSE, FALSE,
+                                            FALSE, FALSE, FALSE))
+  expect_identical(out$.emoji_next_space, c(TRUE, FALSE, TRUE, TRUE, FALSE,
+                                            FALSE, FALSE, FALSE,
+                                            FALSE, FALSE, FALSE))
+  # a word on one side only is not inside one: the toned thumb has "ok" just
+  # after it, the family "ok" just before, the run's first emoji "a" (a
+  # mutation reading either side alone survived every fixture before this)
+  expect_identical(out$.emoji_intraword, rep(FALSE, 11L))
+  # and the answer does not depend on how densely a row is packed
+  dense <- emoji_features(tibble::tibble(text = strrep(s, 400)), text)
+  expect_identical(dense$.emoji_prev, c("none", rep("emoji", 399)))
+  expect_identical(dense$.emoji_next, c(rep("emoji", 399), "none"))
+})
+
 test_that("emoji_a11y_check() reports the CSCW 2024 taxonomy as facts", {
   j <- cp(0x1F602)
   p <- cp(0x1F389)
@@ -1637,6 +1684,10 @@ test_that("emoji_a11y_check() reports the CSCW 2024 taxonomy as facts", {
   expect_equal(out$.emoji_n_mid, c(0L, 0L, 1L))
   expect_equal(out$.emoji_spoken_chars[1], 4L * nchar("face with tears of joy"))
   expect_equal(out$.emoji_n_char, nchar(d$text))
+  # a pair written once is no repeated sequence: one pair twice and another
+  # once count one (counting every distinct pair survived the fixtures above)
+  once <- tibble::tibble(text = paste0(p, h, " yes ", p, h, " and ", j, p))
+  expect_identical(emoji_a11y_check(once, text)$.emoji_n_repeated_seqs, 1L)
 })
 
 test_that("emoji_a11y_check() counts letters, payloads, names and modifiers", {

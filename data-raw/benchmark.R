@@ -16,6 +16,12 @@
 # denser rows. A verb that fails the first is quadratic in the corpus; one
 # that fails the second is quadratic within a row, which the row axis cannot
 # see. Either is the finding, not the absolute time.
+#
+# Run on 2026-11-06 for 0.7.0, on one amd core of midway3, byte-compiled: all
+# sixteen verbs grow 35x to 56x for 50x the rows, and none moves by more than
+# 1.3x from 1 to 1,600 emoji per row. The second axis caught the new
+# emoji_features() at 2.1x, its neighbour lookup re-scanning the row for every
+# emoji, before the release; it now reads 1.0x.
 
 library(tidyEmoji)
 
@@ -63,22 +69,42 @@ verbs <- list(
   emoji_sentiment    = function(d) emoji_sentiment(d, text),
   emoji_dfm          = function(d) emoji_dfm(d, text),
   emoji_context      = function(d) emoji_context(d, text),
-  emoji_collocations = function(d) emoji_collocations(d, text)
+  emoji_collocations = function(d) emoji_collocations(d, text),
+  # 0.7.0: the hidden-payload scan, the identity verbs and the access verbs.
+  # emoji_decompose() takes glyphs rather than text, so it reads `glyph`, the
+  # row's first emoji, which with_glyphs() adds outside the timing.
+  emoji_sanitize     = function(d) emoji_sanitize(d, text, policy = "strip"),
+  emoji_hidden       = function(d) emoji_hidden(d, text),
+  emoji_decompose    = function(d) emoji_decompose(d$glyph),
+  emoji_skin_tone    = function(d) emoji_skin_tone(d, text),
+  emoji_gender       = function(d) emoji_gender(d, text),
+  emoji_retone       = function(d) emoji_retone(d, text, tone = "dark"),
+  emoji_runs         = function(d) emoji_runs(d, text),
+  emoji_features     = function(d) emoji_features(d, text),
+  emoji_a11y_check   = function(d) emoji_a11y_check(d, text)
 )
+
+with_glyphs <- function(d) {
+  g <- tidyEmoji:::emoji_glyph_list(d$text)
+  d$glyph <- vapply(g, function(x) if (length(x)) x[[1L]] else NA_character_,
+                    character(1))
+  d
+}
 
 cat("tidyEmoji", as.character(utils::packageVersion("tidyEmoji")),
     "|", R.version.string, "\n")
-cat("emoji", as.character(utils::packageVersion("emoji")),
+cat("emoji data snapshot", emoji_provenance()$emoji_pkg,
     "| sizes:", paste(sizes, collapse = ", "), "\n\n")
 
 # Warm up first. The reference table and the lexicons are lazy-loaded on first
 # use, so without this the smallest size pays for loading them and the scaling
 # ratios come out below 1: an artefact that reads like a speed-up.
-invisible(lapply(verbs, function(f) f(data.frame(text = make_corpus(50L)))))
+warm <- with_glyphs(data.frame(text = make_corpus(50L), stringsAsFactors = FALSE))
+invisible(lapply(verbs, function(f) f(warm)))
 
 results <- list()
 for (n in sizes) {
-  d <- data.frame(text = make_corpus(n), stringsAsFactors = FALSE)
+  d <- with_glyphs(data.frame(text = make_corpus(n), stringsAsFactors = FALSE))
   for (nm in names(verbs)) {
     el <- timeit(verbs[[nm]], d)
     results[[length(results) + 1L]] <-
@@ -137,8 +163,8 @@ cat("\nEmoji per row, at a constant", format(3200L, big.mark = ","),
     "emoji in total:\n")
 dense_k <- c(1L, 10L, 100L, 1600L)
 dense <- lapply(dense_k, function(k) {
-  data.frame(text = rep(strrep("\U0001f600", k), 3200L %/% k),
-             stringsAsFactors = FALSE)
+  with_glyphs(data.frame(text = rep(strrep("\U0001f600", k), 3200L %/% k),
+                         stringsAsFactors = FALSE))
 })
 cat("| Verb | ", paste(sprintf("%d/row", dense_k), collapse = " | "),
     " | densest/cheapest |\n", sep = "")
