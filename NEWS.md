@@ -286,6 +286,10 @@ section, *Glyphs, not people*, that each of their help pages links to.
   with them 115 of those queries find more, and every emoji 0.6.0 found is
   still among the results. `emoji_properties()` with no argument builds its
   5,244-row table once per session.
+* **Every bundled data file rebuilds byte for byte from `data-raw/` with no
+  network**, the two lexicons now from pinned copies of their sources, and a
+  `cran-mode` CI job runs `R CMD check --as-cran` with `NOT_CRAN` unset on
+  Windows (R-devel and release) and macOS, as CRAN does.
 
 # tidyEmoji 0.6.0
 

@@ -168,12 +168,12 @@ attributed:
   sit beside it.
 * New in 0.7.0: the example data `oasst_messages` and `oasst_reactions`, a
   screened sample of OpenAssistant Conversations (Kopf et al., 2023,
-  <arXiv:2304.07327>) under the Apache License 2.0, whose text is reproduced
-  in `inst/LICENSE.note`; it replaces a corpus of posts with no recorded
-  licence. Also new: a snapshot of the frozen data of the `emoji` package
-  16.0.0 (MIT), which moves from Imports to Suggests, and the shortcodes of
-  emojibase-data 18.0.0 (MIT). Each MIT notice is in `inst/LICENSE.note`, and
-  each copyright holder is in `Authors@R`.
+  <doi:10.48550/arXiv.2304.07327>) under the Apache License 2.0, whose text
+  is reproduced in `inst/LICENSE.note`; it replaces a corpus of posts with no
+  recorded licence. Also new: a snapshot of the frozen data of the `emoji`
+  package 16.0.0 (MIT), which moves from Imports to Suggests, and the
+  shortcodes of emojibase-data 18.0.0 (MIT). Each MIT notice is in
+  `inst/LICENSE.note`, and each copyright holder is in `Authors@R`.
 
 ## Check time
 
@@ -190,7 +190,22 @@ over 82.5 s, 1.5 times the median of five runs of it on the current suite
 over 1 s for any one block. The exhaustive tests run in CI on every push and
 stand down on CRAN through `skip_sweep()`, each with a sampled twin that
 does run there (the skip inventory above).
-**TODO:** the win-builder and macOS builder times, before submitting.
+
+Windows and macOS, in CRAN mode: the `cran-mode` job runs
+`R CMD check --as-cran` with `NOT_CRAN` unset on GitHub's runners, as
+win-builder and the macOS builder do. On commit a1d1dd4 the tests took 86 s
+on windows-latest with R-devel (2026-11-05 r90840), 83 s with R 4.6.2 and
+34 s on macos-latest (arm64, R 4.6.2); the vignettes 20, 21 and 11 s; the
+whole check 188, 180 and 95 s, with 0 failures and 69, 69 and 71 tests
+skipped. CRAN's own check times for 0.6.0, read on 2026-11-07, are 397 s on
+r-oldrel-windows-x86_64, the one Windows flavour to have reported 0.6.0 so
+far (0.4.0 took 490 s on r-devel-windows-x86_64 and 425 s on
+r-release-windows-x86_64), 116 s on r-release-macos-arm64 and 674 s on
+r-release-macos-x86_64. All three jobs gave one NOTE, from the incoming
+feasibility check: the days since the last update, and a request to cite the
+OASST2 paper by its arXiv DOI, which DESCRIPTION now does.
+**TODO before submitting:** win-builder (R-devel and release) and the macOS
+builder themselves, whose results go to the maintainer's mailbox.
 
 ## Downstream dependencies
 
