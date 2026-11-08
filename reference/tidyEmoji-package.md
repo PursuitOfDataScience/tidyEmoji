@@ -24,14 +24,15 @@ and to rewrite tones for counterfactual experiments, reports runs of
 emoji and the facts behind their accessibility, and finds, decodes and
 removes hidden payloads, invisible characters that carry a message to a
 language model. Its keywords unite those of the 'emoji' package with the
-Unicode CLDR 49 annotations, and the shortcodes of the newest emoji come
-from 'emojibase' (MIT). The bundled emoji sentiment lexicon is from the
-Emoji Sentiment Ranking of Kralj Novak et al. (2015)
+annotations in release 49 of the Unicode Common Locale Data Repository,
+and the shortcodes of the newest emoji come from 'emojibase' (MIT). The
+bundled emoji sentiment lexicon is from the Emoji Sentiment Ranking of
+Kralj Novak et al. (2015)
 [doi:10.1371/journal.pone.0144296](https://doi.org/10.1371/journal.pone.0144296)
 , released under CC BY-SA 4.0; the emotion lexicon is from EmoTag1200 of
 Shoeb & de Melo (2020) <https://aclanthology.org/2020.emnlp-main.720/>,
 released under the MIT licence. The example data, dated and
-multilingual, is a sample of OpenAssistant Conversations (Kopf et al.,
+multilingual, is a sample of 'OpenAssistant' Conversations (Kopf et al.,
 2023)
 [doi:10.48550/arXiv.2304.07327](https://doi.org/10.48550/arXiv.2304.07327)
 , released under the Apache License 2.0.
