@@ -37,6 +37,8 @@ run that has happened for this version.*
   `cran-budget` job timing the suite in CRAN mode against a ceiling, a weekly
   URL, spelling and catalogue job, and a coverage job
 * win-builder: R-devel and R-release
+* macOS builder: R-release on an Apple M1, the setup of CRAN's
+  r-release-macos-arm64
 
 ## R CMD check results
 
@@ -204,8 +206,14 @@ r-release-windows-x86_64), 116 s on r-release-macos-arm64 and 674 s on
 r-release-macos-x86_64. All three jobs gave one NOTE, from the incoming
 feasibility check: the days since the last update, and a request to cite the
 OASST2 paper by its arXiv DOI, which DESCRIPTION now does.
-**TODO before submitting:** win-builder (R-devel and release) and the macOS
-builder themselves, whose results go to the maintainer's mailbox.
+The macOS builder checked the 6fbe954 tarball twice on 2026-11-08. One run
+asked for R-release and one for R-devel, and it ran both on its
+r-release-macosx-arm64 setup (R 4.6.1 patched, macOS 26.6, an Apple M1):
+Status OK with no NOTE, the tests 28 s, the vignettes 14 and 13 s, and the
+whole check 86 and 68 s of wall clock, against CRAN's 116 s for 0.6.0 on the
+same flavour. win-builder checked the same tarball on R-devel and R-release,
+uploaded 2026-11-07 04:37 UTC; its results go only to the maintainer's
+mailbox. **TODO:** record those two check times here.
 
 ## Downstream dependencies
 

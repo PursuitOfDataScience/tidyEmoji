@@ -23,8 +23,10 @@
 # decorative letters; removing it is the only change to that row. It is a true
 # positive, not a false one: the scan's second rule hides U+E0001 always,
 # because no well-formed sequence uses it, and the roadmap's figure of 0 flags
-# on these corpora had simply missed it. What the zero was guarding, that no
-# legitimate sequence is touched, holds: both subdivision flags and every
+# on these corpora had simply missed it. The turn carries emoji too (U+1F480,
+# U+1F4B0), so it is one of the roadmap's 3,007 emoji-bearing turns: the miss
+# was in that scan, not in which rows it read. What the zero was guarding, that
+# no legitimate sequence is touched, holds: both subdivision flags and every
 # selector in all three corpora come back byte for byte. Every other
 # row checked comes back byte for byte under all five policies and under
 # emoji_to_text(): all of the first two corpora and the 2,809 other WildChat
