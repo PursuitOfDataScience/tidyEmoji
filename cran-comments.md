@@ -52,6 +52,17 @@ it: do not skip it.
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, the four vignettes, README.md and NEWS.md, with the
   269 entries in `inst/WORDLIST`.
+* **The incoming spell check of DESCRIPTION**: win-builder's NOTE named four
+  words its aspell check did not know: CLDR, Kopf, OpenAssistant and
+  shortcodes. That check runs only where `_R_CHECK_CRAN_INCOMING_USE_ASPELL_`
+  is set, as on CRAN and win-builder, so neither our runs nor the `cran-mode`
+  job raised it. DESCRIPTION now spells out CLDR (the Unicode Common Locale
+  Data Repository) and quotes 'OpenAssistant' as the project's name. The two
+  words left are spelt correctly: Kopf is the first author of the OASST2
+  paper, and shortcodes is the usual name for codes such as `:smile:`. The
+  same check, run here with R's own function and the GNU aspell English
+  dictionaries, reports those two and nothing else on the current
+  DESCRIPTION.
 
 ## The skip inventory
 
@@ -211,9 +222,13 @@ asked for R-release and one for R-devel, and it ran both on its
 r-release-macosx-arm64 setup (R 4.6.1 patched, macOS 26.6, an Apple M1):
 Status OK with no NOTE, the tests 28 s, the vignettes 14 and 13 s, and the
 whole check 86 and 68 s of wall clock, against CRAN's 116 s for 0.6.0 on the
-same flavour. win-builder checked the same tarball on R-devel and R-release,
-uploaded 2026-11-07 04:37 UTC; its results go only to the maintainer's
-mailbox. **TODO:** record those two check times here.
+same flavour. win-builder checked the same tarball on 2026-11-07 with R-devel
+(2026-11-06 r90845) and R 4.6.2: the tests 79 and 73 s, the vignettes 20 and
+19 s, and the whole check 192 s on each, well under CRAN's Windows figures
+above. Each gave one NOTE, from the incoming feasibility check: the days
+since the last update, and the four words of DESCRIPTION discussed under the
+check results. The DESCRIPTION wording described there is the only change to
+the package since that tarball.
 
 ## Downstream dependencies
 
