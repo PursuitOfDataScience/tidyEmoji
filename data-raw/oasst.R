@@ -127,8 +127,8 @@ stopifnot(file.exists(extract_path))
 eligible <- readRDS(extract_path)
 meta <- attr(eligible, "oasst")
 
-# Messages read by hand and taken out before the data was committed, with the
-# rule that removed each. The detoxify scores and the word list are
+# Messages read and taken out before the data was committed, with the rule
+# that removed each. The detoxify scores and the word list are
 # English-centred and leave some messages unscored, so every unscored
 # emoji-bearing message, and every row an example or vignette prints, was read
 # in full; a message is removed if it is sexual, hateful, harassing, or holds

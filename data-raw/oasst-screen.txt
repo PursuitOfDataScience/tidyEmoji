@@ -3,10 +3,10 @@
 # Stored ROT13-encoded, one per line, so the repository never shows them in
 # plain text; data-raw/oasst.R decodes them with chartr() and matches each as a
 # whole word, case-insensitively. English-centred, as every such list is,
-# which is why the build also has a human read the rows no toxicity score
-# covers. Words with an innocent everyday sense in another language the corpus
-# holds (French "retard", "late") are left out on purpose: they would remove
-# ordinary messages and no slur.
+# which is why the rows no toxicity score covers are also read in full before
+# the data is committed. Words with an innocent everyday sense in another
+# language the corpus holds (French "retard", "late") are left out on purpose:
+# they would remove ordinary messages and no slur.
 avttre
 avttref
 avttn
