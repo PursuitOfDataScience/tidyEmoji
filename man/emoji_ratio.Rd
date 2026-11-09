@@ -84,6 +84,10 @@ section of \link{tidyEmoji}), so it adds nothing to \code{.emoji_n} or
 emoji-only. The same holds for the joiners of a zero-width-joiner sequence
 Unicode does not recommend, which counts as its parts:
 \verb{U+1F9D1 U+200D U+1F467} is two emoji, a ratio of \code{2/3}, and emoji-only.
+A symbol the catalogue does not list, followed by a stray \code{U+FE0F}, is the
+text it is without the selector, so \verb{U+1F600 U+2605 U+FE0F} (a black star)
+is no more emoji-only than \verb{U+1F600 U+2605}, inside a joined sequence or
+not.
 }
 \examples{
 df <- data.frame(text = c("\U0001f600\U0001f389", "half \U0001f600", "no"))

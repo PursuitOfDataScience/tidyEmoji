@@ -104,8 +104,12 @@ annotated eight thousand times, and the bundled lexicon keeps the annotation
 counts that say which is which. With \code{se = TRUE} the result gains
 \code{.emoji_sentiment_se}, the standard error of the row's mean: each glyph's
 score has a binomial-style standard error computed from its own counts, and
-those are propagated to the mean assuming independent annotations
-(\code{sqrt(sum(se^2)) / n_scored}). It needs the annotation counts, so it is
+those are propagated to the mean over the row's distinct glyphs, assuming
+independent annotations: \code{sqrt(sum(w^2 * se^2))}, where \code{w} is each glyph's
+share of the row's scored occurrences. A repeated glyph is the same
+estimate again rather than new evidence, so one emoji written three times
+has the standard error of one. With every glyph distinct this is
+\code{sqrt(sum(se^2)) / n_scored}. It needs the annotation counts, so it is
 available for the bundled \code{"novak2015"} lexicon only. See
 \code{\link[=emoji_ambiguity]{emoji_ambiguity()}} for the same counts read as disagreement.
 }

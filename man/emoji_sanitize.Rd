@@ -106,7 +106,8 @@ name or alias is \strong{left in place unchanged}. A glyph the catalogue does
 not list, such as a family with a skin tone (a sequence Unicode allows
 but does not recommend), is detected but cannot be named, so these two
 policies can return a column that still holds emoji. A ZWJ sequence the
-catalogue does not list is named by its parts, in order. \code{"strip"} never
+catalogue does not list is named by its parts, in order, unless it holds
+something that is no part, which it keeps as it is. \code{"strip"} never
 does. Neither does \code{"placeholder"}, unless the token you supply is
 itself emoji-forming: one that \emph{is} an emoji survives by definition, and
 a lone combining character such as \code{U+FE0F} binds to whatever the
@@ -171,12 +172,16 @@ reversibility contract, not a cosmetic choice:
 \item A \code{wrap} that decorates the token -- \code{"[:{x}:]"}, \code{":{x}:!"} -- brings the
 emoji back but leaves the decoration behind, so the emoji is restored and
 the text is not.
-\item A \code{wrap} with no \verb{:token:} at all -- \code{"{x}"}, \code{"<{x}>"}, \code{"@{x}@"},
-\code{":{x}"} -- restores nothing: the shortcode stays in the text as an
-ordinary word. This is the case to watch, because it fails silently.
-\item \code{wrap = "::{x}::"} is worse than either: the inner \verb{:grinning:} matches,
-so the emoji comes back wrapped in the leftover colons (\verb{:<U+1F600>:}) and
-a further round trip keeps adding to them.
+\item A \code{wrap} with no \verb{:token:} at all -- \code{"{x}"}, \code{"<{x}>"}, \code{"@{x}@"} --
+restores nothing: the shortcode stays in the text as an ordinary word.
+This is the case to watch, because it fails silently.
+\item \code{wrap = ":{x}"} restores by accident, and only partly: two emoji written
+together become \verb{:grinning:grinning}, whose first two colons make a
+token, so one grinning face comes back and the other stays a word. A
+lone emoji stays a word.
+\item \code{wrap = "::{x}::"} is worse than any of these: the inner \verb{:grinning:}
+matches, so the emoji comes back wrapped in the leftover colons
+(\verb{:<U+1F600>:}) and a further round trip keeps adding to them.
 }
 
 Change \code{wrap} for readability by all means, but not on a column you intend
@@ -208,6 +213,13 @@ the round trip restores the original text exactly when the only
 may hold real ones, compare \code{emoji_density()}'s \code{.emoji_n} before and after,
 which is the cheapest way to see the inflation.
 
+A colon pair that is no alias does not get in the way: \code{"10:30"} with a
+grinning face straight after it becomes \code{"10:30:grinning:"}, and the face
+comes back. One case is ambiguous: an alias the text itself spells after a
+colon, straight before an emoji. \code{"status:ok"} and a thumbs-up become
+\code{"status:ok:+1:"}, which restores as \code{"status"}, \verb{U+1F197} and \code{"+1:"},
+because \code{\link[=text_to_emoji]{text_to_emoji()}} reads the first token it meets.
+
 Unicode also lists shorter spellings of the same emoji, with the \code{U+FE0F}
 presentation selectors omitted. Feed one of those in and the round trip
 returns the \emph{canonical} spelling instead: \verb{U+270C} comes back as
@@ -236,8 +248,17 @@ every policy, \code{"keep"} included, deletes those code points by default:
 rules are exact, so a lone \code{U+FE0E} or \code{U+FE0F}, the selectors of Japanese
 names, Unicode's standardized variants and the England, Scotland and Wales
 flags all stay. Text with nothing hidden in it comes back byte for byte as
-before; \code{hidden = "keep"} restores 0.6.0 exactly. \code{\link[=emoji_hidden]{emoji_hidden()}} reports
-what was there, and decodes it.
+before, with one exception: rewriting an emoji can leave hidden what the
+emoji made legitimate, and that goes too. The tags of a subdivision flag
+the catalogue does not list are part of the flag until its black flag is
+named, masked or deleted, and are tags outside a flag after; and deleting
+an emoji (\code{"strip"}, or an empty \code{placeholder}) makes a selector on
+either side of it adjacent, so a run of single selectors spread over
+adjacent emoji would otherwise come out of \code{"strip"} as a payload.
+\code{hidden = "keep"} restores 0.6.0 exactly. \code{\link[=emoji_hidden]{emoji_hidden()}} reports what
+was there, and decodes it, and reports nothing on the result: a deletion
+can always make two selectors adjacent, so it repeats until nothing hidden
+is left.
 }
 
 \section{Why a policy, and why written down}{

@@ -265,15 +265,26 @@ test_that("legitimate selectors, joiners and tags are never hidden payloads", {
   expect_equal(h$.emoji_n_hidden, rep(0L, length(controls)))
   expect_true(all(h$.emoji_hidden_kind == "none"))
   expect_true(all(is.na(h$.emoji_hidden_payload)))
-  # and the rewriting verbs leave every one of them byte for byte alone
+  # and the rewriting verbs leave every one of them byte for byte alone,
+  # except what a rewrite itself leaves hidden: Texas's tags, once the black
+  # flag they belonged to is named, masked or gone, are tags outside a flag,
+  # and go too
   expect_identical(emoji_sanitize(d, text, policy = "keep")$text, controls)
+  texas <- which(controls == cp(0x1F3F4, 0xE0075, 0xE0073, 0xE0074, 0xE0078,
+                                0xE007F))
+  hid <- function(s) emoji_hidden(tibble::tibble(text = s), text)$.emoji_n_hidden
   for (p in c("strip", "name", "shortcode", "placeholder")) {
-    expect_identical(emoji_sanitize(d, text, policy = p)$text,
-                     emoji_sanitize(d, text, policy = p, hidden = "keep")$text,
-                     info = p)
+    kept <- emoji_sanitize(d, text, policy = p, hidden = "keep")$text
+    removed <- emoji_sanitize(d, text, policy = p)$text
+    orphan <- hid(kept) > 0L
+    expect_identical(which(orphan), texas, info = p)
+    expect_identical(removed[!orphan], kept[!orphan], info = p)
+    expect_identical(hid(removed), rep(0L, length(controls)), info = p)
   }
-  expect_identical(emoji_to_text(d, text)$text,
-                   emoji_to_text(d, text, hidden = "keep")$text)
+  named <- emoji_to_text(d, text)$text
+  kept <- emoji_to_text(d, text, hidden = "keep")$text
+  expect_identical(named[-texas], kept[-texas])
+  expect_identical(named[texas], "black flag")
   expect_identical(emoji_summary(d, text)$n_hidden, 0L)
 })
 
@@ -1920,4 +1931,347 @@ test_that("every 0.7.0 export has a concept, an example and a question-index row
   for (f in new) {
     expect_true(grepl(paste0("`", f, "()`"), index, fixed = TRUE), info = f)
   }
+})
+
+
+# --- The pre-submission review ---------------------------------------------
+#
+# A review of 0.7.0 before its CRAN submission confirmed these by reading the
+# source. Each test fails on 7f8a620, the first release commit of 0.7.0.
+
+test_that("package code reads every bundled dataset through tidyEmoji::", {
+  # Lazy-loaded data is not in the namespace, so a bare name found a dataset
+  # only through the search path: without library(tidyEmoji) the verbs failed
+  # with "object 'emoji_sentiment_lexicon' not found", and with it a global
+  # object of the same name was read instead.
+  ns <- asNamespace("tidyEmoji")
+  ds <- sub(" .*$", "", utils::data(package = "tidyEmoji")$results[, "Item"])
+  expect_length(ds, 6L)
+  # the symbols of `e` that are not inside a `::` or `:::` call; an empty
+  # argument (`x[, 1]`) is a symbol too, and never passed on as a value
+  bare <- function(e) {
+    if (is.symbol(e)) return(as.character(e))
+    if (is.call(e) && is.symbol(e[[1L]]) &&
+        as.character(e[[1L]]) %in% c("::", ":::")) {
+      return(character(0))
+    }
+    if (!is.call(e) && !is.pairlist(e)) return(character(0))
+    out <- character(0)
+    for (i in seq_along(e)) {
+      if (is.symbol(e[[i]])) {
+        out <- c(out, as.character(e[[i]]))
+      } else if (is.call(e[[i]]) || is.pairlist(e[[i]])) {
+        out <- c(out, bare(e[[i]]))
+      }
+    }
+    out
+  }
+  hits <- character(0)
+  n_fun <- 0L
+  for (nm in ls(ns, all.names = TRUE)) {
+    f <- get(nm, envir = ns)
+    if (!is.function(f) || is.primitive(f)) next
+    n_fun <- n_fun + 1L
+    found <- intersect(c(bare(formals(f)), bare(body(f))), ds)
+    if (length(found)) {
+      hits <- c(hits, paste0(nm, "(): ", paste(found, collapse = ", ")))
+    }
+  }
+  expect_gt(n_fun, 150L)
+  expect_identical(hits, character(0))
+  # and the walk does see a bare name where there is one
+  probe <- function() nrow(emoji_sentiment_lexicon)
+  expect_identical(intersect(bare(body(probe)), ds), "emoji_sentiment_lexicon")
+})
+
+test_that("the verbs read the bundled data, never an object of the same name", {
+  cache <- tidyEmoji:::.tidyEmoji_cache
+  slots <- c("sentiment", "emotion", "ambiguity")
+  saved <- mget(slots, envir = cache, ifnotfound = list(NULL))
+  decoy <- new.env()
+  for (nm in c("emoji_sentiment_lexicon", "emoji_emotion_lexicon",
+               "emoji_unicode_crosswalk", "category_unicode_crosswalk")) {
+    assign(nm, utils::head(getExportedValue("tidyEmoji", nm), 1L),
+           envir = decoy)
+  }
+  attach(decoy, pos = 2L, name = "tidyEmoji_decoy", warn.conflicts = FALSE)
+  on.exit({
+    detach("tidyEmoji_decoy", character.only = TRUE)
+    for (s in slots) assign(s, saved[[s]], envir = cache)
+  }, add = TRUE)
+  for (s in slots) assign(s, NULL, envir = cache)
+  love <- cp(0x1F60D)
+  rage <- cp(0x1F621)
+  d <- data.frame(text = c(paste("love", love), paste("angry", rage)))
+  lex <- tidyEmoji::emoji_sentiment_lexicon
+  s <- emoji_sentiment(d, text, se = TRUE)
+  expect_identical(s$.emoji_n_scored, c(1L, 1L))
+  expect_equal(s$.emoji_sentiment,
+               lex$sentiment_score[match(c(love, rage), lex$emoji)])
+  expect_false(anyNA(s$.emoji_sentiment_se))
+  e <- emoji_emotion(d, text)
+  expect_identical(e$.emoji_n_scored, c(1L, 1L))
+  expect_identical(nrow(emoji_ambiguity()), nrow(lex))
+  expect_identical(emoji_lexicons()$n[1:2], c(969L, 150L))
+  expect_identical(emoji_provenance()$sentiment_lexicon,
+                   "novak2015 (969 emoji)")
+  expect_identical(emoji_categorize(d, text)$.emoji_category,
+                   rep("Smileys & Emotion", 2L))
+  expect_gt(nrow(top_n_emojis(d, text, duplicated = TRUE)), 2L)
+})
+
+test_that("emoji_collocations()' pmi survives counts whose product passes 2^31", {
+  pmi <- tidyEmoji:::.emoji_pmi
+  # 50000 * 100000 overflows an integer product; the 50,000-row corpus of
+  # one sentence that reaches it is too slow to build here
+  expect_no_warning(v <- pmi(50000L, 100000, 50000, 100000L))
+  expect_identical(v, 0)
+  expect_equal(pmi(50000L, 50000L, 50000L, 100000L), log(2))
+  # bit-identical to the integer product below the overflow, so no tie moves
+  o <- c(1L, 7L, 300L)
+  r <- c(10, 20, 400)
+  cc <- c(3, 9, 500)
+  expect_identical(pmi(o, r, cc, 1000L), log(o * 1000L / (r * cc)))
+  # and the verb's column is that function's answer
+  df <- data.frame(text = c("cold coffee \U0001f622", "coffee again \U0001f622",
+                            "warm tea \U0001f60a"))
+  out <- emoji_collocations(df, text, min_n = 1)
+  expect_true(".emoji_pmi" %in% all.names(body(emoji_collocations)))
+  expect_false(anyNA(out$pmi))
+})
+
+test_that("emoji_pairs(directed = TRUE) has a finite log odds for both orders", {
+  ab <- cp(0x1F602, 0x1F60D)
+  ba <- cp(0x1F60D, 0x1F602)
+  two <- data.frame(text = c(ab, ba))
+  expect_no_warning(
+    out <- emoji_pairs(two, text, directed = TRUE, measure = "log_odds"))
+  expect_equal(out$log_odds, rep(log(3), 2L))
+  three <- data.frame(text = c(ab, ab, ba))
+  out <- emoji_pairs(three, text, directed = TRUE, measure = "log_odds")
+  expect_identical(out$item1, c(cp(0x1F602), cp(0x1F60D)))
+  expect_equal(out$log_odds, c(log(5), log(3)))
+  # a pair never written the other way round scores as it does undirected
+  one <- data.frame(text = c(ab, cp(0x1F602), cp(0x1F389)))
+  expect_identical(
+    emoji_pairs(one, text, directed = TRUE, measure = "log_odds")$log_odds,
+    emoji_pairs(one, text, measure = "log_odds")$log_odds)
+  # ppmi and dice keep the whole-document marginals
+  expect_equal(emoji_pairs(three, text, directed = TRUE, measure = "dice")$dice,
+               c(4 / 6, 2 / 6))
+})
+
+test_that("text_to_emoji() reads a shortcode straight after a colon pair", {
+  rt <- function(s) {
+    text_to_emoji(emoji_sanitize(data.frame(text = s), text,
+                                 policy = "shortcode"), text)$text
+  }
+  grin <- cp(0x1F600)
+  # "10:30:grinning:" and ":D:joy:" used to keep their last shortcode
+  expect_identical(rt(paste0("see you at 10:30", grin)),
+                   paste0("see you at 10:30", grin))
+  expect_identical(rt(paste0(":D", cp(0x1F602))), paste0(":D", cp(0x1F602)))
+  emojize <- function(s) text_to_emoji(data.frame(text = s), text)$text
+  # unchanged wherever every pair resolves
+  expect_identical(emojize(":grinning::fire: :wave:"),
+                   paste0(grin, cp(0x1F525), " ", cp(0x1F44B)))
+  expect_identical(emojize("::grinning::"), paste0(":", grin, ":"))
+  # the one ambiguous reading: an alias spelt after a colon comes first
+  expect_identical(emojize("status:ok:+1:"),
+                   paste0("status", cp(0x1F197), "+1:"))
+  # wrap = ":{x}" brings back the first of two emoji written together
+  w <- emoji_to_text(data.frame(text = cp(0x1F600, 0x1F600)), text,
+                     format = "shortcode", wrap = ":{x}")$text
+  expect_identical(w, ":grinning:grinning")
+  expect_identical(emojize(w), paste0(grin, "grinning"))
+  # positions are characters, not bytes, and NA stays NA
+  expect_identical(emojize(c(paste0(cp(0xE9, 0x4F60), " 10:30:fire:"), NA)),
+                   c(paste0(cp(0xE9, 0x4F60), " 10:30", cp(0x1F525)), NA))
+})
+
+test_that("register_emoji_lexicon() refuses a glyph column named key", {
+  local_clean_registry()
+  lex <- data.frame(key = c(cp(0x1F600), cp(0x1F621)), score = c(0.9, -0.8))
+  expect_error(register_emoji_lexicon("bykey_review", lex, by = "key"),
+               "code-point keys")
+  expect_false("bykey_review" %in% emoji_lexicons()$name)
+  d <- data.frame(text = paste("great", cp(0x1F600)))
+  # inline, the same table always worked
+  expect_identical(emoji_score(d, text, lexicon = lex, by = "key")$.emoji_score,
+                   0.9)
+  names(lex)[1L] <- "glyph"
+  register_emoji_lexicon("bykey_review", lex, by = "glyph")
+  expect_identical(emoji_score(d, text, lexicon = "bykey_review")$.emoji_score,
+                   0.9)
+  expect_identical(
+    emoji_coverage(d, text, lexicon = "bykey_review")$n_scorable, 1L)
+})
+
+test_that("emoji_properties() calls every toned catalogue spelling modifiable", {
+  hands <- cp(0x1FAF1, 0x1F3FB, 0x200D, 0x1FAF2, 0x1F3FF)
+  kiss <- cp(0x1F9D1, 0x1F3FB, 0x200D, 0x2764, 0xFE0F, 0x200D, 0x1F48B,
+             0x200D, 0x1F9D1, 0x1F3FC)
+  x <- c(hands, kiss, cp(0x1F46A, 0x1F3FD), cp(0x1F600, 0x1F3FB),
+         cp(0x1F44D), cp(0x1F3FB), "not an emoji")
+  p <- emoji_properties(x)
+  expect_identical(p$modifiable, c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, NA))
+  # emoji_decompose() agrees wherever it answers; a swatch alone it
+  # leaves NA, having no base to judge
+  expect_identical(p$modifiable[1:5], emoji_decompose(x[1:5])$modifiable)
+  # all 2915 toned spellings, the 280 that were FALSE included
+  all <- emoji_properties()
+  toned <- grepl("(^| )1F3F[B-F]( |$)", all$key) & all$status != "component"
+  expect_identical(sum(toned), 2915L)
+  expect_true(all(all$modifiable[toned]))
+})
+
+test_that("removing hidden payloads leaves none behind, under every policy", {
+  payloads <- c(
+    # deleting the tag makes the two selectors adjacent
+    cp(0x1F600, 0xFE0F, 0xE0041, 0xFE0F),
+    # selectors interleaved with tags: a binary channel through one pass
+    cp(0x1F600, 0xFE0F, 0xE0041, 0xFE0E, 0xE0041, 0xFE0F, 0xE0041, 0xFE0E),
+    # legitimate selectors that "strip" would make adjacent
+    paste0("a", cp(0xFE0F, 0x1F600, 0xFE0E), "b"),
+    paste0("a", cp(0xFE0F, 0x1F600, 0xFE0F), "b"),
+    cp(0x1F600, 0xFE0F, 0x1F600, 0xFE0E, 0x1F600, 0xFE0E, 0x1F600, 0xFE0F),
+    paste0("#", cp(0xFE0F, 0x1F600, 0xFE0E, 0x20E3)),
+    paste0("x", cp(0xFE0F, 0x1F1FA, 0x1F1F8, 0xFE0F)),
+    # a subdivision flag the catalogue does not list: its tags are hidden
+    # once the black flag is rewritten
+    cp(0x1F3F4, 0xE0075, 0xE0073, 0xE0074, 0xE0078, 0xE007F))
+  d <- data.frame(text = payloads)
+  hid <- function(s) emoji_hidden(data.frame(text = s), text)$.emoji_n_hidden
+  none <- rep(0L, length(payloads))
+  expect_identical(tidyEmoji:::.emoji_hidden_remove(payloads[1:2]),
+                   rep(cp(0x1F600, 0xFE0F), 2L))
+  for (p in c("keep", "strip", "name", "shortcode", "placeholder")) {
+    expect_identical(hid(emoji_sanitize(d, text, policy = p)$text), none,
+                     info = p)
+  }
+  emptied <- emoji_sanitize(d, text, policy = "placeholder", placeholder = "")
+  expect_identical(hid(emptied$text), none)
+  expect_identical(hid(emoji_to_text(d, text)$text), none)
+  # "strip" still leaves no emoji material either
+  stripped <- emoji_sanitize(d, text, policy = "strip")$text
+  expect_identical(lengths(tidyEmoji:::.emoji_all_spans(stripped)) / 2L,
+                   as.numeric(none))
+  expect_identical(stripped[5], cp(0xFE0F))
+  # hidden = "keep" still keeps everything
+  expect_identical(emoji_sanitize(d, text, hidden = "keep")$text, payloads)
+})
+
+test_that("emoji_to_text() keeps a joined sequence whole if it holds a non-part", {
+  star <- paste0("a", cp(0x2605, 0xFE0F, 0x200D, 0x1F600), "b")
+  hair <- cp(0x1F600, 0x200D, 0x1F9B0)
+  fire <- cp(0x1F600, 0x200D, 0x1F525)
+  d <- data.frame(text = c(star, hair, fire))
+  # 0.7.0 at first wrote "agrinning faceb" and "grinning face", deleting a
+  # visible black star and a red-hair swatch
+  expect_identical(emoji_to_text(d, text)$text,
+                   c(star, hair, "grinning face fire"))
+  expect_identical(emoji_to_text(d, text, format = "shortcode")$text,
+                   c(star, hair, ":grinning::fire:"))
+  back <- text_to_emoji(emoji_sanitize(d, text, policy = "shortcode"), text)
+  expect_identical(back$text, c(star, hair, cp(0x1F600, 0x1F525)))
+  # counting is untouched: each counts as its one part, or its two
+  expect_identical(lengths(tidyEmoji:::emoji_glyph_list(d$text)),
+                   c(1L, 1L, 2L))
+})
+
+test_that("emoji_ratio() reads a symbol with a stray selector as text", {
+  d <- data.frame(text = c(cp(0x1F600, 0x2605, 0xFE0F), cp(0x1F600, 0x2605),
+                           cp(0x2605, 0xFE0F, 0x200D, 0x1F600),
+                           cp(0x1F600, 0x200D, 0x1F9B0),
+                           cp(0x1F600, 0x1F3FB),
+                           cp(0x1F9D1, 0x200D, 0x1F467),
+                           paste0(cp(0x1F600), " ", cp(0x1F1FD, 0x1F1FD))))
+  out <- emoji_ratio(d, text)
+  expect_identical(out$.emoji_only,
+                   c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE))
+  expect_identical(out$.emoji_n, c(1L, 1L, 1L, 1L, 1L, 2L, 1L))
+})
+
+test_that("emoji_coverage() counts a registered lexicon's score columns only", {
+  local_clean_registry()
+  d <- data.frame(text = c(paste("x", cp(0x1F600)), paste("y", cp(0x1F621))))
+  lex <- data.frame(emoji = c(cp(0x1F600), cp(0x1F621)), score = c(NA, -0.8),
+                    n_raters = c(10, 12))
+  register_emoji_lexicon("raters_review", lex)
+  cov <- emoji_coverage(d, text, lexicon = "raters_review")
+  sc <- emoji_score(d, text, lexicon = "raters_review")
+  # the rater count used to make the first emoji "scorable"
+  expect_identical(cov$n_scorable, sum(sc$.emoji_n_scored))
+  expect_identical(c(cov$n_scorable, cov$lexicon_size), c(1L, 1L))
+  # an emotion lexicon is read through its emotion columns
+  emo <- data.frame(emoji = c(cp(0x1F600), cp(0x1F621)), joy = c(0.9, NA),
+                    n_raters = c(3, 4))
+  register_emoji_lexicon("joy_review", emo)
+  expect_identical(emoji_coverage(d, text, lexicon = "joy_review")$n_scorable,
+                   sum(emoji_emotion(d, text, lexicon = "joy_review")$.emoji_n_scored))
+})
+
+test_that("emoji_country() reports the flags a joiner stands between", {
+  us <- cp(0x1F1FA, 0x1F1F8)
+  jp <- cp(0x1F1EF, 0x1F1F5)
+  d <- data.frame(id = 1:3,
+                  text = c(paste0(us, cp(0x200D), jp),
+                           paste("go", us, "and", jp),
+                           paste("stray", cp(0x1F1FD, 0x1F1FD))))
+  out <- emoji_country(d, text)
+  expect_identical(out$id, c(1L, 1L, 2L, 2L, 3L))
+  expect_identical(out$.emoji_iso2, c("US", "JP", "US", "JP", NA))
+  # the flags the counting verbs count
+  expect_identical(sum(emoji_frequency(d[1:2, ], text)$n), 4L)
+})
+
+test_that("a ZWJ sequence that counts as its parts is one run of them", {
+  d <- data.frame(text = c(cp(0x1F600, 0x200D, 0x1F9B0, 0x200D, 0x1F525),
+                           cp(0x1F600, 0x200D, 0x1F525),
+                           paste(cp(0x1F600), "x", cp(0x1F525))))
+  r <- emoji_runs(d, text, sep = "adjacent")
+  expect_identical(r$.row_number, c(1L, 2L, 3L, 3L))
+  expect_identical(r$.emoji_run_length, c(2L, 2L, 1L, 1L))
+  f <- emoji_features(d, text)
+  expect_identical(f$.emoji_run, c(1L, 1L, 1L, 1L, 1L, 2L))
+  expect_identical(emoji_a11y_check(d, text)$.emoji_longest_run,
+                   c(2L, 2L, 1L))
+})
+
+test_that("the corrected help pages describe what the verbs do", {
+  # ?register_emoji_lexicon's recipe: the rating renamed to `score`, the
+  # others reachable through score =
+  norms <- data.frame(Emoji = c(cp(0x1F600), cp(0x1F621)),
+                      valence = c(0.9, -0.8), arousal = c(0.5, 0.9))
+  names(norms)[names(norms) == "Emoji"] <- "emoji"
+  expect_error(register_emoji_lexicon("norms_review", norms), "score column")
+  local_clean_registry()
+  names(norms)[names(norms) == "valence"] <- "score"
+  register_emoji_lexicon("norms_review", norms)
+  d <- data.frame(text = paste("hi", cp(0x1F600)))
+  expect_identical(emoji_score(d, text, lexicon = "norms_review")$.emoji_score,
+                   0.9)
+  expect_identical(emoji_score(d, text, lexicon = "norms_review",
+                               score = "arousal")$.emoji_score, 0.5)
+  # ?emoji_sentiment: a repeated glyph is not new evidence
+  rep3 <- emoji_sentiment(data.frame(text = c(cp(0x1F602), strrep(cp(0x1F602), 3))),
+                          text, se = TRUE)
+  expect_identical(rep3$.emoji_sentiment_se[2], rep3$.emoji_sentiment_se[1])
+  # ?emoji_version_profile and ?emoji_categorize: an uncatalogued ZWJ
+  # sequence counts as its parts; a toned family has no version or category
+  catlap <- cp(0x1F408, 0x200D, 0x1F4BB)
+  fam <- cp(0x1F46A, 0x1F3FD)
+  vp <- emoji_version_profile(data.frame(text = catlap), text)
+  expect_identical(vp$version, c("0.6", "0.7"))
+  expect_true(is.na(emoji_version_profile(data.frame(text = fam), text)$version))
+  expect_identical(
+    emoji_categorize(data.frame(text = c(catlap, fam)), text)$.emoji_category,
+    c("Animals & Nature|Objects", NA))
+  # ?emoji_incongruity: a missing text score leaves the emoji's own score
+  inc <- emoji_incongruity(data.frame(text = paste("great", cp(0x1F600)),
+                                      s = NA_real_), text, s, scale = "none")
+  expect_false(is.na(inc$.emoji_sentiment))
+  expect_true(all(is.na(unlist(inc[c(".emoji_incongruity",
+                                     ".emoji_polarity_flip",
+                                     ".emoji_incongruent")]))))
 })

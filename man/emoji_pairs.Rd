@@ -119,8 +119,14 @@ apart); unlike the other two it does not favour rare pairs.
 
 \code{N} counts only documents with an emoji, so adding emoji-free rows to a
 corpus changes no measure. Under \code{directed = TRUE}, \code{n} counts documents
-where \code{item1} comes first, and the measures score that ordered event
-against the same marginals. For a network, filter on a frequency threshold
+where \code{item1} comes first. \code{"ppmi"} and \code{"dice"} score that ordered
+event against the same marginals. \code{"log_odds"} sets aside the documents
+that hold the pair the other way round (a document holding both emoji is
+in exactly one of the two orders), so its two-by-two table is over the
+rest and stays finite: \code{n1}, \code{n2} and \code{N} each lose the reverse pair's
+\code{n}. A pair never written the other way round scores as it does
+undirected.
+For a network, filter on a frequency threshold
 as well as on the measure, so the edges kept are both strong and seen more
 than once.
 }

@@ -16,7 +16,8 @@ returning \code{NA} for every score at first use. See \code{\link[=emoji_score]{
 one-row-per-emoji requirement, which is checked when the lexicon is used.}
 
 \item{by}{Name of the column holding the emoji glyph, as a single string.
-Default \code{"emoji"}.}
+Default \code{"emoji"}. It cannot be \code{"key"}, the column registration writes
+the code-point keys to: rename such a glyph column first.}
 }
 \value{
 Invisibly, the registered lexicon, with a \code{key} column holding the
@@ -62,13 +63,16 @@ naturally with \code{\link[=emoji_faceness]{emoji_faceness()}}.
 \url{https://osf.io/vbmpj/}
 }
 
-Each arrives as a table keyed by emoji, so registering one is a rename and
-a call: put the glyphs in a column called \code{emoji}, keep the rating you
-want as a numeric column, and register it.
+Each arrives as a table keyed by emoji, so registering one is two renames
+and a call: put the glyphs in a column called \code{emoji} and the rating to
+score on by default in one called \code{score}, which registration requires.
+Every other numeric rating in the table stays usable through \verb{score =}.
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{norms <- read.csv("emoji_sp_norms.csv")   # downloaded from OSF
 names(norms)[names(norms) == "Emoji"] <- "emoji"
+names(norms)[names(norms) == "valence"] <- "score"
 register_emoji_lexicon("emoji_sp", norms)
+emoji_score(df, text, lexicon = "emoji_sp")   # valence
 emoji_score(df, text, lexicon = "emoji_sp", score = "arousal")
 emoji_coverage(df, text, lexicon = "emoji_sp")
 }\if{html}{\out{</div>}}

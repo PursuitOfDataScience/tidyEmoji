@@ -444,7 +444,7 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
   word_tot <- vapply(split(counts$n, counts$word), sum, numeric(1))
   r1 <- unname(emoji_tot[counts$emoji])
   c1 <- unname(word_tot[counts$word])
-  counts$pmi <- log(counts$n * total / (r1 * c1))
+  counts$pmi <- .emoji_pmi(counts$n, r1, c1, total)
   if (!measure %in% c("pmi", "count")) {
     counts[[measure]] <- .emoji_association(measure, counts$n, r1, c1, total)
   }
@@ -458,6 +458,18 @@ emoji_collocations <- function(data, text, window = 5, min_n = 3,
   out <- .emoji_arrange(out, dplyr::desc(.sort), dplyr::desc(n), emoji, word)
   out$.sort <- NULL
   out
+}
+
+# Pointwise mutual information of a joint count `o` against the marginals `r`
+# and `cc` out of `total`, the column emoji_collocations() always returns.
+# `o` comes from dplyr::count() and `total` from sum() over it, both
+# integers, so their product overflowed to NA ("NAs produced by integer
+# overflow") once it passed 2^31 - 1: about 46,000 co-occurrences, and
+# always the commonest pairs of a large corpus first. Each product is made
+# double before it is taken. Below the overflow the result is bit-identical
+# to the integer product, so no existing tie moves.
+.emoji_pmi <- function(o, r, cc, total) {
+  log(as.numeric(o) * total / (as.numeric(r) * cc))
 }
 
 # The association measures, from the cells of a two-by-two table: `o` the

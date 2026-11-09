@@ -3,7 +3,7 @@
 # for the category vocabulary: it is what stops `.emoji_category` depending on
 # the order the emoji happened to appear in.
 .emoji_category_levels <- function() {
-  category_unicode_crosswalk$category
+  tidyEmoji::category_unicode_crosswalk$category
 }
 
 #' Categorise each row by the emoji categories it contains
@@ -20,20 +20,18 @@
 #' the corpus, and by exactly the rows a user whose Unicode coverage is behind
 #' most needs to see.
 #'
-#' Two different things reach that `NA`, and only the first is a catalogue
-#' question:
+#' What reaches that `NA` is an emoji the catalogue does not list that is no
+#' joined sequence, such as a family with a skin tone (`U+1F46A U+1F3FD`, a
+#' sequence Unicode allows but does not recommend). A zero-width-joiner
+#' sequence the catalogue does not list, newer than the bundled catalogue or
+#' joined in a combination Unicode does not recommend, used to reach it too.
+#' Since 0.7.0 it counts as its parts, as in every verb, and they are
+#' categorised: a cat joined to a laptop is `"Animals & Nature|Objects"`. Use
+#' [emoji_provenance()] to check which catalogue you are matching against.
 #'
-#' 1. A zero-width-joiner sequence **newer than the bundled catalogue**, since
-#'    detection is grapheme-aware and does not require the sequence to be
-#'    catalogued. Use [emoji_provenance()] to check which catalogue you are
-#'    matching against; a tidyEmoji release built on a newer Unicode file
-#'    fixes it.
-#' 2. A **non-RGI ZWJ join**: components joined in a combination Unicode does
-#'    not recommend, which no catalogue lists.
-#'
-#' An invalid regional-indicator pair such as `U+1F1FD U+1F1FD` used to be a
-#' third. Since 0.6.0 it is not an emoji at all, so it no longer keeps a row
-#' here; see the Detection section of [tidyEmoji].
+#' An invalid regional-indicator pair such as `U+1F1FD U+1F1FD` used to reach
+#' it as well. Since 0.6.0 it is not an emoji at all, so it no longer keeps a
+#' row here; see the Detection section of [tidyEmoji].
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, filtered to the rows containing at least one

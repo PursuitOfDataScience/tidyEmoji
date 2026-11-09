@@ -63,21 +63,18 @@ kept with \code{.emoji_category} set to \code{NA}. Dropping it would silently sh
 the corpus, and by exactly the rows a user whose Unicode coverage is behind
 most needs to see.
 
-Two different things reach that \code{NA}, and only the first is a catalogue
-question:
-\enumerate{
-\item A zero-width-joiner sequence \strong{newer than the bundled catalogue}, since
-detection is grapheme-aware and does not require the sequence to be
-catalogued. Use \code{\link[=emoji_provenance]{emoji_provenance()}} to check which catalogue you are
-matching against; a tidyEmoji release built on a newer Unicode file
-fixes it.
-\item A \strong{non-RGI ZWJ join}: components joined in a combination Unicode does
-not recommend, which no catalogue lists.
-}
+What reaches that \code{NA} is an emoji the catalogue does not list that is no
+joined sequence, such as a family with a skin tone (\verb{U+1F46A U+1F3FD}, a
+sequence Unicode allows but does not recommend). A zero-width-joiner
+sequence the catalogue does not list, newer than the bundled catalogue or
+joined in a combination Unicode does not recommend, used to reach it too.
+Since 0.7.0 it counts as its parts, as in every verb, and they are
+categorised: a cat joined to a laptop is \code{"Animals & Nature|Objects"}. Use
+\code{\link[=emoji_provenance]{emoji_provenance()}} to check which catalogue you are matching against.
 
-An invalid regional-indicator pair such as \verb{U+1F1FD U+1F1FD} used to be a
-third. Since 0.6.0 it is not an emoji at all, so it no longer keeps a row
-here; see the Detection section of \link{tidyEmoji}.
+An invalid regional-indicator pair such as \verb{U+1F1FD U+1F1FD} used to reach
+it as well. Since 0.6.0 it is not an emoji at all, so it no longer keeps a
+row here; see the Detection section of \link{tidyEmoji}.
 }
 \examples{
 df <- data.frame(text = c("smile \U0001f600",

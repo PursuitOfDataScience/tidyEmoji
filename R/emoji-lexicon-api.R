@@ -32,7 +32,8 @@ emoji_lexicons <- function() {
     name = c("novak2015", "emotag1200"),
     type = c("sentiment", "emotion"),
     dimensions = I(list("sentiment_score", dims)),
-    n = c(nrow(emoji_sentiment_lexicon), nrow(emoji_emotion_lexicon)),
+    n = c(nrow(tidyEmoji::emoji_sentiment_lexicon),
+          nrow(tidyEmoji::emoji_emotion_lexicon)),
     source = c(
       "Kralj Novak et al. (2015), PLoS ONE 10(12): e0144296",
       "Shoeb & de Melo (2020), EMNLP 2020"
@@ -104,14 +105,17 @@ emoji_lexicons <- function() {
 #'   naturally with [emoji_faceness()].
 #'   <https://osf.io/vbmpj/>
 #'
-#' Each arrives as a table keyed by emoji, so registering one is a rename and
-#' a call: put the glyphs in a column called `emoji`, keep the rating you
-#' want as a numeric column, and register it.
+#' Each arrives as a table keyed by emoji, so registering one is two renames
+#' and a call: put the glyphs in a column called `emoji` and the rating to
+#' score on by default in one called `score`, which registration requires.
+#' Every other numeric rating in the table stays usable through `score =`.
 #'
 #' ```
 #' norms <- read.csv("emoji_sp_norms.csv")   # downloaded from OSF
 #' names(norms)[names(norms) == "Emoji"] <- "emoji"
+#' names(norms)[names(norms) == "valence"] <- "score"
 #' register_emoji_lexicon("emoji_sp", norms)
+#' emoji_score(df, text, lexicon = "emoji_sp")   # valence
 #' emoji_score(df, text, lexicon = "emoji_sp", score = "arousal")
 #' emoji_coverage(df, text, lexicon = "emoji_sp")
 #' ```
@@ -128,7 +132,8 @@ emoji_lexicons <- function() {
 #'   returning `NA` for every score at first use. See [emoji_score()] for the
 #'   one-row-per-emoji requirement, which is checked when the lexicon is used.
 #' @param by Name of the column holding the emoji glyph, as a single string.
-#'   Default `"emoji"`.
+#'   Default `"emoji"`. It cannot be `"key"`, the column registration writes
+#'   the code-point keys to: rename such a glyph column first.
 #' @return Invisibly, the registered lexicon, with a `key` column holding the
 #'   code-point key of each glyph. A `key` column already in `tbl` is
 #'   replaced rather than trusted: the registry looks a lexicon up by that
@@ -165,6 +170,16 @@ register_emoji_lexicon <- function(name, tbl, by = "emoji") {
   .emoji_check_string(by, "by")
   if (!by %in% names(tbl)) {
     stop(sprintf("`tbl` has no column `%s`.", by), call. = FALSE)
+  }
+  # Registration writes the code-point keys to a `key` column, so a glyph
+  # column of that name was overwritten by its own keys, and scoring then keyed
+  # the keys a second time: every score came back NA while emoji_coverage()
+  # called the emoji scorable. Refused, since the inline route already works.
+  if (identical(by, "key")) {
+    stop(paste0("`by = \"key\"` names the column registration writes the ",
+                "code-point keys to, so the glyphs in it would be overwritten. ",
+                "Rename the glyph column, for example to `emoji`, and register ",
+                "again."), call. = FALSE)
   }
   # Resolve the score column now rather than at first use: a lexicon with no
   # usable score column registered happily and only failed later, from inside

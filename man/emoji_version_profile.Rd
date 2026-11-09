@@ -62,8 +62,12 @@ different here.
 The version comes from the catalogue tidyEmoji detects against, so it is
 capped by that catalogue's Unicode version (see \code{\link[=emoji_unicode_version]{emoji_unicode_version()}}).
 Glyphs whose version is unknown, which means any the catalogue does not
-carry, such as a ZWJ sequence newer than it, are reported in a row with
-\code{version = NA} rather than dropped. Every spelling in the catalogue carries
+carry, such as a family with a skin tone (\verb{U+1F46A U+1F3FD}, a sequence
+Unicode allows but does not recommend), are reported in a row with
+\code{version = NA} rather than dropped. A zero-width-joiner sequence the
+catalogue does not list is not one of them: since 0.7.0 it counts as its
+parts, so a cat, \verb{U+200D} and a laptop are a cat (version 0.7) and a laptop
+(version 0.6). Every spelling in the catalogue carries
 its emoji's version, so a fully-qualified glyph such as \verb{U+2764 U+FE0F}
 reports the same version as its unqualified form.
 

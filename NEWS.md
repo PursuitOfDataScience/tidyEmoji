@@ -32,13 +32,28 @@ test suite fits CRAN's clock.
   hidden, and Japanese ideographic variants, Mongolian and mathematical
   variants, joiners and non-joiners and the England, Scotland and Wales flags
   are all left alone, so text with nothing hidden in it comes back byte for
-  byte, as all 1,485 rows of the bundled sample do under all five policies.
-  On 482,010 rows of three real corpora (the retired posts, all 135,174
-  OASST2 messages and the 344,836 turns in the first shard of WildChat-1M)
-  the scan flags one: a model's reply holding a stray `U+E0001`, the deprecated
-  language tag, among decorative letters, and that code point is all it
-  loses. The 139,983 other rows checked come back byte for byte under every
-  policy (`data-raw/hidden-corpora.R`).
+  byte, but for what a rewrite itself leaves hidden (below), as all 1,485
+  rows of the bundled sample do under all five policies. On 482,010 rows of
+  three real corpora (the retired posts, all 135,174 OASST2 messages and the
+  344,836 turns in the first shard of WildChat-1M) the scan flags one: a
+  model's reply holding a stray `U+E0001`, the deprecated language tag,
+  among decorative letters, and that code point is all it loses. The
+  139,983 other rows checked come back byte for byte under every policy but
+  `"strip"`, where 4 of them lose one `U+FE0F` each: an emoji written with a
+  redundant selector leaves it behind when it goes, and two such selectors
+  left side by side make the second a hidden code point
+  (`data-raw/hidden-corpora.R`).
+* **Nothing hidden is left behind.** Deleting a hidden code point can make
+  two selectors adjacent, which hides the second, so removal repeats until
+  nothing hidden is left: a single pass over `U+1F600 U+FE0F`, a tag,
+  `U+FE0F` kept the last selector, and selectors interleaved with tags
+  carried a binary run of `U+FE0E` and `U+FE0F` through. What a rewrite
+  itself leaves hidden goes too: the tags of a subdivision flag the
+  catalogue does not list, once its black flag is named, masked or
+  stripped, and the selectors on either side of a stripped emoji, so a run
+  of single selectors spread over adjacent emoji cannot come out of
+  `"strip"` as a payload. `emoji_hidden()` reports nothing on any result
+  under the default.
 * **New: `emoji_hidden()`** reports, per row, how many code points are hidden,
   their bytes, whether they are selectors or tags, how many runs they form,
   and the payload decoded from the two published encodings, with every control
@@ -65,8 +80,10 @@ more. `emoji_summary()` gains `n_unlisted`, beside `n_orphan_components` and
   `Extended_Pictographic` code point before the selector, a presentation
   sequence Unicode defines for only some of them; the catalogue now decides.
   `n_unlisted` counts them, and the verbs that rewrite text treat them as
-  before. Rare and systematic, the shape of 0.6.0's invalid flags: 2 tokens
-  in all of OASST2, none in the bundled sample.
+  before. `emoji_ratio()` reads one as the text it is without the selector,
+  so `U+1F600 U+2605 U+FE0F` is no more emoji-only than `U+1F600 U+2605`.
+  Rare and systematic, the shape of 0.6.0's invalid flags: 2 tokens in all
+  of OASST2, none in the bundled sample.
 * **Fewer: a request for the text form is honoured.** `U+FE0E` after a glyph
   asks for its text presentation, a sequence Unicode defines for 371 bases.
   0.6.0 counted it as an emoji anyway for the 152 bases whose default is
@@ -87,7 +104,12 @@ more. `emoji_summary()` gains `n_unlisted`, beside `n_orphan_components` and
   name; nearly every platform draws it as three, and 0.7.0 counts those
   three, the longest catalogued parts read left to right. The verbs that
   rewrite text keep the sequence whole, so `"strip"` removes its joiners too
-  and `"name"` names the parts in order, and `n_unlisted` counts it. Each
+  and `"name"` names the parts in order, and `n_unlisted` counts it. A
+  sequence holding anything that is no part, a hair component joined to a
+  face or a symbol that is no emoji, is left as it is by `"name"` and
+  `"shortcode"`, which would otherwise delete it from the text. Two flags a
+  joiner stands between are two flags to `emoji_country()` too, and a
+  sequence's parts are one run to `emoji_runs()`, whatever is joined in. Each
   split adds its parts minus one: the bundled sample holds three such
   sequences (a cat joined to a laptop, a man and a woman joined by a
   handshake, a handshake joined to a zombie) and so 1,454 emoji of 398 kinds
@@ -198,6 +220,52 @@ section, *Glyphs, not people*, that each of their help pages links to.
 
 ## Smaller repairs
 
+* **The verbs no longer need `library(tidyEmoji)`.** Package code read the
+  bundled lexicons and crosswalks by their bare names, which resolve only
+  through the search path, because lazy-loaded data is not in the
+  namespace. So `tidyEmoji::emoji_sentiment(df, text)` without the package
+  attached, and every package importing tidyEmoji, failed with "object
+  'emoji_sentiment_lexicon' not found"; and with it attached, a global
+  object of the same name was read instead of the bundled one, and cached
+  for the session. Sentiment, emotion, ambiguity, categories,
+  `emoji_lexicons()`, `emoji_provenance()` and
+  `top_n_emojis(duplicated = TRUE)` were all affected. They now read
+  `tidyEmoji::` throughout, and a test walks the namespace for a bare name.
+* **`emoji_collocations()`'s `pmi` no longer overflows on a large corpus.**
+  It multiplied two integer counts, which gave `NA` with "NAs produced by
+  integer overflow" once the product passed 2,147,483,647, about 46,000
+  co-occurrences: the commonest pairs of a large corpus were the first to
+  lose their score. Below that the value is unchanged to the last bit, so
+  no tie moves.
+* **`emoji_pairs(directed = TRUE, measure = "log_odds")` is finite when a
+  pair occurs in both orders.** Scored against whole-document marginals,
+  the cell of documents holding neither emoji went negative as soon as some
+  documents held the pair the other way round, and the log odds came back
+  `NaN`. Those documents are now set aside from that row's table; a pair
+  written in one order only scores as before, and `"ppmi"` and `"dice"` do
+  not change.
+* **`text_to_emoji()` reads a shortcode written straight after a colon pair
+  that is no alias**, so `emoji_sanitize(policy = "shortcode")` restores
+  `"10:30"` with a grinning face after it, which it writes as
+  `"10:30:grinning:"`: the `:30:` had taken both colons and the face stayed
+  text. Where every pair is an alias the result is unchanged. The one
+  ambiguous reading, an alias the text spells after a colon straight before
+  an emoji, is documented.
+* **`register_emoji_lexicon(by = "key")` is refused.** Registration writes
+  the code-point keys to a `key` column, so a glyph column of that name was
+  overwritten by its own keys: every score came back `NA` while
+  `emoji_coverage()` called the emoji scorable. The same table passed
+  inline always worked, and still does.
+* **`emoji_properties()$modifiable` is `TRUE` for every toned spelling.**
+  280 of them, the mixed-tone spellings of the handshake, the kiss, the
+  couple with heart and two people holding hands, wrestling or with bunny
+  ears, are joined sequences whose untoned form is a different code point,
+  and stripping their tones found no catalogue entry, so they were `FALSE`
+  where `emoji_decompose()` said `TRUE`.
+* **`emoji_coverage()` reads a registered lexicon through its score
+  columns** (`sentiment_score` or `score`, and the emotion columns), not
+  every numeric column, so a count of raters no longer makes an emoji
+  "scorable" that `emoji_score()` leaves unscored.
 * **`emoji_collocations()` keeps its measure column at zero rows (D9).**
   With `measure = "ppmi"`, `"dice"`, `"logdice"`, `"llr"` or `"tscore"`, an
   empty result (no rows, all `NA`, or no pair reaching `min_n`) stopped at
@@ -257,6 +325,15 @@ section, *Glyphs, not people*, that each of their help pages links to.
   for them, so deduplicate by conversation and by template before counting.
 * **The networks vignette draws its graph** with `igraph`'s own `plot()`,
   as 0.6.0 left open, labelled by name so that it renders on any device.
+* **Five help pages now say what the code does.** The recipe in
+  `?register_emoji_lexicon` registered a table with no score column, which
+  registration refuses, so it now renames the rating to `score`;
+  `?emoji_sentiment` gives the standard error the code computes, over
+  distinct glyphs, since a repeated glyph is not new evidence;
+  `?emoji_version_profile` and `?emoji_categorize` no longer say an
+  uncatalogued joiner sequence falls into the `NA` row, since 0.7.0 counts
+  it as its parts; and `?emoji_incongruity` no longer says
+  `.emoji_sentiment` is `NA` where the text score is missing.
 * **`?tidyEmoji` gains** the 0.7.0 detection rules, a section *Glyphs, not
   people* that every identity page links to, and the hidden-payload rule.
   The introduction's question index names every new verb, which a test now
@@ -267,9 +344,9 @@ section, *Glyphs, not people*, that each of their help pages links to.
 * **The test suite fits CRAN's clock.** CRAN's x86_64 flavours spent 219 to
   237 s of CPU on 0.6.0's tests, and one of them 680 s on the whole check.
   Run as CRAN runs it, on byte-compiled installs, the suite now takes a
-  median 55.0 s of CPU on one core of an AMD server against 156.0 s
-  for 0.6.0's: 2.83 times less (95% CI 2.79 to 2.89) over 12 paired,
-  interleaved runs of the two, and 2.69 times in the worst pair (Wilcoxon
+  median 58.4 s of CPU on one core of an AMD server against 155.4 s
+  for 0.6.0's: 2.65 times less (95% CI 2.64 to 2.68) over 12 paired,
+  interleaved runs of the two, and 2.44 times in the worst pair (Wilcoxon
   signed-rank p < 0.001). The 49 exhaustive tests that cost most of the time
   (every catalogue spelling, every verb, hundreds of random strings) stand
   down on CRAN through `skip_sweep()`, and each names a *twin* that runs

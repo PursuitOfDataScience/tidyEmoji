@@ -152,6 +152,18 @@ emoji_country <- function(data, text) {
   keep <- lapply(seq_along(v), function(i) {
     m <- sp$locs[[i]]
     if (!nrow(m)) return(m)
+    k <- sp$kinds[[i]]
+    if (!is.null(k)) {
+      # The flags every counting verb counts, read the way they read them: a
+      # ZWJ sequence Unicode does not recommend counts as its parts, so two
+      # flags a joiner stands between are two flags. Read as one span they
+      # matched no flag shape and dropped out of this verb altogether while
+      # emoji_frequency() counted both. The stray indicators the counting
+      # verbs set aside are kept, as before, to be reported with an NA code.
+      m <- rbind(.emoji_counted(sp, i)$m,
+                 m[k == .emoji_kind_flag, , drop = FALSE])
+      m <- m[order(m[, "start"], method = "radix"), , drop = FALSE]
+    }
     g <- .emoji_slice(m, if (is.na(v[[i]])) "" else v[[i]])
     m[stringi::stri_detect_regex(g, ri_only), , drop = FALSE]
   })

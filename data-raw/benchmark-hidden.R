@@ -8,6 +8,14 @@
 # [1.015, 1.030], 30 pairs, worst 0.984), inside the 5% the plan allows, and
 # "keep" 30 ms on 50,000 rows, the scan alone, since without it "keep" does
 # nothing.
+#
+# Re-run on 2026-11-09, after "strip" began clearing what its own deletions
+# leave hidden on every pass and the other rewriting policies a final pass
+# for what a rewrite orphans, on one amd core of a node shared with two
+# other single-core jobs: "strip" +2.8% (1.028, 95% CI [1.024, 1.032], 40
+# pairs, worst 0.968), "name" +3.8% (1.038, [1.036, 1.039], 30 pairs, worst
+# 1.016), still inside the 5%, and "keep" 65 ms on 50,000 rows (median 68
+# ms against 3 ms without the scan, 60 pairs).
 
 # Paired, interleaved benchmark: emoji_sanitize() with hidden = "remove" (the
 # 0.7.0 default) against hidden = "keep" (0.6.0's path, no scan), 50,000 rows.

@@ -320,6 +320,12 @@ Other contributors:
   \item OpenAssistant contributors (OASST2 example data in data/oasst_*.rda) [copyright holder]
   \item emoji authors (snapshot of the emoji package's data in R/sysdata.rda) [copyright holder]
   \item Miles Johnson (emojibase data in R/sysdata.rda and the crosswalk) [copyright holder]
+  \item Petra Kralj Novak (Emoji Sentiment Ranking in data/emoji_sentiment_lexicon.rda) [copyright holder]
+  \item Jasmina Smailovic (Emoji Sentiment Ranking) [copyright holder]
+  \item Borut Sluban (Emoji Sentiment Ranking) [copyright holder]
+  \item Igor Mozetic (Emoji Sentiment Ranking) [copyright holder]
+  \item Abu Awal Md Shoeb (EmoTag1200 in data/emoji_emotion_lexicon.rda) [copyright holder]
+  \item Gerard de Melo (EmoTag1200) [copyright holder]
 }
 
 }

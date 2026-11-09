@@ -11,7 +11,7 @@
 # emoji_key(). Cached for the session.
 emoji_ambiguity_table <- function() {
   if (is.null(.tidyEmoji_cache$ambiguity)) {
-    lex <- emoji_sentiment_lexicon
+    lex <- tidyEmoji::emoji_sentiment_lexicon
     neg <- as.numeric(lex$negative)
     neu <- as.numeric(lex$neutral)
     pos <- as.numeric(lex$positive)

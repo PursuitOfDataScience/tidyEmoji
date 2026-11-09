@@ -98,6 +98,13 @@ corpus: how many distinct emoji it scores, and what share of the emoji in
 the catalogue those are. Skin-tone and hair components are not emoji
 occurrences (see the \emph{Detection} section of \link{tidyEmoji}) and are left out
 of the catalogue's count.
+
+A registered lexicon can score an emoji when it holds a value for it in a
+column the scoring verbs read by default: the score \code{\link[=emoji_score]{emoji_score()}} and
+\code{\link[=emoji_sentiment]{emoji_sentiment()}} take (\code{sentiment_score}, else \code{score}), or an emotion
+column \code{\link[=emoji_emotion]{emoji_emotion()}} takes. Its other numeric columns, such as a count
+of raters, do not count. A score chosen with \verb{score =} can cover a
+different set.
 }
 \section{What \code{presentation} costs}{
 

@@ -279,8 +279,10 @@
 #'   `.emoji_n_scored` distinguishes the two ways the answer can be missing,
 #'   as it does in [emoji_sentiment()]: `0` means the row had emoji that the
 #'   lexicon could not score, `NA` that it had no emoji to score. The four
-#'   derived columns are `NA` in both cases, and also wherever `text_score`
-#'   itself is missing or not finite.
+#'   derived columns are `NA` in both cases. Where `text_score` itself is
+#'   missing or not finite, the three that compare it with the emoji,
+#'   `.emoji_incongruity`, `.emoji_polarity_flip` and `.emoji_incongruent`,
+#'   are `NA` as well, and `.emoji_sentiment` is still the emoji's score.
 #' @references An emoji centric approach to sarcasm detection in online
 #'   discourse. *Scientific Reports* (2025). The influence of emoji meaning
 #'   multipleness on perceived online review helpfulness. *Journal of Business

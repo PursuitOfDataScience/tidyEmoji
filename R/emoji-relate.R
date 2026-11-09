@@ -74,8 +74,14 @@
 #'
 #' `N` counts only documents with an emoji, so adding emoji-free rows to a
 #' corpus changes no measure. Under `directed = TRUE`, `n` counts documents
-#' where `item1` comes first, and the measures score that ordered event
-#' against the same marginals. For a network, filter on a frequency threshold
+#' where `item1` comes first. `"ppmi"` and `"dice"` score that ordered
+#' event against the same marginals. `"log_odds"` sets aside the documents
+#' that hold the pair the other way round (a document holding both emoji is
+#' in exactly one of the two orders), so its two-by-two table is over the
+#' rest and stays finite: `n1`, `n2` and `N` each lose the reverse pair's
+#' `n`. A pair never written the other way round scores as it does
+#' undirected.
+#' For a network, filter on a frequency threshold
 #' as well as on the measure, so the edges kept are both strong and seen more
 #' than once.
 #' @return A tibble with columns `item1`, `item2` and `n`, plus a column named
@@ -136,7 +142,24 @@ emoji_pairs <- function(data, text, doc_id = NULL, directed = FALSE,
     df <- table(unlist(present, use.names = FALSE))
     n1 <- as.numeric(df[out$item1])
     n2 <- as.numeric(df[out$item2])
-    out[[measure]] <- .emoji_association(measure, out$n, n1, n2, n_docs)
+    total <- rep(as.numeric(n_docs), nrow(out))
+    if (directed && measure == "log_odds") {
+      # A document holding both emoji counts towards one order only, so
+      # against whole-document marginals the "neither" cell,
+      # N - n1 - n2 + n, went negative as soon as some documents held the
+      # pair the other way round, and the log odds came back NaN. Those
+      # documents are set aside from this row's table instead, which leaves
+      # a valid two-by-two table of the rest; a pair never written the
+      # other way round is scored exactly as before. ppmi and dice stay
+      # finite against the whole-document marginals and keep them.
+      n_rev <- out$n[match(paste(out$item2, out$item1),
+                           paste(out$item1, out$item2))]
+      n_rev[is.na(n_rev)] <- 0L
+      n1 <- n1 - n_rev
+      n2 <- n2 - n_rev
+      total <- total - n_rev
+    }
+    out[[measure]] <- .emoji_association(measure, out$n, n1, n2, total)
   }
   if (isTRUE(sort)) {
     if (measure == "count") {

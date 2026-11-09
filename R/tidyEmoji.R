@@ -271,8 +271,13 @@
 #' one, is the way to get per-group results today.
 "_PACKAGE"
 
-# Quiet R CMD check notes about variables referenced via tidy evaluation and
-# bundled datasets used inside package functions.
+# Quiet R CMD check notes about variables referenced via tidy evaluation.
+# The bundled datasets are not listed, on purpose. Lazy-loaded data lives
+# outside the namespace, so a bare name found it only through the search
+# path: every verb that read one failed unless the package was attached,
+# and a global object of the same name won when it was. Package code reads
+# them as tidyEmoji::<name>, and leaving them out of this list is what lets
+# R CMD check flag a bare one again.
 utils::globalVariables(c(
   ".",
   "emoji", "name", "shortcode", "group", "subgroup", "version", "n", "unicode",
@@ -288,7 +293,5 @@ utils::globalVariables(c(
   ".emoji_joy", ".emoji_sadness", ".emoji_surprise", ".emoji_trust",
   "anger", "anticipation", "disgust", "fear", "joy", "sadness", "surprise",
   "trust",
-  "sentiment_score", "sentiment_label",
-  "emoji_unicode_crosswalk", "category_unicode_crosswalk",
-  "emoji_sentiment_lexicon", "emoji_emotion_lexicon"
+  "sentiment_score", "sentiment_label"
 ))

@@ -70,9 +70,9 @@ emoji_provenance <- function() {
     unicode_emoji_date = as.Date(.emoji_catalogue_meta$file_date),
     n_emoji = nrow(emoji_reference()),
     sentiment_lexicon = sprintf("novak2015 (%d emoji)",
-                                nrow(emoji_sentiment_lexicon)),
+                                nrow(tidyEmoji::emoji_sentiment_lexicon)),
     emotion_lexicon = sprintf("emotag1200 (%d emoji)",
-                              nrow(emoji_emotion_lexicon)),
+                              nrow(tidyEmoji::emoji_emotion_lexicon)),
     R = paste(R.version$major, R.version$minor, sep = "."),
     cldr = .emoji_vocab$cldr_version,
     emojibase = .emoji_vocab$emojibase_version

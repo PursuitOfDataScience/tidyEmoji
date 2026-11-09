@@ -68,8 +68,8 @@ since a flag has no text-presentation form.}
 
 \item{hidden}{What to do with hidden payloads, as in \code{\link[=emoji_sanitize]{emoji_sanitize()}}:
 \code{"remove"} (the default) deletes the variation selectors and tag
-characters \code{\link[=emoji_hidden]{emoji_hidden()}} reports, and \code{"keep"} leaves them, as every
-version before 0.7.0 did.}
+characters \code{\link[=emoji_hidden]{emoji_hidden()}} reports, those the rewrite leaves hidden
+included, and \code{"keep"} leaves them, as every version before 0.7.0 did.}
 }
 \value{
 \code{data}, as a tibble, with the text column rewritten in place (same
@@ -78,7 +78,9 @@ in place unchanged. A ZWJ sequence the catalogue does not list, such as
 grinning face, \verb{U+200D}, fire, is written as the names of the parts it
 splits into, in order and separated by spaces ("grinning face fire"), or
 as their shortcodes (":grinning::fire:"): the parts every other verb
-counts since 0.7.0. If any part has no name the sequence stays as it is.
+counts since 0.7.0. If any part has no name the sequence stays as it is,
+and so it does when it holds anything that is no part, such as a hair
+component joined to a face, which naming the parts alone would delete.
 }
 \description{
 \code{emoji_to_text()} returns a copy of \code{data} with its text column rewritten so

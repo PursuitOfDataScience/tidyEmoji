@@ -21,15 +21,17 @@
 #'   [emoji_sanitize()] for the cases.
 #' @param hidden What to do with hidden payloads, as in [emoji_sanitize()]:
 #'   `"remove"` (the default) deletes the variation selectors and tag
-#'   characters [emoji_hidden()] reports, and `"keep"` leaves them, as every
-#'   version before 0.7.0 did.
+#'   characters [emoji_hidden()] reports, those the rewrite leaves hidden
+#'   included, and `"keep"` leaves them, as every version before 0.7.0 did.
 #' @return `data`, as a tibble, with the text column rewritten in place (same
 #'   column name). `NA` entries stay `NA`, and emoji with no known name are left
 #'   in place unchanged. A ZWJ sequence the catalogue does not list, such as
 #'   grinning face, `U+200D`, fire, is written as the names of the parts it
 #'   splits into, in order and separated by spaces ("grinning face fire"), or
 #'   as their shortcodes (":grinning::fire:"): the parts every other verb
-#'   counts since 0.7.0. If any part has no name the sequence stays as it is.
+#'   counts since 0.7.0. If any part has no name the sequence stays as it is,
+#'   and so it does when it holds anything that is no part, such as a hair
+#'   component joined to a face, which naming the parts alone would delete.
 #' @section A preview of what a screen reader says:
 #' `format = "name"` writes the text a screen reader that reads CLDR names,
 #' as NVDA does, will speak. That *Preview* is the design the sighted writers
@@ -104,8 +106,17 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
   # with no known name does.
   zw <- all_glyphs[is.na(glyph_rpl) & grepl(.emoji_zwj, all_glyphs, fixed = TRUE)]
   for (g in zw) {
-    pm <- .emoji_zwj_parts(utf8ToInt(g))
+    cps <- utf8ToInt(g)
+    pm <- .emoji_zwj_parts(cps)
     if (!nrow(pm)) next
+    # Anything outside the parts but a joiner or a selector is visible
+    # material no part accounts for: a hair component joined to a face, a
+    # black star with a stray U+FE0F. Writing the parts' names alone deleted
+    # it from the text, so such a sequence stays as it is, like any glyph
+    # that cannot be named.
+    inside <- rep(FALSE, length(cps))
+    for (r in seq_len(nrow(pm))) inside[pm[r, "start"]:pm[r, "end"]] <- TRUE
+    if (any(!inside & !cps %in% c(0x200DL, 0xFE0EL, 0xFE0FL))) next
     r <- unname(rpl_lookup[emoji_key(substring(g, pm[, "start"], pm[, "end"]))])
     if (!anyNA(r)) {
       glyph_rpl[[g]] <- paste(r, collapse = if (format == "name") " " else "")
@@ -116,6 +127,14 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
     if (!length(g)) return(v[[i]])
     .emoji_replace_in_order(v[[i]], locs[[i]], g, unname(glyph_rpl[g]))
   }, character(1))
+  # Naming an emoji can leave hidden what it made legitimate: the tags of a
+  # subdivision flag the catalogue does not list are part of the flag until
+  # its black flag becomes the words "black flag", and then they are tags
+  # outside a flag, invisible, up to six letters a flag. So they go too.
+  if (hidden == "remove") {
+    had <- lengths(lst) > 0L
+    rewritten[had] <- .emoji_hidden_remove(rewritten[had])
+  }
   rewritten[was_na] <- NA_character_
 
   out <- .emoji_as_tibble(data)
@@ -158,7 +177,15 @@ emoji_to_text <- function(data, text, format = c("name", "shortcode"),
 #' or `-`, and a closing colon. Restricting the token this way means colons
 #' used for other purposes -- clock times, URLs, ratios, ordinary punctuation
 #' -- cannot swallow a following shortcode: `"meet at 10:30 :wave:"` still
-#' emojizes the wave.
+#' emojizes the wave. A colon pair that is shortcode-shaped but no alias gives
+#' its closing colon up to the token after it, so `"10:30:grinning:"`, which
+#' [emoji_sanitize()] writes for a clock time with a grinning face straight
+#' after it, still emojizes the face.
+#'
+#' One reading stays ambiguous, because the text cannot settle it: an alias
+#' written after a colon, straight before a shortcode. `"status:ok"` followed
+#' by a thumbs-up sanitises to `"status:ok:+1:"`, and `:ok:` (`U+1F197`) is
+#' read first, leaving `+1:` as text.
 #'
 #' **The converse is a limitation, not a feature.** This verb cannot tell a
 #' token [emoji_sanitize()] or [emoji_to_text()] wrote from one the text always
@@ -212,19 +239,48 @@ text_to_emoji <- function(data, text) {
   # Match only the characters GitHub-style aliases actually use. A permissive
   # ":[^:]+:" lets an unrelated colon pair (a URL, a clock time, "note: ...")
   # consume the opening colon of a real shortcode and silently skip it.
-  m <- gregexpr(":[A-Za-z0-9_+-]+:", v)
-  regmatches(v, m) <- lapply(regmatches(v, m), function(toks) {
-    vapply(toks, function(t) {
-      sc <- substr(t, 2L, nchar(t) - 1L)
-      g <- unname(name_map[sc])
-      if (is.na(g)) t else g
+  # A row needs a whole token to hold one, so test for that first.
+  cand <- which(grepl(":[A-Za-z0-9_+-]+:", v))
+  if (length(cand)) {
+    # The closing colon is a lookahead, not part of the match: until 0.7.0 a
+    # colon pair that was no alias (the ":30:" of "10:30:grinning:", which
+    # emoji_sanitize() writes for a clock time followed by an emoji) consumed
+    # both colons, and the shortcode after it lost its opening one.
+    m <- gregexpr(":[A-Za-z0-9_+-]+(?=:)", v[cand], perl = TRUE)
+    v[cand] <- vapply(seq_along(cand), function(j) {
+      .emoji_emojize(v[cand][[j]], m[[j]], name_map)
     }, character(1))
-  })
+  }
   v[was_na] <- NA_character_
   out <- .emoji_as_tibble(data)
   col_name <- .emoji_col_name(data, {{ text }})
   out[[col_name]] <- v
   .emoji_regroup(out, col_name)
+}
+
+# Replace the alias tokens of one string. `mm` is its gregexpr() match of an
+# opening colon and alias characters, the closing colon left to a lookahead,
+# so consecutive matches can share a colon. Walked left to right: a match
+# that is a known alias is replaced together with its closing colon, which
+# the match after it then cannot reuse; one that is not leaves both colons in
+# the text and its closing colon free to open the next token. Where every
+# pair is an alias this is exactly the old non-overlapping scan.
+.emoji_emojize <- function(s, mm, name_map) {
+  st <- as.integer(mm)
+  if (st[[1L]] < 0L) return(s)
+  len <- attr(mm, "match.length")
+  g <- unname(name_map[substring(s, st + 1L, st + len - 1L)])
+  take <- logical(length(st))
+  free <- 1L
+  for (i in seq_along(st)) {
+    if (st[[i]] < free || is.na(g[[i]])) next
+    take[[i]] <- TRUE
+    free <- st[[i]] + len[[i]] + 1L
+  }
+  if (!any(take)) return(s)
+  locs <- cbind(start = st[take], end = st[take] + len[take])
+  .emoji_replace_in_order(s, locs, substring(s, locs[, "start"],
+                                             locs[, "end"]), g[take])
 }
 
 

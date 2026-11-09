@@ -82,8 +82,10 @@ since a flag has no text-presentation form.}
 \code{.emoji_n_scored} distinguishes the two ways the answer can be missing,
 as it does in \code{\link[=emoji_sentiment]{emoji_sentiment()}}: \code{0} means the row had emoji that the
 lexicon could not score, \code{NA} that it had no emoji to score. The four
-derived columns are \code{NA} in both cases, and also wherever \code{text_score}
-itself is missing or not finite.
+derived columns are \code{NA} in both cases. Where \code{text_score} itself is
+missing or not finite, the three that compare it with the emoji,
+\code{.emoji_incongruity}, \code{.emoji_polarity_flip} and \code{.emoji_incongruent},
+are \code{NA} as well, and \code{.emoji_sentiment} is still the emoji's score.
 }
 \description{
 \code{emoji_incongruity()} measures the signed gap between the sentiment a row's

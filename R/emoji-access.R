@@ -11,12 +11,16 @@
 # Every occurrence of every row with its run and the run's position: the one
 # segmentation emoji_runs(), emoji_features() and emoji_a11y_check() share.
 # Two consecutive occurrences are in one run when nothing stands between
-# them, when only white space does (sep = "whitespace"), or when only the
-# joiners of a sequence split into its parts (D7) do.
+# them, when only white space does (sep = "whitespace"), or when both are
+# parts of one sequence that counts as its parts (D7).
 .emoji_run_frame <- function(v, presentation, sep) {
   w <- as.character(v)
   w[is.na(w)] <- ""
-  occ <- .emoji_occurrences(w, presentation)
+  # detected once, and handed on in `sp` to the verbs that need the spans too
+  sp <- .emoji_spans(w, presentation)
+  locs <- sp$locs
+  for (i in which(lengths(sp$kinds) > 0L)) locs[[i]] <- .emoji_counted(sp, i)$m
+  occ <- .emoji_occurrences(w, presentation, locs = locs)
   n <- nrow(occ)
   if (!n) {
     return(list(occ = tibble::tibble(
@@ -26,7 +30,8 @@
       runs = tibble::tibble(
         row = integer(), run = integer(), start = integer(), end = integer(),
         length = integer(), n_distinct = integer(), glyphs = character(),
-        reduplication = logical(), position = character()), text = w))
+        reduplication = logical(), position = character()), text = w,
+      sp = sp))
   }
   row <- occ$.row_number
   st <- occ$.position
@@ -41,6 +46,17 @@
     joined <- joined | stringi::stri_detect_regex(gap, paste0("^", .emoji_ws,
                                                               "$"))
   }
+  # Two parts of one ZWJ sequence that counts as its parts (D7) are one run
+  # whatever stands between them: a hair component joined into the sequence
+  # (U+1F600 U+200D U+1F9B0 U+200D U+1F525) left a gap that was not only
+  # joiners, and the sequence came back as two runs. An occurrence's unit is
+  # the detected span holding it, and a kind-6 span holds all its parts.
+  roff <- c(0, cumsum(as.numeric(nchar(w))))
+  span_start <- unlist(lapply(seq_along(sp$locs), function(r) {
+    sp$locs[[r]][, "start"] + roff[[r]]
+  }), use.names = FALSE)
+  unit <- findInterval(st + roff[row], span_start)
+  joined <- joined | c(FALSE, unit[-1L] == unit[-n])
   joined <- same & joined
   run_id <- cumsum(!joined)
   # per run
@@ -77,7 +93,7 @@
       emoji = occ$.emoji, start = st, end = en,
       run = r_in_row[run_id], run_length = r_len[run_id],
       zone = as.character(position)[run_id]),
-    runs = runs, text = w)
+    runs = runs, text = w, sp = sp)
 }
 
 
@@ -282,7 +298,7 @@ emoji_features <- function(data, text, presentation = "emoji") {
   fr <- .emoji_run_frame(v, presentation, "whitespace")
   o <- fr$occ
   w <- fr$text
-  all_spans <- .emoji_all_spans(w, presentation)
+  all_spans <- fr$sp$locs
   prev <- .emoji_neighbour(w, o$row, o$start, o$end, all_spans, "prev")
   nxt <- .emoji_neighbour(w, o$row, o$start, o$end, all_spans, "next")
   # each occurrence's relative position, counting every emoji as one
@@ -445,7 +461,7 @@ emoji_a11y_check <- function(data, text, max_name = 40L,
   name_len <- ifelse(is.na(name), 0L, nchar(name))
   spoken <- tabulate(rep(row, name_len), nbins = n)
   # regional indicators standing alone or in a pair that spells no flag (D2)
-  sp <- .emoji_spans(fr$text, presentation)
+  sp <- fr$sp
   ri <- vapply(seq_len(n), function(i) {
     k <- sp$kinds[[i]]
     if (is.null(k) || !any(k == .emoji_kind_flag)) return(0L)

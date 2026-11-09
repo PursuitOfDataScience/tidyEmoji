@@ -23,8 +23,14 @@
     return(unique(rownames(m)[rowSums(!is.na(m)) > 0L]))
   }
   tbl <- rec$tbl
-  dims <- setdiff(names(tbl), c(.emoji_registered_by(tbl), "emoji", "key",
-                                "name"))
+  # The columns the scoring verbs read by default: the score emoji_score()
+  # and emoji_sentiment() take (`sentiment_score`, else `score`) and the
+  # emotion columns emoji_emotion() takes. Any numeric column used to count,
+  # so a rater count made an emoji "scorable" that emoji_score() then left
+  # unscored, and the two verbs disagreed about the same lexicon.
+  dims <- c(intersect(c("sentiment_score", "score"), names(tbl))[1L],
+            intersect(emoji_emotion_dims(), names(tbl)))
+  dims <- dims[!is.na(dims)]
   dims <- dims[vapply(tbl[dims], function(v) is.numeric(v) || is.logical(v),
                       logical(1))]
   keys <- as.character(tbl$key)
@@ -69,6 +75,13 @@
 #' the catalogue those are. Skin-tone and hair components are not emoji
 #' occurrences (see the *Detection* section of [tidyEmoji]) and are left out
 #' of the catalogue's count.
+#'
+#' A registered lexicon can score an emoji when it holds a value for it in a
+#' column the scoring verbs read by default: the score [emoji_score()] and
+#' [emoji_sentiment()] take (`sentiment_score`, else `score`), or an emotion
+#' column [emoji_emotion()] takes. Its other numeric columns, such as a count
+#' of raters, do not count. A score chosen with `score =` can cover a
+#' different set.
 #'
 #' @section What `presentation` costs:
 #' The default detection requires emoji presentation, so a bare `U+2764`

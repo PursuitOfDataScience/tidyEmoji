@@ -666,9 +666,13 @@ emoji_key <- function(glyphs) {
 }
 
 # Named vector mapping emoji_key() -> sentiment score, cached for the session.
+# The lexicon is read as tidyEmoji::emoji_sentiment_lexicon, as every bundled
+# dataset is inside the package: lazy-loaded data is not in the namespace, so
+# the bare name failed without library(tidyEmoji) and, with it, let a global
+# object of the same name stand in for the lexicon for the whole session.
 emoji_sentiment_map <- function() {
   if (is.null(.tidyEmoji_cache$sentiment)) {
-    lex <- emoji_sentiment_lexicon
+    lex <- tidyEmoji::emoji_sentiment_lexicon
     keys <- emoji_key(lex$emoji)
     score <- lex$sentiment_score
     names(score) <- keys
@@ -941,6 +945,7 @@ emoji_sentiment_map <- function() {
       class = .emoji_cp_class(c(comp_cps, ri, 0xFE0F)),
       ri_only = "^[\\x{1F1E6}-\\x{1F1FF}]+$",
       part_keys = unique(ref$key[!comp]),
+      component_cps = unique(comp_cps),
       text_style = .emoji_text_style_bases
     )
   }
@@ -1309,10 +1314,10 @@ emoji_has <- function(x, presentation = "emoji") {
 # occupies. The long-form counterpart of emoji_glyph_list(): every verb that
 # needs occurrence-level detail (context windows, per-glyph profiles) builds on
 # this so occurrence identity is defined in exactly one place.
-.emoji_occurrences <- function(v, presentation = "emoji") {
+.emoji_occurrences <- function(v, presentation = "emoji",
+                               locs = .emoji_locations(v, presentation)) {
   v <- as.character(v)
   v[is.na(v)] <- ""
-  locs <- .emoji_locations(v, presentation)
   n <- vapply(locs, nrow, integer(1))
   if (!sum(n)) {
     return(tibble::tibble(.row_number = integer(), .position = integer(),
@@ -1360,7 +1365,7 @@ emoji_canonical <- function(glyphs) {
 # U+FE0F resolve exactly like sentiment. Cached for the session.
 emoji_emotion_map <- function() {
   if (is.null(.tidyEmoji_cache$emotion)) {
-    lex <- emoji_emotion_lexicon
+    lex <- tidyEmoji::emoji_emotion_lexicon
     m <- as.matrix(lex[, c("anger", "anticipation", "disgust", "fear",
                             "joy", "sadness", "surprise", "trust")])
     rownames(m) <- lex$key

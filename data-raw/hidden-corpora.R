@@ -13,8 +13,8 @@
 #   3. WildChat-1M's first shard, data/train-00000-of-00014.parquet, as one row
 #      per turn in an Arrow IPC stream (hash, role, content). pyarrow does it in
 #      a few lines: read conversation_hash and conversation, list_flatten the
-#      conversations, and drop the four NUL characters the shard holds, which
-#      an R string cannot.
+#      conversations, and drop the five NUL characters the shard holds, in
+#      four turns, which an R string cannot.
 #
 #   Rscript data-raw/hidden-corpora.R tweets.csv ready.jsonl.gz turns.arrows
 #
@@ -33,6 +33,15 @@
 # turns that carry an emoji, a selector or a tag, 139,983 rows. Selector runs
 # of two or more: none anywhere. Tag characters: only the Scotland and Wales
 # flags, and that U+E0001.
+#
+# Re-run on 2026-11-09, after "strip" learned to delete what its own
+# deletions leave hidden: the same 482,010 rows and the same one flag, and
+# every row checked byte for byte under "keep", "name", "shortcode",
+# "placeholder" and emoji_to_text(). Under "strip", 4 of the 139,983 differ,
+# one in OASST2 and three in WildChat, and each by one U+FE0F: an emoji
+# written with a redundant selector (U+2757 U+FE0F twice, say) leaves its
+# selector behind when it goes, two of those then stand together, and the
+# second is a hidden code point that "keep" passes on and "remove" deletes.
 
 args <- commandArgs(TRUE)
 stopifnot(length(args) == 3L)
@@ -87,6 +96,18 @@ measure <- function(name, v, check_all = TRUE) {
                         emoji_to_text(d, text, hidden = "keep")))
   cat(sprintf("  %d rows checked, byte for byte with and without the scan: %s\n",
               nrow(d), paste(names(same), same, sep = "=", collapse = " ")))
+  # where a policy differs, say by how much and in what: only code points
+  # the rewrite itself left hidden may go
+  for (p in names(same)[!same & names(same) != "to_text"]) {
+    r <- emoji_sanitize(d, text, policy = p)$text
+    k <- emoji_sanitize(d, text, policy = p, hidden = "keep")$text
+    lost <- vapply(which(r != k), function(j) {
+      paste(sprintf("%X", setdiff_once(utf8ToInt(k[j]), utf8ToInt(r[j]))),
+            collapse = "+")
+    }, character(1))
+    cat(sprintf("  %s: %d rows differ, losing %s\n", p, length(lost),
+                paste(lost, collapse = ", ")))
+  }
   c(rows = length(v), flagged = sum(flagged), checked = nrow(d))
 }
 

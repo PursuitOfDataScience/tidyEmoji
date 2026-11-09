@@ -1,21 +1,49 @@
 ## Submission notes
 
-*Skeleton for the next submission, opened 2026-11-06 after 0.6.0 was accepted.
-Fill in the two TODO sections before submitting; everything below them is
-carried forward because the test suite derives it and will fail if it goes
-stale. The 0.6.0 text is in git history (`git show v0.6.0:cran-comments.md`)
-if a paragraph is worth reusing.*
+This is a **feature release**. The current CRAN version is 0.6.0, published
+on 2026-11-05. Its check page reported OK on all 13 flavours when read on
+2026-11-09, so nothing there asks for an early fix, and this submission
+waits out the interval CRAN asks between updates of an established package.
+NEWS.md gives every change with a worked example.
 
-**TODO before submitting.** In this order:
-
-* What kind of release this is, and the previous CRAN version with its
-  publication date.
-* The new verbs and the behaviour changes a user could notice, each in one
-  sentence, pointing at NEWS.md for the detail.
-* Whether dependencies, bundled data or the licence changed.
-* The check times before and after the CRAN time budget, beside the CRAN
-  figures, including Windows and macOS.
-* Anything a CRAN reviewer flagged last time, and how it was addressed.
+* **Eight new exported functions**: `emoji_hidden()`, which finds, measures
+  and decodes hidden payloads; `emoji_decompose()`, `emoji_skin_tone()`,
+  `emoji_gender()` and `emoji_retone()`, which read what a glyph depicts and
+  never infer anything about the person writing it; and `emoji_runs()`,
+  `emoji_features()` and `emoji_a11y_check()`, for runs of emoji, the cues
+  around each one and the facts behind their accessibility.
+* **Results users can observe changing**: `emoji_sanitize()` and
+  `emoji_to_text()` remove hidden payloads (variation selectors and tag
+  characters that carry no visible meaning) by default, and
+  `hidden = "keep"` restores 0.6.0's output; the catalogue now decides
+  three detection questions, so a symbol with a stray `U+FE0F` counts only
+  if it is listed, a `U+FE0E` asking for the text form is honoured, and a
+  zero-width-joiner sequence Unicode does not recommend counts as its
+  parts. Counts can therefore move in both directions, and
+  `emoji_summary()` reports each change. The verbs also now work without
+  `library(tidyEmoji)`: package code read its bundled datasets by bare
+  name, which only an attached package resolves.
+* **Lifecycle**: `emoji_tweets()` and `top_n_emojis(duplicated_unicode = )`
+  are defunct, as 0.6.0's deprecation warnings announced.
+* **Dependencies**: `emoji` moves from Imports to Suggests. The package
+  bundles an attributed snapshot of the frozen data and regex of `emoji`
+  16.0.0 (MIT) instead of importing it. `readr` leaves Suggests, and
+  `ISOcodes` and `jsonlite` join it. The declared floors are unchanged.
+* **Bundled data and licence**: the example corpus
+  `inst/extdata/ata_tweets.csv`, which had no recorded source or licence,
+  is replaced by `oasst_messages` and `oasst_reactions`, a screened sample
+  of OpenAssistant Conversations (Apache License 2.0); `R/sysdata.rda`
+  adds the `emoji` snapshot, the CLDR 49 keywords, the shortcodes of
+  emojibase 18.0.0 and Unicode's standardized variation sequences. Each
+  source and its notice are under *Bundled data and licence* below, and
+  this submission adds the authors of the two bundled lexicons to
+  `Authors@R` as copyright holders. The package's own licence is
+  unchanged.
+* **Check time**: 0.6.0's tests took 219 to 237 s of CPU on CRAN's x86_64
+  flavours; 0.7.0 holds them to a budget, measured under *Check time*
+  below, Windows and macOS included.
+* **The last review**: 0.6.0 was accepted as first submitted, so there is
+  no reviewer request to answer.
 
 ## Test environments
 
@@ -42,16 +70,36 @@ run that has happened for this version.*
 
 ## R CMD check results
 
-**TODO: fill in from an actual run.** Report per environment rather than as one
-headline, and separate the package's own results from this host's artefacts.
-The four that recur on our machine, and are not the package, are: no `qpdf`,
-no `tidy`, an unverifiable system clock, and the URL discussed below. The PDF
-reference manual is only built locally, so the local run is the one that covers
-it: do not skip it.
+The package's own result is the same everywhere: **0 errors, 0 warnings and
+one NOTE**, from the incoming feasibility check, saying "Days since last
+update: 4", since 0.6.0 was published on 2026-11-05. The rest of what this
+host reports is the host: no `qpdf` (a WARNING), no HTML Tidy, an
+unverifiable system clock, and the CLARIN.SI URL discussed below, which R
+itself marks "Status without verification: OK". Each run is of the 0.7.0
+tarball, with `NOT_CRAN` unset and the remote incoming checks on.
+
+* **R 4.4.1 on Linux** (x86_64, an AMD EPYC 7702): Status 1 WARNING, 3
+  NOTEs. The WARNING (`qpdf`) and two NOTEs (the clock, HTML Tidy) are this
+  host's; the third NOTE is the incoming one, holding the days since the
+  update and the URL. Tests: 0 failures, 66 skipped (see the skip
+  inventory). The PDF reference manual builds, which only this local run
+  checks.
+* **The same under `LC_ALL=C`**: the same result. Tests: 0 failures, 68
+  skipped, the 66 above and two that read the session's encoding and stand
+  down outside UTF-8: a glyph as a column name, and the fold compared with
+  `tolower()`.
+* **R 4.1.0**, the declared minimum: Status 1 WARNING, 3 NOTEs: `qpdf`, the
+  clock, the incoming NOTE, and `spelling` not installed in that library,
+  which `_R_CHECK_FORCE_SUGGESTS_=false` lets through. Tests: 0 failures, 66
+  skipped.
+* **R 4.6.0**, with `forcats`, `igraph`, `ISOcodes` and `spelling` absent,
+  so the check runs without four of its Suggests as some CRAN flavours do:
+  Status 2 NOTEs, the incoming NOTE and HTML Tidy. Tests: 0 failures, 67
+  skipped, the 66 and one that needs `ISOcodes`.
 
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, the four vignettes, README.md and NEWS.md, with the
-  269 entries in `inst/WORDLIST`.
+  270 entries in `inst/WORDLIST`.
 * **The incoming spell check of DESCRIPTION**: win-builder's NOTE named four
   words its aspell check did not know: CLDR, Kopf, OpenAssistant and
   shortcodes. That check runs only where `_R_CHECK_CRAN_INCOMING_USE_ASPELL_`
@@ -193,16 +241,19 @@ attributed:
 0.6.0's tests took 219 to 237 s of CPU on CRAN's x86_64 flavours, and the
 whole check 680 s on r-release-macos-x86_64. 0.7.0 holds the suite to a
 budget. Run as CRAN runs it, on byte-compiled installs on one core of an AMD
-EPYC 7702 on Linux, the 0.7.0 suite takes a median 55.0 s of CPU (53.7
-to 56.6 s) where 0.6.0's takes 156.0 s: 2.83 times less, 95% CI 2.79 to
-2.89, over 12 paired, interleaved runs of the two with a warm-up pair
-discarded, and 2.69 times in the worst pair (Wilcoxon signed-rank
-p = 0.00049). No test block takes a second. A `cran-budget` job in CI fails
-over 82.5 s, 1.5 times the median of five runs of it on the current suite
-(52.7, 55.0, 55.0, 56.7 and 57.2 s elapsed on GitHub's ubuntu-latest), or
-over 1 s for any one block. The exhaustive tests run in CI on every push and
-stand down on CRAN through `skip_sweep()`, each with a sampled twin that
-does run there (the skip inventory above).
+EPYC 7702 on Linux, the 0.7.0 suite takes a median 58.4 s of CPU (58.1
+to 64.3 s) where 0.6.0's takes 155.4 s: 2.65 times less, 95% CI 2.64 to
+2.68, over 12 paired, interleaved runs of the two with a warm-up pair
+discarded, and 2.44 times in the worst pair (Wilcoxon signed-rank
+p = 0.00049). That is the suite of this submission, regression tests for
+the pre-submission repairs included; the same design gave 55.0 s and 2.83
+times less on 2026-11-08, before them. No test block takes a second. A
+`cran-budget` job in CI fails over 82.5 s, 1.5 times the median of five
+runs of it at the release commit (52.7, 55.0, 55.0, 56.7 and 57.2 s elapsed
+on GitHub's ubuntu-latest), or over 1 s for any one block. The exhaustive
+tests run in CI on every push and stand down on CRAN through
+`skip_sweep()`, each with a sampled twin that does run there (the skip
+inventory above).
 
 Windows and macOS, in CRAN mode: the `cran-mode` job runs
 `R CMD check --as-cran` with `NOT_CRAN` unset on GitHub's runners, as
@@ -210,10 +261,9 @@ win-builder and the macOS builder do. On commit a1d1dd4 the tests took 86 s
 on windows-latest with R-devel (2026-11-05 r90840), 83 s with R 4.6.2 and
 34 s on macos-latest (arm64, R 4.6.2); the vignettes 20, 21 and 11 s; the
 whole check 188, 180 and 95 s, with 0 failures and 69, 69 and 71 tests
-skipped. CRAN's own check times for 0.6.0, read on 2026-11-07, are 397 s on
-r-oldrel-windows-x86_64, the one Windows flavour to have reported 0.6.0 so
-far (0.4.0 took 490 s on r-devel-windows-x86_64 and 425 s on
-r-release-windows-x86_64), 116 s on r-release-macos-arm64 and 674 s on
+skipped. CRAN's own check times for 0.6.0, read on 2026-11-09, are 452 s on
+r-devel-windows-x86_64, 516 s on r-release-windows-x86_64 and 397 s on
+r-oldrel-windows-x86_64, 116 s on r-release-macos-arm64 and 674 s on
 r-release-macos-x86_64. All three jobs gave one NOTE, from the incoming
 feasibility check: the days since the last update, and a request to cite the
 OASST2 paper by its arXiv DOI, which DESCRIPTION now does.
@@ -227,13 +277,15 @@ same flavour. win-builder checked the same tarball on 2026-11-07 with R-devel
 19 s, and the whole check 192 s on each, well under CRAN's Windows figures
 above. Each gave one NOTE, from the incoming feasibility check: the days
 since the last update, and the four words of DESCRIPTION discussed under the
-check results. The DESCRIPTION wording described there is the only change to
-the package since that tarball.
+check results. Since that tarball the package has changed by that wording
+and by the pre-submission repairs NEWS.md lists, so both builders check the
+final tarball again before it is submitted; the `cran-mode` jobs have
+checked every commit in between.
 
 ## Downstream dependencies
 
 There are no reverse dependencies. Verified against a live CRAN index
-(25,479 packages on 2026-11-04, which list tidyEmoji at 0.4.0) with
+(25,529 packages on 2026-11-09, which list tidyEmoji at 0.6.0) with
 `tools::package_dependencies("tidyEmoji", db = available.packages(),
 reverse = TRUE, which = c("Depends", "Imports", "LinkingTo", "Suggests",
 "Enhances"))`, which returns none. Re-run this against a live index before

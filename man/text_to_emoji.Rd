@@ -39,7 +39,15 @@ A shortcode token is a colon, one or more of \code{A-Z}, \code{a-z}, \code{0-9},
 or \code{-}, and a closing colon. Restricting the token this way means colons
 used for other purposes -- clock times, URLs, ratios, ordinary punctuation
 -- cannot swallow a following shortcode: \code{"meet at 10:30 :wave:"} still
-emojizes the wave.
+emojizes the wave. A colon pair that is shortcode-shaped but no alias gives
+its closing colon up to the token after it, so \code{"10:30:grinning:"}, which
+\code{\link[=emoji_sanitize]{emoji_sanitize()}} writes for a clock time with a grinning face straight
+after it, still emojizes the face.
+
+One reading stays ambiguous, because the text cannot settle it: an alias
+written after a colon, straight before a shortcode. \code{"status:ok"} followed
+by a thumbs-up sanitises to \code{"status:ok:+1:"}, and \verb{:ok:} (\verb{U+1F197}) is
+read first, leaving \verb{+1:} as text.
 
 \strong{The converse is a limitation, not a feature.} This verb cannot tell a
 token \code{\link[=emoji_sanitize]{emoji_sanitize()}} or \code{\link[=emoji_to_text]{emoji_to_text()}} wrote from one the text always

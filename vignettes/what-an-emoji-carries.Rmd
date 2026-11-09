@@ -176,5 +176,8 @@ follows another, when an ideographic selector follows no CJK ideograph, or
 when it forms no standardized variation sequence; a tag character is hidden
 outside a well-formed flag. So Japanese ideographic variants, the flags of
 England, Scotland and Wales, and text with nothing hidden in it all come back
-byte for byte. `emoji_summary()` counts the rows carrying a payload, and
+byte for byte under `"keep"`. A policy that rewrites an emoji also removes
+what the rewrite itself leaves hidden, such as two selectors a stripped
+emoji stood between, as `?emoji_sanitize` explains. `emoji_summary()` counts
+the rows carrying a payload, and
 `emoji_token_cost()` adds the bytes the payload costs.

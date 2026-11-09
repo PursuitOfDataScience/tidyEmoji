@@ -20,7 +20,31 @@ Authors@R:
       person(given = "Miles",
              family = "Johnson",
              role = "cph",
-             comment = "emojibase data in R/sysdata.rda and the crosswalk"))
+             comment = "emojibase data in R/sysdata.rda and the crosswalk"),
+      person(given = "Petra",
+             family = "Kralj Novak",
+             role = "cph",
+             comment = "Emoji Sentiment Ranking in data/emoji_sentiment_lexicon.rda"),
+      person(given = "Jasmina",
+             family = "Smailovic",
+             role = "cph",
+             comment = "Emoji Sentiment Ranking"),
+      person(given = "Borut",
+             family = "Sluban",
+             role = "cph",
+             comment = "Emoji Sentiment Ranking"),
+      person(given = "Igor",
+             family = "Mozetic",
+             role = "cph",
+             comment = "Emoji Sentiment Ranking"),
+      person(given = "Abu Awal Md",
+             family = "Shoeb",
+             role = "cph",
+             comment = "EmoTag1200 in data/emoji_emotion_lexicon.rda"),
+      person(given = "Gerard",
+             family = "de Melo",
+             role = "cph",
+             comment = "EmoTag1200"))
 Description: A tidy toolkit for working with the emoji in any text column, such
     as social-media posts, product reviews, chat logs or survey responses.
     Unicode is awkward to handle and not every code point is an emoji, which

@@ -128,12 +128,29 @@
 # `x` with every hidden code point deleted. Elements with none come back as
 # they went in, byte for byte and with their encoding mark, so the default of
 # the rewriting verbs changes nothing on text that carries no payload.
+#
+# Deleting is repeated until nothing hidden is left. One pass was not enough,
+# because a deletion can make two selectors adjacent, and rule (a) then hides
+# the second: U+1F600 U+FE0F <tag> U+FE0F kept a hidden U+FE0F, and selectors
+# interleaved with tags carried a whole run of U+FE0E and U+FE0F through, a
+# binary channel. Each pass deletes at least one code point from every
+# element it rescans, so the loop ends.
 .emoji_hidden_remove <- function(x) {
   sc <- .emoji_hidden_scan(x)
   hit <- which(lengths(sc$pos) > 0L)
   if (!length(hit)) return(x)
   x <- as.character(x)
-  for (i in hit) x[[i]] <- intToUtf8(sc$cps[[i]][-sc$pos[[i]]])
+  pos <- sc$pos[hit]
+  cps <- sc$cps[hit]
+  repeat {
+    for (j in seq_along(hit)) x[[hit[[j]]]] <- intToUtf8(cps[[j]][-pos[[j]]])
+    sc <- .emoji_hidden_scan(x[hit])
+    again <- lengths(sc$pos) > 0L
+    if (!any(again)) break
+    hit <- hit[again]
+    pos <- sc$pos[again]
+    cps <- sc$cps[again]
+  }
   x
 }
 

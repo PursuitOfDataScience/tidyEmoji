@@ -155,6 +155,16 @@ emoji_properties <- function(x = NULL) {
   # its base. A swatch on its own strips to nothing: it is in the catalogue
   # and takes no tone, so FALSE rather than NA.
   modifiable <- bk$modifiable[match(emoji_key(.emoji_strip_tones(x)), bk$key)]
+  # A catalogue spelling with a tone in it is, by the definition above, an
+  # emoji the catalogue spells with a tone. Stripping the tones misses 280
+  # of them: a handshake, a kiss, a couple with heart, people holding hands,
+  # wrestlers and bunny ears in mixed tones are joined sequences whose
+  # untoned form is a different, single code point (U+1F91D for the
+  # handshake), so the stripped key is in no catalogue and they fell through
+  # to FALSE below, where emoji_decompose() said TRUE.
+  toned <- !is.na(kidx) & ref$status[kidx] != "component" &
+    grepl("(^| )1F3F[B-F]( |$)", keys)
+  modifiable[is.na(modifiable) & toned] <- TRUE
   modifiable[is.na(modifiable) & !is.na(kidx)] <- FALSE
   tibble::tibble(
     emoji = x,

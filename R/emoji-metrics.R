@@ -192,6 +192,10 @@ emoji_density <- function(data, text, presentation = "emoji") {
 #' emoji-only. The same holds for the joiners of a zero-width-joiner sequence
 #' Unicode does not recommend, which counts as its parts:
 #' `U+1F9D1 U+200D U+1F467` is two emoji, a ratio of `2/3`, and emoji-only.
+#' A symbol the catalogue does not list, followed by a stray `U+FE0F`, is the
+#' text it is without the selector, so `U+1F600 U+2605 U+FE0F` (a black star)
+#' is no more emoji-only than `U+1F600 U+2605`, inside a joined sequence or
+#' not.
 #'
 #' @inheritParams emoji_summary
 #' @return `data`, as a tibble, with added columns `.emoji_n`,
@@ -243,13 +247,41 @@ emoji_ratio <- function(data, text, presentation = "emoji") {
   measurable <- !is.na(n_char) & n_char > 0L
   ratio[measurable] <- emoji_chars[measurable] / n_char[measurable]
 
-  # emoji-only: strip the located emoji, then whitespace; nothing may remain
+  # emoji-only: strip the located emoji, then whitespace; nothing may remain.
+  # An unlisted symbol with a stray U+FE0F (D6, kind 5) is the text it is
+  # without the selector: "U+1F600 U+2605 U+FE0F" was emoji-only while
+  # "U+1F600 U+2605" was not, for one invisible code point. So it stays in the
+  # residual, and so does such a symbol inside a ZWJ sequence that counts as
+  # its parts (kind 6): what no part covers there is text unless it is a
+  # joiner, a selector, a component or a regional indicator, the emoji
+  # material that is not text standing alone either.
+  material <- c(0x200DL, 0xFE0EL, 0xFE0FL, 0x1F1E6L:0x1F1FFL,
+                .emoji_residue()$component_cps)
   residual <- vapply(seq_along(v), function(i) {
     m <- spans[[i]]
     s <- v[[i]]
     if (is.na(s)) return(NA_character_)
     if (is.null(m) || nrow(m) == 0L) return(s)
-    paste0(.emoji_gaps(s, m), collapse = "")
+    k <- sp$kinds[[i]]
+    extra <- character(0)
+    if (!is.null(k)) {
+      six <- m[k == .emoji_kind_unrecommended, , drop = FALSE]
+      cps <- if (nrow(six)) suppressWarnings(utf8ToInt(s)) else NA_integer_
+      if (nrow(six) && !anyNA(cps)) {
+        cover <- logical(length(cps))
+        p <- sp$parts[[i]]
+        if (!is.null(p)) {
+          for (r in seq_len(nrow(p))) cover[p[r, "start"]:p[r, "end"]] <- TRUE
+        }
+        inn <- unlist(lapply(seq_len(nrow(six)), function(r) {
+          six[r, "start"]:six[r, "end"]
+        }))
+        left <- inn[!cover[inn] & !cps[inn] %in% material]
+        extra <- intToUtf8(cps[left], multiple = TRUE)
+      }
+      m <- m[k != .emoji_kind_unlisted, , drop = FALSE]
+    }
+    paste0(c(.emoji_gaps(s, m), extra), collapse = "")
   }, character(1))
   only <- !was_na & emoji_chars > 0L &
     !nzchar(gsub(.emoji_ws1, "", residual))

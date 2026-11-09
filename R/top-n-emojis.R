@@ -118,7 +118,7 @@ top_n_emojis <- function(data, text, n = 20, duplicated = FALSE,
     out <- freq_head %>%
       dplyr::select(key, emoji, group, n) %>%
       dplyr::left_join(
-        emoji_unicode_crosswalk %>%
+        tidyEmoji::emoji_unicode_crosswalk %>%
           dplyr::select(key, emoji_name) %>%
           dplyr::distinct(),
         by = "key", relationship = "many-to-many"

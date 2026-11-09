@@ -35,8 +35,12 @@
 #' counts that say which is which. With `se = TRUE` the result gains
 #' `.emoji_sentiment_se`, the standard error of the row's mean: each glyph's
 #' score has a binomial-style standard error computed from its own counts, and
-#' those are propagated to the mean assuming independent annotations
-#' (`sqrt(sum(se^2)) / n_scored`). It needs the annotation counts, so it is
+#' those are propagated to the mean over the row's distinct glyphs, assuming
+#' independent annotations: `sqrt(sum(w^2 * se^2))`, where `w` is each glyph's
+#' share of the row's scored occurrences. A repeated glyph is the same
+#' estimate again rather than new evidence, so one emoji written three times
+#' has the standard error of one. With every glyph distinct this is
+#' `sqrt(sum(se^2)) / n_scored`. It needs the annotation counts, so it is
 #' available for the bundled `"novak2015"` lexicon only. See
 #' [emoji_ambiguity()] for the same counts read as disagreement.
 #'
