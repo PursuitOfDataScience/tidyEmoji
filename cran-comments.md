@@ -75,8 +75,12 @@ one NOTE**, from the incoming feasibility check, saying "Days since last
 update: 4", since 0.6.0 was published on 2026-11-05. The rest of what this
 host reports is the host: no `qpdf` (a WARNING), no HTML Tidy, an
 unverifiable system clock, and the CLARIN.SI URL discussed below, which R
-itself marks "Status without verification: OK". Each run is of the 0.7.0
-tarball, with `NOT_CRAN` unset and the remote incoming checks on.
+itself marks "Status without verification: OK". Each local run is of the
+0.7.0 tarball with `NOT_CRAN` unset and the remote incoming checks on. The
+R 4.4.1 run was repeated on the tarball built from commit 1602753, which
+carries the pre-submission repairs, with the same result; the other three
+are of a tarball that differs from it only in the wording of NEWS.md and
+of one help page.
 
 * **R 4.4.1 on Linux** (x86_64, an AMD EPYC 7702): Status 1 WARNING, 3
   NOTEs. The WARNING (`qpdf`) and two NOTEs (the clock, HTML Tidy) are this
@@ -96,6 +100,12 @@ tarball, with `NOT_CRAN` unset and the remote incoming checks on.
   so the check runs without four of its Suggests as some CRAN flavours do:
   Status 2 NOTEs, the incoming NOTE and HTML Tidy. Tests: 0 failures, 67
   skipped, the 66 and one that needs `ISOcodes`.
+* **GitHub Actions, commit 1602753**: all 13 jobs pass. The ten that check
+  with `NOT_CRAN` set report Status OK, and the three `cran-mode` jobs
+  (Windows R-devel and R 4.6.2, macOS R 4.6.2) report 1 NOTE each, the days
+  since the last update and nothing else. The `cran-budget` job timed the
+  CRAN-mode suite at 52.2 s, under its 82.5 s ceiling, with no block over a
+  second.
 
 * **Spelling**: `spelling::spell_check_package()` reports 0 unknown words
   across the help pages, the four vignettes, README.md and NEWS.md, with the
@@ -257,16 +267,18 @@ inventory above).
 
 Windows and macOS, in CRAN mode: the `cran-mode` job runs
 `R CMD check --as-cran` with `NOT_CRAN` unset on GitHub's runners, as
-win-builder and the macOS builder do. On commit a1d1dd4 the tests took 86 s
-on windows-latest with R-devel (2026-11-05 r90840), 83 s with R 4.6.2 and
-34 s on macos-latest (arm64, R 4.6.2); the vignettes 20, 21 and 11 s; the
-whole check 188, 180 and 95 s, with 0 failures and 69, 69 and 71 tests
-skipped. CRAN's own check times for 0.6.0, read on 2026-11-09, are 452 s on
-r-devel-windows-x86_64, 516 s on r-release-windows-x86_64 and 397 s on
-r-oldrel-windows-x86_64, 116 s on r-release-macos-arm64 and 674 s on
-r-release-macos-x86_64. All three jobs gave one NOTE, from the incoming
-feasibility check: the days since the last update, and a request to cite the
-OASST2 paper by its arXiv DOI, which DESCRIPTION now does.
+win-builder and the macOS builder do. On commit 1602753 the tests took 83 s
+on windows-latest with R-devel (2026-11-08 r90859), 86 s with R 4.6.2 and
+45 s on macos-latest (arm64, R 4.6.2); the vignettes 20, 20 and 14 s; the
+whole check 260, 253 and 169 s, of which the incoming feasibility check,
+reaching CRAN over the network, took 64, 57 and 44 s; with 0 failures and
+69, 69 and 71 tests skipped. CRAN's own check times for 0.6.0, read on
+2026-11-09, are 452 s on r-devel-windows-x86_64, 516 s on
+r-release-windows-x86_64 and 397 s on r-oldrel-windows-x86_64, 116 s on
+r-release-macos-arm64 and 674 s on r-release-macos-x86_64. All three jobs
+gave one NOTE, from the incoming feasibility check: the days since the
+last update. Their first run, on a1d1dd4, had also asked for the OASST2
+paper to be cited by its arXiv DOI, which DESCRIPTION has done since.
 The macOS builder checked the 6fbe954 tarball twice on 2026-11-08. One run
 asked for R-release and one for R-devel, and it ran both on its
 r-release-macosx-arm64 setup (R 4.6.1 patched, macOS 26.6, an Apple M1):
