@@ -436,3 +436,17 @@ Other contributors:
 
 - Miles Johnson (emojibase data in R/sysdata.rda and the crosswalk)
   \[copyright holder\]
+
+- Petra Kralj Novak (Emoji Sentiment Ranking in
+  data/emoji_sentiment_lexicon.rda) \[copyright holder\]
+
+- Jasmina Smailovic (Emoji Sentiment Ranking) \[copyright holder\]
+
+- Borut Sluban (Emoji Sentiment Ranking) \[copyright holder\]
+
+- Igor Mozetic (Emoji Sentiment Ranking) \[copyright holder\]
+
+- Abu Awal Md Shoeb (EmoTag1200 in data/emoji_emotion_lexicon.rda)
+  \[copyright holder\]
+
+- Gerard de Melo (EmoTag1200) \[copyright holder\]

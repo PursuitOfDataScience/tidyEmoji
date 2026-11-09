@@ -112,17 +112,17 @@ categorised. If none of a row's emoji is in the reference table the row is
 kept with <code>.emoji_category</code> set to <code>NA</code>. Dropping it would silently shrink
 the corpus, and by exactly the rows a user whose Unicode coverage is behind
 most needs to see.</p>
-<p>Two different things reach that <code>NA</code>, and only the first is a catalogue
-question:</p><ol><li><p>A zero-width-joiner sequence <strong>newer than the bundled catalogue</strong>, since
-detection is grapheme-aware and does not require the sequence to be
-catalogued. Use <code><a href="emoji_provenance.html">emoji_provenance()</a></code> to check which catalogue you are
-matching against; a tidyEmoji release built on a newer Unicode file
-fixes it.</p></li>
-<li><p>A <strong>non-RGI ZWJ join</strong>: components joined in a combination Unicode does
-not recommend, which no catalogue lists.</p></li>
-</ol><p>An invalid regional-indicator pair such as <code>U+1F1FD U+1F1FD</code> used to be a
-third. Since 0.6.0 it is not an emoji at all, so it no longer keeps a row
-here; see the Detection section of <a href="tidyEmoji-package.html">tidyEmoji</a>.</p>
+<p>What reaches that <code>NA</code> is an emoji the catalogue does not list that is no
+joined sequence, such as a family with a skin tone (<code>U+1F46A U+1F3FD</code>, a
+sequence Unicode allows but does not recommend). A zero-width-joiner
+sequence the catalogue does not list, newer than the bundled catalogue or
+joined in a combination Unicode does not recommend, used to reach it too.
+Since 0.7.0 it counts as its parts, as in every verb, and they are
+categorised: a cat joined to a laptop is <code>"Animals &amp; Nature|Objects"</code>. Use
+<code><a href="emoji_provenance.html">emoji_provenance()</a></code> to check which catalogue you are matching against.</p>
+<p>An invalid regional-indicator pair such as <code>U+1F1FD U+1F1FD</code> used to reach
+it as well. Since 0.6.0 it is not an emoji at all, so it no longer keeps a
+row here; see the Detection section of <a href="tidyEmoji-package.html">tidyEmoji</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

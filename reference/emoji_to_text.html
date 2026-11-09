@@ -129,8 +129,8 @@ since a flag has no text-presentation form.</p></dd>
 <dt id="arg-hidden">hidden<a class="anchor" aria-label="anchor" href="#arg-hidden"></a></dt>
 <dd><p>What to do with hidden payloads, as in <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code>:
 <code>"remove"</code> (the default) deletes the variation selectors and tag
-characters <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports, and <code>"keep"</code> leaves them, as every
-version before 0.7.0 did.</p></dd>
+characters <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports, those the rewrite leaves hidden
+included, and <code>"keep"</code> leaves them, as every version before 0.7.0 did.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -141,7 +141,9 @@ in place unchanged. A ZWJ sequence the catalogue does not list, such as
 grinning face, <code>U+200D</code>, fire, is written as the names of the parts it
 splits into, in order and separated by spaces ("grinning face fire"), or
 as their shortcodes (":grinning::fire:"): the parts every other verb
-counts since 0.7.0. If any part has no name the sequence stays as it is.</p>
+counts since 0.7.0. If any part has no name the sequence stays as it is,
+and so it does when it holds anything that is no part, such as a hair
+component joined to a face, which naming the parts alone would delete.</p>
     </div>
     <div class="section level2">
     <h2 id="a-preview-of-what-a-screen-reader-says">A preview of what a screen reader says<a class="anchor" aria-label="anchor" href="#a-preview-of-what-a-screen-reader-says"></a></h2>

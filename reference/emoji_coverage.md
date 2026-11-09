@@ -119,6 +119,16 @@ emoji occurrences (see the *Detection* section of
 [tidyEmoji](https://pursuitofdatascience.github.io/tidyEmoji/reference/tidyEmoji-package.md))
 and are left out of the catalogue's count.
 
+A registered lexicon can score an emoji when it holds a value for it in
+a column the scoring verbs read by default: the score
+[`emoji_score()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_score.md)
+and
+[`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md)
+take (`sentiment_score`, else `score`), or an emotion column
+[`emoji_emotion()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_emotion.md)
+takes. Its other numeric columns, such as a count of raters, do not
+count. A score chosen with `score =` can cover a different set.
+
 ## What `presentation` costs
 
 The default detection requires emoji presentation, so a bare `U+2764`

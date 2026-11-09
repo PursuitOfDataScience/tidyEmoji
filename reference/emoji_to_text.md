@@ -100,7 +100,8 @@ emoji_to_text(
   `"remove"` (the default) deletes the variation selectors and tag
   characters
   [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
-  reports, and `"keep"` leaves them, as every version before 0.7.0 did.
+  reports, those the rewrite leaves hidden included, and `"keep"` leaves
+  them, as every version before 0.7.0 did.
 
 ## Value
 
@@ -111,7 +112,9 @@ such as grinning face, `U+200D`, fire, is written as the names of the
 parts it splits into, in order and separated by spaces ("grinning face
 fire"), or as their shortcodes (":grinning::fire:"): the parts every
 other verb counts since 0.7.0. If any part has no name the sequence
-stays as it is.
+stays as it is, and so it does when it holds anything that is no part,
+such as a hair component joined to a face, which naming the parts alone
+would delete.
 
 ## A preview of what a screen reader says
 

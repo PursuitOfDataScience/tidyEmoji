@@ -35,7 +35,8 @@ register_emoji_lexicon(name, tbl, by = "emoji")
 - by:
 
   Name of the column holding the emoji glyph, as a single string.
-  Default `"emoji"`.
+  Default `"emoji"`. It cannot be `"key"`, the column registration
+  writes the code-point keys to: rename such a glyph column first.
 
 ## Value
 
@@ -80,13 +81,17 @@ registered and cited:
   [`emoji_faceness()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_faceness.md).
   <https://osf.io/vbmpj/>
 
-Each arrives as a table keyed by emoji, so registering one is a rename
-and a call: put the glyphs in a column called `emoji`, keep the rating
-you want as a numeric column, and register it.
+Each arrives as a table keyed by emoji, so registering one is two
+renames and a call: put the glyphs in a column called `emoji` and the
+rating to score on by default in one called `score`, which registration
+requires. Every other numeric rating in the table stays usable through
+`score =`.
 
     norms <- read.csv("emoji_sp_norms.csv")   # downloaded from OSF
     names(norms)[names(norms) == "Emoji"] <- "emoji"
+    names(norms)[names(norms) == "valence"] <- "score"
     register_emoji_lexicon("emoji_sp", norms)
+    emoji_score(df, text, lexicon = "emoji_sp")   # valence
     emoji_score(df, text, lexicon = "emoji_sp", score = "arousal")
     emoji_coverage(df, text, lexicon = "emoji_sp")
 

@@ -146,8 +146,10 @@ since a flag has no text-presentation form.</p></dd>
 <p><code>.emoji_n_scored</code> distinguishes the two ways the answer can be missing,
 as it does in <code><a href="emoji_sentiment.html">emoji_sentiment()</a></code>: <code>0</code> means the row had emoji that the
 lexicon could not score, <code>NA</code> that it had no emoji to score. The four
-derived columns are <code>NA</code> in both cases, and also wherever <code>text_score</code>
-itself is missing or not finite.</p>
+derived columns are <code>NA</code> in both cases. Where <code>text_score</code> itself is
+missing or not finite, the three that compare it with the emoji,
+<code>.emoji_incongruity</code>, <code>.emoji_polarity_flip</code> and <code>.emoji_incongruent</code>,
+are <code>NA</code> as well, and <code>.emoji_sentiment</code> is still the emoji's score.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

@@ -180,8 +180,14 @@ apart stays finite.</p></li>
 apart); unlike the other two it does not favour rare pairs.</p></li>
 </ul><p><code>N</code> counts only documents with an emoji, so adding emoji-free rows to a
 corpus changes no measure. Under <code>directed = TRUE</code>, <code>n</code> counts documents
-where <code>item1</code> comes first, and the measures score that ordered event
-against the same marginals. For a network, filter on a frequency threshold
+where <code>item1</code> comes first. <code>"ppmi"</code> and <code>"dice"</code> score that ordered
+event against the same marginals. <code>"log_odds"</code> sets aside the documents
+that hold the pair the other way round (a document holding both emoji is
+in exactly one of the two orders), so its two-by-two table is over the
+rest and stays finite: <code>n1</code>, <code>n2</code> and <code>N</code> each lose the reverse pair's
+<code>n</code>. A pair never written the other way round scores as it does
+undirected.
+For a network, filter on a frequency threshold
 as well as on the measure, so the edges kept are both strong and seen more
 than once.</p>
     </div>

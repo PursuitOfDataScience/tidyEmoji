@@ -132,7 +132,11 @@ section of <a href="tidyEmoji-package.html">tidyEmoji</a>), so it adds nothing t
 <code>.emoji_only</code>: <code>U+1F600 U+1F3FB</code> is one emoji, a ratio of <code>0.5</code>, and
 emoji-only. The same holds for the joiners of a zero-width-joiner sequence
 Unicode does not recommend, which counts as its parts:
-<code>U+1F9D1 U+200D U+1F467</code> is two emoji, a ratio of <code>2/3</code>, and emoji-only.</p>
+<code>U+1F9D1 U+200D U+1F467</code> is two emoji, a ratio of <code>2/3</code>, and emoji-only.
+A symbol the catalogue does not list, followed by a stray <code>U+FE0F</code>, is the
+text it is without the selector, so <code>U+1F600 U+2605 U+FE0F</code> (a black star)
+is no more emoji-only than <code>U+1F600 U+2605</code>, inside a joined sequence or
+not.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

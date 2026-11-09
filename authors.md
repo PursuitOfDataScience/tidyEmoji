@@ -16,6 +16,24 @@
 - **Miles Johnson**. Copyright holder.  
   emojibase data in R/sysdata.rda and the crosswalk
 
+- **Petra Kralj Novak**. Copyright holder.  
+  Emoji Sentiment Ranking in data/emoji_sentiment_lexicon.rda
+
+- **Jasmina Smailovic**. Copyright holder.  
+  Emoji Sentiment Ranking
+
+- **Borut Sluban**. Copyright holder.  
+  Emoji Sentiment Ranking
+
+- **Igor Mozetic**. Copyright holder.  
+  Emoji Sentiment Ranking
+
+- **Abu Awal Md Shoeb**. Copyright holder.  
+  EmoTag1200 in data/emoji_emotion_lexicon.rda
+
+- **Gerard de Melo**. Copyright holder.  
+  EmoTag1200
+
 ## Citation
 
 Source:

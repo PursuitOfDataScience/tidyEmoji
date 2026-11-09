@@ -99,7 +99,10 @@ either, so it does not stop a row being `.emoji_only`: `U+1F600 U+1F3FB`
 is one emoji, a ratio of `0.5`, and emoji-only. The same holds for the
 joiners of a zero-width-joiner sequence Unicode does not recommend,
 which counts as its parts: `U+1F9D1 U+200D U+1F467` is two emoji, a
-ratio of `2/3`, and emoji-only.
+ratio of `2/3`, and emoji-only. A symbol the catalogue does not list,
+followed by a stray `U+FE0F`, is the text it is without the selector, so
+`U+1F600 U+2605 U+FE0F` (a black star) is no more emoji-only than
+`U+1F600 U+2605`, inside a joined sequence or not.
 
 ## See also
 

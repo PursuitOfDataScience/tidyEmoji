@@ -114,7 +114,10 @@ as it does in
 [`emoji_sentiment()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sentiment.md):
 `0` means the row had emoji that the lexicon could not score, `NA` that
 it had no emoji to score. The four derived columns are `NA` in both
-cases, and also wherever `text_score` itself is missing or not finite.
+cases. Where `text_score` itself is missing or not finite, the three
+that compare it with the emoji, `.emoji_incongruity`,
+`.emoji_polarity_flip` and `.emoji_incongruent`, are `NA` as well, and
+`.emoji_sentiment` is still the emoji's score.
 
 ## Details
 

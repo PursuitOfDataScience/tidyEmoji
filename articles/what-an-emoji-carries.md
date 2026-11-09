@@ -228,7 +228,11 @@ follows another, when an ideographic selector follows no CJK ideograph,
 or when it forms no standardized variation sequence; a tag character is
 hidden outside a well-formed flag. So Japanese ideographic variants, the
 flags of England, Scotland and Wales, and text with nothing hidden in it
-all come back byte for byte.
+all come back byte for byte under `"keep"`. A policy that rewrites an
+emoji also removes what the rewrite itself leaves hidden, such as two
+selectors a stripped emoji stood between, as
+[`?emoji_sanitize`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_sanitize.md)
+explains.
 [`emoji_summary()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_summary.md)
 counts the rows carrying a payload, and
 [`emoji_token_cost()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_token_cost.md)

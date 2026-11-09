@@ -168,7 +168,8 @@ name or alias is <strong>left in place unchanged</strong>. A glyph the catalogue
 not list, such as a family with a skin tone (a sequence Unicode allows
 but does not recommend), is detected but cannot be named, so these two
 policies can return a column that still holds emoji. A ZWJ sequence the
-catalogue does not list is named by its parts, in order. <code>"strip"</code> never
+catalogue does not list is named by its parts, in order, unless it holds
+something that is no part, which it keeps as it is. <code>"strip"</code> never
 does. Neither does <code>"placeholder"</code>, unless the token you supply is
 itself emoji-forming: one that <em>is</em> an emoji survives by definition, and
 a lone combining character such as <code>U+FE0F</code> binds to whatever the
@@ -217,12 +218,16 @@ reversibility contract, not a cosmetic choice:</p><ul><li><p><code>wrap = ":{x}:
 <li><p>A <code>wrap</code> that decorates the token – <code>"[:{x}:]"</code>, <code>":{x}:!"</code> – brings the
 emoji back but leaves the decoration behind, so the emoji is restored and
 the text is not.</p></li>
-<li><p>A <code>wrap</code> with no <code>:token:</code> at all – <code>"{x}"</code>, <code>"&lt;{x}&gt;"</code>, <code>"@{x}@"</code>,
-<code>":{x}"</code> – restores nothing: the shortcode stays in the text as an
-ordinary word. This is the case to watch, because it fails silently.</p></li>
-<li><p><code>wrap = "::{x}::"</code> is worse than either: the inner <code>:grinning:</code> matches,
-so the emoji comes back wrapped in the leftover colons (<code>:&lt;U+1F600&gt;:</code>) and
-a further round trip keeps adding to them.</p></li>
+<li><p>A <code>wrap</code> with no <code>:token:</code> at all – <code>"{x}"</code>, <code>"&lt;{x}&gt;"</code>, <code>"@{x}@"</code> –
+restores nothing: the shortcode stays in the text as an ordinary word.
+This is the case to watch, because it fails silently.</p></li>
+<li><p><code>wrap = ":{x}"</code> restores by accident, and only partly: two emoji written
+together become <code>:grinning:grinning</code>, whose first two colons make a
+token, so one grinning face comes back and the other stays a word. A
+lone emoji stays a word.</p></li>
+<li><p><code>wrap = "::{x}::"</code> is worse than any of these: the inner <code>:grinning:</code>
+matches, so the emoji comes back wrapped in the leftover colons
+(<code>:&lt;U+1F600&gt;:</code>) and a further round trip keeps adding to them.</p></li>
 </ul><p>Change <code>wrap</code> for readability by all means, but not on a column you intend
 to restore.</p>
 <p><strong>The default <code>wrap</code> also assumes something about the input text, and this is
@@ -246,6 +251,12 @@ the round trip restores the original text exactly when the only
 <code>:shortcode:</code>-shaped tokens in it are the ones this verb wrote. If your text
 may hold real ones, compare <code><a href="emoji_density.html">emoji_density()</a></code>'s <code>.emoji_n</code> before and after,
 which is the cheapest way to see the inflation.</p>
+<p>A colon pair that is no alias does not get in the way: <code>"10:30"</code> with a
+grinning face straight after it becomes <code>"10:30:grinning:"</code>, and the face
+comes back. One case is ambiguous: an alias the text itself spells after a
+colon, straight before an emoji. <code>"status:ok"</code> and a thumbs-up become
+<code>"status:ok:+1:"</code>, which restores as <code>"status"</code>, <code>U+1F197</code> and <code>"+1:"</code>,
+because <code><a href="text_to_emoji.html">text_to_emoji()</a></code> reads the first token it meets.</p>
 <p>Unicode also lists shorter spellings of the same emoji, with the <code>U+FE0F</code>
 presentation selectors omitted. Feed one of those in and the round trip
 returns the <em>canonical</em> spelling instead: <code>U+270C</code> comes back as
@@ -274,8 +285,17 @@ every policy, <code>"keep"</code> included, deletes those code points by default
 rules are exact, so a lone <code>U+FE0E</code> or <code>U+FE0F</code>, the selectors of Japanese
 names, Unicode's standardized variants and the England, Scotland and Wales
 flags all stay. Text with nothing hidden in it comes back byte for byte as
-before; <code>hidden = "keep"</code> restores 0.6.0 exactly. <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports
-what was there, and decodes it.</p>
+before, with one exception: rewriting an emoji can leave hidden what the
+emoji made legitimate, and that goes too. The tags of a subdivision flag
+the catalogue does not list are part of the flag until its black flag is
+named, masked or deleted, and are tags outside a flag after; and deleting
+an emoji (<code>"strip"</code>, or an empty <code>placeholder</code>) makes a selector on
+either side of it adjacent, so a run of single selectors spread over
+adjacent emoji would otherwise come out of <code>"strip"</code> as a payload.
+<code>hidden = "keep"</code> restores 0.6.0 exactly. <code><a href="emoji_hidden.html">emoji_hidden()</a></code> reports what
+was there, and decodes it, and reports nothing on the result: a deletion
+can always make two selectors adjacent, so it repeats until nothing hidden
+is left.</p>
     </div>
     <div class="section level2">
     <h2 id="why-a-policy-and-why-written-down">Why a policy, and why written down<a class="anchor" aria-label="anchor" href="#why-a-policy-and-why-written-down"></a></h2>

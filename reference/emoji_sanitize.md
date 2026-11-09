@@ -136,10 +136,11 @@ The policies:
   as a family with a skin tone (a sequence Unicode allows but does not
   recommend), is detected but cannot be named, so these two policies can
   return a column that still holds emoji. A ZWJ sequence the catalogue
-  does not list is named by its parts, in order. `"strip"` never does.
-  Neither does `"placeholder"`, unless the token you supply is itself
-  emoji-forming: one that *is* an emoji survives by definition, and a
-  lone combining character such as `U+FE0F` binds to whatever the
+  does not list is named by its parts, in order, unless it holds
+  something that is no part, which it keeps as it is. `"strip"` never
+  does. Neither does `"placeholder"`, unless the token you supply is
+  itself emoji-forming: one that *is* an emoji survives by definition,
+  and a lone combining character such as `U+FE0F` binds to whatever the
   removed glyph was standing next to. `name` is also the accessibility
   answer: it is what a screen reader announces.
 
@@ -207,11 +208,16 @@ cosmetic choice:
   the emoji back but leaves the decoration behind, so the emoji is
   restored and the text is not.
 
-- A `wrap` with no `:token:` at all – `"{x}"`, `"<{x}>"`, `"@{x}@"`,
-  `":{x}"` – restores nothing: the shortcode stays in the text as an
-  ordinary word. This is the case to watch, because it fails silently.
+- A `wrap` with no `:token:` at all – `"{x}"`, `"<{x}>"`, `"@{x}@"` –
+  restores nothing: the shortcode stays in the text as an ordinary word.
+  This is the case to watch, because it fails silently.
 
-- `wrap = "::{x}::"` is worse than either: the inner `:grinning:`
+- `wrap = ":{x}"` restores by accident, and only partly: two emoji
+  written together become `:grinning:grinning`, whose first two colons
+  make a token, so one grinning face comes back and the other stays a
+  word. A lone emoji stays a word.
+
+- `wrap = "::{x}::"` is worse than any of these: the inner `:grinning:`
   matches, so the emoji comes back wrapped in the leftover colons
   (`:<U+1F600>:`) and a further round trip keeps adding to them.
 
@@ -250,6 +256,15 @@ ones this verb wrote. If your text may hold real ones, compare
 `.emoji_n` before and after, which is the cheapest way to see the
 inflation.
 
+A colon pair that is no alias does not get in the way: `"10:30"` with a
+grinning face straight after it becomes `"10:30:grinning:"`, and the
+face comes back. One case is ambiguous: an alias the text itself spells
+after a colon, straight before an emoji. `"status:ok"` and a thumbs-up
+become `"status:ok:+1:"`, which restores as `"status"`, `U+1F197` and
+`"+1:"`, because
+[`text_to_emoji()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/text_to_emoji.md)
+reads the first token it meets.
+
 Unicode also lists shorter spellings of the same emoji, with the
 `U+FE0F` presentation selectors omitted. Feed one of those in and the
 round trip returns the *canonical* spelling instead: `U+270C` comes back
@@ -278,10 +293,18 @@ by default: `"keep"` means keep the emoji, and a payload is not part of
 any emoji. The rules are exact, so a lone `U+FE0E` or `U+FE0F`, the
 selectors of Japanese names, Unicode's standardized variants and the
 England, Scotland and Wales flags all stay. Text with nothing hidden in
-it comes back byte for byte as before; `hidden = "keep"` restores 0.6.0
-exactly.
+it comes back byte for byte as before, with one exception: rewriting an
+emoji can leave hidden what the emoji made legitimate, and that goes
+too. The tags of a subdivision flag the catalogue does not list are part
+of the flag until its black flag is named, masked or deleted, and are
+tags outside a flag after; and deleting an emoji (`"strip"`, or an empty
+`placeholder`) makes a selector on either side of it adjacent, so a run
+of single selectors spread over adjacent emoji would otherwise come out
+of `"strip"` as a payload. `hidden = "keep"` restores 0.6.0 exactly.
 [`emoji_hidden()`](https://pursuitofdatascience.github.io/tidyEmoji/reference/emoji_hidden.md)
-reports what was there, and decodes it.
+reports what was there, and decodes it, and reports nothing on the
+result: a deletion can always make two selectors adjacent, so it repeats
+until nothing hidden is left.
 
 ## Why a policy, and why written down
 

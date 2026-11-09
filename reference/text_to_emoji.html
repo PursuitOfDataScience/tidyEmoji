@@ -93,7 +93,14 @@ entries stay <code>NA</code>.</p>
 or <code>-</code>, and a closing colon. Restricting the token this way means colons
 used for other purposes – clock times, URLs, ratios, ordinary punctuation
 – cannot swallow a following shortcode: <code>"meet at 10:30 :wave:"</code> still
-emojizes the wave.</p>
+emojizes the wave. A colon pair that is shortcode-shaped but no alias gives
+its closing colon up to the token after it, so <code>"10:30:grinning:"</code>, which
+<code><a href="emoji_sanitize.html">emoji_sanitize()</a></code> writes for a clock time with a grinning face straight
+after it, still emojizes the face.</p>
+<p>One reading stays ambiguous, because the text cannot settle it: an alias
+written after a colon, straight before a shortcode. <code>"status:ok"</code> followed
+by a thumbs-up sanitises to <code>"status:ok:+1:"</code>, and <code>:ok:</code> (<code>U+1F197</code>) is
+read first, leaving <code>+1:</code> as text.</p>
 <p><strong>The converse is a limitation, not a feature.</strong> This verb cannot tell a
 token <code><a href="emoji_sanitize.html">emoji_sanitize()</a></code> or <code><a href="emoji_to_text.html">emoji_to_text()</a></code> wrote from one the text always
 held, so it emojizes both. Text that arrives with literal shortcode tokens in

@@ -147,10 +147,14 @@ number holding each item, and `n` the number holding both.
 
 `N` counts only documents with an emoji, so adding emoji-free rows to a
 corpus changes no measure. Under `directed = TRUE`, `n` counts documents
-where `item1` comes first, and the measures score that ordered event
-against the same marginals. For a network, filter on a frequency
-threshold as well as on the measure, so the edges kept are both strong
-and seen more than once.
+where `item1` comes first. `"ppmi"` and `"dice"` score that ordered
+event against the same marginals. `"log_odds"` sets aside the documents
+that hold the pair the other way round (a document holding both emoji is
+in exactly one of the two orders), so its two-by-two table is over the
+rest and stays finite: `n1`, `n2` and `N` each lose the reverse pair's
+`n`. A pair never written the other way round scores as it does
+undirected. For a network, filter on a frequency threshold as well as on
+the measure, so the edges kept are both strong and seen more than once.
 
 ## See also
 
