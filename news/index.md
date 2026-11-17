@@ -2151,7 +2151,7 @@ unverified.
 - **This release’s prose broke the package’s spell check, and nothing
   said so.** `inst/WORDLIST` and `Language: en-GB` exist because the
   maintainer runs
-  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling//reference/spell_check_package.html);
+  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling/reference/spell_check_package.html);
   against the commit this loop started from it reported **zero** flagged
   words. Against the current tree it reported **53** – every one
   introduced by the documentation and release notes written here. None
@@ -2163,7 +2163,7 @@ unverified.
   `inst/WORDLIST`, which is back to reporting zero.
 
 - The word list keeps the ordering it had.
-  [`spelling::update_wordlist()`](https://docs.ropensci.org/spelling//reference/wordlist.html)
+  [`spelling::update_wordlist()`](https://docs.ropensci.org/spelling/reference/wordlist.html)
   re-sorts case-sensitively, which would have rewritten the whole file
   and buried 53 real additions in an 86-line diff; restoring the
   original case-insensitive order makes the change exactly 53 added
@@ -3685,7 +3685,7 @@ unverified.
   is unavailable.
 
 - `DESCRIPTION` declares `Language: en-GB`. The field was missing, so
-  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling//reference/spell_check_package.html)
+  [`spelling::spell_check_package()`](https://docs.ropensci.org/spelling/reference/spell_check_package.html)
   defaulted to `en-US` and flagged 55 correct British spellings –
   `licence`, `normalised`, `analysed`, `summarise`, `behaviour`,
   `neighbouring` – as errors, which made the check unusable as a gate.
