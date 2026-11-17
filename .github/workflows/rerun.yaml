@@ -1,0 +1,213 @@
+# Re-runs a CI run whose every failure was GitHub's infrastructure rather than
+# this package. Three runs went red that way, and each stayed red until someone
+# pressed "Re-run failed jobs" by hand:
+#
+#   2026-09-21  R-CMD-check on two PRs: the server hosting the Pandoc release
+#               answered 504, so setup-pandoc failed on Windows and Ubuntu.
+#   2026-11-16  R-CMD-check, macOS: the runner's DNS failed before the job
+#               began, codeload.github.com did not resolve, and r-lib/actions
+#               never downloaded, so the job died in "Set up job".
+#
+# GitHub has no retry key for jobs or steps, and a job that dies in "Set up
+# job" never starts a step that could retry it, so the retry has to come from
+# outside the run. This workflow does that when a run completes:
+#
+#   1. It reads every failed job: its failure annotations, and the 40 log lines
+#      above each ##[error], which is where pak, curl and the runner print the
+#      cause before the step ends on a bare exit code.
+#   2. A job counts as transient only if that text names a network or runner
+#      failure (TRANSIENT below) and does not show the check reaching a verdict
+#      (REAL below). Anything it does not recognise counts as real.
+#   3. Only when every failed job is transient does it re-run them, after a
+#      pause, at most twice per run. A run with one real failure is left
+#      exactly as it is, so a red run here still always means the code.
+#
+# GitHub sends its "Some jobs were not successful" email when the first attempt
+# completes, before this workflow starts. The run that email links to has
+# re-run itself and is green by the time it is opened.
+#
+# To see what it would decide for any run, without re-running anything:
+#   gh workflow run rerun.yaml -f run_id=<id>
+# A manual run is a dry run unless dry_run=false; the verdict per job is in
+# its job summary.
+on:
+  workflow_run:
+    workflows: [R-CMD-check, checks, pkgdown, test-coverage]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: ID of a completed run to classify
+        required: true
+        type: string
+      dry_run:
+        description: Only report what would be done
+        type: boolean
+        default: true
+
+name: rerun
+
+# Reading runs, jobs and logs, and asking for a re-run, is all this does.
+permissions:
+  actions: write
+  checks: read
+
+concurrency:
+  group: rerun-${{ github.event.workflow_run.id || inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  rerun:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # No `uses:` steps on purpose. A job with no action to download in "Set up
+    # job" cannot fail the way the jobs it rescues did.
+    steps:
+      - name: Re-run the failed jobs if the infrastructure caused every failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          MAX_ATTEMPTS=3
+
+          # Network and runner failures, in the words the tools print them:
+          # the runner fetching an action; DNS on macOS, Linux and Windows;
+          # HTTP 5xx from tool-cache, R, git and the runner; curl, Node and
+          # OpenSSL timeouts and resets; git transport; and the runner itself
+          # going away.
+          TRANSIENT='Failed to download (action|archive)'
+          TRANSIENT+='|nodename nor servname provided|Temporary failure in name resolution'
+          TRANSIENT+='|Name or service not known|No such host is known'
+          TRANSIENT+='|Could(n.t| not) resolve (host|proxy)|getaddrinfo (EAI_AGAIN|ENOTFOUND)'
+          TRANSIENT+='|Unexpected HTTP response: 5[0-9]{2}|HTTP (error|status)[^0-9]{0,14}5[0-9]{2}'
+          TRANSIENT+='|returned error: 5[0-9]{2}|status code does not indicate success: 5[0-9]{2}'
+          TRANSIENT+='|50[234] (Bad Gateway|Service Unavailable|Gateway Time-?out)'
+          TRANSIENT+='|Timeout was reached|(Connection|Operation) timed out|ETIMEDOUT|ECONNRESET'
+          TRANSIENT+='|Connection reset by peer|socket hang up|Failed to connect to [^ ]+ port'
+          TRANSIENT+='|Could(n.t| not) connect to server|SSL connect error|SSL_ERROR_SYSCALL'
+          TRANSIENT+='|TLS handshake timeout|schannel: failed to receive handshake'
+          TRANSIENT+='|RPC failed|early EOF|remote end hung up unexpectedly|unexpected disconnect while reading'
+          TRANSIENT+='|lost communication with the server|received a shutdown signal'
+          TRANSIENT+='|hosted runner encountered an error|was not acquired by Runner'
+          TRANSIENT+='|Internal server error\. Correlation ID'
+
+          # The check ran to a verdict, which a broken network cannot produce.
+          # Once one of these appears, a timeout in the same text is a URL the
+          # check reported on (--as-cran tries every URL), not the failure.
+          REAL='R CMD check found|Status: [0-9]+ (ERROR|WARNING)'
+
+          say() { printf '%s\n' "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
+
+          # The API is part of the platform whose flakes this is here for, so
+          # every call gets three tries.
+          api() {
+            local i out
+            for i in 1 2 3; do
+              if out=$(gh api "$@" </dev/null); then
+                printf '%s\n' "$out"
+                return 0
+              fi
+              (( i < 3 )) && sleep $(( 15 * i ))
+            done
+            return 1
+          }
+
+          # The 40 lines up to each ##[error]: the cause sits just above the
+          # line that reports the step failed, while a whole log would also
+          # hold downloads that failed once and then succeeded on a retry.
+          window() {
+            awk '{ buf[NR] = $0 }
+                 /##\[error\]/ {
+                   from = NR - 40
+                   if (from <= last) from = last + 1
+                   for (i = from; i <= NR; i++) print buf[i]
+                   last = NR
+                 }'
+          }
+
+          [[ $RUN_ID =~ ^[0-9]+$ ]] || { echo "::error::run_id must be a number"; exit 1; }
+
+          meta=$(api "repos/$GH_REPO/actions/runs/$RUN_ID" \
+            --jq '[.name, .workflow_id, .run_attempt, .status, (.conclusion // "none"), (.head_branch // "")] | @tsv') || exit 1
+          IFS=$'\t' read -r name wf_id attempt status conclusion branch <<<"$meta"
+
+          say "### $name run $RUN_ID, attempt $attempt"
+          if [[ $status != completed || $conclusion != failure ]]; then
+            say "Nothing to do: the run is $status, $conclusion."
+            exit 0
+          fi
+          if (( attempt >= MAX_ATTEMPTS )); then
+            say "Not re-running: attempt $attempt is the last automatic one, so this failure is left for a person."
+            exit 0
+          fi
+
+          failed=$(api "repos/$GH_REPO/actions/runs/$RUN_ID/attempts/$attempt/jobs?per_page=100" \
+            --jq '.jobs[] | select(.conclusion == "failure")
+                  | [.id, .name, ([.steps[]? | select(.conclusion == "failure") | .name][0] // "no step")]
+                  | @tsv') || exit 1
+          if [[ -z $failed ]]; then
+            say "Nothing to do: no job in attempt $attempt failed."
+            exit 0
+          fi
+
+          verdict=transient
+          while IFS=$'\t' read -r job_id job step; do
+            notes=$(api "repos/$GH_REPO/check-runs/$job_id/annotations?per_page=100" \
+              --jq '.[] | select(.annotation_level == "failure") | .message') || notes=
+            log=$(api "repos/$GH_REPO/actions/jobs/$job_id/logs") || log=
+            evidence=$(printf '%s\n%s\n' "$notes" "$(window <<<"$log")")
+            if hit=$(grep -a -m1 -i -E -e "$REAL" <<<"$evidence"); then
+              kind=real
+            elif hit=$(grep -a -m1 -i -E -e "$TRANSIENT" <<<"$evidence"); then
+              kind=transient
+            else
+              kind=real
+              hit="no network or runner error in what it printed"
+            fi
+            hit=$(sed -E 's/^[^0-9]{0,3}[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z //; s/##\[error\]//; s/`//g' <<<"$hit")
+            say "- \`${job//\`/}\` failed at \`${step//\`/}\`: $kind (\`${hit:0:160}\`)"
+            [[ $kind == transient ]] || verdict=real
+          done <<<"$failed"
+
+          if [[ $verdict != transient ]]; then
+            say "Not re-running: a job failed for a reason other than the infrastructure."
+            exit 0
+          fi
+
+          # A second infrastructure failure in a row looks like an outage
+          # rather than one bad runner, so the second wait is longer.
+          pause=$(( attempt == 1 ? 60 : 600 ))
+          if [[ $DRY_RUN == true ]]; then
+            say "Dry run: would wait $pause s, then re-run the failed jobs as attempt $(( attempt + 1 ))."
+            exit 0
+          fi
+          sleep "$pause"
+
+          now=$(api "repos/$GH_REPO/actions/runs/$RUN_ID" \
+            --jq '"\(.status) \(.conclusion) \(.run_attempt)"') || exit 1
+          if [[ $now != "completed failure $attempt" ]]; then
+            say "Nothing to do: the run changed while this waited ($now)."
+            exit 0
+          fi
+
+          # A re-run joins its workflow's concurrency group, and the groups
+          # here cancel whatever is in progress, so re-running this run while a
+          # newer one on the same branch is going would cancel the newer one.
+          args=(-X GET "repos/$GH_REPO/actions/workflows/$wf_id/runs" -F per_page=30)
+          [[ -n $branch ]] && args+=(-f "branch=$branch")
+          busy=$(api "${args[@]}" \
+            --jq "[.workflow_runs[] | select(.id > $RUN_ID and .status != \"completed\")] | length") || exit 1
+          if (( busy > 0 )); then
+            say "Not re-running: a newer $name run on ${branch:-this ref} is still going, and a re-run would cancel it."
+            exit 0
+          fi
+
+          api -X POST "repos/$GH_REPO/actions/runs/$RUN_ID/rerun-failed-jobs" >/dev/null || exit 1
+          say "Re-ran the failed jobs as attempt $(( attempt + 1 ))."
