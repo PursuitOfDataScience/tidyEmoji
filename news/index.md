@@ -2105,10 +2105,8 @@ unverified.
   [`library(ggplot2)`](https://ggplot2.tidyverse.org) sits inside
   `if (has_plot_pkgs)`. The six plotting chunks that use `forcats` and
   `stringr` all carry `eval = has_plot_pkgs`. One apparent third case
-  was a comment explaining why
-  [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)
-  is *not* used – worth noting because a naive scan counts that as a
-  dependency.
+  was a comment explaining why `readr::read_csv()` is *not* used – worth
+  noting because a naive scan counts that as a dependency.
 
 - Verified `inst/CITATION`, which nothing had checked and which is what
   a user pastes into a paper. It renders three entries – the package and
@@ -2686,9 +2684,8 @@ unverified.
 
 - **The introduction vignette could not be built without its Suggests
   packages, so `R CMD build` failed outright on a library tree lacking
-  one.** It read its example corpus with
-  [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)
-  and drew its charts with `ggplot2`, `forcats` and `stringr`, all
+  one.** It read its example corpus with `readr::read_csv()` and drew
+  its charts with `ggplot2`, `forcats` and `stringr`, all
   unconditionally – optional dependencies used as if they were required.
   Verified by building on an R 4.6.0 tree with neither ‘readr’ nor
   ‘forcats’: `Error: Vignette re-building failed`. The corpus is now
