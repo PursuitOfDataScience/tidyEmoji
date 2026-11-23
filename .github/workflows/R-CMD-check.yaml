@@ -59,7 +59,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          # ggplot2 is only suggested, and since S7 began to need R 4.2 it
+          # cannot be installed on the 4.1 floor at all: pak treats Suggests
+          # as hard and stopped the job before the check (2026-11-23). On
+          # R older than 4.2 it is skipped, as a user there would find it;
+          # the vignette's plots and their test are written for exactly that
+          # case, and every other job still installs ggplot2.
+          extra-packages: any::rcmdcheck, ggplot2=?ignore-before-r=4.2.0
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
